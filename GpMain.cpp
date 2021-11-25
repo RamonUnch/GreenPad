@@ -191,6 +191,9 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_DATETIME:   on_datetime();                      break;
 	case ID_CMD_RECONV:     on_reconv();                        break;
 	case ID_CMD_TOGGLEIME:  on_toggleime();                     break;
+    // More edit
+	case ID_CMD_UPPERCASE:  edit_.getCursor().UpperCase();      break;
+	case ID_CMD_LOWERCASE:  edit_.getCursor().LowerCase();      break;
 
 	// Search
 	case ID_CMD_FIND:       search_.ShowDlg();  break;
@@ -525,9 +528,12 @@ void GreenPadWnd::on_drop( HDROP hd )
 	UINT iMax = ::DragQueryFile( hd, 0xffffffff, NULL, 0 );
 	for( UINT i=0; i<iMax; ++i )
 	{
-		TCHAR str[MAX_PATH];
-		::DragQueryFile( hd, i, str, countof(str) );
+		// Get length of the i string as arraay size.
+		UINT len = ::DragQueryFile( hd, i, NULL, 0)+1;
+		TCHAR *str = new TCHAR [len];
+		::DragQueryFile( hd, i, str, len );
 		Open( str, AutoDetect );
+        delete [] str;
 	}
 	::DragFinish( hd );
 }
@@ -887,6 +893,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf )
 {
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
+	
 	if( !tf->Open( fn.c_str() ) )
 	{
 		// ERROR!
@@ -1122,6 +1129,7 @@ void GreenPadWnd::ShowUp2()
 
 int kmain()
 {
+	// MessageBox(NULL, GetCommandLine(), TEXT("Command Line"), MB_OK);
 	LOGGER( "kmain() begin" );
 
 	Argv  arg;

@@ -99,6 +99,9 @@
 #define ID_CMD_MRU                      40200
 #define ID_CMD_DOCTYPE                  40300
 
+#define ID_CMD_UPPERCASE                50001
+#define ID_CMD_LOWERCASE                50002
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

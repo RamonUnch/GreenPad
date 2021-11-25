@@ -8,9 +8,8 @@ using namespace ki;
 //=========================================================================
 // IME‚ÉŠÖ‚·‚é‚ ‚ê‚±‚ê
 //=========================================================================
-
+static GUID myIID_IActiveIMMMessagePumpOwner = {0xb5cf2cfa,0x8aeb,0x11d1,{0x93,0x64,0x00,0x60,0xb0,0x67,0xb8,0x6e}};
 IMEManager* IMEManager::pUniqueInstance_;
-
 IMEManager::IMEManager()
 #ifdef USEGLOBALIME
 	: immApp_( NULL )
@@ -27,7 +26,7 @@ IMEManager::IMEManager()
 					IID_IActiveIMMApp, (void**)&immApp_ ) )
 			{
 				immApp_->QueryInterface(
-					IID_IActiveIMMMessagePumpOwner, (void**)&immMsg_ );
+					myIID_IActiveIMMMessagePumpOwner, (void**)&immMsg_ );
 			}
 		}
 	#endif
