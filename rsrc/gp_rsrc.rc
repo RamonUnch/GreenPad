@@ -1,22 +1,76 @@
-//Microsoft Developer Studio generated resource script.
-//
-#include "resrc1.h"
 
-#define APSTUDIO_READONLY_SYMBOLS
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 2 resource.
-//
 #include "resource.h"
-#include "winresrc.h"
-#include "winuser.h"
-#include "shlobj.h"
+#ifndef DS_SETFOREGROUND
+	#define DS_SETFOREGROUND 0x200L
+#endif
+#ifndef RT_MANIFEST
+	#define RT_MANIFEST 24
+#endif
+
+#include <winresrc.h>
+#include <winuser.h>
+#include "fileopen.dlg"
+#ifndef IDC_STATIC
+#define IDC_STATIC (-1)
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
-#undef APSTUDIO_READONLY_SYMBOLS
+//
+// RT_MANIFEST
+//
+
+1                       RT_MANIFEST             "manifest.xml"
 
 /////////////////////////////////////////////////////////////////////////////
-// Japanese resources
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,0,4,0
+ PRODUCTVERSION 0,1,8,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041104b0"
+        BEGIN
+            VALUE "CompanyName", "kMonos.NET\0"
+            VALUE "FileDescription", "GreenPad\0"
+            VALUE "FileVersion", "#42\0"
+            VALUE "InternalName", "kilib\0"
+            VALUE "LegalCopyright", "Written by k.inaba 2002-2008.\0"
+            VALUE "OriginalFilename", "GreenPad.exe\0"
+            VALUE "ProductName", "GreenPad\0"
+            VALUE "ProductVersion", "1.08.0\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x411, 1200
+    END
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAIN                ICON                    "exefile.ico"
+
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+/////////////////////////////////////////////////////////////////////////////
+// 日本語 resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
 #ifdef _WIN32
@@ -26,12 +80,84 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Menu
+//
+
+IDR_MAIN MENU 
+BEGIN
+    POPUP "ファイル(&F)"
+    BEGIN
+        MENUITEM "新規作成(&N)\tCtrl+N",        ID_CMD_NEWFILE
+        MENUITEM SEPARATOR
+        MENUITEM "開く(&O)...\tCtrl+O",         ID_CMD_OPENFILE
+        MENUITEM "開き直す(&R)...\tCtrl+R",     ID_CMD_REOPENFILE
+        MENUITEM SEPARATOR
+        MENUITEM "保存(&S)\tCtrl+S",            ID_CMD_SAVEFILE
+        MENUITEM "別名で保存(&A)...\tCtrl+Shift+S", ID_CMD_SAVEFILEAS
+        MENUITEM SEPARATOR
+        MENUITEM "印刷(&P)...\tCtrl+P",            ID_CMD_PRINT
+        MENUITEM SEPARATOR
+        POPUP "最近のファイル(&M)"
+        BEGIN
+            MENUITEM "(no files)",                  ID_MENUITEM40029, GRAYED
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "保存して終了(&I)\tCtrl+E", ID_CMD_SAVEEXIT
+        MENUITEM "保存せずに終了(&D)\tCtrl+Shift+E", ID_CMD_DISCARDEXIT
+        MENUITEM "終了(&X)",                    ID_CMD_EXIT
+    END
+    POPUP "編集(&E)"
+    BEGIN
+        MENUITEM "元に戻す(&U)\tCtrl+Z",        ID_CMD_UNDO
+        MENUITEM "やり直す(&R)\tCtrl+Y",        ID_CMD_REDO
+        MENUITEM SEPARATOR
+        MENUITEM "切り取り(&X)\tCtrl+X",        ID_CMD_CUT
+        MENUITEM "コピー(&C)\tCtrl+C",          ID_CMD_COPY
+        MENUITEM "貼り付け(&P)\tCtrl+V",        ID_CMD_PASTE
+        MENUITEM "削除(&D)\tDel",               ID_CMD_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "全てを選択(&A)\tCtrl+A",      ID_CMD_SELECTALL
+        MENUITEM SEPARATOR
+        MENUITEM "日時の挿入(&T)\tF5",          ID_CMD_DATETIME
+        MENUITEM SEPARATOR
+        MENUITEM "再変換(&V)",              ID_CMD_RECONV
+        MENUITEM "IME On/Off(&I)",          ID_CMD_TOGGLEIME
+    END
+    POPUP "検索(&S)"
+    BEGIN
+        MENUITEM "検索・置換(&F)\tCtrl+F",      ID_CMD_FIND
+        MENUITEM "次を検索(&N)\tF3",            ID_CMD_FINDNEXT
+        MENUITEM "前を検索(&P)\tShift+F3",      ID_CMD_FINDPREV
+        MENUITEM SEPARATOR
+        MENUITEM "指定行へジャンプ(&J)\tCtrl+J", ID_CMD_JUMP
+        MENUITEM SEPARATOR
+        MENUITEM "Grep(&G)...\tCtrl+G",         ID_CMD_GREP
+    END
+    POPUP "表示(&V)"
+    BEGIN
+        MENUITEM "折り返さない(&N)\tCtrl+1",    ID_CMD_NOWRAP
+        MENUITEM "指定幅で折り返し(&W)\tCtrl+2", ID_CMD_WRAPWIDTH
+        MENUITEM "右端で折り返し(&R)\tCtrl+3",  ID_CMD_WRAPWINDOW
+        MENUITEM SEPARATOR
+        POPUP "文書タイプ(&T)"
+        BEGIN
+            MENUITEM "(なし)",                      ID_MENUITEM40025, GRAYED
+        END
+        MENUITEM "設定(&S)...",                 ID_CMD_CONFIG
+        MENUITEM SEPARATOR
+        MENUITEM "ステータス バー(&B)",         ID_CMD_STATUSBAR
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // Dialog
 //
 
 IDD_OPENFILEHOOK DIALOGEX 0, 0, 187, 34
-STYLE DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
-FONT 9, "ＭＳ Ｐゴシック", 0, 0, 0x1
+STYLE DS_SETFONT | DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
+FONT 9, "ＭＳ Ｐゴシック"
 BEGIN
     LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT 
                     WS_GROUP
@@ -41,8 +167,8 @@ BEGIN
 END
 
 IDD_SAVEFILEHOOK DIALOGEX 0, 0, 187, 55
-STYLE DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
-FONT 9, "ＭＳ Ｐゴシック", 0, 0, 0x1
+STYLE DS_SETFONT | DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
+FONT 9, "ＭＳ Ｐゴシック"
 BEGIN
     LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT 
                     WS_GROUP
@@ -54,9 +180,9 @@ BEGIN
                     WS_TABSTOP
 END
 
-IDD_REOPENDLG DIALOG DISCARDABLE  0, 0, 187, 54
-STYLE DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_VISIBLE | WS_CLIPSIBLINGS | 
-    WS_CAPTION
+IDD_REOPENDLG DIALOG  0, 0, 187, 54
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_VISIBLE | 
+    WS_CLIPSIBLINGS | WS_CAPTION
 CAPTION "開き直す"
 FONT 9, "ＭＳ Ｐゴシック"
 BEGIN
@@ -67,9 +193,9 @@ BEGIN
     PUSHBUTTON      "キャンセル",IDCANCEL,125,32,56,14
 END
 
-IDD_FINDREPLACE DIALOG DISCARDABLE  0, 0, 316, 84
-STYLE DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+IDD_FINDREPLACE DIALOG  0, 0, 316, 84
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU
 CAPTION "検索・置換"
 FONT 9, "ＭＳ ゴシック"
 BEGIN
@@ -89,9 +215,9 @@ BEGIN
     PUSHBUTTON      "閉じる",IDCANCEL,244,59,37,14
 END
 
-IDD_JUMP DIALOG DISCARDABLE  0, 0, 131, 43
-STYLE DS_ABSALIGN | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+IDD_JUMP DIALOG  0, 0, 131, 43
+STYLE DS_ABSALIGN | DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU
 CAPTION "指定行へジャンプ"
 FONT 9, "ＭＳ Ｐゴシック"
 BEGIN
@@ -100,10 +226,14 @@ BEGIN
     LTEXT           "行目へ",IDC_STATIC,61,15,22,8
 END
 
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
 IDD_CONFIG DIALOGEX 0, 0, 287, 236
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+#else
+IDD_CONFIG DIALOG 0, 0, 287, 236
+#endif
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "エディタ設定"
-FONT 9, "ＭＳ Ｐゴシック", 0, 0, 0x1
+FONT 9, "ＭＳ Ｐゴシック"
 BEGIN
     GROUPBOX        "共通設定",IDC_STATIC,7,11,273,102
     RTEXT           "[元に戻す]上限(&U):",IDC_STATIC,24,24,56,8
@@ -155,8 +285,8 @@ BEGIN
     PUSHBUTTON      "ｷｬﾝｾﾙ",IDCANCEL,230,214,50,14
 END
 
-IDD_ADDDOCTYPE DIALOG DISCARDABLE  0, 0, 123, 67
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_ADDDOCTYPE DIALOG  0, 0, 123, 67
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "文書タイプの追加"
 FONT 9, "ＭＳ Ｐゴシック"
 BEGIN
@@ -168,85 +298,12 @@ BEGIN
     PUSHBUTTON      "ｷｬﾝｾﾙ",IDCANCEL,71,43,33,14
 END
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Menu
-//
-
-IDR_MAIN MENU DISCARDABLE 
-BEGIN
-    POPUP "ファイル(&F)"
-    BEGIN
-        MENUITEM "新規作成(&N)\tCtrl+N",        ID_CMD_NEWFILE
-        MENUITEM SEPARATOR
-        MENUITEM "開く(&O)...\tCtrl+O",         ID_CMD_OPENFILE
-        MENUITEM "開き直す(&R)...\tCtrl+R",     ID_CMD_REOPENFILE
-        MENUITEM SEPARATOR
-        MENUITEM "保存(&S)\tCtrl+S",            ID_CMD_SAVEFILE
-        MENUITEM "別名で保存(&A)...\tCtrl+Shift+S", ID_CMD_SAVEFILEAS
-        MENUITEM SEPARATOR
-        MENUITEM "印刷(&P)...\tCtrl+P",         ID_CMD_PRINT
-        MENUITEM SEPARATOR
-        POPUP "最近のファイル(&M)"
-        BEGIN
-            MENUITEM "(no files)",                  ID_MENUITEM40029, GRAYED
-        END
-        MENUITEM SEPARATOR
-        MENUITEM "保存して終了(&I)\tCtrl+E",    ID_CMD_SAVEEXIT
-        MENUITEM "保存せずに終了(&D)\tCtrl+Shift+E", ID_CMD_DISCARDEXIT
-        MENUITEM "終了(&X)",                    ID_CMD_EXIT
-    END
-    POPUP "編集(&E)"
-    BEGIN
-        MENUITEM "元に戻す(&U)\tCtrl+Z",        ID_CMD_UNDO
-        MENUITEM "やり直す(&R)\tCtrl+Y",        ID_CMD_REDO
-        MENUITEM SEPARATOR
-        MENUITEM "切り取り(&X)\tCtrl+X",        ID_CMD_CUT
-        MENUITEM "コピー(&C)\tCtrl+C",          ID_CMD_COPY
-        MENUITEM "貼り付け(&P)\tCtrl+V",        ID_CMD_PASTE
-        MENUITEM "削除(&D)\tDel",               ID_CMD_DELETE
-        MENUITEM SEPARATOR
-        MENUITEM "全てを選択(&A)\tCtrl+A",      ID_CMD_SELECTALL
-        MENUITEM SEPARATOR
-        MENUITEM "日時の挿入(&T)\tF5",          ID_CMD_DATETIME
-        MENUITEM SEPARATOR
-        MENUITEM "再変換(&V)",                  ID_CMD_RECONV
-        MENUITEM "IME On/Off(&I)",              ID_CMD_TOGGLEIME
-    END
-    POPUP "検索(&S)"
-    BEGIN
-        MENUITEM "検索・置換(&F)\tCtrl+F",      ID_CMD_FIND
-        MENUITEM "次を検索(&N)\tF3",            ID_CMD_FINDNEXT
-        MENUITEM "前を検索(&P)\tShift+F3",      ID_CMD_FINDPREV
-        MENUITEM SEPARATOR
-        MENUITEM "指定行へジャンプ(&J)\tCtrl+J", ID_CMD_JUMP
-        MENUITEM SEPARATOR
-        MENUITEM "Grep(&G)...\tCtrl+G",         ID_CMD_GREP
-    END
-    POPUP "表示(&V)"
-    BEGIN
-        MENUITEM "折り返さない(&N)\tCtrl+1",    ID_CMD_NOWRAP
-        MENUITEM "指定幅で折り返し(&W)\tCtrl+2", ID_CMD_WRAPWIDTH
-        MENUITEM "右端で折り返し(&R)\tCtrl+3",  ID_CMD_WRAPWINDOW
-        MENUITEM SEPARATOR
-        POPUP "文書タイプ(&T)"
-        BEGIN
-            MENUITEM "(なし)",                      ID_MENUITEM40025, GRAYED
-        END
-        MENUITEM "設定(&S)...",                 ID_CMD_CONFIG
-        MENUITEM SEPARATOR
-        MENUITEM "ステータス バー(&B)",         ID_CMD_STATUSBAR
-    END
-END
-
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // Accelerator
 //
 
-IDR_MAIN ACCELERATORS MOVEABLE PURE 
+IDR_MAIN ACCELERATORS 
 BEGIN
     "1",            ID_CMD_NOWRAP,          VIRTKEY, CONTROL, NOINVERT
     "2",            ID_CMD_WRAPWIDTH,       VIRTKEY, CONTROL, NOINVERT
@@ -254,26 +311,23 @@ BEGIN
     "A",            ID_CMD_SELECTALL,       VIRTKEY, CONTROL, NOINVERT
     "C",            ID_CMD_COPY,            VIRTKEY, CONTROL, NOINVERT
     "E",            ID_CMD_SAVEEXIT,        VIRTKEY, CONTROL, NOINVERT
-    "E",            ID_CMD_DISCARDEXIT,     VIRTKEY, SHIFT, CONTROL, 
-                                                    NOINVERT
+    "E",            ID_CMD_DISCARDEXIT,     VIRTKEY, SHIFT, CONTROL, NOINVERT
     "F",            ID_CMD_FIND,            VIRTKEY, CONTROL, NOINVERT
     "G",            ID_CMD_GREP,            VIRTKEY, CONTROL, NOINVERT
     "H",            ID_CMD_FIND,            VIRTKEY, CONTROL, NOINVERT
     "J",            ID_CMD_JUMP,            VIRTKEY, CONTROL, NOINVERT
-    "L",            ID_CMD_LOWERCASE,       VIRTKEY, CONTROL, NOINVERT
-    "L",            ID_CMD_LOWERCASE,       VIRTKEY, ALT, NOINVERT
     "N",            ID_CMD_NEWFILE,         VIRTKEY, CONTROL, NOINVERT
     "O",            ID_CMD_OPENFILE,        VIRTKEY, CONTROL, NOINVERT
     "P",            ID_CMD_PRINT,           VIRTKEY, CONTROL, NOINVERT
     "R",            ID_CMD_REOPENFILE,      VIRTKEY, CONTROL, NOINVERT
     "S",            ID_CMD_SAVEFILE,        VIRTKEY, CONTROL, NOINVERT
-    "S",            ID_CMD_SAVEFILEAS,      VIRTKEY, SHIFT, CONTROL, 
-                                                    NOINVERT
-    "U",            ID_CMD_UPPERCASE,       VIRTKEY, CONTROL, NOINVERT
-    "U",            ID_CMD_UPPERCASE,       VIRTKEY, ALT, NOINVERT
+    "S",            ID_CMD_SAVEFILEAS,      VIRTKEY, SHIFT, CONTROL, NOINVERT
     "V",            ID_CMD_PASTE,           VIRTKEY, CONTROL, NOINVERT
-    VK_DELETE,      ID_CMD_CUT,             VIRTKEY, SHIFT, NOINVERT
+    "L",            ID_CMD_LOWERCASE,       VIRTKEY, ALT, NOINVERT
+    "U",            ID_CMD_UPPERCASE,       VIRTKEY, ALT, NOINVERT
+
     VK_ESCAPE,      ID_CMD_EXIT,            VIRTKEY, NOINVERT
+    VK_DELETE,      ID_CMD_CUT,             VIRTKEY, SHIFT, NOINVERT
     VK_F3,          ID_CMD_FINDNEXT,        VIRTKEY, NOINVERT
     VK_F3,          ID_CMD_FINDPREV,        VIRTKEY, SHIFT, NOINVERT
     VK_F4,          ID_CMD_EXIT,            VIRTKEY, CONTROL, NOINVERT
@@ -282,8 +336,7 @@ BEGIN
     VK_INSERT,      ID_CMD_PASTE,           VIRTKEY, SHIFT, NOINVERT
     VK_RETURN,      ID_CMD_REOPENFILE,      VIRTKEY, ALT, NOINVERT
     VK_TAB,         ID_CMD_NEXTWINDOW,      VIRTKEY, CONTROL, NOINVERT
-    VK_TAB,         ID_CMD_PREVWINDOW,      VIRTKEY, SHIFT, CONTROL, 
-                                                    NOINVERT
+    VK_TAB,         ID_CMD_PREVWINDOW,      VIRTKEY, SHIFT, CONTROL, NOINVERT
     "X",            ID_CMD_CUT,             VIRTKEY, CONTROL, NOINVERT
     "Y",            ID_CMD_REDO,            VIRTKEY, CONTROL, NOINVERT
     "Z",            ID_CMD_UNDO,            VIRTKEY, CONTROL, NOINVERT
@@ -296,7 +349,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO MOVEABLE PURE 
+GUIDELINES DESIGNINFO 
 BEGIN
     IDD_FINDREPLACE, DIALOG
     BEGIN
@@ -338,7 +391,7 @@ END
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     IDS_ASKTOSAVE           "現在の文書を保存しますか？"
     IDS_APPNAME             "GreenPad"
@@ -352,12 +405,13 @@ BEGIN
     IDS_OKTODEL             "を削除してよろしいですか？"
 END
 
-#endif    // Japanese resources
+#endif    // 日本語 resources
 /////////////////////////////////////////////////////////////////////////////
+#endif //TARGET_VER
 
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// 英語 (米国) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
@@ -367,12 +421,88 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Menu
+//
+
+IDR_MAIN MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New File\tCtrl+N",           ID_CMD_NEWFILE
+        MENUITEM SEPARATOR
+        MENUITEM "&Open...\tCtrl+O",            ID_CMD_OPENFILE
+        MENUITEM "&ReOpen...\tCtrl+R",          ID_CMD_REOPENFILE
+        MENUITEM SEPARATOR
+        MENUITEM "&Save\tCtrl+S",               ID_CMD_SAVEFILE
+        MENUITEM "Save &As...\tCtrl+Shift+S",   ID_CMD_SAVEFILEAS
+        MENUITEM SEPARATOR
+        MENUITEM "&Print...\tCtrl+P",              ID_CMD_PRINT
+        MENUITEM SEPARATOR
+        POPUP "R&ecent Files"
+        BEGIN
+            MENUITEM "(no files)",                  ID_MENUITEM40030, GRAYED
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Save and Ex&it\tCtrl+E",   ID_CMD_SAVEEXIT
+        MENUITEM "&Discard and Exit\tCtrl+Shift+E",   ID_CMD_DISCARDEXIT
+        MENUITEM "E&xit",                       ID_CMD_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Undo\tCtrl+Z",               ID_CMD_UNDO
+        MENUITEM "&Redo\tCtrl+Y",               ID_CMD_REDO
+        MENUITEM SEPARATOR
+        MENUITEM "Cut\tCtrl+&X",                ID_CMD_CUT
+        MENUITEM "&Copy\tCtrl+C",               ID_CMD_COPY
+        MENUITEM "&Paste\tCtrl+V",              ID_CMD_PASTE
+
+        MENUITEM "&Delete\tDel",                ID_CMD_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "Select &All\tCtrl+A",         ID_CMD_SELECTALL
+        MENUITEM SEPARATOR
+        MENUITEM "Insert Date&&&Time\tF5",      ID_CMD_DATETIME
+        MENUITEM SEPARATOR
+        MENUITEM "Upper Ca&se\tAlt+U",          ID_CMD_UPPERCASE
+        MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
+        MENUITEM SEPARATOR
+        MENUITEM "Recon&version",               ID_CMD_RECONV
+        MENUITEM "&IME On/Off",                 ID_CMD_TOGGLEIME
+    END
+    POPUP "&Search"
+    BEGIN
+        MENUITEM "&Find\tCtrl+F",               ID_CMD_FIND
+        MENUITEM "Find &Next\tF3",              ID_CMD_FINDNEXT
+        MENUITEM "Find &Prev\tShift+F3",        ID_CMD_FINDPREV
+        MENUITEM SEPARATOR
+        MENUITEM "&Jump to Line\tCtrl+J",       ID_CMD_JUMP
+        MENUITEM SEPARATOR
+        MENUITEM "&Grep...\tCtrl+G",            ID_CMD_GREP
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&No wrapping\tCtrl+1",        ID_CMD_NOWRAP
+        MENUITEM "&Wrap at #th letter\tCtrl+2", ID_CMD_WRAPWIDTH
+        MENUITEM "Wrap at &Right Edge\tCtrl+3", ID_CMD_WRAPWINDOW
+        MENUITEM SEPARATOR
+        POPUP "&Document Type"
+        BEGIN
+            MENUITEM "dummy",                       ID_MENUITEM40025
+        END
+        MENUITEM "&Settings...",                ID_CMD_CONFIG
+        MENUITEM SEPARATOR
+        MENUITEM "Status&Bar",                  ID_CMD_STATUSBAR
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // Dialog
 //
 
 IDD_SAVEFILEHOOK DIALOGEX 0, 0, 187, 55
-STYLE DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
-FONT 9, "MS Sans Serif", 0, 0, 0x1
+STYLE DS_SETFONT | DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
+FONT 9, "MS Sans Serif"
 BEGIN
     LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT 
                     WS_GROUP
@@ -384,9 +514,9 @@ BEGIN
                     WS_TABSTOP
 END
 
-IDD_REOPENDLG DIALOG DISCARDABLE  0, 0, 187, 54
-STYLE DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_VISIBLE | WS_CLIPSIBLINGS | 
-    WS_CAPTION
+IDD_REOPENDLG DIALOG  0, 0, 187, 54
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_VISIBLE | 
+    WS_CLIPSIBLINGS | WS_CAPTION
 CAPTION "ReOpen File"
 FONT 9, "MS Sans Serif"
 BEGIN
@@ -398,8 +528,8 @@ BEGIN
 END
 
 IDD_OPENFILEHOOK DIALOGEX 0, 0, 187, 34
-STYLE DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
-FONT 9, "MS Sans Serif", 0, 0, 0x1
+STYLE DS_SETFONT | DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
+FONT 9, "MS Sans Serif"
 BEGIN
     LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT 
                     WS_GROUP
@@ -408,9 +538,9 @@ BEGIN
                     WS_TABSTOP
 END
 
-IDD_JUMP DIALOG DISCARDABLE  0, 0, 131, 43
-STYLE DS_ABSALIGN | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+IDD_JUMP DIALOG  0, 0, 131, 43
+STYLE DS_ABSALIGN | DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU
 CAPTION "Jump To"
 FONT 9, "MS Sans Serif"
 BEGIN
@@ -419,9 +549,9 @@ BEGIN
     LTEXT           "&Line",IDC_STATIC,17,16,13,8
 END
 
-IDD_FINDREPLACE DIALOG DISCARDABLE  0, 0, 282, 84
-STYLE DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+IDD_FINDREPLACE DIALOG  0, 0, 282, 84
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU
 CAPTION "Find & Replace"
 FONT 9, "MS Sans Serif"
 BEGIN
@@ -441,8 +571,8 @@ BEGIN
     PUSHBUTTON      "Close",IDCANCEL,244,59,29,14
 END
 
-IDD_ADDDOCTYPE DIALOG DISCARDABLE  0, 0, 123, 67
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_ADDDOCTYPE DIALOG  0, 0, 123, 67
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "New DocType"
 FONT 9, "MS Sans Serif"
 BEGIN
@@ -454,10 +584,14 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,71,43,33,14
 END
 
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
 IDD_CONFIG DIALOGEX 0, 0, 287, 236
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+#else
+IDD_CONFIG DIALOG 0, 0, 287, 236
+#endif
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Config"
-FONT 9, "MS Sans Serif", 0, 0, 0x1
+FONT 9, "MS Sans Serif"
 BEGIN
     GROUPBOX        "Common",IDC_STATIC,7,7,273,106
     RTEXT           "&Undo:",IDC_STATIC,62,21,25,8
@@ -512,86 +646,11 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Menu
-//
-
-IDR_MAIN MENU DISCARDABLE 
-BEGIN
-    POPUP "&File"
-    BEGIN
-        MENUITEM "&New File\tCtrl+N",           ID_CMD_NEWFILE
-        MENUITEM SEPARATOR
-        MENUITEM "&Open...\tCtrl+O",            ID_CMD_OPENFILE
-        MENUITEM "&ReOpen...\tCtrl+R",          ID_CMD_REOPENFILE
-        MENUITEM SEPARATOR
-        MENUITEM "&Save\tCtrl+S",               ID_CMD_SAVEFILE
-        MENUITEM "Save &As...\tCtrl+Shift+S",   ID_CMD_SAVEFILEAS
-        MENUITEM SEPARATOR
-        MENUITEM "&Print...\tCtrl+P",           ID_CMD_PRINT
-        MENUITEM SEPARATOR
-        POPUP "R&ecent Files"
-        BEGIN
-            MENUITEM "(no files)",                  ID_MENUITEM40030, GRAYED
-        END
-        MENUITEM SEPARATOR
-        MENUITEM "Save and Ex&it\tCtrl+E",      ID_CMD_SAVEEXIT
-        MENUITEM "&Discard and Exit\tCtrl+Shift+E", ID_CMD_DISCARDEXIT
-        MENUITEM "E&xit",                       ID_CMD_EXIT
-    END
-    POPUP "&Edit"
-    BEGIN
-        MENUITEM "&Undo\tCtrl+Z",               ID_CMD_UNDO
-        MENUITEM "&Redo\tCtrl+Y",               ID_CMD_REDO
-        MENUITEM SEPARATOR
-        MENUITEM "Cut\tCtrl+&X",                ID_CMD_CUT
-        MENUITEM "&Copy\tCtrl+C",               ID_CMD_COPY
-        MENUITEM "&Paste\tCtrl+V",              ID_CMD_PASTE
-        MENUITEM "&Delete\tDel",                ID_CMD_DELETE
-        MENUITEM SEPARATOR
-        MENUITEM "Select &All\tCtrl+A",         ID_CMD_SELECTALL
-        MENUITEM SEPARATOR
-        MENUITEM "Insert Date&&&Time\tF5",      ID_CMD_DATETIME
-        MENUITEM SEPARATOR
-        MENUITEM "Upper Ca&se\tAlt+U",          ID_CMD_UPPERCASE
-        MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
-        MENUITEM SEPARATOR
-        MENUITEM "Recon&version",               ID_CMD_RECONV
-        MENUITEM "&IME On/Off",                 ID_CMD_TOGGLEIME
-    END
-    POPUP "&Search"
-    BEGIN
-        MENUITEM "&Find\tCtrl+F",               ID_CMD_FIND
-        MENUITEM "Find &Next\tF3",              ID_CMD_FINDNEXT
-        MENUITEM "Find &Prev\tShift+F3",        ID_CMD_FINDPREV
-        MENUITEM SEPARATOR
-        MENUITEM "&Jump to Line\tCtrl+J",       ID_CMD_JUMP
-        MENUITEM SEPARATOR
-        MENUITEM "&Grep...\tCtrl+G",            ID_CMD_GREP
-    END
-    POPUP "&View"
-    BEGIN
-        MENUITEM "&No wrapping\tCtrl+1",        ID_CMD_NOWRAP
-        MENUITEM "&Wrap at #th letter\tCtrl+2", ID_CMD_WRAPWIDTH
-        MENUITEM "Wrap at &Right Edge\tCtrl+3", ID_CMD_WRAPWINDOW
-        MENUITEM SEPARATOR
-        POPUP "&Document Type"
-        BEGIN
-            MENUITEM "dummy",                       ID_MENUITEM40025
-        END
-        MENUITEM "&Settings...",                ID_CMD_CONFIG
-        MENUITEM SEPARATOR
-        MENUITEM "Status&Bar",                  ID_CMD_STATUSBAR
-    END
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // DESIGNINFO
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO MOVEABLE PURE 
+GUIDELINES DESIGNINFO 
 BEGIN
     IDD_JUMP, DIALOG
     BEGIN
@@ -633,7 +692,7 @@ END
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     IDS_ASKTOSAVE           "Do you want to Save the current file ?"
     IDS_APPNAME             "GreenPad"
@@ -647,159 +706,5 @@ BEGIN
     IDS_OKTODEL             " will be removed. OK?"
 END
 
-#endif    // English (U.S.) resources
+#endif    // 英語 (米国) resources
 /////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////
-// French (France) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRA)
-#ifdef _WIN32
-LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
-#pragma code_page(1252)
-#endif //_WIN32
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Dialog
-//
-
-FILEOPENORD DIALOG DISCARDABLE  36, 24, 268, 158
-STYLE DS_MODALFRAME | DS_3DLOOK | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
-CAPTION "Open"
-FONT 9, "System"
-BEGIN
-    LTEXT           "File &name:",stc3,6,6,76,9
-    EDITTEXT        edt1,6,16,90,12,ES_AUTOHSCROLL | ES_OEMCONVERT
-    LISTBOX         lst1,6,32,90,68,LBS_SORT | LBS_OWNERDRAWFIXED | 
-                    LBS_HASSTRINGS | LBS_DISABLENOSCROLL | WS_VSCROLL | 
-                    WS_TABSTOP
-    LTEXT           "&Folders:",IDC_STATIC,110,6,96,9
-    LTEXT           "",stc1,110,16,96,9,SS_NOPREFIX
-    LISTBOX         lst2,110,32,96,68,LBS_SORT | LBS_OWNERDRAWFIXED | 
-                    LBS_HASSTRINGS | LBS_DISABLENOSCROLL | WS_VSCROLL | 
-                    WS_TABSTOP
-    LTEXT           "List files of &type:",stc2,6,104,90,9
-    COMBOBOX        cmb1,6,114,90,96,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | 
-                    WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Dri&ves:",stc4,110,104,96,9
-    COMBOBOX        cmb2,110,114,96,68,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | 
-                    CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | 
-                    WS_TABSTOP
-    DEFPUSHBUTTON   "OK",IDOK,212,6,50,14,WS_GROUP
-    PUSHBUTTON      "Cancel",IDCANCEL,212,24,50,14,WS_GROUP
-    PUSHBUTTON      "&Help",pshHelp,212,46,50,14,WS_GROUP
-    CONTROL         "&Read only",chx1,"Button",BS_AUTOCHECKBOX | WS_GROUP | 
-                    WS_TABSTOP,212,68,50,12
-    LTEXT           "&Character Encoding:",IDC_STATIC,6,131,100,8
-    COMBOBOX        IDC_CODELIST,6,140,126,103,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    LTEXT           "&Line ending:",IDC_STATIC,142,131,56,8
-    COMBOBOX        IDC_CRLFLIST,141,140,67,103,CBS_DROPDOWNLIST | 
-                    WS_VSCROLL | WS_TABSTOP
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// 24
-//
-
-1                       24      MOVEABLE PURE   "manifest.xml"
-
-#ifndef _MAC
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
-
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,0,4,0
- PRODUCTVERSION 0,1,8,0
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L
-#else
- FILEFLAGS 0x0L
-#endif
- FILEOS 0x4L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "041104b0"
-        BEGIN
-            VALUE "CompanyName", "kMonos.NET\0"
-            VALUE "FileDescription", "GreenPad\0"
-            VALUE "FileVersion", "#42\0"
-            VALUE "InternalName", "kilib\0"
-            VALUE "LegalCopyright", "Written by k.inaba 2002-2008.\0"
-            VALUE "OriginalFilename", "GreenPad.exe\0"
-            VALUE "ProductName", "GreenPad\0"
-            VALUE "ProductVersion", "1.08.0\0"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x411, 1200
-    END
-END
-
-#endif    // !_MAC
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDR_MAIN                ICON    DISCARDABLE     "exefile.ico"
-
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE DISCARDABLE 
-BEGIN
-    "resrc1.h\0"
-END
-
-2 TEXTINCLUDE DISCARDABLE 
-BEGIN
-    "#include ""resource.h""\r\n"
-    "#include ""winresrc.h""\r\n"
-    "#include ""winuser.h""\r\n"
-    "#include ""shlobj.h""\r\n"
-    "\0"
-END
-
-3 TEXTINCLUDE DISCARDABLE 
-BEGIN
-    "\r\n"
-    "\0"
-END
-
-#endif    // APSTUDIO_INVOKED
-
-#endif    // French (France) resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-
-#ifndef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 3 resource.
-//
-
-
-/////////////////////////////////////////////////////////////////////////////
-#endif    // not APSTUDIO_INVOKED
-
