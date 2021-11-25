@@ -494,6 +494,37 @@ void Cursor::Paste()
 }
 
 
+//-------------------------------------------------------------------------
+// More Edit functions
+//-------------------------------------------------------------------------
+
+void Cursor::UpperLowerCase(const bool up)
+{
+	DPos dm=cur_, dM=sel_;
+	if( cur_ > sel_ )
+		dm=sel_, dM=cur_;
+
+	int    len = doc_.getRangeLength( dm, dM );
+	unicode *p = new unicode[len+1];
+	doc_.getText( p, dm, dM );
+	if (up)
+		CharUpperW(p);
+	else
+		CharLowerW(p);
+
+	doc_.Execute( Replace(cur_, sel_, p, my_lstrlenW(p)) );
+	delete [] p;
+
+}
+void Cursor::UpperCase()
+{
+	UpperLowerCase(true); // Uppercase
+}
+void Cursor::LowerCase()
+{
+	UpperLowerCase(false); // Lowercase
+}
+
 
 //-------------------------------------------------------------------------
 // ÉJÅ[É\Éãà⁄ìÆ
