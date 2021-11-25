@@ -1,0 +1,91 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kilib", "kilib_vc71.vcproj", "{910E868F-4E52-4D55-9C4E-4563F5934517}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+		Unicode Release = Unicode Release
+		Debug NT 3.5 = Debug NT 3.5
+		Release NT 3.5 = Release NT 3.5
+		Unicode Release NT 3.5 = Unicode Release NT 3.5
+		Debug NT 3.1 = Debug NT 3.1
+		Release NT 3.1 = Release NT 3.1
+		Unicode Release NT 3.1 = Unicode Release NT 3.1
+		Debug Win32s = Debug Win32s
+		Release Win32s = Release Win32s
+	EndGlobalSection
+	GlobalSection(ProjectDependencies) = postSolution
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug.ActiveCfg = Debug|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug.Build.0 = Debug|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release.ActiveCfg = Release|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release.Build.0 = Release|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release.ActiveCfg = Unicode Release|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release.Build.0 = Unicode Release|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug NT 3.5.ActiveCfg = Debug NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug NT 3.5.Build.0 = Debug NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release NT 3.5.ActiveCfg = Release NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release NT 3.5.Build.0 = Release NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release NT 3.5.ActiveCfg = Unicode Release NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release NT 3.5.Build.0 = Unicode Release NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug NT 3.1.ActiveCfg = Debug NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug NT 3.1.Build.0 = Debug NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release NT 3.1.ActiveCfg = Release NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release NT 3.1.Build.0 = Release NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release NT 3.1.ActiveCfg = Unicode Release NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release NT 3.1.Build.0 = Unicode Release NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug Win32s.ActiveCfg = Debug Win32s|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug Win32s.Build.0 = Debug Win32s|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release Win32s.ActiveCfg = Release Win32s|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release Win32s.Build.0 = Release Win32s|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+		Unicode Release|Win32 = Unicode Release|Win32
+		Debug NT 3.5|Win32 = Debug NT 3.5|Win32
+		Release NT 3.5|Win32 = Release NT 3.5|Win32
+		Unicode Release NT 3.5|Win32 = Unicode Release NT 3.5|Win32
+		Debug NT 3.1|Win32 = Debug NT 3.1|Win32
+		Release NT 3.1|Win32 = Release NT 3.1|Win32
+		Unicode Release NT 3.1|Win32 = Unicode Release NT 3.1|Win32
+		Debug Win32s|Win32 = Debug Win32s|Win32
+		Release Win32s|Win32 = Release Win32s|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug|Win32.ActiveCfg = Debug|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug|Win32.Build.0 = Debug|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release|Win32.ActiveCfg = Release|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release|Win32.Build.0 = Release|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release|Win32.ActiveCfg = Unicode Release|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release|Win32.Build.0 = Unicode Release|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug NT 3.5|Win32.ActiveCfg = Debug NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug NT 3.5|Win32.Build.0 = Debug NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release NT 3.5|Win32.ActiveCfg = Release NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release NT 3.5|Win32.Build.0 = Release NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release NT 3.5|Win32.ActiveCfg = Unicode Release NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release NT 3.5|Win32.Build.0 = Unicode Release NT 3.5|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug NT 3.1|Win32.ActiveCfg = Debug NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug NT 3.1|Win32.Build.0 = Debug NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release NT 3.1|Win32.ActiveCfg = Release NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release NT 3.1|Win32.Build.0 = Release NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release NT 3.1|Win32.ActiveCfg = Unicode Release NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Unicode Release NT 3.1|Win32.Build.0 = Unicode Release NT 3.1|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug Win32s|Win32.ActiveCfg = Debug Win32s|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Debug Win32s|Win32.Build.0 = Debug Win32s|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release Win32s|Win32.ActiveCfg = Release Win32s|Win32
+		{910E868F-4E52-4D55-9C4E-4563F5934517}.Release Win32s|Win32.Build.0 = Release Win32s|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
