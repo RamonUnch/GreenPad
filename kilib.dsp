@@ -1,25 +1,25 @@
 # Microsoft Developer Studio Project File - Name="kilib" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
-# ** 編集しないでください **
+# ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Application" 0x0101
 
 CFG=kilib - Win32 Debug
-!MESSAGE これは有効なﾒｲｸﾌｧｲﾙではありません。 このﾌﾟﾛｼﾞｪｸﾄをﾋﾞﾙﾄﾞするためには NMAKE を使用してください。
-!MESSAGE [ﾒｲｸﾌｧｲﾙのｴｸｽﾎﾟｰﾄ] ｺﾏﾝﾄﾞを使用して実行してください
+!MESSAGE This is not a valid makefile. To build this project using NMAKE,
+!MESSAGE use the Export Makefile command and run
 !MESSAGE 
 !MESSAGE NMAKE /f "kilib.mak".
 !MESSAGE 
-!MESSAGE NMAKE の実行時に構成を指定できます
-!MESSAGE ｺﾏﾝﾄﾞ ﾗｲﾝ上でﾏｸﾛの設定を定義します。例:
+!MESSAGE You can specify a configuration when running NMAKE
+!MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
 !MESSAGE NMAKE /f "kilib.mak" CFG="kilib - Win32 Debug"
 !MESSAGE 
-!MESSAGE 選択可能なﾋﾞﾙﾄﾞ ﾓｰﾄﾞ:
+!MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "kilib - Win32 Release" ("Win32 (x86) Application" 用)
-!MESSAGE "kilib - Win32 Debug" ("Win32 (x86) Application" 用)
-!MESSAGE "kilib - Win32 Unicode Release" ("Win32 (x86) Application" 用)
+!MESSAGE "kilib - Win32 Release" (based on "Win32 (x86) Application")
+!MESSAGE "kilib - Win32 Debug" (based on "Win32 (x86) Application")
+!MESSAGE "kilib - Win32 Unicode Release" (based on "Win32 (x86) Application")
 !MESSAGE 
 
 # Begin Project
@@ -101,7 +101,6 @@ LINK32=link.exe
 # ADD BASE CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SUPERTINY" /D "USEGLOBALIME" /Yu"stdafx.h" /FD /GF /c
 # SUBTRACT BASE CPP /Gf
 # ADD CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /Yu"stdafx.h" /FD /GF /c
-# SUBTRACT CPP /Gf
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "NDEBUG"
@@ -112,7 +111,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
+# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
