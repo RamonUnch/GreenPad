@@ -21,7 +21,7 @@ IMEManager::IMEManager()
 		if( !app().isWin95() )
 		{
 			app().InitModule( App::OLE );
-			if( S_OK == ::CoCreateInstance(
+			if( S_OK == ::MyCoCreateInstance(
 					CLSID_CActiveIMM, NULL, CLSCTX_INPROC_SERVER,
 					IID_IActiveIMMApp, (void**)&immApp_ ) )
 			{
