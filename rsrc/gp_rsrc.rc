@@ -27,7 +27,7 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,0,4,0
+ FILEVERSION 1,1,0,0
  PRODUCTVERSION 0,1,8,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -47,10 +47,10 @@ BEGIN
             VALUE "FileDescription", "GreenPad\0"
             VALUE "FileVersion", "#42\0"
             VALUE "InternalName", "kilib\0"
-            VALUE "LegalCopyright", "Written by k.inaba 2002-2008.\0"
+            VALUE "LegalCopyright", "Written by k.inaba 2002-2008\0"
             VALUE "OriginalFilename", "GreenPad.exe\0"
             VALUE "ProductName", "GreenPad\0"
-            VALUE "ProductVersion", "1.08.0\0"
+            VALUE "ProductVersion", "1.10.0\0"
         END
     END
     BLOCK "VarFileInfo"
