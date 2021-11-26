@@ -20,11 +20,7 @@ EwEdit::EwEdit()
 		ClassRegistered = true;
 
 		// ‰‰ñ\’zŽž‚Ì‚ÝAƒNƒ‰ƒX“o˜^‚ðs‚¤
-#if !defined(TARGET_VER) || TARGET_VER>350
-		WNDCLASSEX wc    = {0};
-#else
 		WNDCLASS wc    = {0};
-#endif
 		wc.lpszClassName = className_;
 		WndImpl::Register( &wc );
 	}

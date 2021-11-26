@@ -37,11 +37,7 @@ View::View( doc::Document& d, HWND wnd )
 	{
 		// ‰‰ñ\’zŽž‚Ì‚ÝAƒNƒ‰ƒX“o˜^‚ðs‚¤
 		ClassRegistered = true;
-#if !defined(TARGET_VER) || TARGET_VER>350
-		WNDCLASSEX wc    = {0};
-#else
 		WNDCLASS wc    = {0};
-#endif
 		wc.lpszClassName = className_;
 		wc.style         = CS_DBLCLKS | CS_OWNDC;
 		wc.hCursor       = app().LoadOemCursor( IDC_IBEAM );
