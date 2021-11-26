@@ -14,13 +14,24 @@ StatusBar::StatusBar()
 
 bool StatusBar::Create( HWND parent )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+/*#if 0 // !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
 	HWND h = ::CreateStatusWindow(
 		WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP,
 		TEXT(""), parent, 1787 );
 #else
 	HWND h = NULL;
-#endif
+#endif*/
+	// Avoid using CreateStatusWindow that is not present on NT3.1.
+	HWND h = CreateWindow(
+		STATUSCLASSNAME,  // pointer to registered class name
+		NULL, // pointer to window name
+		WS_CHILD|WS_VISIBLE, // window style
+		0, 0, 0, 0, //x, y, w, h
+		parent, // handle to parent or owner window
+		(struct HMENU__ *)1787,          // handle to menu or child-window identifier
+		app().hinst(), // handle to application instance
+		NULL // pointer to window-creation data
+	);
 	if( h == NULL )
 		return false;
 

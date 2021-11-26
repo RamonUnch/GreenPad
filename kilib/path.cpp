@@ -7,7 +7,7 @@ using namespace ki;
 
 Path& Path::BeSpecialPath( int nPATH, bool bs )
 {
-	TCHAR* buf = AllocMem( MAX_PATH+1 );
+	TCHAR* buf = AllocMem( MAX_PATH + 1 );
 
 	switch( nPATH )
 	{
