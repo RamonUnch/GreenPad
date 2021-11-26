@@ -155,6 +155,11 @@ public:
 	void SetInsMode( bool bIns );
 	void SetROMode( bool bRO );
 
+	// More Edit
+	void UpperLowerCase(const bool up);
+	void UpperCase();
+	void LowerCase();
+
 	// IME
 	void Reconv();
 	void ToggleIME();
