@@ -455,24 +455,13 @@ void WndImpl::Destroy()
 		::DestroyWindow( hwnd() );
 }
 
-#if !defined(TARGET_VER) || TARGET_VER>350
-ATOM WndImpl::Register( WNDCLASSEX* cls )
-#else
 ATOM WndImpl::Register( WNDCLASS* cls )
-#endif
 {
 	// WndImpl派生クラスで使うWndClassを登録。
 	// プロシージャはkilib謹製のものに書き換えちゃいます。
-#if !defined(TARGET_VER) || TARGET_VER>350
-	cls->cbSize      = sizeof(WNDCLASSEX);
-#endif
 	cls->hInstance   = app().hinst();
 	cls->lpfnWndProc = StartProc;
-#if !defined(TARGET_VER) || TARGET_VER>350
-	return ::RegisterClassEx( cls );
-#else
 	return ::RegisterClass( cls );
-#endif
 }
 
 struct ThisAndParam

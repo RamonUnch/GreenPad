@@ -295,11 +295,7 @@ protected:
 	typedef const TCHAR* const ClsName;
 
 	//@{ ウインドウクラス登録 //@}
-#if !defined(TARGET_VER) || TARGET_VER>350
-	static ATOM Register( WNDCLASSEX* cls );
-#else
 	static ATOM Register( WNDCLASS* cls );
-#endif
 
 	// てけとーに実装して反応してください。
 	// on_commandは、処理しなかったらfalseを返すこと。

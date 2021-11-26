@@ -1317,14 +1317,12 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 			if( cs ) return cs;
 		}
 		cs = MLangAutoDetection( ptr, siz );
-		if( cs ) return cs;
+		if( cs ) return cs;	
 	}
-	else
-	{ // chardet is the only auto detection method
-		cs = chardetAutoDetection( ptr, siz );
-		if( cs ) return cs;
-	}
-
+	// chardet is the only auto detection method
+	cs = chardetAutoDetection( ptr, siz );
+	if( cs ) return cs;
+	
 // last resort
 //-- 暫定版 UTF-8 / 日本語EUC チェック
 
@@ -1382,7 +1380,9 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 #ifndef NO_MLANG
 	app().InitModule( App::OLE );
 	IMultiLanguage2 *lang = NULL;
-	if( S_OK == ::MyCoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, IID_IMultiLanguage2, (LPVOID*)&lang ) )
+	DWORD ret = ::MyCoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, IID_IMultiLanguage2, (LPVOID*)&lang );
+	// MessageBoxA(NULL, "CoCreateInstance(CLSID_CMultiLanguage...)", ret==S_OK? "Sucess":"Failed", MB_OK);
+	if( S_OK == ret )
 	{
 		int detectEncCount = 5;
 		DetectEncodingInfo detectEnc[5];

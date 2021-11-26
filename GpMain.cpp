@@ -514,7 +514,7 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 		::CheckMenuItem( menu, ID_CMD_WRAPWINDOW, MF_BYCOMMAND|(wrap_==0?MF_CHECKED:MF_UNCHECKED));
 	}
 
-#if defined(TARGET_VER) && TARGET_VER==310
+#if defined(TARGET_VER) && TARGET_VER==300
 	::EnableMenuItem( menu, ID_CMD_STATUSBAR, MF_BYCOMMAND|MF_GRAYED );
 #else
 	::CheckMenuItem( menu, ID_CMD_STATUSBAR,
@@ -625,8 +625,8 @@ void GreenPadWnd::on_config()
 		ReloadConfig(false);
 	}
 }
-#if 1 // can be changed back to 0
-/* Re-implementation of FindWindowEx for NT3.1 
+#if defined(TARGET_VER) && TARGET_VER<=310
+/* WIP: Re-implementation of FindWindowEx for NT3.x
  * because of this I have changed the TARGET_VER>310 to 300
  * for those calls so that they can be still disabled easyly */ 
 struct MyFindWindowExstruct {
@@ -1103,11 +1103,7 @@ GreenPadWnd::GreenPadWnd()
 {
 	LOGGER( "GreenPadWnd::Construct begin" );
 
-#if !defined(TARGET_VER) || TARGET_VER>350
-	static WNDCLASSEX wc;
-#else
 	static WNDCLASS wc;
-#endif
 	wc.hIcon         = app().LoadIcon( IDR_MAIN );
 	wc.hCursor       = app().LoadOemCursor( IDC_ARROW );
 	wc.lpszMenuName  = MAKEINTRESOURCE( IDR_MAIN );
@@ -1129,9 +1125,9 @@ void GreenPadWnd::on_create( CREATESTRUCT* cs )
 	LOGGER("GreenPadWnd::on_create edit created");
 	edit_.getDoc().AddHandler( this );
 	edit_.getCursor().AddHandler( this );
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	stb_.SetStatusBarVisible( cfg_.showStatusBar() );
-#elif defined(TARGET_VER) && TARGET_VER==310
+#elif defined(TARGET_VER) && TARGET_VER==300
 	stb_.SetStatusBarVisible( false );
 #endif
 
