@@ -8,6 +8,42 @@
 using namespace ki;
 
 
+typedef DWORD (WINAPI * Initialize_funk)(LPVOID r);
+static DWORD MyOleInitialize(LPVOID r)
+{
+	static Initialize_funk func = (Initialize_funk)(-1);
+	if (func == (Initialize_funk)(-1)) // First time!
+		func = (Initialize_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "OleInitialize");
+
+	if (func) { // We got the function!
+		return func(r);
+	}
+	return 666; // Fail with 666 error.
+}
+
+typedef void (WINAPI * UnInitialize_funk)( );
+static void MyOleUninitialize( )
+{
+	static UnInitialize_funk func = (UnInitialize_funk)(-1);
+	if (func == (UnInitialize_funk)(-1)) // First time!
+		func = (UnInitialize_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "OleUninitialize");
+
+	if (func) { // We got the function!
+		func();
+	}
+}
+typedef DWORD (WINAPI * CoCreateInstance_funk)(REFCLSID , LPUNKNOWN , DWORD , REFIID , LPVOID *);
+DWORD MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv)
+{
+	static CoCreateInstance_funk func = (CoCreateInstance_funk)(-1);
+	if (func == (CoCreateInstance_funk)(-1)) // First time!
+		func = (CoCreateInstance_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "CoCreateInstance");
+
+	if (func) { // We got the function!
+		return func(rclsid, pUnkOuter, dwClsContext, riid, ppv);
+	}
+	return 666; // Fail with 666 error
+}
 
 //=========================================================================
 
@@ -17,6 +53,7 @@ inline App::App()
 	: exitcode_    (-1)
 	, loadedModule_(0)
 	, hInst_       (::GetModuleHandle(NULL))
+	, hOle32_      ((HINSTANCE)(-1))
 {
 	// 唯一のインスタンスは私です。
 	pUniqueInstance_ = this;
@@ -26,11 +63,11 @@ inline App::App()
 App::~App()
 {
 	// ロード済みモジュールがあれば閉じておく
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
-	if( loadedModule_ & COM )
-		::CoUninitialize();
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+//	if( loadedModule_ & COM )
+//		::MyCoUninitialize();
 	if( loadedModule_ & OLE )
-		::OleUninitialize();
+		::MyOleUninitialize();
 #endif
 
 	// 終～了～
@@ -45,19 +82,35 @@ inline void App::SetExitCode( int code )
 
 void App::InitModule( imflag what )
 {
+	if (hOle32_ == (HINSTANCE)(-1) && what&(OLE|COM)) 
+	{
+		hOle32_ = ::LoadLibraryA("OLE32.DLL");
+		// MessageBoxA(NULL, "Loading OLE32.DLL", hOle32_?"Sucess": "Failed", MB_OK);
+	}
+
 	// 初期化済みでなければ初期化する
+	bool ret = true;
 	if( !(loadedModule_ & what) )
 		switch( what )
 		{
-		case CTL: ::InitCommonControls(); break;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
-		case COM: ::CoInitialize( NULL ); break;
-		case OLE: ::OleInitialize( NULL );break;
+		case CTL:
+			::InitCommonControls(); break;
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+		case COM: 
+			// Actually we only ever use OLE, that calls COM, so it can
+			// be Ignored safely...
+			//ret = S_OK == ::MyCoInitialize( NULL );
+			//MessageBoxA(NULL, "CoInitialize", ret?"Sucess": "Failed", MB_OK);
+			//break;
+		case OLE: 
+			ret = S_OK == ::MyOleInitialize( NULL );
+			// MessageBoxA(NULL, "OleInitialize", ret?"Sucess": "Failed", MB_OK);
+			break;
 #endif
 		}
 
 	// 今回初期化したモノを記憶
-	loadedModule_ |= what;
+	if (ret) loadedModule_ |= what;
 }
 
 void App::Exit( int code )
