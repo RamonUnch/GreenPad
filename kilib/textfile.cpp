@@ -1177,6 +1177,22 @@ void TextFileR::Close()
 	fp_.Close();
 }
 
+// cs should be below -100;
+int TextFileR::neededCodepage(int cs) 
+{
+	switch(cs)
+	{
+	case IsoKR: // -950 => 949
+	case HZ:    // -937 => 936
+	case IsoJP: // -933 => 932
+		return -cs - 1;
+//	case IsoCN:
+//	case UTF8: 
+//	case EucJP:
+	default: 
+		return -cs;
+	}
+}
 bool TextFileR::Open( const TCHAR* fname )
 {
 	// ファイルを開く
@@ -1187,6 +1203,18 @@ bool TextFileR::Open( const TCHAR* fname )
 
 	// 必要なら自動判定
 	cs_ = AutoDetection( cs_, buf, Min<ulong>(siz,16<<10) ); // 先頭16KB
+	int needed_cs = cs_;
+	if (needed_cs < -100)
+		needed_cs = neededCodepage(cs_);
+
+	if(needed_cs > 0 && !::IsValidCodePage(needed_cs)) 
+	{
+		TCHAR str[128];
+		wsprintf(str, TEXT("Codepage cp%d Is not installed!\nDefaulting to current ACP"), needed_cs);
+		MessageBox(NULL, str, TEXT("GreenPad"), MB_OK);
+		cs_ = ::GetACP(); // default to ACP...
+	}
+
 
 	// 対応するデコーダを作成
 	switch( cs_ )
@@ -1475,7 +1503,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 				}
 
 
-	if(hIL = ::LoadLibrary(TEXT("chardet.dll")))
+	if(hIL = ::LoadLibraryA( "chardet.dll" ))
 	{
 		chardet_create = (int(__cdecl*)(chardet_t*))::GetProcAddress(hIL, "chardet_create");
 		chardet_destroy = (void(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_destroy");

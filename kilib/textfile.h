@@ -180,6 +180,7 @@ private:
 	int AutoDetection( int cs, const uchar* ptr, ulong siz );
 	int MLangAutoDetection( const uchar* ptr, ulong siz );
 	int chardetAutoDetection( const uchar* ptr, ulong siz );
+	int neededCodepage(int cs);
 
 	bool IsNonUnicodeRange(qbyte u);
 	bool IsAscii(uchar c);
