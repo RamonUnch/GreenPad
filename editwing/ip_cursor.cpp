@@ -178,6 +178,12 @@ bool Cursor::getCurPos( const VPos** start, const VPos** end ) const
 	return true;
 }
 
+bool Cursor::getCurPosUnordered( const VPos** cur, const VPos** sel ) const
+{
+	*cur =  &cur_;
+	*sel = &sel_;
+	return cur != sel;
+}
 
 
 
@@ -501,10 +507,11 @@ void Cursor::Paste()
 void Cursor::UpperLowerCase(const bool up)
 {
 	DPos dm=cur_, dM=sel_;
+	DPos ocur=cur_, osel=sel_;
 	if( cur_ > sel_ )
 		dm=sel_, dM=cur_;
 
-	int    len = doc_.getRangeLength( dm, dM );
+	int len = doc_.getRangeLength( dm, dM );
 	unicode *p = new unicode[len+1];
 	doc_.getText( p, dm, dM );
 	if (up)
@@ -513,6 +520,8 @@ void Cursor::UpperLowerCase(const bool up)
 		CharLowerW(p);
 
 	doc_.Execute( Replace(cur_, sel_, p, my_lstrlenW(p)) );
+	MoveCur(osel, false);
+	MoveCur(ocur, true);
 	delete [] p;
 
 }

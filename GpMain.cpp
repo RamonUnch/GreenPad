@@ -171,6 +171,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_NEWFILE:    on_newfile();   break;
 	case ID_CMD_OPENFILE:   on_openfile();  break;
 	case ID_CMD_REOPENFILE: on_reopenfile();break;
+	case ID_CMD_REFRESHFILE:on_refreshfile();break;
 	case ID_CMD_SAVEFILE:   on_savefile();  break;
 	case ID_CMD_SAVEFILEAS: on_savefileas();break;
 	case ID_CMD_PRINT:      on_print();     break;
@@ -264,7 +265,25 @@ void GreenPadWnd::on_reopenfile()
 		ReopenDlg dlg( charSets_, csi_ );
 		dlg.GoModal( hwnd() );
 		if( dlg.endcode()==IDOK && AskToSave() )
+		{
 			OpenByMyself( filename_, charSets_[dlg.csi()].ID, false );
+		}
+	}
+}
+
+// Keeps cursor position...
+// TOTO: also set VPos so that it does not scroll...
+void GreenPadWnd::on_refreshfile()
+{
+	if( !isUntitled() )
+	{
+		const view::VPos *cur, *sel;
+		bool selected = edit_.getCursor().getCurPosUnordered(&cur, &sel);
+		unsigned sline = cur->tl, scol = cur->ad;
+		unsigned eline = sel->tl, ecol = sel->ad;
+		OpenByMyself(filename_, charSets_[csi_].ID, false);
+		if (selected) edit_.getCursor().MoveCur(DPos(eline, ecol), false);
+		edit_.getCursor().MoveCur(DPos(sline, scol), selected);
 	}
 }
 

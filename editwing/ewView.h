@@ -170,6 +170,7 @@ public:
 	bool isROMode() const;
 	bool isSelected() const;
 	bool getCurPos( const VPos** start, const VPos** end ) const;
+	bool getCurPosUnordered( const VPos** cur, const VPos** sel ) const;
 	void ResetPos();
 	void on_scroll_begin();
 	void on_scroll_end();
