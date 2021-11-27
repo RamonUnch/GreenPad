@@ -20,7 +20,7 @@ Path& Path::BeSpecialPath( int nPATH, bool bs )
 	default:
 		*buf = TEXT('\0');
 		{
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>352)
 			LPITEMIDLIST il;
 			if( NOERROR==::SHGetSpecialFolderLocation( NULL, nPATH, &il ) )
 			{
@@ -120,7 +120,7 @@ Path& Path::BeShortLongStyle()
 
 String Path::CompactIfPossible( int Mx )
 {
-	HMODULE hshl = ::LoadLibrary( TEXT("shlwapi.dll") );
+	HMODULE hshl = ::LoadLibraryA( "shlwapi.dll" );
 	if( !hshl ) return *this;
 
 	typedef BOOL (STDAPICALLTYPE *PCPE_t)( LPTSTR, LPCTSTR, UINT, DWORD );

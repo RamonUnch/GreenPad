@@ -331,7 +331,8 @@ BEGIN
     VK_F3,          ID_CMD_FINDNEXT,        VIRTKEY, NOINVERT
     VK_F3,          ID_CMD_FINDPREV,        VIRTKEY, SHIFT, NOINVERT
     VK_F4,          ID_CMD_EXIT,            VIRTKEY, CONTROL, NOINVERT
-    VK_F5,          ID_CMD_DATETIME,        VIRTKEY, NOINVERT
+    VK_F5,          ID_CMD_REFRESHFILE,     VIRTKEY, NOINVERT
+    VK_F6,          ID_CMD_DATETIME,        VIRTKEY, NOINVERT
     VK_INSERT,      ID_CMD_COPY,            VIRTKEY, CONTROL, NOINVERT
     VK_INSERT,      ID_CMD_PASTE,           VIRTKEY, SHIFT, NOINVERT
     VK_RETURN,      ID_CMD_REOPENFILE,      VIRTKEY, ALT, NOINVERT
@@ -432,6 +433,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Open...\tCtrl+O",            ID_CMD_OPENFILE
         MENUITEM "&ReOpen...\tCtrl+R",          ID_CMD_REOPENFILE
+		MENUITEM "Re&fresh\tF5"                 ID_CMD_REFRESHFILE
         MENUITEM SEPARATOR
         MENUITEM "&Save\tCtrl+S",               ID_CMD_SAVEFILE
         MENUITEM "Save &As...\tCtrl+Shift+S",   ID_CMD_SAVEFILEAS
@@ -460,7 +462,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Select &All\tCtrl+A",         ID_CMD_SELECTALL
         MENUITEM SEPARATOR
-        MENUITEM "Insert Date&&&Time\tF5",      ID_CMD_DATETIME
+        MENUITEM "Insert Date&&&Time\tF6",      ID_CMD_DATETIME
         MENUITEM SEPARATOR
         MENUITEM "Upper Ca&se\tAlt+U",          ID_CMD_UPPERCASE
         MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE

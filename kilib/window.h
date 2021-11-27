@@ -10,7 +10,7 @@ namespace ki {
 
 
 // タイムアウト付きMsgBoxの返値
-#define IDTIMEOUT 0
+// #define IDTIMEOUT 0
 
 
 

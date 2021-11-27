@@ -52,7 +52,7 @@ using namespace ki;
 		return buf;
 	}
 	#endif
-
+	#ifndef __GNUC__
 	void* __cdecl memmove( void* dst, const void* src, size_t cnt )
 	{
 		__asm {
@@ -119,6 +119,7 @@ using namespace ki;
 		}
 		return dst;
 	}
+	#endif
 
 #endif
 
