@@ -112,7 +112,7 @@ struct VPos : public DPos
 //	ÉJÅ[É\Éã
 //@}
 //=========================================================================
-
+typedef unicode *(WINAPI *ModProc)(unicode* str);
 class Cursor : public ki::Object
 {
 public:
@@ -156,9 +156,10 @@ public:
 	void SetROMode( bool bRO );
 
 	// More Edit
-	void UpperLowerCase(const bool up);
-	void UpperCase();
-	void LowerCase();
+	void ModSelection(ModProc funk);
+	void UpperCaseSel();
+	void LowerCaseSel();
+	void InvertCaseSel();
 
 	// IME
 	void Reconv();

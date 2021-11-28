@@ -193,8 +193,9 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_RECONV:     on_reconv();                        break;
 	case ID_CMD_TOGGLEIME:  on_toggleime();                     break;
     // More edit
-	case ID_CMD_UPPERCASE:  edit_.getCursor().UpperCase();      break;
-	case ID_CMD_LOWERCASE:  edit_.getCursor().LowerCase();      break;
+	case ID_CMD_UPPERCASE:  edit_.getCursor().UpperCaseSel();      break;
+	case ID_CMD_LOWERCASE:  edit_.getCursor().LowerCaseSel();      break;
+	case ID_CMD_INVERTCASE: edit_.getCursor().InvertCaseSel();     break;
 
 	// Search
 	case ID_CMD_FIND:       search_.ShowDlg();  break;

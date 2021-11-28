@@ -23,6 +23,18 @@ using doc::Replace;
 //=========================================================================
 
 
+unicode* WINAPI InvertCaseW(unicode *str)
+{
+	if(!str) return NULL;
+	for(int i=0; str[i] != TEXT('\0'); i++)
+	{
+		if(IsCharLowerW(str[i]))
+			str[i] = (wchar_t)CharUpperW((wchar_t *)(str[i]));
+		else
+			str[i] = (wchar_t)CharLowerW((wchar_t *)(str[i]));
+	}
+	return str;
+}
 
 //-------------------------------------------------------------------------
 // Caret制御用ラッパー
@@ -504,7 +516,7 @@ void Cursor::Paste()
 // More Edit functions
 //-------------------------------------------------------------------------
 
-void Cursor::UpperLowerCase(const bool up)
+void Cursor::ModSelection(ModProc mfunk)
 {
 	DPos dm=cur_, dM=sel_;
 	DPos ocur=cur_, osel=sel_;
@@ -514,24 +526,24 @@ void Cursor::UpperLowerCase(const bool up)
 	int len = doc_.getRangeLength( dm, dM );
 	unicode *p = new unicode[len+1];
 	doc_.getText( p, dm, dM );
-	if (up)
-		CharUpperW(p);
-	else
-		CharLowerW(p);
-
+	mfunk(p);
 	doc_.Execute( Replace(cur_, sel_, p, my_lstrlenW(p)) );
 	MoveCur(osel, false);
 	MoveCur(ocur, true);
 	delete [] p;
 
 }
-void Cursor::UpperCase()
+void Cursor::UpperCaseSel()
 {
-	UpperLowerCase(true); // Uppercase
+	ModSelection(CharUpperW);
 }
-void Cursor::LowerCase()
+void Cursor::LowerCaseSel()
 {
-	UpperLowerCase(false); // Lowercase
+	ModSelection(CharLowerW);
+}
+void Cursor::InvertCaseSel()
+{
+	ModSelection(InvertCaseW);
 }
 
 

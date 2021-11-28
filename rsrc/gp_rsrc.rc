@@ -325,6 +325,7 @@ BEGIN
     "V",            ID_CMD_PASTE,           VIRTKEY, CONTROL, NOINVERT
     "L",            ID_CMD_LOWERCASE,       VIRTKEY, ALT, NOINVERT
     "U",            ID_CMD_UPPERCASE,       VIRTKEY, ALT, NOINVERT
+	"I",            ID_CMD_INVERTCASE,      VIRTKEY, ALT, NOINVERT
 
     VK_ESCAPE,      ID_CMD_EXIT,            VIRTKEY, NOINVERT
     VK_DELETE,      ID_CMD_CUT,             VIRTKEY, SHIFT, NOINVERT
@@ -466,6 +467,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Upper Ca&se\tAlt+U",          ID_CMD_UPPERCASE
         MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
+        MENUITEM "I&nvert Case\tAlt+I",         ID_CMD_INVERTCASE
         MENUITEM SEPARATOR
         MENUITEM "Recon&version",               ID_CMD_RECONV
         MENUITEM "&IME On/Off",                 ID_CMD_TOGGLEIME
