@@ -122,7 +122,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		if( reinterpret_cast<HWND>(wp) == edit_.hwnd() )
 			::TrackPopupMenu(
 				::GetSubMenu( ::GetMenu(hwnd()), 1 ), // 編集メニュー表示
-				TPM_LEFTALIGN|TPM_TOPALIGN|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
+				GetSystemMetrics(SM_MENUDROPALIGNMENT)|TPM_TOPALIGN|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
 				static_cast<SHORT>(LOWORD(lp)), static_cast<SHORT>(HIWORD(lp)), 0, hwnd(), NULL );
 		else
 			return WndImpl::on_message( msg, wp, lp );
@@ -458,81 +458,27 @@ void GreenPadWnd::on_exit()
 
 void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
-	LOGGER("GreenPadWnd::ReloadConfig on_initmenu begin");
-	if(app().isNewShell())
+	::EnableMenuItem( menu, ID_CMD_CUT, MF_BYCOMMAND|(edit_.getCursor().isSelected() ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_COPY, MF_BYCOMMAND|(edit_.getCursor().isSelected() ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_DELETE, MF_BYCOMMAND|(edit_.getCursor().isSelected() ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_UNDO, MF_BYCOMMAND|(edit_.getDoc().isUndoAble() ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_REDO, MF_BYCOMMAND|(edit_.getDoc().isRedoAble() ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_RECONV, MF_BYCOMMAND|(edit_.getCursor().isSelected() && ime().IsIME() && ime().CanReconv() ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_TOGGLEIME, MF_BYCOMMAND|(ime().IsIME() ? MF_ENABLED : MF_GRAYED) );
+
+	if( editmenu_only )
 	{
-		MENUITEMINFO mi = { sizeof(MENUITEMINFO), MIIM_STATE };
-
-		mi.fState =
-			(edit_.getCursor().isSelected() ? MFS_ENABLED : MFS_DISABLED);
-		::SetMenuItemInfo( menu, ID_CMD_CUT, FALSE, &mi );
-		::SetMenuItemInfo( menu, ID_CMD_COPY, FALSE, &mi );
-		::SetMenuItemInfo( menu, ID_CMD_DELETE, FALSE, &mi );
-
-		mi.fState =
-			(edit_.getDoc().isUndoAble() ? MFS_ENABLED : MFS_DISABLED);
-		::SetMenuItemInfo( menu, ID_CMD_UNDO, FALSE, &mi );
-
-		mi.fState =
-			(edit_.getCursor().isSelected() && ime().IsIME() && ime().CanReconv() ? MFS_ENABLED : MFS_DISABLED);
-		::SetMenuItemInfo( menu, ID_CMD_RECONV, FALSE, &mi );
-		mi.fState =
-			(ime().IsIME() ? MFS_ENABLED : MFS_DISABLED);
-		::SetMenuItemInfo( menu, ID_CMD_TOGGLEIME, FALSE, &mi );
-
-		mi.fState =
-			(edit_.getDoc().isRedoAble() ? MFS_ENABLED : MFS_DISABLED);
-		::SetMenuItemInfo( menu, ID_CMD_REDO, FALSE, &mi );
-
-		if( editmenu_only )
-		{
-			LOGGER("GreenPadWnd::ReloadConfig on_initmenu end");
-			return;
-		}
-
-		mi.fState = (isUntitled() || edit_.getDoc().isModified()
-			? MFS_ENABLED : MFS_DISABLED);
-		::SetMenuItemInfo( menu, ID_CMD_SAVEFILE, FALSE, &mi );
-
-		mi.fState =
-			(!isUntitled() ? MFS_ENABLED : MFS_DISABLED);
-		::SetMenuItemInfo( menu, ID_CMD_REOPENFILE, FALSE, &mi );
-
-		mi.fState =
-			(cfg_.grepExe().len()>0 ? MFS_ENABLED : MFS_DISABLED);
-		::SetMenuItemInfo( menu, ID_CMD_GREP, FALSE, &mi );
-
-		UINT id = (wrap_==-1 ? ID_CMD_NOWRAP
-			: (wrap_>0 ? ID_CMD_WRAPWIDTH : ID_CMD_WRAPWINDOW));
-		::CheckMenuRadioItem(
-			menu, ID_CMD_NOWRAP, ID_CMD_WRAPWINDOW, id, MF_BYCOMMAND );
+		LOGGER("GreenPadWnd::ReloadConfig on_initmenu end");
+		return;
 	}
-	else
-#endif
-	{
-		::EnableMenuItem( menu, ID_CMD_CUT, MF_BYCOMMAND|(edit_.getCursor().isSelected() ? MF_ENABLED : MF_GRAYED) );
-		::EnableMenuItem( menu, ID_CMD_COPY, MF_BYCOMMAND|(edit_.getCursor().isSelected() ? MF_ENABLED : MF_GRAYED) );
-		::EnableMenuItem( menu, ID_CMD_DELETE, MF_BYCOMMAND|(edit_.getCursor().isSelected() ? MF_ENABLED : MF_GRAYED) );
-		::EnableMenuItem( menu, ID_CMD_UNDO, MF_BYCOMMAND|(edit_.getDoc().isUndoAble() ? MF_ENABLED : MF_GRAYED) );
-		::EnableMenuItem( menu, ID_CMD_REDO, MF_BYCOMMAND|(edit_.getDoc().isRedoAble() ? MF_ENABLED : MF_GRAYED) );
-		::EnableMenuItem( menu, ID_CMD_RECONV, MF_BYCOMMAND|(edit_.getCursor().isSelected() && ime().IsIME() && ime().CanReconv() ? MF_ENABLED : MF_GRAYED) );
-		::EnableMenuItem( menu, ID_CMD_TOGGLEIME, MF_BYCOMMAND|(ime().IsIME() ? MF_ENABLED : MF_GRAYED) );
 
-		if( editmenu_only )
-		{
-			LOGGER("GreenPadWnd::ReloadConfig on_initmenu end");
-			return;
-		}
+	::EnableMenuItem( menu, ID_CMD_SAVEFILE, MF_BYCOMMAND|(isUntitled() || edit_.getDoc().isModified() ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_REOPENFILE, MF_BYCOMMAND|(!isUntitled() ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_GREP, MF_BYCOMMAND|(cfg_.grepExe().len()>0 ? MF_ENABLED : MF_GRAYED) );
 
-		::EnableMenuItem( menu, ID_CMD_SAVEFILE, MF_BYCOMMAND|(isUntitled() || edit_.getDoc().isModified() ? MF_ENABLED : MF_GRAYED) );
-		::EnableMenuItem( menu, ID_CMD_REOPENFILE, MF_BYCOMMAND|(!isUntitled() ? MF_ENABLED : MF_GRAYED) );
-		::EnableMenuItem( menu, ID_CMD_GREP, MF_BYCOMMAND|(cfg_.grepExe().len()>0 ? MF_ENABLED : MF_GRAYED) );
-
-		::CheckMenuItem( menu, ID_CMD_NOWRAP, MF_BYCOMMAND|(wrap_==-1?MF_CHECKED:MF_UNCHECKED));
-		::CheckMenuItem( menu, ID_CMD_WRAPWIDTH, MF_BYCOMMAND|(wrap_>0?MF_CHECKED:MF_UNCHECKED));
-		::CheckMenuItem( menu, ID_CMD_WRAPWINDOW, MF_BYCOMMAND|(wrap_==0?MF_CHECKED:MF_UNCHECKED));
-	}
+	::CheckMenuItem( menu, ID_CMD_NOWRAP, MF_BYCOMMAND|(wrap_==-1?MF_CHECKED:MF_UNCHECKED));
+	::CheckMenuItem( menu, ID_CMD_WRAPWIDTH, MF_BYCOMMAND|(wrap_>0?MF_CHECKED:MF_UNCHECKED));
+	::CheckMenuItem( menu, ID_CMD_WRAPWINDOW, MF_BYCOMMAND|(wrap_==0?MF_CHECKED:MF_UNCHECKED));
 
 #if defined(TARGET_VER) && TARGET_VER==300
 	::EnableMenuItem( menu, ID_CMD_STATUSBAR, MF_BYCOMMAND|MF_GRAYED );

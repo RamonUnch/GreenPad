@@ -18,6 +18,7 @@ IMEManager::IMEManager()
 {
 	#ifdef USEGLOBALIME
 		// êFÅXñ ì|Ç»ÇÃÇ≈Win95Ç≈ÇÕGlobalIMEñ≥Çµ
+		// No global IME on Win95 because it is buggy...
 		if( !app().isWin95() )
 		{
 			app().InitModule( App::OLE );
@@ -77,7 +78,7 @@ BOOL IMEManager::IsIME()
 		}
 #else
 	return FALSE;
-#endif
+#endif // TARGET_VER
 }
 
 BOOL IMEManager::CanReconv()
@@ -98,7 +99,7 @@ BOOL IMEManager::CanReconv()
 		return (nImeProps & SCS_CAP_SETRECONVERTSTRING) != 0;
 #else
 	return FALSE;
-#endif
+#endif // TARGET_VER
 }
 
 BOOL IMEManager::GetState( HWND wnd )
@@ -120,7 +121,7 @@ BOOL IMEManager::GetState( HWND wnd )
 			imeStatus = ::ImmGetOpenStatus(ime );
 			::ImmReleaseContext( wnd, ime );
 		}
-#endif
+#endif // TARGET_VER
 	return imeStatus;
 }
 
@@ -142,7 +143,7 @@ void IMEManager::SetState( HWND wnd, bool enable )
 			::ImmSetOpenStatus(ime, (enable ? TRUE : FALSE) );
 			::ImmReleaseContext( wnd, ime );
 		}
-#endif
+#endif // TARGET_VER
 }
 
 void IMEManager::FilterWindows( ATOM* lst, UINT siz )
@@ -216,7 +217,7 @@ void IMEManager::SetFont( HWND wnd, const LOGFONT& lf )
 		::ImmSetCompositionFont( ime, plf );
 		::ImmReleaseContext( wnd, ime );
 	}
-#endif
+#endif // TARGET_VER
 }
 
 void IMEManager::SetPos( HWND wnd, int x, int y )
@@ -242,7 +243,7 @@ void IMEManager::SetPos( HWND wnd, int x, int y )
 		::ImmSetCompositionWindow( ime, &cf );
 		::ImmReleaseContext( wnd, ime );
 	}
-#endif
+#endif // TARGET_VER
 }
 
 void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )

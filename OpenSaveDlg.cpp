@@ -235,16 +235,16 @@ CharSetList::CharSetList()
 
 	// “K‹X“o˜^
 	                               EnrollL( AutoDetect,      0 );
-	if( ::IsValidCodePage(932) )   Enroll(  SJIS,            1 ),
-	                               Enroll(  EucJP,           2 ),
-	                               Enroll(  IsoJP,           3 );
-	if( ::IsValidCodePage(949) )   Enroll(  UHC,             4 ),
-	                               Enroll(  IsoKR,           5 );
+	if( ::IsValidCodePage(932) )   Enroll(  SJIS,            1 )
+	                             , Enroll(  EucJP,           2 )
+	                             , Enroll(  IsoJP,           3 );
+	if( ::IsValidCodePage(949) )   Enroll(  UHC,             4 )
+	                             , Enroll(  IsoKR,           5 );
 	if( ::IsValidCodePage(1361) )  Enroll(  Johab,           6 );
 	if( ::IsValidCodePage(54936) ) Enroll(  GB18030,         7 );
-	if( ::IsValidCodePage(936) )   Enroll(  GBK,             8 ),
-	                               Enroll(  IsoCN,           9 ),
-	                               Enroll(  HZ   ,          10 );
+	if( ::IsValidCodePage(936) )   Enroll(  GBK,             8 )
+	                             , Enroll(  IsoCN,           9 )
+	                             , Enroll(  HZ   ,          10 );
 	if( ::IsValidCodePage(950) )   Enroll(  Big5 ,          11 );
 	if( ::IsValidCodePage(20000) ) Enroll(  CNS  ,          12 );
 	if( ::IsValidCodePage(20001) ) Enroll(  TCA  ,          13 );
