@@ -389,7 +389,7 @@ void ViewImpl::ScrollView( int dx, int dy, bool update )
 		rlScr_.nPos += dx;
 #if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
 		::SetScrollInfo( hwnd_, SB_HORZ, &rlScr_, TRUE );
-#elif defined(TARGET_VER) && TARGET_VER<=350 && TARGET_VER>310
+#elif defined(TARGET_VER) && TARGET_VER<=350 && TARGET_VER>300
 		::MySetScrollInfo( hwnd_, SB_HORZ, &rlScr_, TRUE );
 #else
 		::SetScrollPos( hwnd_, SB_HORZ, rlScr_.nPos, TRUE );
@@ -403,7 +403,7 @@ void ViewImpl::ScrollView( int dx, int dy, bool update )
 		udScr_.nPos += dy;
 #if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
 		::SetScrollInfo( hwnd_, SB_VERT, &udScr_, TRUE );
-#elif defined(TARGET_VER) && TARGET_VER<=350 && TARGET_VER>310
+#elif defined(TARGET_VER) && TARGET_VER<=350 && TARGET_VER>300
 		::MySetScrollInfo( hwnd_, SB_VERT, &udScr_, TRUE );
 #else
 		::SetScrollPos( hwnd_, SB_VERT, udScr_.nPos, TRUE );

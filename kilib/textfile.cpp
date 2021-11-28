@@ -1211,7 +1211,7 @@ bool TextFileR::Open( const TCHAR* fname )
 	{
 		TCHAR str[128];
 		wsprintf(str, TEXT("Codepage cp%d Is not installed!\nDefaulting to current ACP"), needed_cs);
-		MessageBox(NULL, str, TEXT("GreenPad"), MB_OK);
+		MessageBox(NULL, str, TEXT("Encoding"), MB_OK|MB_TASKMODAL);
 		cs_ = ::GetACP(); // default to ACP...
 	}
 
@@ -1404,12 +1404,11 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 {
 	int cs = 0;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 #ifndef NO_MLANG
 	app().InitModule( App::OLE );
 	IMultiLanguage2 *lang = NULL;
 	DWORD ret = ::MyCoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, IID_IMultiLanguage2, (LPVOID*)&lang );
-	// MessageBoxA(NULL, "CoCreateInstance(CLSID_CMultiLanguage...)", ret==S_OK? "Sucess":"Failed", MB_OK);
 	if( S_OK == ret )
 	{
 		int detectEncCount = 5;
