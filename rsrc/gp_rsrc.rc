@@ -321,12 +321,9 @@ BEGIN
     "P",            ID_CMD_PRINT,           VIRTKEY, CONTROL, NOINVERT
     "R",            ID_CMD_REOPENFILE,      VIRTKEY, CONTROL, NOINVERT
     "S",            ID_CMD_SAVEFILE,        VIRTKEY, CONTROL, NOINVERT
-    "S",            ID_CMD_SAVEFILEAS,      VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "S",            ID_CMD_SAVEFILEAS,      VIRTKEY, SHIFT, CONTROL, 
+                                                    NOINVERT
     "V",            ID_CMD_PASTE,           VIRTKEY, CONTROL, NOINVERT
-    "L",            ID_CMD_LOWERCASE,       VIRTKEY, ALT, NOINVERT
-    "U",            ID_CMD_UPPERCASE,       VIRTKEY, ALT, NOINVERT
-
-    VK_ESCAPE,      ID_CMD_EXIT,            VIRTKEY, NOINVERT
     VK_DELETE,      ID_CMD_CUT,             VIRTKEY, SHIFT, NOINVERT
     VK_F3,          ID_CMD_FINDNEXT,        VIRTKEY, NOINVERT
     VK_F3,          ID_CMD_FINDPREV,        VIRTKEY, SHIFT, NOINVERT
@@ -336,7 +333,8 @@ BEGIN
     VK_INSERT,      ID_CMD_PASTE,           VIRTKEY, SHIFT, NOINVERT
     VK_RETURN,      ID_CMD_REOPENFILE,      VIRTKEY, ALT, NOINVERT
     VK_TAB,         ID_CMD_NEXTWINDOW,      VIRTKEY, CONTROL, NOINVERT
-    VK_TAB,         ID_CMD_PREVWINDOW,      VIRTKEY, SHIFT, CONTROL, NOINVERT
+    VK_TAB,         ID_CMD_PREVWINDOW,      VIRTKEY, SHIFT, CONTROL, 
+                                                    NOINVERT
     "X",            ID_CMD_CUT,             VIRTKEY, CONTROL, NOINVERT
     "Y",            ID_CMD_REDO,            VIRTKEY, CONTROL, NOINVERT
     "Z",            ID_CMD_UNDO,            VIRTKEY, CONTROL, NOINVERT
@@ -455,15 +453,11 @@ BEGIN
         MENUITEM "Cut\tCtrl+&X",                ID_CMD_CUT
         MENUITEM "&Copy\tCtrl+C",               ID_CMD_COPY
         MENUITEM "&Paste\tCtrl+V",              ID_CMD_PASTE
-
         MENUITEM "&Delete\tDel",                ID_CMD_DELETE
         MENUITEM SEPARATOR
         MENUITEM "Select &All\tCtrl+A",         ID_CMD_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Insert Date&&&Time\tF5",      ID_CMD_DATETIME
-        MENUITEM SEPARATOR
-        MENUITEM "Upper Ca&se\tAlt+U",          ID_CMD_UPPERCASE
-        MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
         MENUITEM SEPARATOR
         MENUITEM "Recon&version",               ID_CMD_RECONV
         MENUITEM "&IME On/Off",                 ID_CMD_TOGGLEIME

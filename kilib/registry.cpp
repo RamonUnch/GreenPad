@@ -130,7 +130,7 @@ bool IniFile::PutPath( const TCHAR* key, const Path& val )
 	// UTF-encoder
 	const TCHAR* hex = TEXT("0123456789abcdef");
 	String buf = TEXT("#");
-	for(unsigned i=0; i!=val.len(); ++i)
+	for(int i=0; i!=val.len(); ++i)
 	{
 		unsigned short u = (unsigned short) val[i];
 		buf += hex[(u>>12) & 0xf];

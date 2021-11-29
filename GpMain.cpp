@@ -191,9 +191,6 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_DATETIME:   on_datetime();                      break;
 	case ID_CMD_RECONV:     on_reconv();                        break;
 	case ID_CMD_TOGGLEIME:  on_toggleime();                     break;
-    // More edit
-	case ID_CMD_UPPERCASE:  edit_.getCursor().UpperCase();      break;
-	case ID_CMD_LOWERCASE:  edit_.getCursor().LowerCase();      break;
 
 	// Search
 	case ID_CMD_FIND:       search_.ShowDlg();  break;
@@ -528,12 +525,9 @@ void GreenPadWnd::on_drop( HDROP hd )
 	UINT iMax = ::DragQueryFile( hd, 0xffffffff, NULL, 0 );
 	for( UINT i=0; i<iMax; ++i )
 	{
-		// Get length of the i string as arraay size.
-		UINT len = ::DragQueryFile( hd, i, NULL, 0)+1;
-		TCHAR *str = new TCHAR [len];
-		::DragQueryFile( hd, i, str, len );
+		TCHAR str[MAX_PATH];
+		::DragQueryFile( hd, i, str, countof(str) );
 		Open( str, AutoDetect );
-        delete [] str;
 	}
 	::DragFinish( hd );
 }
@@ -625,59 +619,7 @@ void GreenPadWnd::on_config()
 		ReloadConfig(false);
 	}
 }
-#if 1 // can be changed back to 0
-/* Re-implementation of FindWindowEx for NT3.1 
- * because of this I have changed the TARGET_VER>310 to 300
- * for those calls so that they can be still disabled easyly */ 
-struct MyFindWindowExstruct {
-    HWND after;
-	LPCTSTR lpszClass;
-    LPCTSTR lpszWindow;
-	HWND ret;
-};
-static BOOL CALLBACK MyFindWindowExProc(HWND hwnd, LPARAM lParam)
-{
-	struct MyFindWindowExstruct *param=(MyFindWindowExstruct *)lParam;
-	// Skip windows before we reach the after HWND.
-	if (param->after) {
-		if (param->after == hwnd)
-			param->after = NULL; // Stop skipping windows
 
-		return TRUE; // Next window
-	}
-	// Start looking for the window we want...
-	TCHAR tmpstr[256];
-	bool classmatch = false, titlematch = false;
-
-	if (param->lpszClass) {
-		GetClassName(hwnd, tmpstr, countof(tmpstr));
-		// Class matches...
-		classmatch = !lstrcmp(param->lpszClass, tmpstr);
-	} else {
-		classmatch = true;
-	}
-
-	if(param->lpszWindow) {
-		GetWindowText(hwnd, tmpstr, countof(tmpstr));
-		titlematch = !lstrcmp(param->lpszClass, tmpstr);
-	} else {
-		titlematch = true;
-	}
-	if (classmatch && titlematch) {
-		param->ret = hwnd; // Save hwnd in param
-		return FALSE; // Stop enumarating
-	}
-	return TRUE; // Next window
-}
-static HWND MyFindWindowEx(HWND parent, HWND after, LPCTSTR lpszClass, LPCTSTR lpszWindow)
-{
-    struct MyFindWindowExstruct param = {after, lpszClass, lpszWindow, NULL};
-    EnumChildWindows(parent, MyFindWindowExProc, (LPARAM)&param);
-	return param.ret;
-}
-#else
-#define MyFindWindowEx FindWindowEx
-#endif
 static inline void MyShowWnd( HWND wnd )
 {
 	if( ::IsIconic(wnd) )
@@ -687,12 +629,12 @@ static inline void MyShowWnd( HWND wnd )
 
 void GreenPadWnd::on_nextwnd()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
-	if( HWND next = ::MyFindWindowEx( NULL, hwnd(), className_, NULL ) )
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+	if( HWND next = ::FindWindowEx( NULL, hwnd(), className_, NULL ) )
 	{
 		HWND last=next, pos;
 		while( last != NULL )
-			last = ::MyFindWindowEx( NULL, pos=last, className_, NULL );
+			last = ::FindWindowEx( NULL, pos=last, className_, NULL );
 		if( pos != next )
 			::SetWindowPos( hwnd(), pos,
 				0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_SHOWWINDOW );
@@ -703,19 +645,19 @@ void GreenPadWnd::on_nextwnd()
 
 void GreenPadWnd::on_prevwnd()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
-	HWND pos=NULL, next=::MyFindWindowEx( NULL,NULL,className_,NULL );
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+	HWND pos=NULL, next=::FindWindowEx( NULL,NULL,className_,NULL );
 	if( next==hwnd() )
 	{
 		while( next != NULL )
-			next = ::MyFindWindowEx( NULL,pos=next,className_,NULL );
+			next = ::FindWindowEx( NULL,pos=next,className_,NULL );
 		if( pos!=hwnd())
 			MyShowWnd( pos );
 	}
 	else
 	{
 		while( next!=hwnd() && next!=NULL )
-			next = ::MyFindWindowEx( NULL,pos=next,className_,NULL );
+			next = ::FindWindowEx( NULL,pos=next,className_,NULL );
 		if( next!=NULL )
 			MyShowWnd( pos );
 	}
@@ -945,7 +887,6 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf )
 {
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
-	
 	if( !tf->Open( fn.c_str() ) )
 	{
 		// ERROR!
@@ -991,8 +932,8 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf )
 	// [最近使ったファイル]へ追加
 	cfg_.AddMRU( filename_ );
 	HWND wnd = NULL;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
-	while( NULL!=(wnd=::MyFindWindowEx( NULL, wnd, className_, NULL )) )
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+	while( NULL!=(wnd=::FindWindowEx( NULL, wnd, className_, NULL )) )
 		SendMessage( wnd, GPM_MRUCHANGED, 0, 0 );
 #endif
 
@@ -1074,8 +1015,8 @@ bool GreenPadWnd::Save()
 		// [最近使ったファイル]更新
 		cfg_.AddMRU( filename_ );
 		HWND wnd = NULL;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
-		while( NULL!=(wnd=::MyFindWindowEx( NULL, wnd, className_, NULL )) )
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+		while( NULL!=(wnd=::FindWindowEx( NULL, wnd, className_, NULL )) )
 			SendMessage( wnd, GPM_MRUCHANGED, 0, 0 );
 #endif
 		return true;
@@ -1181,7 +1122,6 @@ void GreenPadWnd::ShowUp2()
 
 int kmain()
 {
-	// MessageBox(NULL, GetCommandLine(), TEXT("Command Line"), MB_OK);
 	LOGGER( "kmain() begin" );
 
 	Argv  arg;

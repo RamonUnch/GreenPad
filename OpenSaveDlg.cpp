@@ -367,10 +367,8 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	}
 	else
 	{
-		// Limit to MAX_PATH because fnm can be longer
-		// And SHELL API does not handle UNC anyway!
-		::lstrcpyn(filepath_, fnm, MAX_PATH);
-		::lstrcpyn(filename_, fnm, MAX_PATH);
+		::lstrcpy(filepath_, fnm);
+		::lstrcpy(filename_, fnm);
 		
 		int i = 0;
 		int j = -1;
@@ -477,10 +475,8 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	}
 	else
 	{
-		// Limit to MAX_PATH because fnm can be longer
-		// And SHELL API does not handle UNC anyway!
-		::lstrcpyn(filepath_, fnm, MAX_PATH);
-		::lstrcpyn(filename_, fnm, MAX_PATH);
+		::lstrcpy(filepath_, fnm);
+		::lstrcpy(filename_, fnm);
 		
 		int i = 0;
 		int j = -1;

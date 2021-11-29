@@ -3,6 +3,7 @@
 using namespace ki;
 
 
+
 //=========================================================================
 
 Path& Path::BeSpecialPath( int nPATH, bool bs )
