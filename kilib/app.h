@@ -2,9 +2,6 @@
 #define _KILIB_APP_H_
 #include "types.h"
 #include "log.h"
-
-DWORD MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
-
 #ifndef __ccdoc__
 namespace ki {
 #endif
@@ -107,7 +104,6 @@ private:
 	int             exitcode_;
 	ulong           loadedModule_;
 	const HINSTANCE hInst_;
-	HINSTANCE       hOle32_;
 	static App*     pUniqueInstance_;
 
 private:

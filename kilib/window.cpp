@@ -8,8 +8,9 @@ using namespace ki;
 //=========================================================================
 // IME‚ÉŠÖ‚·‚é‚ ‚ê‚±‚ê
 //=========================================================================
-static GUID myIID_IActiveIMMMessagePumpOwner = {0xb5cf2cfa,0x8aeb,0x11d1,{0x93,0x64,0x00,0x60,0xb0,0x67,0xb8,0x6e}};
+
 IMEManager* IMEManager::pUniqueInstance_;
+
 IMEManager::IMEManager()
 #ifdef USEGLOBALIME
 	: immApp_( NULL )
@@ -21,12 +22,12 @@ IMEManager::IMEManager()
 		if( !app().isWin95() )
 		{
 			app().InitModule( App::OLE );
-			if( S_OK == ::MyCoCreateInstance(
+			if( S_OK == ::CoCreateInstance(
 					CLSID_CActiveIMM, NULL, CLSCTX_INPROC_SERVER,
 					IID_IActiveIMMApp, (void**)&immApp_ ) )
 			{
 				immApp_->QueryInterface(
-					myIID_IActiveIMMMessagePumpOwner, (void**)&immMsg_ );
+					IID_IActiveIMMMessagePumpOwner, (void**)&immMsg_ );
 			}
 		}
 	#endif

@@ -760,24 +760,7 @@ namespace
 			q = p+2;
 		return const_cast<char*>( q );
 	}
-#if !defined(TARGET_VER) || defined (TARGET_VER) && TARGET_VER>305
-	static char* WINAPI MyCharNextExA(WORD cp, const char *p, DWORD flags)
-	{
-		// Only for Windows >= 4 (NT4/95+) because
-		// CharNextExA is not here on NT3.1 and is a stub on NT3.5
-		if (app().isNewShell()) {
-			static uNextFunc Window_CharNextExA = (uNextFunc)(-1);
-			if (Window_CharNextExA == (uNextFunc)(-1)) // First time!
-				Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandleA("USER32.DLL"), "CharNextExA");
 
-			if (Window_CharNextExA) { // We got the function!
-				return Window_CharNextExA(cp, p, flags);
-			}
-		}
-		// Fallback to increment :)
-		return (char *)++p;
-	}
-#endif
 	// IMultiLanguage2::DetectInputCodepageÇÕGB18030ÇÃÇ±Ç∆ÇîFéØÇ≈Ç´Ç‹ÇπÇÒÅB
 	static bool IsGB18030Like( const uchar* ptr, ulong siz, int refcs )
 	{
@@ -879,8 +862,9 @@ struct rMBCS : public TextFileRPimpl
 		: fb( reinterpret_cast<const char*>(b) )
 		, fe( reinterpret_cast<const char*>(b+s) )
 		, cp( c==UTF8 ? UTF8N : c )
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>305) // 350
-		, next( cp==UTF8N ?   CharNextUtf8 : cp==GB18030 ? CharNextGB18030 : MyCharNextExA )
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
+		, next( cp==UTF8N ?   CharNextUtf8 : cp==GB18030 ? CharNextGB18030 :
+							CharNextExA )
 #endif
 		, conv( cp==UTF8N && (app().isWin95()||!::IsValidCodePage(65001))
 		                  ? Utf8ToWideChar : MultiByteToWideChar )
@@ -903,7 +887,7 @@ struct rMBCS : public TextFileRPimpl
 				state = EOL;
 				break;
 			}
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>305) //350
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
 			else if( (*p) & 0x80 && p+1<fe )
 			{
 				p = next(cp,p,0);
@@ -1382,7 +1366,7 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 #ifndef NO_MLANG
 	app().InitModule( App::OLE );
 	IMultiLanguage2 *lang = NULL;
-	if( S_OK == ::MyCoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, IID_IMultiLanguage2, (LPVOID*)&lang ) )
+	if( S_OK == ::CoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, IID_IMultiLanguage2, (LPVOID*)&lang ) )
 	{
 		int detectEncCount = 5;
 		DetectEncodingInfo detectEnc[5];
