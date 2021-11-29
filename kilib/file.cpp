@@ -13,7 +13,9 @@ static TCHAR *GetUNCPath(const TCHAR *ifn)
     // also we should not add it if it is alrady an UNC
     // and we should prefix with \\?\UNC\ in case of Network path
 	ULONG len = GetFullPathName(ifn, 0, 0, 0);
-    if (len) {
+    // Note that it seems that UNC are not working on NT 3.1
+	// So we only convert them if the path is longer than MAX_PATH
+	if (len > MAX_PATH) { // len includes the terminating \0.
         TCHAR *buf = new TCHAR [(len + 16) * sizeof(wchar_t)];
         if (!buf) return NULL;
         int buffstart = 0;
@@ -67,10 +69,10 @@ static HANDLE CreateFileUNC(
 	HANDLE hTemplateFile)
 {
 	TCHAR *UNCPath = (TCHAR *)fname;
-#if UNICODE
+#if UNICODE && (!defined(TARGET_VER) || defined(TARGET_VER) && TARGET_VER>300)
+	// UNC are supported only un Unicode mode on Windows NT 
 	if(App::isNT())
 		UNCPath = GetUNCPath(fname);
-	
 	if(!UNCPath) // Failed then fallback to non UNC
 		UNCPath = (TCHAR *)fname;
 #endif
@@ -85,7 +87,7 @@ static HANDLE CreateFileUNC(
 		dwFlagsAndAttributes, 
 		hTemplateFile
 	);
-#if UNICODE
+#if UNICODE && (!defined(TARGET_VER) || defined(TARGET_VER) && TARGET_VER>300)
 	if(UNCPath && UNCPath != fname) // Was allocated...
 		delete [] UNCPath;
 #endif
