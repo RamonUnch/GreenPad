@@ -159,7 +159,10 @@ public:
 	void ModSelection(ModProc funk);
 	void UpperCaseSel();
 	void LowerCaseSel();
+	static unicode* WINAPI InvertCaseW(unicode *);
+	static unicode* WINAPI TrimTrailingSpacesW(unicode *);
 	void InvertCaseSel();
+	void TTSpacesSel();
 
 	// IME
 	void Reconv();

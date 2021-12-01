@@ -196,6 +196,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_UPPERCASE:  edit_.getCursor().UpperCaseSel();      break;
 	case ID_CMD_LOWERCASE:  edit_.getCursor().LowerCaseSel();      break;
 	case ID_CMD_INVERTCASE: edit_.getCursor().InvertCaseSel();     break;
+	case ID_CMD_TTSPACES:   edit_.getCursor().TTSpacesSel();       break;
 
 	// Search
 	case ID_CMD_FIND:       search_.ShowDlg();  break;
@@ -935,7 +936,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf )
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
 
-	if( !tf->Open( fn.c_str(), always ) )
+	if( !tf->Open( fn.c_str(), true ) )
 	{
 		// ERROR!
 		MsgBox( fn.c_str(), String(IDS_OPENERROR).c_str() );
