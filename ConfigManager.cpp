@@ -841,7 +841,8 @@ void ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 			}
 			break;
 		}
-		String cpt = mru_[i].CompactIfPossible(60);
+		String cpt = (String)TEXT("&") + String().SetInt(i+1).c_str() + (String)TEXT(" ");
+		cpt += mru_[i].CompactIfPossible(60);
 		::InsertMenu( m, i, MF_BYPOSITION, id + i, const_cast<TCHAR*>(cpt.c_str()) );
 	}
 }

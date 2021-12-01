@@ -54,6 +54,8 @@ private:
 	bool ShowOpenDlg( ki::Path* fn, int* cs );
 	bool Open( const ki::Path& fn, int cs );
 	bool OpenByMyself( const ki::Path& fn, int cs, bool needReConf=true );
+	static BOOL CALLBACK SendMsgToFriendsProc(HWND hwnd, LPARAM lPmsg);
+	BOOL SendMsgToAllFriends(UINT msg);
 
 	bool AskToSave();
 	bool Save_showDlgIfNeeded();
