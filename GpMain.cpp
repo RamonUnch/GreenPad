@@ -926,9 +926,9 @@ BOOL CALLBACK GreenPadWnd::SendMsgToFriendsProc(HWND hwnd, LPARAM lPmsg)
 	}
 	return TRUE; // Next hwnd
 }
-bool GreenPadWnd::SendMsgToAllFriends(UINT msg)
+BOOL GreenPadWnd::SendMsgToAllFriends(UINT msg)
 {
-	return !!EnumWindows(SendMsgToFriendsProc, (LPARAM)msg);
+	return EnumWindows(SendMsgToFriendsProc, (LPARAM)msg);
 }
 bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf )
 {

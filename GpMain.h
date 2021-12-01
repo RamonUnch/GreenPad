@@ -55,7 +55,7 @@ private:
 	bool Open( const ki::Path& fn, int cs );
 	bool OpenByMyself( const ki::Path& fn, int cs, bool needReConf=true );
 	static BOOL CALLBACK SendMsgToFriendsProc(HWND hwnd, LPARAM lPmsg);
-	bool SendMsgToAllFriends(UINT msg);
+	BOOL SendMsgToAllFriends(UINT msg);
 
 	bool AskToSave();
 	bool Save_showDlgIfNeeded();
