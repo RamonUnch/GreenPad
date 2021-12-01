@@ -494,8 +494,9 @@ void GreenPadWnd::on_drop( HDROP hd )
 	UINT iMax = ::DragQueryFile( hd, 0xffffffff, NULL, 0 );
 	for( UINT i=0; i<iMax; ++i )
 	{
-		// Get length of the i string as arraay size.
+		// Get length of the i string for array size.
 		UINT len = ::DragQueryFile( hd, i, NULL, 0)+1;
+		len = len < MAX_PATH? MAX_PATH: len; // ^ the Above may fail on NT3.1
 		TCHAR *str = new TCHAR [len];
 		::DragQueryFile( hd, i, str, len );
 		Open( str, AutoDetect );
@@ -591,7 +592,7 @@ void GreenPadWnd::on_config()
 		ReloadConfig(false);
 	}
 }
-#if defined(TARGET_VER) && TARGET_VER<=310
+#if defined(TARGET_VER) && TARGET_VER<=350
 /* WIP: Re-implementation of FindWindowEx for NT3.x
  * because of this I have changed the TARGET_VER>310 to 300
  * for those calls so that they can be still disabled easyly */ 
@@ -637,13 +638,21 @@ static BOOL CALLBACK MyFindWindowExProc(HWND hwnd, LPARAM lParam)
 }
 static HWND MyFindWindowEx(HWND parent, HWND after, LPCTSTR lpszClass, LPCTSTR lpszWindow)
 {
-    struct MyFindWindowExstruct param = {after, lpszClass, lpszWindow, NULL};
-    EnumChildWindows(parent, MyFindWindowExProc, (LPARAM)&param);
+  # if defined(UNICODE) && defined(UNICOWS)
+	if (app().isNewShell()) {
+		// In UNICOWS mode FindWindowEx is dynamically
+		// imported and is implemented for 95/NT4+
+		return FindWindowEx(parent, after, lpszClass, lpszWindow);
+	}
+  # endif
+	// Fallback to the WIP FindWindowEx re-implementation.
+	struct MyFindWindowExstruct param = {after, lpszClass, lpszWindow, NULL};
+	EnumChildWindows(parent, MyFindWindowExProc, (LPARAM)&param);
 	return param.ret;
 }
 #else
 #define MyFindWindowEx FindWindowEx
-#endif
+#endif // TARGET_VER == NT3.x
 static inline void MyShowWnd( HWND wnd )
 {
 	if( ::IsIconic(wnd) )
@@ -797,7 +806,7 @@ void GreenPadWnd::UpdateWindowName()
 
 void GreenPadWnd::SetupMRUMenu()
 {
-	if( HMENU m = ::GetSubMenu( ::GetSubMenu(::GetMenu(hwnd()),0),8 ) )
+	if( HMENU m = ::GetSubMenu( ::GetSubMenu(::GetMenu(hwnd()),0),11 ) )
 	{
 		cfg_.SetUpMRUMenu( m, ID_CMD_MRU );
 		::DrawMenuBar( hwnd() );
