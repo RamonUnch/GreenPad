@@ -30,7 +30,7 @@ public:
 	//	@param fname ファイル名
 	//	@return 開けたかどうか
 	//@}
-	bool Open( const TCHAR* fname );
+	bool Open( const TCHAR* fname, bool always=false );
 
 	//@{
 	//	閉じる

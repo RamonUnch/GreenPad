@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "path.h"
+#include "app.h"
 using namespace ki;
 
 
@@ -21,11 +22,15 @@ Path& Path::BeSpecialPath( int nPATH, bool bs )
 		*buf = TEXT('\0');
 		{
 #if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>352)
-			LPITEMIDLIST il;
-			if( NOERROR==::SHGetSpecialFolderLocation( NULL, nPATH, &il ) )
-			{
-				::SHGetPathFromIDList( il, buf );
-				::CoTaskMemFree( il );
+//#if (defined(UNICODE) && defined(UNICOWS)) || !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
+				if(app().isNewShell())
+				{
+				LPITEMIDLIST il;
+				if( NOERROR==::SHGetSpecialFolderLocation( NULL, nPATH, &il ) )
+				{
+					::SHGetPathFromIDList( il, buf );
+					::CoTaskMemFree( il );
+				}
 			}
 #endif
 		}
@@ -88,10 +93,17 @@ Path& Path::BeDriveOnly()
 
 Path& Path::BeShortStyle()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
-	TCHAR* buf = ReallocMem( len()+1 );
-	::GetShortPathName( buf, buf, len()+1 );
-	UnlockMem();
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+// In UNICOWS mode the A/W functions are imported dynamically anyway.
+// GetShortPathName needs at least 95/NT4 but there is a stub in NT3.5
+#if (defined(UNICODE) && defined(UNICOWS)) || !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+	if(app().isNewShell()) // 95/NT4+
+	{
+		TCHAR* buf = ReallocMem( len()+1 );
+		::GetShortPathName( buf, buf, len()+1 );
+		UnlockMem();
+	}
+#endif
 #endif
 	return *this;
 }

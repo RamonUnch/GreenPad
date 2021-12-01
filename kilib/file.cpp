@@ -108,7 +108,7 @@ FileR::~FileR()
 	Close();
 }
 
-bool FileR::Open( const TCHAR* fname )
+bool FileR::Open( const TCHAR* fname, bool always)
 {
 //	MessageBox(NULL, fname, fname, MB_OK);
 	Close();
@@ -116,7 +116,7 @@ bool FileR::Open( const TCHAR* fname )
 	// ファイルを読みとり専用で開く
 	handle_ = ::CreateFileUNC(fname, GENERIC_READ,
 		FILE_SHARE_READ|FILE_SHARE_WRITE,
-		NULL, OPEN_EXISTING,
+		NULL, always? OPEN_ALWAYS: OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL|FILE_FLAG_SEQUENTIAL_SCAN, NULL
 	);
 	if( handle_ == INVALID_HANDLE_VALUE )

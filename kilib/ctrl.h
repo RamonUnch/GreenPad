@@ -59,7 +59,7 @@ inline void StatusBar::SetText( const TCHAR* str, int part )
 	{ SendMsg( SB_SETTEXT, part, reinterpret_cast<LPARAM>(str) ); }
 
 inline void StatusBar::SetStatusBarVisible(bool b)
-	{ ::ShowWindow( hwnd(), b?SW_SHOW:SW_HIDE ); visible_=b; }
+	{ if(hwnd()) ::ShowWindow( hwnd(), b?SW_SHOW:SW_HIDE ); visible_= b && hwnd(); }
 
 
 

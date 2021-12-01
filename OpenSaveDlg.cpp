@@ -4,7 +4,16 @@
 #include "OpenSaveDlg.h"
 using namespace ki;
 
-
+static TCHAR *Mylstrcpyn(TCHAR *out, const TCHAR *in, int outlen)
+{
+	int i;
+	for (i=0; i<outlen && in[i]; i++) 
+	{
+		out[i] = in[i];
+	}
+	out[i] = TEXT('\0');
+	return out;
+}
 
 //------------------------------------------------------------------------
 // 文字コードリスト
@@ -369,9 +378,9 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	{
 		// Limit to MAX_PATH because fnm can be longer
 		// And SHELL API does not handle UNC anyway!
-		::lstrcpyn(filepath_, fnm, MAX_PATH);
-		::lstrcpyn(filename_, fnm, MAX_PATH);
-		
+		Mylstrcpyn(filepath_, fnm, MAX_PATH);
+		Mylstrcpyn(filename_, fnm, MAX_PATH);
+
 		int i = 0;
 		int j = -1;
 		
@@ -405,7 +414,9 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 				OFN_HIDEREADONLY  |
 				OFN_ENABLEHOOK    |
 				OFN_ENABLESIZING  |
-				OFN_ENABLETEMPLATE;
+				OFN_ENABLETEMPLATE|
+				OFN_LONGNAMES     |
+				OFN_CREATEPROMPT;
 
 	if (app().isNewShell())
 	{
@@ -479,8 +490,8 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	{
 		// Limit to MAX_PATH because fnm can be longer
 		// And SHELL API does not handle UNC anyway!
-		::lstrcpyn(filepath_, fnm, MAX_PATH);
-		::lstrcpyn(filename_, fnm, MAX_PATH);
+		Mylstrcpyn(filepath_, fnm, MAX_PATH);
+		Mylstrcpyn(filename_, fnm, MAX_PATH);
 		
 		int i = 0;
 		int j = -1;
@@ -516,7 +527,8 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 				OFN_ENABLESIZING    |
 				OFN_ENABLEHOOK      |
 				OFN_ENABLETEMPLATE  |
-				OFN_OVERWRITEPROMPT;
+				OFN_OVERWRITEPROMPT |
+				OFN_LONGNAMES;
 
 	if (app().isNewShell())
 	{

@@ -934,11 +934,11 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf )
 {
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
-	
-	if( !tf->Open( fn.c_str() ) )
+
+	if( !tf->Open( fn.c_str(), always ) )
 	{
 		// ERROR!
-		MsgBox( String(IDS_OPENERROR).c_str() );
+		MsgBox( fn.c_str(), String(IDS_OPENERROR).c_str() );
 		return false;
 	}
 
@@ -1063,7 +1063,7 @@ bool GreenPadWnd::Save()
 	}
 
 	// Error!
-	MsgBox( String(IDS_SAVEERROR).c_str() );
+	MsgBox( filename_.c_str(), String(IDS_SAVEERROR).c_str() );
 	return false;
 }
 

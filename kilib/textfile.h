@@ -139,7 +139,7 @@ public:
 	~TextFileR();
 
 	//@{ ŠJ‚­ //@}
-	bool Open( const TCHAR* fname );
+	bool Open( const TCHAR* fname, bool always=false );
 
 	//@{ •Â‚¶‚é //@}
 	void Close();

@@ -1182,30 +1182,44 @@ int TextFileR::neededCodepage(int cs)
 {
 	switch(cs)
 	{
+	// Whitelist...
+	// for positives values and values < -100;
+	case UTF1Y: // -64999
+	case UTF9Y: // -65002
+	case UTF7:  // +65000
+	case UTF8:  // -65001
+	case UTF8N: // +65001
+	case SCSU:  // -60000
+	case BOCU1: // -60001
+		return 0 ; // WHITELISTED
+
+	// TYPE -(cp+1)
 	case IsoKR: // -950 => 949
 	case HZ:    // -937 => 936
 	case IsoJP: // -933 => 932
-		return -cs - 1;
+		return -cs - 1; // Funny cases.
+
 //	case IsoCN:
-//	case UTF8: 
 //	case EucJP:
-	default: 
-		return -cs;
+// and all > 0 cases.
+	default:
+		if(cs < -100) // values between 0 and -100 are whitelisted
+			return -cs; // negative sign case.
+		else
+			return cs; // normal case cs == needed cp.
 	}
 }
-bool TextFileR::Open( const TCHAR* fname )
+bool TextFileR::Open( const TCHAR* fname, bool always )
 {
 	// ファイルを開く
-	if( !fp_.Open(fname) )
+	if( !fp_.Open(fname, always) )
 		return false;
 	const uchar* buf = fp_.base();
 	const ulong  siz = fp_.size();
 
 	// 必要なら自動判定
 	cs_ = AutoDetection( cs_, buf, Min<ulong>(siz,16<<10) ); // 先頭16KB
-	int needed_cs = cs_;
-	if (needed_cs < -100)
-		needed_cs = neededCodepage(cs_);
+	int needed_cs = neededCodepage(cs_);
 
 	if(needed_cs > 0 && !::IsValidCodePage(needed_cs)) 
 	{
