@@ -23,19 +23,6 @@ using doc::Replace;
 //=========================================================================
 
 
-unicode* WINAPI InvertCaseW(unicode *str)
-{
-	if(!str) return NULL;
-	for(int i=0; str[i] != TEXT('\0'); i++)
-	{
-		if(IsCharLowerW(str[i]))
-			str[i] = (wchar_t)CharUpperW((wchar_t *)(str[i]));
-		else
-			str[i] = (wchar_t)CharLowerW((wchar_t *)(str[i]));
-	}
-	return str;
-}
-
 //-------------------------------------------------------------------------
 // Caret制御用ラッパー
 //-------------------------------------------------------------------------
@@ -511,10 +498,47 @@ void Cursor::Paste()
 	}
 }
 
-
 //-------------------------------------------------------------------------
 // More Edit functions
 //-------------------------------------------------------------------------
+unicode* WINAPI Cursor::InvertCaseW(unicode *str)
+{
+	if(!str) return NULL;
+	for(int i=0; str[i] != TEXT('\0'); i++)
+	{
+		if(IsCharLowerW(str[i]))
+			str[i] = (wchar_t)CharUpperW((wchar_t *)(str[i]));
+		else
+			str[i] = (wchar_t)CharLowerW((wchar_t *)(str[i]));
+	}
+	return str;
+}
+
+unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str)
+{
+
+	int i, j;
+	bool trim = true;
+	// Go through the string backward
+	for (i = lstrlen(str)-1, j = i; i >= 0; i--) 
+	{
+		if (trim) { // we trim
+			if (str[i] == ' ' || str[i] == '\t') {
+				continue; // next i.
+			} else if (str[i] != '\n' && str[i] != '\r') {
+				trim = false; // stop trimming
+			}
+		} else { // If we stopped trimming
+			if (str[i] == '\n' || str[i] == '\r') {
+				trim = true; // restart just after the CR|LF
+			}
+		}
+		str[j--] = str[i];
+	}
+	j++;
+
+	return j!=0 ? &str[j]: NULL; // New string start
+}
 
 void Cursor::ModSelection(ModProc mfunk)
 {
@@ -526,12 +550,13 @@ void Cursor::ModSelection(ModProc mfunk)
 	int len = doc_.getRangeLength( dm, dM );
 	unicode *p = new unicode[len+1];
 	doc_.getText( p, dm, dM );
-	mfunk(p);
-	doc_.Execute( Replace(cur_, sel_, p, my_lstrlenW(p)) );
-	MoveCur(osel, false);
-	MoveCur(ocur, true);
+	unicode *np = mfunk(p);
+	if (np) {
+		doc_.Execute( Replace(cur_, sel_, np, my_lstrlenW(np)) );
+		MoveCur(osel, false);
+		MoveCur(ocur, true);
+	}
 	delete [] p;
-
 }
 void Cursor::UpperCaseSel()
 {
@@ -545,7 +570,10 @@ void Cursor::InvertCaseSel()
 {
 	ModSelection(InvertCaseW);
 }
-
+void Cursor::TTSpacesSel()
+{
+	ModSelection(TrimTrailingSpacesW);
+}
 
 //-------------------------------------------------------------------------
 // カーソル移動

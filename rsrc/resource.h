@@ -102,7 +102,8 @@
 #define ID_CMD_UPPERCASE                50001
 #define ID_CMD_LOWERCASE                50002
 #define ID_CMD_INVERTCASE               50003
-#define ID_CMD_REFRESHFILE              50004
+#define ID_CMD_TTSPACES                 50004
+#define ID_CMD_REFRESHFILE              50005
 
 // Next default values for new objects
 // 
