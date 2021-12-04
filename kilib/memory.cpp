@@ -29,7 +29,7 @@ using namespace ki;
 		void* __cdecl operator new( size_t siz )
 		{
 			++allocCounter;
-			return ::HeapAlloc( g_heap, HEAP_GENERATE_EXCEPTIONS, siz );
+			return ::HeapAlloc( g_heap, /*HEAP_GENERATE_EXCEPTIONS*/0, siz );
 		}
 		void __cdecl operator delete( void* ptr )
 		{

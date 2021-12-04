@@ -28,7 +28,7 @@ class App
 {
 public:
 
-	enum imflag { CTL=1, COM=2, OLE=4 };
+	enum imflag { CTL=1, COM=2, OLE=4, OLEDLL=8 };
 
 	//@{
 	//	種々のモジュールを初期化する
@@ -88,11 +88,13 @@ public:
 
 	//@{ インスタンスハンドル //@}
 	HINSTANCE hinst() const;
+	HINSTANCE       hOle32_;
 
 	//@{ Windowsのバージョン //@}
 	static const OSVERSIONINFOA& osver();
 	static bool isWin95();
 	static bool isNT();
+	static bool Is351p();
 	static bool isNewShell();
 	static bool isNewTypeWindows();
 
@@ -107,7 +109,6 @@ private:
 	int             exitcode_;
 	ulong           loadedModule_;
 	const HINSTANCE hInst_;
-	HINSTANCE       hOle32_;
 	static App*     pUniqueInstance_;
 
 private:

@@ -32,6 +32,19 @@ static void MyOleUninitialize( )
 		func();
 	}
 }
+typedef DWORD (WINAPI * CoCreateInstance_funk)(REFCLSID , LPUNKNOWN , DWORD , REFIID , LPVOID *);
+DWORD MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv)
+{
+	static CoCreateInstance_funk func = (CoCreateInstance_funk)(-1);
+	if (func == (CoCreateInstance_funk)(-1)) // First time!
+		func = (CoCreateInstance_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "CoCreateInstance");
+
+	if (func) { // We got the function!
+		return func(rclsid, pUnkOuter, dwClsContext, riid, ppv);
+	}
+	return 666; // Fail with 666 error
+}
+
 typedef BOOL (WINAPI *GetVersionEx_funk)(LPOSVERSIONINFOA s_osVer);
 static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 {
@@ -73,18 +86,6 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 
 	return TRUE;
 }
-typedef DWORD (WINAPI * CoCreateInstance_funk)(REFCLSID , LPUNKNOWN , DWORD , REFIID , LPVOID *);
-DWORD MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv)
-{
-	static CoCreateInstance_funk func = (CoCreateInstance_funk)(-1);
-	if (func == (CoCreateInstance_funk)(-1)) // First time!
-		func = (CoCreateInstance_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "CoCreateInstance");
-
-	if (func) { // We got the function!
-		return func(rclsid, pUnkOuter, dwClsContext, riid, ppv);
-	}
-	return 666; // Fail with 666 error
-}
 
 //=========================================================================
 
@@ -123,7 +124,7 @@ inline void App::SetExitCode( int code )
 
 void App::InitModule( imflag what )
 {
-	if (hOle32_ == (HINSTANCE)(-1) && what&(OLE|COM)) 
+	if (hOle32_ == (HINSTANCE)(-1) && what&(OLE|COM|OLEDLL)) 
 	{
 		hOle32_ = ::LoadLibraryA("OLE32.DLL");
 		// MessageBoxA(NULL, "Loading OLE32.DLL", hOle32_?"Sucess": "Failed", MB_OK);
@@ -211,6 +212,12 @@ bool App::isNewShell()
 	return v.dwMajorVersion>3;
 }
 
+bool App::Is351p()
+{
+	static const OSVERSIONINFOA& v = osver();
+	return v.dwMajorVersion>3 
+		|| v.dwMajorVersion==3 && v.dwMinorVersion >= 51;
+}
 
 
 //=========================================================================

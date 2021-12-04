@@ -3,7 +3,26 @@
 #include "app.h"
 using namespace ki;
 
-
+#if 0
+typedef void (WINAPI * funkk)(LPVOID mem);
+static void MyCoTaskMemFree(void *mem)
+{
+	static funkk func = (funkk) (-1);
+	if (func == (funkk)(-1))
+		func = (funkk)GetProcAddress(GetModuleHandleA("OLE32.DLL"),"CoTaskMemFree");
+	if (func) func(mem);
+}
+typedef HRESULT (WINAPI * funkk2)(HWND h, int i, LPITEMIDLIST *idl);
+HRESULT MySHGetSpecialFolderLocation(HWND h, int i, LPITEMIDLIST *idl)
+{
+	static funkk2 func = (funkk2) (-1);
+	if (func == (funkk2)(-1))
+		func = (funkk2)GetProcAddress(GetModuleHandleA("SHELL32.DLL"),"SHGetSpecialFolderLocation");
+	if (func)
+		return func(h, i, idl);
+	return 666;
+}
+#endif
 //=========================================================================
 
 Path& Path::BeSpecialPath( int nPATH, bool bs )
@@ -20,20 +39,21 @@ Path& Path::BeSpecialPath( int nPATH, bool bs )
 	case ExeName: ::GetModuleFileName( NULL, buf, MAX_PATH ); break;
 	default:
 		*buf = TEXT('\0');
-		{
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>352)
+// This part seems to never be used for now...
 //#if (defined(UNICODE) && defined(UNICOWS)) || !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
-				if(app().isNewShell())
-				{
+#if 0
+			if(app().isNewShell())
+			{
+				// MessageBoxA(NULL, "SHGetSpecialFolderLocation","",MB_OK);
+				app().InitModule(App::OLEDLL); // Load the dll to be sure...
 				LPITEMIDLIST il;
-				if( NOERROR==::SHGetSpecialFolderLocation( NULL, nPATH, &il ) )
+				if( NOERROR==MySHGetSpecialFolderLocation( NULL, nPATH, &il ) )
 				{
-					::SHGetPathFromIDList( il, buf );
-					::CoTaskMemFree( il );
+					::SHGetPathFromIDList( il, buf ); // Dynamic in UNICOWS mode
+					MyCoTaskMemFree( il );
 				}
 			}
 #endif
-		}
 	}
 
 	UnlockMem();

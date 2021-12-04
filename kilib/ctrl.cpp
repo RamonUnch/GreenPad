@@ -49,7 +49,7 @@ int StatusBar::AutoResize( bool maximized )
 	getPos( &rc );
 	width_ = rc.right - rc.left;
 	if( !maximized )
-		width_ -= GetSystemMetrics(SM_CXVSCROLL)-1; //15
+		width_ -= 15;
 	return (isStatusBarVisible() ? rc.bottom - rc.top : 0);
 }
 
