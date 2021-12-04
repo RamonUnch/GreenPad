@@ -52,8 +52,8 @@ private:
 	void ReloadConfig( bool noSetDocType=false );
 
 	bool ShowOpenDlg( ki::Path* fn, int* cs );
-	bool Open( const ki::Path& fn, int cs );
-	bool OpenByMyself( const ki::Path& fn, int cs, bool needReConf=true );
+	bool Open( const ki::Path& fn, int cs, bool always=true );
+	bool OpenByMyself( const ki::Path& fn, int cs, bool needReConf=true, bool always=false );
 	static BOOL CALLBACK SendMsgToFriendsProc(HWND hwnd, LPARAM lPmsg);
 	BOOL SendMsgToAllFriends(UINT msg);
 

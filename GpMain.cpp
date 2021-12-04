@@ -257,7 +257,7 @@ void GreenPadWnd::on_openfile()
 	Path fn;
 	int  cs;
 	if( ShowOpenDlg( &fn, &cs ) )
-		Open( fn, cs );
+		Open( fn, cs, true );
 }
 
 void GreenPadWnd::on_reopenfile()
@@ -892,18 +892,18 @@ bool GreenPadWnd::ShowOpenDlg( Path* fn, int* cs )
 	return ok;
 }
 
-bool GreenPadWnd::Open( const ki::Path& fn, int cs )
+bool GreenPadWnd::Open( const ki::Path& fn, int cs, bool always )
 {
 	if( isUntitled() && !edit_.getDoc().isModified() )
 	{
 		// 無題で無変更だったら自分で開く
-		return OpenByMyself( fn, cs );
+		return OpenByMyself( fn, cs, true, always );
 	}
 	else
 	{
 		// 同じ窓で開くモードならそうする
 		if( cfg_.openSame() )
-			return ( AskToSave() ? OpenByMyself( fn, cs ) : true );
+			return ( AskToSave() ? OpenByMyself( fn, cs, true, true ) : true );
 
 		// そうでなければ他へ回す
 		String
@@ -931,12 +931,12 @@ BOOL GreenPadWnd::SendMsgToAllFriends(UINT msg)
 {
 	return EnumWindows(SendMsgToFriendsProc, (LPARAM)msg);
 }
-bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf )
+bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, bool always )
 {
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
 
-	if( !tf->Open( fn.c_str(), true ) )
+	if( !tf->Open( fn.c_str(), always ) )
 	{
 		// ERROR!
 		MsgBox( fn.c_str(), String(IDS_OPENERROR).c_str() );

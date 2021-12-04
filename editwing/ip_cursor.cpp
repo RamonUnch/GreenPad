@@ -520,7 +520,7 @@ unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str)
 	int i, j;
 	bool trim = true;
 	// Go through the string backward
-	for (i = lstrlen(str)-1, j = i; i >= 0; i--) 
+	for (i = lstrlenW(str)-1, j = i; i >= 0; i--) 
 	{
 		if (trim) { // we trim
 			if (str[i] == ' ' || str[i] == '\t') {

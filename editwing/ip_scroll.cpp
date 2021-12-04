@@ -23,8 +23,10 @@ static int MySetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw
 {
 	// Should be supported since Windows NT 3.51...
 	static ssnfo_funk dyn_SetScrollInfo = (ssnfo_funk)(-1);
-	if( dyn_SetScrollInfo == (ssnfo_funk)(-1) )
+	if( dyn_SetScrollInfo == (ssnfo_funk)(-1) ) {
 		dyn_SetScrollInfo = (ssnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "SetScrollInfo");
+		if( !app().Is351p() ) dyn_SetScrollInfo = NULL;
+	}
 
 	if( dyn_SetScrollInfo )
 		return dyn_SetScrollInfo( hwnd, fnBar, lpsi, fredraw );
@@ -38,8 +40,10 @@ static int MyGetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 {
 	// Should be supported since Windows NT 3.51...
 	static gsnfo_funk dyn_GetScrollInfo = (gsnfo_funk)(-1);
-	if( dyn_GetScrollInfo == (gsnfo_funk)(-1) )
+	if( dyn_GetScrollInfo == (gsnfo_funk)(-1) ) {
 		dyn_GetScrollInfo = (gsnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "GetScrollInfo");
+		if( !app().Is351p() ) dyn_GetScrollInfo = NULL;
+	}
 
 	if( dyn_GetScrollInfo ) {
 		return dyn_GetScrollInfo( hwnd, fnBar, lpsi );
