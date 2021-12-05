@@ -119,6 +119,7 @@ private:
 	ki::IniFile ini_;
 	bool        sharedConfigMode_;
 	CharSetList charSets_;
+	bool       inichanged_; // keep track of save to ini.
 
 	// ëSëÃìIÇ»ê›íË
 	int        undoLimit_;
@@ -218,7 +219,7 @@ inline bool ConfigManager::showStatusBar() const
 	{ return showStatusBar_; }
 
 inline void ConfigManager::ShowStatusBarSwitch()
-	{ showStatusBar_ = !showStatusBar_; SaveIni(); }
+	{ showStatusBar_ = !showStatusBar_; inichanged_=1; SaveIni(); }
 
 inline bool ConfigManager::countByUnicode() const
 	{ return countbyunicode_; }

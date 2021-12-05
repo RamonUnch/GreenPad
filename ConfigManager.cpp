@@ -392,6 +392,7 @@ bool ConfigManager::DoDialog( const ki::Window& parent )
 			return false;
 		curDt_ = dtList_.begin(); // とりあえず
 	}
+	inichanged_=1;
 	SaveIni();
 	return true;
 }
@@ -557,6 +558,7 @@ static const TCHAR s_sharedConfigSection[] = TEXT("SharedConfig");
 
 void ConfigManager::LoadIni()
 {
+	inichanged_=0;
 	{
 		FileW fp;
 		Path inipath(Path::Exe);
@@ -566,24 +568,56 @@ void ConfigManager::LoadIni()
 		{
 			static const char s_defaultIni[] =
 			"[DocType]\r\n"
-			"1=C/C++\r\n"
-			"2=C#\r\n"
-			"3=D\r\n"
-			"4=Java\r\n"
-			"5=HTML\r\n"
-			"6=CSS\r\n"
-			"7=Perl\r\n"
-			"8=Ruby\r\n"
-			"9=PHP\r\n"
-			"10=Python\r\n"
-			"11=Haskell\r\n"
-			"12=OCaml\r\n"
-			"13=INI\r\n"
-			"14=UnicodeText\r\n"
+			"1=Assembly\r\n"
+			"2=B2E\r\n"
+			"3=C/C++\r\n"
+			"4=C#\r\n"
+			"5=D\r\n"
+			"6=Delphi\r\n"
+			"7=Java\r\n"
+			"8=HTML\r\n"
+			"9=CSS\r\n"
+			"10=Perl\r\n"
+			"11=Ruby\r\n"
+			"12=PHP\r\n"
+			"13=Python\r\n"
+			"14=Lua\r\n"
+			"15=Java Script\r\n"
+			"16=Erlang\r\n"
+			"17=Haskell\r\n"
+			"18=OCaml\r\n"
+			"19=INI\r\n"
+			"20=UnicodeText\r\n"
+			"\r\n"
+
+			"[Assembly]\r\n"
+			"Pattern=.*\\.asm$\r\n"
+			"Keyword=asm.kwd\r\n"
+			"Layout=program.lay\r\n"
+			"\r\n"
+			"[B2E]\r\n"
+			"Pattern=.*\\.b2e$\r\n"
+			"Keyword=b2e.kwd\r\n"
+			"Layout=program.lay\r\n"
 			"\r\n"
 			"[C/C++]\r\n"
 			"Pattern=.*(\\.(c|cpp|cxx|cc|h|hpp)|include\\\\[^\\.]+)$\r\n"
 			"Keyword=C.kwd\r\n"
+			"Layout=program.lay\r\n"
+			"\r\n"
+			"[C#]\r\n"
+			"Pattern=.*\\.cs$\r\n"
+			"Keyword=C#.kwd\r\n"
+			"Layout=program.lay\r\n"
+			"\r\n"
+			"[D]\r\n"
+			"Pattern=.*\\.d$\r\n"
+			"Keyword=D.kwd\r\n"
+			"Layout=program.lay\r\n"
+			"\r\n"
+			"[Delphi]\r\n"
+			"Pattern=.*\\.pas$\r\n"
+			"Keyword=Delphi.kwd\r\n"
 			"Layout=program.lay\r\n"
 			"\r\n"
 			"[Java]\r\n"
@@ -606,6 +640,11 @@ void ConfigManager::LoadIni()
 			"Keyword=PHP.kwd\r\n"
 			"Layout=program.lay\r\n"
 			"\r\n"
+			"[Perl]\r\n"
+			"Pattern=.*\\.pl$\r\n"
+			"Keyword=Perl.kwd\r\n"
+			"Layout=program.lay\r\n"
+			"\r\n"
 			"[Python]\r\n"
 			"Pattern=.*\\.py$\r\n"
 			"Keyword=Python.kwd\r\n"
@@ -616,24 +655,29 @@ void ConfigManager::LoadIni()
 			"Keyword=Ruby.kwd\r\n"
 			"Layout=program.lay\r\n"
 			"\r\n"
-			"[D]\r\n"
-			"Pattern=.*\\.d$\r\n"
-			"Keyword=D.kwd\r\n"
+			"[Lua]\r\n"
+			"Pattern=.*\\.lua$\r\n"
+			"Keyword=Lua.kwd\r\n"
+			"Layout=program.lay\r\n"
+			"\r\n"
+			"[Java Script]\r\n"
+			"Pattern=.*\\.js$\r\n"
+			"Keyword=Java.kwd\r\n"
+			"Layout=program.lay\r\n"
+			"\r\n"
+			"[Erlang]\r\n"
+			"Pattern=.*\\.erl$\r\n"
+			"Keyword=Erlang.kwd\r\n"
 			"Layout=program.lay\r\n"
 			"\r\n"
 			"[Haskell]\r\n"
 			"Pattern=.*\\.l?hs$\r\n"
-			"Keyword=Haskell.kwd\r\n"
+			"Keyword=JavaScript.kwd\r\n"
 			"Layout=program.lay\r\n"
 			"\r\n"
 			"[OCaml]\r\n"
 			"Pattern=.*\\.mli?$\r\n"
 			"Keyword=OCaml.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[C#]\r\n"
-			"Pattern=.*\\.cs$\r\n"
-			"Keyword=C#.kwd\r\n"
 			"Layout=program.lay\r\n"
 			"\r\n"
 			"[INI]\r\n"
@@ -677,11 +721,15 @@ void ConfigManager::LoadIni()
 	// wnd
 	rememberWindowSize_  = ini_.GetBool( TEXT("RememberWindowSize"), false );
 	rememberWindowPlace_ = ini_.GetBool( TEXT("RememberWindowPos"), false );
-	wndX_ = ini_.GetInt( TEXT("WndX"), CW_USEDEFAULT );
-	wndY_ = ini_.GetInt( TEXT("WndY"), CW_USEDEFAULT );
-	wndW_ = ini_.GetInt( TEXT("WndW"), CW_USEDEFAULT );
-	wndH_ = ini_.GetInt( TEXT("WndH"), CW_USEDEFAULT );
-	wndM_ = ini_.GetBool( TEXT("WndM"), false );
+	if(rememberWindowPlace_) {
+		wndX_ = ini_.GetInt( TEXT("WndX"), CW_USEDEFAULT );
+		wndY_ = ini_.GetInt( TEXT("WndY"), CW_USEDEFAULT );
+	}
+	if(rememberWindowSize_) {
+		wndW_ = ini_.GetInt( TEXT("WndW"), CW_USEDEFAULT );
+		wndH_ = ini_.GetInt( TEXT("WndH"), CW_USEDEFAULT );
+		wndM_ = ini_.GetBool( TEXT("WndM"), false );
+	}
 
 	// TODO: MRU
 	mrus_ = ini_.GetInt( TEXT("MRU"), 4 );
@@ -722,13 +770,15 @@ void ConfigManager::LoadIni()
 
 void ConfigManager::SaveIni()
 {
-	{
-		Path inipath(Path::Exe);
-		inipath+=Path(Path::ExeName).body();
-		inipath+=TEXT(".ini");
-		if( inipath.isReadOnly() )
-			return;
-	}
+	if(!inichanged_) 
+		return;
+	inichanged_=0;
+
+	Path inipath(Path::Exe);
+	inipath+=Path(Path::ExeName).body();
+	inipath+=TEXT(".ini");
+	if( inipath.isReadOnly() )
+		return;
 
 	// 共通の設定の書き込みセクション
 	if( sharedConfigMode_ )
@@ -749,12 +799,15 @@ void ConfigManager::SaveIni()
 	// Wnd
 	ini_.PutBool( TEXT("RememberWindowSize"), rememberWindowSize_ );
 	ini_.PutBool( TEXT("RememberWindowPos"), rememberWindowPlace_ );
-	ini_.PutInt( TEXT("WndX"), wndX_ );
-	ini_.PutInt( TEXT("WndY"), wndY_ );
-	ini_.PutInt( TEXT("WndW"), wndW_ );
-	ini_.PutInt( TEXT("WndH"), wndH_ );
-	ini_.PutBool( TEXT("WndM"), wndM_ );
-
+	if (rememberWindowPlace_) {
+		ini_.PutInt( TEXT("WndX"), wndX_ );
+		ini_.PutInt( TEXT("WndY"), wndY_ );
+	}
+	if (rememberWindowSize_) {
+		ini_.PutInt( TEXT("WndW"), wndW_ );
+		ini_.PutInt( TEXT("WndH"), wndH_ );
+		ini_.PutBool( TEXT("WndM"), wndM_ );
+	}
 	// 新規ファイル関係
 	ini_.PutInt( TEXT("NewfileCharset"), newfileCharset_ );
 	ini_.PutStr( TEXT("NewfileDoctype"), newfileDoctype_.c_str() );
@@ -873,8 +926,10 @@ void ConfigManager::RememberWnd( ki::Window* wnd )
 		wndW_ = rc.right- rc.left;
 		wndH_ = rc.bottom - rc.top;
 	}
-	//if( this->rememberWindowPlace_ || this->rememberWindowSize_ )
-	//	SaveIni();
+	if( this->rememberWindowPlace_ || this->rememberWindowSize_ ) {
+		inichanged_=1;
+		// SaveIni();
+	}
 }
 
 //-------------------------------------------------------------------------
