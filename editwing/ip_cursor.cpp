@@ -520,7 +520,7 @@ unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str)
 	int i, j;
 	bool trim = true;
 	// Go through the string backward
-	for (i = lstrlenW(str)-1, j = i; i >= 0; i--) 
+	for (i = my_lstrlenW(str)-1, j = i; i >= 0; i--) 
 	{
 		if (trim) { // we trim
 			if (str[i] == ' ' || str[i] == '\t') {
@@ -872,7 +872,7 @@ int Cursor::on_ime_reconvertstring( RECONVERTSTRING* rs )
 			str.get(), (len+1)*3, NULL, NULL );
 	}
 #endif
-	const ulong len = ::lstrlen(str.get());
+	const ulong len = my_lstrlen(str.get());
 	if( rs != NULL )
 	{
 		rs->dwSize            = sizeof(RECONVERTSTRING) + (len+1)*sizeof(TCHAR);

@@ -23,6 +23,17 @@ HRESULT MySHGetSpecialFolderLocation(HWND h, int i, LPITEMIDLIST *idl)
 	return 666;
 }
 #endif
+static const TCHAR *GetFNinPath(const TCHAR *p)
+{
+    int i=0;
+
+    while(p[++i] != '\0');
+    while(i >= 0 && p[i] != '\\' && p[i] != '/') i--;
+    i++;
+    i += (p[i] == '\\' || p[i] == '/');
+    return &p[i]; // first char of the filename
+}
+
 //=========================================================================
 
 Path& Path::BeSpecialPath( int nPATH, bool bs )
@@ -42,17 +53,17 @@ Path& Path::BeSpecialPath( int nPATH, bool bs )
 // This part seems to never be used for now...
 //#if (defined(UNICODE) && defined(UNICOWS)) || !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
 #if 0
-			if(app().isNewShell())
+		if(app().isNewShell())
+		{
+			// MessageBoxA(NULL, "SHGetSpecialFolderLocation","",MB_OK);
+			app().InitModule(App::OLEDLL); // Load the dll to be sure...
+			LPITEMIDLIST il;
+			if( NOERROR==MySHGetSpecialFolderLocation( NULL, nPATH, &il ) )
 			{
-				// MessageBoxA(NULL, "SHGetSpecialFolderLocation","",MB_OK);
-				app().InitModule(App::OLEDLL); // Load the dll to be sure...
-				LPITEMIDLIST il;
-				if( NOERROR==MySHGetSpecialFolderLocation( NULL, nPATH, &il ) )
-				{
-					::SHGetPathFromIDList( il, buf ); // Dynamic in UNICOWS mode
-					MyCoTaskMemFree( il );
-				}
+				::SHGetPathFromIDList( il, buf ); // Dynamic in UNICOWS mode
+				MyCoTaskMemFree( il );
 			}
+		}
 #endif
 	}
 
@@ -113,7 +124,7 @@ Path& Path::BeDriveOnly()
 
 Path& Path::BeShortStyle()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+#if 0 && !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 // In UNICOWS mode the A/W functions are imported dynamically anyway.
 // GetShortPathName needs at least 95/NT4 but there is a stub in NT3.5
 #if (defined(UNICODE) && defined(UNICOWS)) || !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
@@ -142,7 +153,7 @@ Path& Path::BeShortLongStyle()
 
 	if( nam != buf )
 		t = *(nam-1), *(nam-1) = TEXT('\0');
-	::lstrcpy( nam, fd.cFileName );
+	my_lstrcpy( nam, fd.cFileName );
 	if( nam != buf )
 		*(nam-1) = t;
 
@@ -150,23 +161,23 @@ Path& Path::BeShortLongStyle()
 	return *this;
 }
 
-String Path::CompactIfPossible( int Mx )
+String Path::CompactIfPossible( unsigned Mx )
 {
-	HMODULE hshl = ::LoadLibraryA( "shlwapi.dll" );
-	if( !hshl ) return *this;
-
-	typedef BOOL (STDAPICALLTYPE *PCPE_t)( LPTSTR, LPCTSTR, UINT, DWORD );
-#ifdef _UNICODE
-	PCPE_t MyPathCompactPathEx = (PCPE_t)::GetProcAddress( hshl, "PathCompactPathExW" );
-#else
-	PCPE_t MyPathCompactPathEx = (PCPE_t)::GetProcAddress( hshl, "PathCompactPathExA" );
-#endif
-	if( !MyPathCompactPathEx ) return *this;
+	if(this->len() <= Mx)
+		return *this; // Nothiing to do
 
 	TCHAR* buf = new TCHAR[Mx+2];
-	MyPathCompactPathEx( buf, c_str(), Mx+1, 0 );
-	::FreeLibrary( hshl );
-
+	const TCHAR *fn = GetFNinPath(c_str())-1; // includes the '\'
+	int fnlen = my_lstrlen(fn);
+	int remaining = Mx - fnlen; // what remains
+	int premaining = Max(remaining-3, 3); // what w will use for the path.
+	my_lstrcpyn(buf, c_str(), premaining);
+	my_lstrcpyn(&buf[premaining], TEXT("..."), 3); // Add ... after the truncated path
+	if (remaining >= 3) {
+		my_lstrcpy(&buf[remaining], fn); // copy fn to the end of buf
+	} else { // remaining < 3
+		my_lstrcpy(&buf[6], &fn[-remaining]); // copy fn to the end of buf
+	}
 	String ans = buf;
 	delete [] buf;
 	return ans;

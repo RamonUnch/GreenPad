@@ -2,6 +2,7 @@
 #include "app.h"
 #include "textfile.h"
 #include "ktlarray.h"
+#include "string.h"
 using namespace ki;
 
 #ifndef NO_CHARDET
@@ -1509,7 +1510,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 	chardet_t pdet = NULL;
 	char charset[128];
 
-# define STR2CP(a,b) if(0 == ::lstrcmpA(charset,a)) { \
+# define STR2CP(a,b) if(0 == my_lstrcmpA(charset,a)) { \
 					chardet_destroy(pdet); \
 					::FreeLibrary(hIL); \
 					return b; \

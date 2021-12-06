@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "app.h"
 #include "winutil.h"
+#include "string.h"
 using namespace ki;
 
 
@@ -42,7 +43,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 		if( h != NULL )
 		{
 			char* cstr = static_cast<char*>( ::GlobalLock( h ) );
-			int Lu = ::lstrlenA( cstr ) * 3;
+			int Lu = my_lstrlenA( cstr ) * 3;
 			unicode* ustr = new unicode[Lu];
 			::MultiByteToWideChar( CP_ACP, 0, cstr, -1, ustr, Lu );
 			::GlobalUnlock( h );

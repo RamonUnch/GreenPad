@@ -75,7 +75,7 @@ public:
 	Path& BeShortLongStyle();
 
 	//@{ ...とかを入れて短く //@}
-	String CompactIfPossible(int Mx);
+	String CompactIfPossible(unsigned Mx);
 
 	//@{ ディレクトリ情報以外 //@}
 	const TCHAR* name() const;

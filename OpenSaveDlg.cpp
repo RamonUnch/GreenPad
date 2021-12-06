@@ -4,17 +4,6 @@
 #include "OpenSaveDlg.h"
 using namespace ki;
 
-static TCHAR *Mylstrcpyn(TCHAR *out, const TCHAR *in, int outlen)
-{
-	int i;
-	for (i=0; i<outlen && in[i]; i++) 
-	{
-		out[i] = in[i];
-	}
-	out[i] = TEXT('\0');
-	return out;
-}
-
 //------------------------------------------------------------------------
 // 文字コードリスト
 //------------------------------------------------------------------------
@@ -378,12 +367,12 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	{
 		// Limit to MAX_PATH because fnm can be longer
 		// And SHELL API does not handle UNC anyway!
-		Mylstrcpyn(filepath_, fnm, MAX_PATH);
-		Mylstrcpyn(filename_, fnm, MAX_PATH);
+		my_lstrcpyn(filepath_, fnm, MAX_PATH);
+		my_lstrcpyn(filename_, fnm, MAX_PATH);
 
 		int i = 0;
 		int j = -1;
-		
+
 		while(filepath_[i] != TEXT('\0'))
 		{
 			if(filepath_[i] == TEXT('\\'))
@@ -392,7 +381,7 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			}
 			i++;
 		}
-		
+
 		int x = 0;
 		for (i = j+1; filepath_[i] != TEXT('\0'); i++)
 		{
@@ -490,12 +479,12 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	{
 		// Limit to MAX_PATH because fnm can be longer
 		// And SHELL API does not handle UNC anyway!
-		Mylstrcpyn(filepath_, fnm, MAX_PATH);
-		Mylstrcpyn(filename_, fnm, MAX_PATH);
-		
+		my_lstrcpyn(filepath_, fnm, MAX_PATH);
+		my_lstrcpyn(filename_, fnm, MAX_PATH);
+
 		int i = 0;
 		int j = -1;
-		
+
 		while(filepath_[i] != TEXT('\0'))
 		{
 			if(filepath_[i] == TEXT('\\'))
@@ -504,7 +493,7 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			}
 			i++;
 		}
-		
+
 		int x = 0;
 		for (i = j+1; filepath_[i] != TEXT('\0'); i++)
 		{
@@ -613,7 +602,7 @@ ki::aarr<TCHAR> OpenFileDlg::ConnectWithNull( String lst[], int num )
 	TCHAR* p = a.get();
 	for( int i=0; i<num; ++i )
 	{
-		::lstrcpy( p, lst[i].c_str() );
+		my_lstrcpy( p, lst[i].c_str() );
 		p += (lst[i].len() + 1);
 	}
 	*p = TEXT('\0');

@@ -97,7 +97,7 @@ public:
 	void AddMRU( const ki::Path& fname );
 
 	//@{ [最近使ったファイル]メニューの構築 //@}
-	void SetUpMRUMenu( HMENU m, UINT id );
+	int SetUpMRUMenu( HMENU m, UINT id );
 
 	//@{ [最近使ったファイル]取得 //@}
 	ki::Path GetMRU( int no ) const;

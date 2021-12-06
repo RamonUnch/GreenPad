@@ -15,7 +15,7 @@ void Logger::WriteLine( const String& str )
 
 void Logger::WriteLine( const TCHAR* str )
 {
-	WriteLine( str, ::lstrlen(str)*sizeof(TCHAR) );
+	WriteLine( str, my_lstrlen(str)*sizeof(TCHAR) );
 }
 
 void Logger::WriteLine( const TCHAR* str, int siz )
