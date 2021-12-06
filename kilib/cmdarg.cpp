@@ -11,8 +11,8 @@ Argv::Argv( const TCHAR* cmd )
 {
 	TCHAR *p, endc;
 
-	buf_ = (p=new TCHAR[::lstrlen(cmd)+1]);
-	::lstrcpy( p, cmd );
+	buf_ = (p=new TCHAR[my_lstrlen(cmd)+1]);
+	my_lstrcpy( p, cmd );
 
 	while( *p != TEXT('\0') )
 	{

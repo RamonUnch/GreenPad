@@ -662,7 +662,7 @@ void ConfigManager::LoadIni()
 			"\r\n"
 			"[Java Script]\r\n"
 			"Pattern=.*\\.js$\r\n"
-			"Keyword=Java.kwd\r\n"
+			"Keyword=JavaScript.kwd\r\n"
 			"Layout=program.lay\r\n"
 			"\r\n"
 			"[Erlang]\r\n"
@@ -672,7 +672,7 @@ void ConfigManager::LoadIni()
 			"\r\n"
 			"[Haskell]\r\n"
 			"Pattern=.*\\.l?hs$\r\n"
-			"Keyword=JavaScript.kwd\r\n"
+			"Keyword=Haskell.kwd\r\n"
 			"Layout=program.lay\r\n"
 			"\r\n"
 			"[OCaml]\r\n"
@@ -849,9 +849,10 @@ void ConfigManager::AddMRU( const ki::Path& fname )
 	// メモリ内のMRUリストを更新
 	{
 		int i;
-		for( i=0; i<countof(mru_); ++i )
+		for( i=0; i<mrus_; ++i ) // countof(mru_)
 			if( mru_[i] == fname )
 			{++i; break;}
+
 		for( --i; i>0; --i )
 			mru_[i] = mru_[i-1];
 		mru_[0] = fname;
@@ -861,21 +862,22 @@ void ConfigManager::AddMRU( const ki::Path& fname )
 	{
 		ini_.SetSectionAsUserName();
 		const String key = TEXT("MRU");
-		for( int i=0; i<countof(mru_); ++i )
+		for( int i=0; i<mrus_; ++i ) //countof(mru_)
 			ini_.PutPath(
 				(key+String().SetInt(i+1)).c_str(), mru_[i] );
 	}
 }
 
-void ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
+int ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 {
+	if (!mrus_) return 0; // Nothing to do
 	Mutex mx(s_mrulock);
 
 	// iniから読み込み
 	{
 		ini_.SetSectionAsUserName();
 		const String key = TEXT("MRU");
-		for( int i=0; i<countof(mru_); ++i )
+		for( int i=0; i<mrus_; ++i )
 			mru_[i] = ini_.GetPath(
 				(key+String().SetInt(i+1)).c_str(), Path() );
 	}
@@ -884,7 +886,7 @@ void ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 	while( ::DeleteMenu( m, 0, MF_BYPOSITION ) );
 
 	// メニュー構築
-	for( int i=0; i<countof(mru_); ++i )
+	for( int i=0; i<mrus_; ++i )
 	{
 		if( i>=mrus_ || mru_[i].len()==0 )
 		{
@@ -898,6 +900,7 @@ void ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 		cpt += mru_[i].CompactIfPossible(60);
 		::InsertMenu( m, i, MF_BYPOSITION, id + i, const_cast<TCHAR*>(cpt.c_str()) );
 	}
+	return mrus_;
 }
 
 Path ConfigManager::GetMRU( int no ) const
@@ -912,21 +915,22 @@ Path ConfigManager::GetMRU( int no ) const
 
 void ConfigManager::RememberWnd( ki::Window* wnd )
 {
-	RECT rc;
-	wnd->getPos(&rc);
-	WINDOWPLACEMENT wp = {sizeof(wp)};
-	::GetWindowPlacement( wnd->hwnd(), &wp );
-
-	if( wp.showCmd==SW_SHOWNORMAL || wp.showCmd == SW_MAXIMIZE )
-		wndM_ = (wp.showCmd == SW_MAXIMIZE);
-	if( wp.showCmd==SW_SHOWNORMAL )
+	if( this->rememberWindowPlace_ || this->rememberWindowSize_ ) 
 	{
-		wndX_ = rc.left;
-		wndY_ = rc.top;
-		wndW_ = rc.right- rc.left;
-		wndH_ = rc.bottom - rc.top;
-	}
-	if( this->rememberWindowPlace_ || this->rememberWindowSize_ ) {
+		RECT rc;
+		wnd->getPos(&rc);
+		WINDOWPLACEMENT wp = {sizeof(wp)};
+		::GetWindowPlacement( wnd->hwnd(), &wp );
+
+		if( wp.showCmd==SW_SHOWNORMAL || wp.showCmd == SW_MAXIMIZE )
+			wndM_ = (wp.showCmd == SW_MAXIMIZE);
+		if( wp.showCmd==SW_SHOWNORMAL )
+		{
+			wndX_ = rc.left;
+			wndY_ = rc.top;
+			wndW_ = rc.right- rc.left;
+			wndH_ = rc.bottom - rc.top;
+		}
 		inichanged_=1;
 		// SaveIni();
 	}

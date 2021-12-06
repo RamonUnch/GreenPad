@@ -21,7 +21,7 @@ void IniFile::SetSectionAsUserName()
 	TCHAR usr[256];
 	DWORD siz = countof(usr);
 	if( !::GetUserName( usr, &siz ) )
-		::lstrcpy( usr, TEXT("Default") );
+		my_lstrcpy( usr, TEXT("Default") );
 	SetSection( usr );
 }
 
@@ -46,7 +46,7 @@ bool IniFile::GetBool( const TCHAR* key, bool defval ) const
 String IniFile::GetStr ( const TCHAR* key, const String& defval ) const
 {
 	RawString str;
-	ulong l=256, s;
+	ulong l=128, s;
 	for(;;)
 	{
 		TCHAR* x = str.AllocMem(l);
@@ -90,7 +90,7 @@ Path IniFile::GetPath( const TCHAR* key, const Path& defval ) const
 
 bool IniFile::PutStr ( const TCHAR* key, const TCHAR* val )
 {
-	if( val[0]==TEXT('"') && val[::lstrlen(val)-1]==TEXT('"') )
+	if( val[0]==TEXT('"') && val[my_lstrlen(val)-1]==TEXT('"') )
 	{
 		// óºí[Ç… " Ç™Ç†ÇÈÇ∆èüéËÇ…çÌÇÁÇÍÇÈÇÃÇ≈ëŒèà
 		String nval;

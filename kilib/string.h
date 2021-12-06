@@ -12,6 +12,78 @@ namespace ki {
 	#define XTCHAR wchar_t
 #endif
 
+//=========================================================================
+//@{
+//	•¶š—ñˆ—{ƒ¿‚Q
+//
+//	Wide•¶š”ÅŠÖ”‚ğ©‘O‚Å
+//@}
+//=========================================================================
+//#undef lstrcpy
+//#undef lstrlen
+//#undef lstrcmp
+
+#ifdef UNICODE
+	#define my_lstrcpy my_lstrcpyW
+	#define my_lstrlen my_lstrlenW
+	#define my_lstrcmp my_lstrcmpW
+#else
+	#define my_lstrcpy my_lstrcpyA
+	#define my_lstrlen my_lstrlenA
+	#define my_lstrcmp my_lstrcmpA
+#endif
+
+inline static
+unicode* my_lstrcpyW( unicode* const d, const unicode* s )
+{
+	for(unicode* n=d; *n++=*s++;);
+	return d;
+}
+inline static
+int my_lstrlenW( const unicode* const d )
+{
+	const unicode* n;
+	for(n=d; *n; ++n);
+	return static_cast<int>(n-d);
+}
+static inline
+int my_lstrcmpW(const unicode *X, const unicode *Y)
+{
+   	while (*X && *X == *Y) { X++; Y++; }
+   	return *(const unicode*)X - *(const unicode*)Y;
+}
+inline static
+char* my_lstrcpyA( char* const d, const char* s )
+{
+	for(char* n=d; *n++=*s++;);
+	return d;
+}
+inline static
+int my_lstrlenA( const char* const d )
+{
+	const char* n;
+	for(n=d; *n; ++n);
+	return static_cast<int>(n-d);
+}
+static inline 
+int my_lstrcmpA(const char *X, const char *Y)
+{
+   	while (*X && *X == *Y) { X++; Y++; }
+   	return *(const unsigned char*)X - *(const unsigned char*)Y;
+}
+
+static inline
+TCHAR *my_lstrcpyn(TCHAR *out, const TCHAR *in, int outlen)
+{
+	int i;
+	for (i=0; i<outlen && in[i]; i++) 
+	{
+		out[i] = in[i];
+	}
+	out[i] = TEXT('\0');
+	return out;
+}
+
 
 
 //=========================================================================
@@ -183,7 +255,7 @@ inline TCHAR* String::AllocMem( ulong minimum )
 	{ return AllocMemHelper( minimum, TEXT(""), 1 ); }
 // “à•”ƒƒ‚ƒŠŒÅ’è
 inline void String::UnlockMem( long siz )
-	{ data_->len = 1 + (siz==-1 ? ::lstrlen(c_str()) : siz); }
+	{ data_->len = 1 + (siz==-1 ? my_lstrlen(c_str()) : siz); }
 
 // ‚O•¶šƒf[ƒ^
 inline String::StringData* String::null()
@@ -207,26 +279,26 @@ inline const TCHAR String::operator[](int n) const
 
 // ”äŠr
 inline bool String::operator==( LPCTSTR s ) const
-	{ return 0==::lstrcmp( c_str(), s ); }
+	{ return 0==my_lstrcmp( c_str(), s ); }
 // ”äŠr
 inline bool String::operator==( const String& obj ) const
 	{ return (data_==obj.data_ ? true : operator==( obj.c_str() )); }
 // ”äŠr
 inline bool String::isSame( LPCTSTR s ) const
-	{ return 0==::lstrcmpi( c_str(), s ); }
+{ return 0==::lstrcmpi( c_str(), s ); }
 // ”äŠr
 inline bool String::isSame( const String& obj ) const
 	{ return (data_==obj.data_ ? true : operator==( obj.c_str() )); }
 
 // —vƒRƒs[‘ã“ü
 inline String& String::operator = ( const TCHAR* s )
-	{ return SetString( s, ::lstrlen(s) ); }
+	{ return SetString( s, my_lstrlen(s) ); }
 // ‡¬
 inline String& String::operator += ( const String& obj )
 	{ return CatString( obj.c_str(), obj.len() ); }
 // ‡¬
 inline String& String::operator += ( const TCHAR* s )
-	{ return CatString( s, ::lstrlen(s) ); }
+	{ return CatString( s, my_lstrlen(s) ); }
 // ‡¬
 inline String& String::operator += ( TCHAR c )
 	{ return CatString( &c, 1 ); }
@@ -272,36 +344,6 @@ struct RawString : public String
 };
 
 }      // namespace ki
-
-
-//=========================================================================
-//@{
-//	•¶š—ñˆ—{ƒ¿‚Q
-//
-//	Wide•¶š”ÅŠÖ”‚ğ©‘O‚Å
-//@}
-//=========================================================================
-
-#ifdef _UNICODE
-	#define my_lstrlenW ::lstrlenW
-	#define my_lstrcpyW ::lstrcpyW
-#else
-	inline static
-	unicode* my_lstrcpyW( unicode* const d, const unicode* s )
-	{
-		for(unicode* n=d; *n++=*s++;);
-		return d;
-	}
-
-	inline static
-	int my_lstrlenW( const unicode* const d )
-	{
-		const unicode* n;
-		for(n=d; *n; ++n);
-		return static_cast<int>(n-d);
-	}
-#endif
-
 
 
 //=========================================================================

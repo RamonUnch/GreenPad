@@ -33,7 +33,7 @@ String::String( const TCHAR* s, long len )
 {
 	// ’·‚³w’è‚ª–³‚¢ê‡‚ÍŒvZ
 	if( len==-1 )
-		len = ::lstrlen(s);
+		len = my_lstrlen(s);
 
 	if( len==0 )
 	{

@@ -16,11 +16,11 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 	PROCESS_INFORMATION psi;
 	::GetStartupInfo( &sti );
 
-	String fcmd = Path(Path::ExeName).BeShortStyle();
-	fcmd += ' ';
-	fcmd += cmd;
+//	String fcmd = (String)(TEXT("\"")) + Path(Path::ExeName);
+//	fcmd += TEXT("\" ");
+//	fcmd += cmd;
 
-	if( ::CreateProcess( NULL, const_cast<TCHAR*>(fcmd.c_str()),
+	if( ::CreateProcess( (TCHAR*)Path(Path::ExeName).c_str(), (TCHAR*)cmd,
 			NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL,
 			&sti, &psi ) )
 	{
@@ -497,7 +497,7 @@ void GreenPadWnd::on_drop( HDROP hd )
 	{
 		// Get length of the i string for array size.
 		UINT len = ::DragQueryFile( hd, i, NULL, 0)+1;
-		len = len < MAX_PATH? MAX_PATH: len; // ^ the Above may fail on NT3.1
+		len = Max(len, (UINT)MAX_PATH); // ^ the Above may fail on NT3.1
 		TCHAR *str = new TCHAR [len];
 		::DragQueryFile( hd, i, str, len );
 		Open( str, AutoDetect );
@@ -572,7 +572,7 @@ void GreenPadWnd::on_datetime()
 		( LOCALE_USER_DEFAULT, 0, NULL, g.len()?const_cast<TCHAR*>(g.c_str()):TEXT("HH:mm yyyy/MM/dd"), buf, countof(buf));
 	::GetDateFormat
 		( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
-	edit_.getCursor().Input( tmp, ::lstrlen(tmp) );
+	edit_.getCursor().Input( tmp, my_lstrlen(tmp) );
 }
 
 void GreenPadWnd::on_doctype( int no )
@@ -620,14 +620,14 @@ static BOOL CALLBACK MyFindWindowExProc(HWND hwnd, LPARAM lParam)
 	if (param->lpszClass) {
 		GetClassName(hwnd, tmpstr, countof(tmpstr));
 		// Class matches...
-		classmatch = !lstrcmp(param->lpszClass, tmpstr);
+		classmatch = !my_lstrcmp(param->lpszClass, tmpstr);
 	} else {
 		classmatch = true;
 	}
 
 	if(param->lpszWindow) {
 		GetWindowText(hwnd, tmpstr, countof(tmpstr));
-		titlematch = !lstrcmp(param->lpszClass, tmpstr);
+		titlematch = !my_lstrcmp(param->lpszClass, tmpstr);
 	} else {
 		titlematch = true;
 	}
@@ -807,11 +807,14 @@ void GreenPadWnd::UpdateWindowName()
 
 void GreenPadWnd::SetupMRUMenu()
 {
-	if( HMENU m = ::GetSubMenu( ::GetSubMenu(::GetMenu(hwnd()),0),11 ) )
+	int nmru;
+	HMENU mparent = ::GetSubMenu(::GetMenu(hwnd()),0);
+	if( HMENU m = ::GetSubMenu(mparent, 11) )
 	{
-		cfg_.SetUpMRUMenu( m, ID_CMD_MRU );
+		nmru = cfg_.SetUpMRUMenu( m, ID_CMD_MRU );
 		::DrawMenuBar( hwnd() );
 	}
+	::EnableMenuItem(mparent, 11, MF_BYPOSITION|(nmru?MF_ENABLED:MF_GRAYED));
 }
 
 void GreenPadWnd::on_mru( int no )
@@ -922,7 +925,7 @@ BOOL CALLBACK GreenPadWnd::SendMsgToFriendsProc(HWND hwnd, LPARAM lPmsg)
 	if(IsWindow(hwnd)) 
 	{
 		GetClassName(hwnd, classn, countof(classn));
-		if (!lstrcmp(classn, className_))
+		if (!my_lstrcmp(classn, className_))
 			SendMessage(hwnd, (UINT)lPmsg, 0, 0);
 	}
 	return TRUE; // Next hwnd
