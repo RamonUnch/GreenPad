@@ -555,7 +555,7 @@ public:
 			if( j >= ie )
 				j = ie;
 			else if( k==7 ) // || k==0 )
-				while( (flg[j]>>5)==0 && j<ie )
+				while( j<ie && (flg[j]>>5)==0  ) // check bound BEFORE [] !!!
 					++j;
 
 			k = (flg[i] & 0x1c);
