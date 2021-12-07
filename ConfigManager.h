@@ -94,7 +94,7 @@ public:
 
 public:
 	//@{ [最近使ったファイル]へ追加 //@}
-	void AddMRU( const ki::Path& fname );
+	bool AddMRU( const ki::Path& fname );
 
 	//@{ [最近使ったファイル]メニューの構築 //@}
 	int SetUpMRUMenu( HMENU m, UINT id );

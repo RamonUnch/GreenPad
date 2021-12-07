@@ -872,8 +872,9 @@ namespace {
 	static const TCHAR* const s_mrulock = TEXT("GreenPad_MRUMutex");
 }
 
-void ConfigManager::AddMRU( const ki::Path& fname )
+bool ConfigManager::AddMRU( const ki::Path& fname )
 {
+	if(!mrus_) return false;
 	Mutex mx(s_mrulock);
 
 	// メモリ内のMRUリストを更新
@@ -896,6 +897,7 @@ void ConfigManager::AddMRU( const ki::Path& fname )
 			ini_.PutPath(
 				(key+String().SetInt(i+1)).c_str(), mru_[i] );
 	}
+	return true;
 }
 
 int ConfigManager::SetUpMRUMenu( HMENU m, UINT id )

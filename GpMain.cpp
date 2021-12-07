@@ -981,8 +981,8 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	UpdateWindowName();
 
 	// [最近使ったファイル]へ追加
-	cfg_.AddMRU( filename_ );
-	SendMsgToAllFriends(GPM_MRUCHANGED);
+	if( cfg_.AddMRU( filename_ ) )
+		SendMsgToAllFriends(GPM_MRUCHANGED);
 
 	return true;
 }
@@ -1060,8 +1060,8 @@ bool GreenPadWnd::Save()
 		edit_.getDoc().SaveFile( tf );
 		UpdateWindowName();
 		// [最近使ったファイル]更新
-		cfg_.AddMRU( filename_ );
-		SendMsgToAllFriends(GPM_MRUCHANGED);
+		if( cfg_.AddMRU( filename_ ) )
+			SendMsgToAllFriends(GPM_MRUCHANGED);
 		return true;
 	}
 
