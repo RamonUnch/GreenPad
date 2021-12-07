@@ -11,11 +11,14 @@
 #define ID_REPLACENEXT                  4
 #define IDS_TXTFILES                    5
 #define ID_REPLACEALL                   5
+
 #define IDS_OPENERROR                   6
 #define IDS_DEFAULT                     7
 #define IDS_NOTFOUND                    8
 #define IDS_REPLACEALLDONE              9
 #define IDS_OKTODEL                     10
+#define IDS_NOTFOUNDDOWN                11
+
 #define IDR_MAIN                        103
 #define IDD_OPENFILEHOOK                105
 #define IDD_SAVEFILEHOOK                106

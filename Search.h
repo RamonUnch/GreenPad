@@ -80,7 +80,7 @@ public:
 	bool TrapMsg(MSG* msg);
 
 	//@{ 見つかりませんでしたダイアログ //@}
-	void NotFound();
+	void NotFound(bool GoingDown=false);
 
 private:
 
@@ -101,7 +101,7 @@ private:
 	void on_replaceall();
 	void UpdateData();
 	void ConstructSearcher( bool down=true );
-	void FindNextImpl();
+	void FindNextImpl( bool redo=false );
 	void FindPrevImpl();
 	bool FindNextFromImpl( DPos s, DPos* beg, DPos* end );
 	bool FindPrevFromImpl( DPos s, DPos* beg, DPos* end );

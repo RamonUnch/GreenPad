@@ -287,7 +287,7 @@ void SearchManager::FindPrev()
 // 実際の処理の実装
 //-------------------------------------------------------------------------
 
-void SearchManager::FindNextImpl()
+void SearchManager::FindNextImpl(bool redo)
 {
 	// カーソル位置取得
 	const VPos *stt, *end;
@@ -313,13 +313,19 @@ void SearchManager::FindNextImpl()
 	}
 
 	// 見つからなかった場合
-	NotFound();
+	NotFound(!redo);
 }
 
-void SearchManager::NotFound()
+void SearchManager::NotFound(bool GoingDown)
 {
 	//MsgBox( String(IDS_NOTFOUND).c_str() );
-	::MessageBox( NULL, String(IDS_NOTFOUND).c_str(), NULL, MB_OK|MB_TASKMODAL );
+	if (GoingDown
+	&& IDOK == ::MessageBox( NULL, String(IDS_NOTFOUNDDOWN).c_str(), NULL, MB_OKCANCEL|MB_TASKMODAL )) {
+		edit_.getCursor().MoveCur( DPos(0,0), false );
+		FindNextImpl(true);
+	} else {
+	    ::MessageBox(NULL, String(IDS_NOTFOUND).c_str(), NULL, MB_OK|MB_TASKMODAL);
+	}
 }
 
 void SearchManager::FindPrevImpl()

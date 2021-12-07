@@ -357,6 +357,7 @@ BEGIN
     IDS_OPENERROR           "ファイルを開くのに失敗しました。"
     IDS_DEFAULT             "(標準)"
     IDS_NOTFOUND            "見つかりませんでした。"
+    IDS_NOTFOUNDDOWN        "見つかりませんでした。\nContinue searching from the top?"
     IDS_REPLACEALLDONE      "%d箇所置換しました。"
     IDS_OKTODEL             "を削除してよろしいですか？"
 END
@@ -697,14 +698,15 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ASKTOSAVE           "Do you want to Save the current file ?"
+    IDS_ASKTOSAVE           "Do you want to Save the current file?"
     IDS_APPNAME             "GreenPad"
     IDS_SAVEERROR           "Could not save file:"
     IDS_ALLFILES            "All Files(*.*)"
     IDS_TXTFILES            "Text Files"
     IDS_OPENERROR           "Could not open file:"
     IDS_DEFAULT             "(default)"
-    IDS_NOTFOUND            "Not Found."
+    IDS_NOTFOUND            "String Not Found."
+    IDS_NOTFOUNDDOWN        "String Not Found.\nContinue searching from the top?"
     IDS_REPLACEALLDONE      "%d times Replaced."
     IDS_OKTODEL             " will be removed. OK?"
 END
