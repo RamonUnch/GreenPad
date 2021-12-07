@@ -319,10 +319,11 @@ void SearchManager::FindNextImpl(bool redo)
 void SearchManager::NotFound(bool GoingDown)
 {
 	//MsgBox( String(IDS_NOTFOUND).c_str() );
-	if (GoingDown
-	&& IDOK == ::MessageBox( NULL, String(IDS_NOTFOUNDDOWN).c_str(), NULL, MB_OKCANCEL|MB_TASKMODAL )) {
-		edit_.getCursor().MoveCur( DPos(0,0), false );
-		FindNextImpl(true);
+	if (GoingDown) {
+		if (IDOK == ::MessageBox( NULL, String(IDS_NOTFOUNDDOWN).c_str(), NULL, MB_OKCANCEL|MB_TASKMODAL )) {
+			edit_.getCursor().MoveCur( DPos(0,0), false );
+			FindNextImpl(true);
+		}
 	} else {
 	    ::MessageBox(NULL, String(IDS_NOTFOUND).c_str(), NULL, MB_OK|MB_TASKMODAL);
 	}

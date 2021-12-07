@@ -198,7 +198,7 @@ bool ViewImpl::ReSetScrollInfo()
 
 	// 縦はnPageとnMaxはとりあえず補正
 	// nPosは場合によって直し方が異なるので別ルーチンにて
-	udScr_.nPage = cy / cvs_.getPainter().H() + 1;
+	udScr_.nPage = cy / NZero(cvs_.getPainter().H()) + 1;
 	udScr_.nMax  = vln() + udScr_.nPage - 2;
 
 	// 横スクロールが起きたらtrue
@@ -345,7 +345,7 @@ void ViewImpl::GetDrawPosInfo( VDrawInfo& v ) const
 	{
 		int    y = -(signed)udScr_vrl_;
 		ulong tl = udScr_tl_;
-		int  top = v.rc.top / H;
+		int  top = v.rc.top / NZero(H);
 		while( y + (signed)rln(tl) <= top )
 			y += rln( tl++ );
 
@@ -497,8 +497,8 @@ void ViewImpl::on_vscroll( int code, int pos )
 	default:          return;
 	case SB_LINEUP:   dy= -1; break;
 	case SB_LINEDOWN: dy= +1; break;
-	case SB_PAGEUP:   dy= -(cy() / cvs_.getPainter().H()); break;
-	case SB_PAGEDOWN: dy= +(cy() / cvs_.getPainter().H()); break;
+	case SB_PAGEUP:   dy= -( cy() / NZero(cvs_.getPainter().H()) ); break;
+	case SB_PAGEDOWN: dy= +( cy() / NZero(cvs_.getPainter().H()) ); break;
 	case SB_THUMBTRACK:
 #if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>305)
 		{
@@ -586,7 +586,7 @@ void ViewImpl::InvalidateView( const DPos& dp, bool afterall ) const
 
 	// 開始y座標計算
 	int r=0, yb=-(signed)udScr_vrl_;
-	for( int t=udScr_tl_, ybe=cy()/H; (unsigned)t<dp.tl; yb+=rln(t++) )
+	for( int t=udScr_tl_, ybe=cy() / NZero(H); (unsigned)t<dp.tl; yb+=rln(t++) )
 		if( yb >= ybe )
 			return;
 	for( ; dp.ad>rlend(dp.tl,r); ++r,++yb );
