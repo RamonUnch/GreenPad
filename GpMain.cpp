@@ -16,11 +16,11 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 	PROCESS_INFORMATION psi;
 	::GetStartupInfo( &sti );
 
-//	String fcmd = (String)(TEXT("\"")) + Path(Path::ExeName);
-//	fcmd += TEXT("\" ");
-//	fcmd += cmd;
+	String fcmd = (String)(TEXT("\"")) + Path(Path::ExeName);
+	fcmd += TEXT("\" ");
+	fcmd += cmd;
 
-	if( ::CreateProcess( (TCHAR*)Path(Path::ExeName).c_str(), (TCHAR*)cmd,
+	if( ::CreateProcess( NULL, (TCHAR*)fcmd.c_str(),
 			NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL,
 			&sti, &psi ) )
 	{
@@ -305,8 +305,6 @@ void GreenPadWnd::on_savefileas()
 
 void GreenPadWnd::on_print()
 {
-	TCHAR tmp[128];
-
 	doc::Document& d = edit_.getDoc();
 	const unicode* buf;
 	ulong dpStart = 0, len = 0;
@@ -342,6 +340,7 @@ void GreenPadWnd::on_print()
 	int nError = ::StartDoc(thePrintDlg.hDC, &di);
 	if (nError == SP_ERROR)
 	{
+		TCHAR tmp[128];
 		::wsprintf(tmp,TEXT("StartDoc Error #%d - please check printer."),::GetLastError());
 		::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK|MB_TASKMODAL );
 		return;
@@ -725,7 +724,7 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 	{
 		// ShiftJISïóÇÃByteêîÉJÉEÉìÉg
 		const unicode* cu = edit_.getDoc().tl(c.tl);
-		const ulong tab = cfg_.vConfig().tabstep;
+		const ulong tab = NZero(cfg_.vConfig().tabstep);
 		cad = 0;
 		for( ulong i=0; i<c.ad; ++i )
 			if( cu[i] == L'\t' )
@@ -922,11 +921,11 @@ bool GreenPadWnd::Open( const ki::Path& fn, int cs, bool always )
 BOOL CALLBACK GreenPadWnd::SendMsgToFriendsProc(HWND hwnd, LPARAM lPmsg)
 {
 	TCHAR classn[256];
-	if(IsWindow(hwnd)) 
+	if(::IsWindow(hwnd)) 
 	{
-		GetClassName(hwnd, classn, countof(classn));
+		::GetClassName(hwnd, classn, countof(classn));
 		if (!my_lstrcmp(classn, className_))
-			SendMessage(hwnd, (UINT)lPmsg, 0, 0);
+			::PostMessage(hwnd, (UINT)lPmsg, 0, 0);
 	}
 	return TRUE; // Next hwnd
 }
