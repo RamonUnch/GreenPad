@@ -710,12 +710,12 @@ void Cursor::Down( bool wide, bool select )
 
 void Cursor::PageUp( bool select )
 {
-	Ud( -view_.cy()/view_.fnt().H(), select );
+	Ud( -view_.cy()/NZero(view_.fnt().H()), select );
 }
 
 void Cursor::PageDown( bool select )
 {
-	Ud( view_.cy()/view_.fnt().H(), select );
+	Ud( view_.cy()/NZero(view_.fnt().H()), select );
 }
 
 void Cursor::Left( bool wide, bool select )

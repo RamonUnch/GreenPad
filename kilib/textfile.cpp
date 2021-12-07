@@ -1615,7 +1615,7 @@ bool TextFileR::IsSurrogateLead(qbyte w) { return 0xD800 <= w && w <= 0xDBFF; }
 bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uChrSize, bool LE)
 {
 	qbyte uchr;
-	ulong usize = siz / uChrSize, x = 0;
+	ulong usize = siz / NZero(uChrSize), x = 0;
 	ulong unconfidence = 0, confidence = 0;
 	bool impossible = false, prevIsNull = false;
 	for( x=0; x < usize; x++ )

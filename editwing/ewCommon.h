@@ -2,6 +2,7 @@
 #define _EDITWING_COMMON_H_
 #include "../kilib/kilib.h"
 #ifndef __ccdoc__
+
 namespace editwing {
 #endif
 
@@ -170,16 +171,19 @@ struct VConfig : public ki::Object
 	}
 
 	//@{ フォント関係設定 //@}
-	void SetFont( const TCHAR* fnam, int fsiz )
+/*	void SetFont( const TCHAR* fnam, int fsiz )
 	{
 		SetFont( fnam,fsiz,DEFAULT_CHARSET );
 	}
 	void SetFont( const TCHAR* fnam, int fsiz, char fontCS )
 	{
 		SetFont( fnam,fsiz,fontCS,DEFAULT_QUALITY );
-	}
-	void SetFont( const TCHAR* fnam, int fsiz, char fontCS, int qual )
-	{
+	}*/
+	void SetFont( const TCHAR* fnam, int fsiz
+				, char fontCS=DEFAULT_CHARSET
+				, LONG fw=FW_DONTCARE, BYTE ff=0
+				, int qual=DEFAULT_QUALITY ) ;
+/*	{
 		fontsize              = fsiz;
 		font.lfWidth          = 0;
 		font.lfEscapement     = 0;
@@ -194,13 +198,13 @@ struct VConfig : public ki::Object
 		font.lfPitchAndFamily = VARIABLE_PITCH|FF_DONTCARE;
 		font.lfCharSet        = fontCS;
 
-		::lstrcpy( font.lfFaceName, fnam );
+		::lstrcpyn( font.lfFaceName, fnam, LF_FACESIZE );
 
 		HDC h = ::GetDC( NULL );
-		font.lfHeight = -MulDiv(fsiz, ::GetDeviceCaps(h,LOGPIXELSY), 72);
+		font.lfHeight = -MulDiv(fsiz, ::GetDeviceCaps(h, LOGPIXELSY), 72);
 		::ReleaseDC( NULL, h );
 	}
-
+*/
 	//@{ タブ幅設定 //@}
 	void SetTabStep( int tab )
 	{

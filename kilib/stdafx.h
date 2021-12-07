@@ -36,6 +36,8 @@
   #undef memset
 #endif
 
+#define NZero(x) (x==0?1:x) // ensur x is NOT zero for divisions...
+
 #ifndef WM_MOUSEWHEEL
 #define WM_MOUSEWHEEL 0x020A
 #endif

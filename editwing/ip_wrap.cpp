@@ -462,7 +462,7 @@ void ViewImpl::GetVPos( int x, int y, VPos* vp, bool linemode ) const
 
 	int tl = udScr_tl_;
 	int vl = udScr_.nPos - udScr_vrl_;
-	int rl = y / fnt().H() + udScr_vrl_;
+	int rl = y / NZero(fnt().H()) + udScr_vrl_;
 	if( rl >= 0 ) // Viewã’[‚æ‚è‰º‚Ìê‡A‰º•ûŒü‚ð’²‚×‚é
 		while( tl < (int)doc_.tln() && (int)rln(tl) <= rl )
 		{

@@ -10,6 +10,28 @@ using namespace editwing;
 
 void BootNewProcess( const TCHAR* cmd ); // in GpMain.cpp
 
+void VConfig::SetFont( const TCHAR* fnam, int fsiz, char fontCS, LONG fw, BYTE ff, int qual )
+{
+	fontsize              = fsiz;
+	font.lfWidth          = 0;
+	font.lfEscapement     = 0;
+	font.lfOrientation    = 0;
+	font.lfWeight         = fw; // FW_DONTCARE;
+	font.lfItalic         = ff&1; // FALSE
+	font.lfUnderline      = ff&2; // FALSE
+	font.lfStrikeOut      = ff&4; // FALSE
+	font.lfOutPrecision   = OUT_DEFAULT_PRECIS;
+	font.lfClipPrecision  = CLIP_DEFAULT_PRECIS;
+	font.lfQuality        = qual;
+	font.lfPitchAndFamily = VARIABLE_PITCH|FF_DONTCARE;
+	font.lfCharSet        = fontCS;
+
+	my_lstrcpyn( font.lfFaceName, fnam, LF_FACESIZE );
+	HDC h = ::GetDC( NULL );
+	font.lfHeight = -MulDiv(fsiz, ::GetDeviceCaps(h, LOGPIXELSY), 72);
+	::ReleaseDC( NULL, h );
+}
+
 //-------------------------------------------------------------------------
 // 設定項目管理。
 // SetDocTypeで切り替えると、文書タイプ依存の項目を自動で
@@ -474,6 +496,8 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 	{
 		String fontname;
 		int    fontsize=0;
+		LONG   fontweight=FW_DONTCARE;
+		BYTE   fontflags=0;
 		int    x;
 		bool   clfound = false;
 
@@ -508,6 +532,12 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 				break;
 			case 0x00660074: // ft: FONT
 				fontname = ptr;
+				break;
+			case 0x00660077: // fw: FONT WEIGHT
+				fontweight = GetInt(ptr);
+				break;
+			case 0x00660066: // ff: FONT FLAGS
+				fontflags = GetInt(ptr);
 				break;
 			case 0x0073007A: // sz: SIZE
 				fontsize = GetInt(ptr);
@@ -544,7 +574,7 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		if( !clfound )
 			dt->vc.color[LN] = dt->vc.color[TXT];
 		if( fontname.len()!=0 && fontsize!=0 )
-			dt->vc.SetFont( fontname.c_str(), fontsize, dt->fontCS, dt->fontQual );
+			dt->vc.SetFont( fontname.c_str(), fontsize, dt->fontCS, fontweight, fontflags, dt->fontQual );
 	}
 }
 

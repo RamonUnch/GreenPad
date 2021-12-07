@@ -215,8 +215,8 @@ private:
 
 private:
 
-	void MoveByMouse( int x, int y );
 	void MoveTo( const VPos& vp, bool sel );
+	void MoveByMouse( int x, int y );
 	void Ud( int dy, bool select );
 	void UpdateCaretPos();
 	void Redraw( const VPos& s, const VPos& e );
