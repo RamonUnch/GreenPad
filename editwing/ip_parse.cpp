@@ -66,7 +66,7 @@ using namespace editwing::doc;
 // Line::flg_
 //   一文字毎に、下のような8bitのフラグを割り当てる
 //   | aaabbbcd |
-// 
+//
 // -----------------------------------------------
 //
 // aaa == "PosInToken"
@@ -141,7 +141,7 @@ struct CommentDFA
 		: state( inComment ? 3 : 0 ) {}
 
 	// 入力符号を与えて状態遷移
-	void transit( int sym ) 
+	void transit( int sym )
 		{ state = tr_table[state][sym]; }
 
 	// 現在の状態
@@ -260,6 +260,9 @@ public:
 		// 有意味な記号にマッチするまでループ
 		// 返値に、マッチするまでに飛ばした文字数、
 		// mlen,symに、マッチした記号の情報を返す
+		// Loop until a meaningful symbol is matched.
+		// Return value is the number of characters skipped before the match.
+		// And the matched length/symbol are copied in mlen and sym.
 
 		int i;
 		ulong ans=0;
@@ -267,6 +270,7 @@ public:
 			if( map_[str[ans]] )
 			{
 				for( i=2; i>=0; --i )
+				{
 					if( tag_[i]!=NULL
 					 && tag_[i]->len <= len-ans
 					 && compare_s(
@@ -276,7 +280,8 @@ public:
 						mlen = tag_[i]->len;
 						goto symbolfound;
 					}
-				if( str[ans] == L'\'' ) // 一重引用符
+				}
+				if( str[ans] == L'\'' ) // 一重引用符 - single quote
 				{
 					if( q1_ )
 					{
@@ -284,7 +289,7 @@ public:
 						goto symbolfound;
 					}
 				}
-				else if( str[ans] == L'\"' ) // 二重引用符
+				else if( str[ans] == L'\"' ) // 二重引用符 - double quote
 				{
 					if( q2_ )
 					{
@@ -434,6 +439,7 @@ public:
 		};
 
 		// PosInToken算出用の距離エンコーダ( 5bitシフト済み )
+		// Distance encoder for PosInToken calculation ( 5bit shifted )
 		//  ( _d>7 ? 7<<5 : _d<<5 )
 		#define tkenc(_d) ( (_d)>7 ? 0xe0 : (_d)<<5 )
 
@@ -442,7 +448,7 @@ public:
 		int& cmtState  = dfa[line.isLineHeadCmt()].state;
 		int commentbit = cmtState&1;
 
-		// 作業領域
+		// 作業領域, workspace
 		int sym;
 		ulong j, k, um, m;
 		uchar t, f;
@@ -455,7 +461,7 @@ public:
 		{
 			j = i;
 
-			// ASCII文字でない場合
+			// ASCII文字でない場合 (Not ASCII char)
 			if( str[i] >= 0x007f )
 			{
 				f = (ALP | commentbit);
@@ -467,7 +473,7 @@ public:
 						flg[j] = f;
 				flg[i] = static_cast<uchar>(tkenc(j-i) | f);
 			}
-			// ASCII文字の場合??
+			// ASCII文字の場合?? (ASCII char?)
 			else
 			{
 				t = letter_type[str[i]];
@@ -481,30 +487,30 @@ public:
 
 				f = (t | commentbit);
 
-				switch( t )
+				switch( t ) // letter type:
 				{
-				// アルファベット＆数字
+				// アルファベット＆数字, Alphabets & Numbers (a-Z, 0-9)
 				case A:
 					f |= kwd_.isKeyword( str+i, j-i );
 					// fall...
 
-				// タブ・制御文字
+				// タブ・制御文字, Tabs and control characters (0-31, 127)
 				case T:
 					// fall...
 
-				// 半角空白
+				// 半角空白 (space, 32)
 				case W:
 					for( k=i+1; k<j; ++k )
 						flg[k] = f;
 					flg[i] = (uchar)(tkenc(j-i)|f);
 					break;
 
-				// 記号
+				// 記号 (Symbol, 33-47, 58-64, 91-94, 96, 123-126)
 				case S:
 					k = i;
 					while( k < j )
 					{
-						// マッチしなかった部分
+						// マッチしなかった部分, The part that did not match
 						um = tag_.SymbolLoop( str+k, j-k, m, sym );
 						f = (0x20 | ALP | commentbit);
 						while( um-- )
@@ -512,7 +518,7 @@ public:
 						if( k >= j )
 							break;
 
-						// マッチした部分
+						// マッチした部分, Matched part
 						f = (CE | commentbit);
 						dfa[0].transit( sym );
 						dfa[1].transit( sym );
@@ -528,7 +534,7 @@ public:
 			}
 		}
 
-		// transitフラグ更新
+		// transitフラグ更新 Update transit flag
 		line.SetTransitFlag(
 			(dfa[1].state & (dfa[1].state<<1)) |
 			((dfa[0].state>>1) & dfa[0].state)
@@ -549,7 +555,7 @@ public:
 		ulong       j,k,ie = line.size();
 		for( ulong i=0; i<ie; i=j )
 		{
-			// Tokenの終端を得る
+			// Tokenの終端を得る, Get the end of the Token
 			k = (flg[i]>>5);
 			j = i + k;
 			if( j >= ie )
