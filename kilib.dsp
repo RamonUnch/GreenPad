@@ -22,6 +22,7 @@ CFG=kilib - Win32 Debug
 !MESSAGE "kilib - Win32 Unicode Release" (based on "Win32 (x86) Application")
 !MESSAGE "kilib - Win32 NT31 Unicode Release" (based on "Win32 (x86) Application")
 !MESSAGE "kilib - Win32 Win32s Ansi Release" (based on "Win32 (x86) Application")
+!MESSAGE "kilib - Win32 Win4_Unicode release" (based on "Win32 (x86) Application")
 !MESSAGE 
 
 # Begin Project
@@ -46,7 +47,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SUPERTINY" /D "USEGLOBALIME" /Yu"stdafx.h" /FD /GF /c
+# ADD CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /Gy /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SUPERTINY" /D "USEGLOBALIME" /Yu"stdafx.h" /FD /GF /c
 # SUBTRACT CPP /Gf
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -57,7 +58,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe" /filealign:512 /OPT:REF /OPT:ICF,7
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "kilib - Win32 Debug"
@@ -74,7 +75,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "SUPERTINY" /D "USEGLOBALIME" /FR /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /W3 /Gm /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "UNICODE" /D "_UNICODE" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICOWS" /D "DO_LOGGING" /D TARGET_VER=350 /FR /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "_DEBUG"
@@ -84,7 +85,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /debug /machine:I386 /out:"OBJ/GreenPad.exe" /pdbtype:sept
+# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /profile /map:"release/GreenPad.map" /debug /machine:I386 /nodefaultlib /out:"release/GreenPad.exe" /filealign:512
 
 !ELSEIF  "$(CFG)" == "kilib - Win32 Unicode Release"
 
@@ -102,19 +103,18 @@ LINK32=link.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SUPERTINY" /D "USEGLOBALIME" /Yu"stdafx.h" /FD /GF /c
 # SUBTRACT BASE CPP /Gf
-# ADD CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D TARGET_VER=350 /Yu"stdafx.h" /FD /GF /c
+# ADD CPP /nologo /Gr /Zp4 /W3 /Ox /Og /Oi /Os /Ob2 /Gy /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D "UNICOWS" /D TARGET_VER=350 /Yu"stdafx.h" /FD /GF /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "NDEBUG"
-# ADD RSC /l 0x411 /d "NDEBUG"
+# ADD RSC /l 0x411 /d "NDEBUG" /d TARGT_VER=350
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
-# SUBTRACT LINK32 /pdb:none
+# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /nodefaultlib /out:"release/GreenPad.exe" /filealign:512 /OPT:REF /OPT:ICF,7
 
 !ELSEIF  "$(CFG)" == "kilib - Win32 NT31 Unicode Release"
 
@@ -131,18 +131,19 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D TARGET_VER=350 /Yu"stdafx.h" /FD /GF /c
-# ADD CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D TARGET_VER=310 /Yu"stdafx.h" /FD /GF /c
+# ADD CPP /nologo /Gr /Zp4 /W3 /Ox /Og /Oi /Os /Ob2 /Gy /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D "UNICOWS" /D TARGET_VER=310 /Yu"stdafx.h" /FD /GF /GF /c
+# SUBTRACT CPP /Oa
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "NDEBUG"
-# ADD RSC /l 0x411 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG" /d TARGET_VER=310
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GPadnt31.exe" /SUBSYSTEM:WINDOWS,3.10
+# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GPadNT31.exe" /SUBSYSTEM:WINDOWS,3.10 /filealign:512 /OPT:REF /OPT:ICF,7
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "kilib - Win32 Win32s Ansi Release"
@@ -161,7 +162,7 @@ LINK32=link.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SUPERTINY" /D "USEGLOBALIME" /Yu"stdafx.h" /FD /GF /c
 # SUBTRACT BASE CPP /Gf
-# ADD CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SUPERTINY" /D "USEGLOBALIME" /D TARGET_VER=300 /D "WIN32S" /Yu"stdafx.h" /FD /GF /c
+# ADD CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /Gy /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SUPERTINY" /D "USEGLOBALIME" /D TARGET_VER=300 /D "WIN32S" /Yu"stdafx.h" /FD /GF /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "NDEBUG"
@@ -172,8 +173,35 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GPad32s.exe" /SUBSYSTEM:WINDOWS,3.10 /FIXED:NO
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GPad32s.exe" /SUBSYSTEM:WINDOWS,3.10 /FIXED:NO /filealign:512 /OPT:REF /OPT:ICF,7
 # SUBTRACT LINK32 /pdb:none
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Win4_Unicode release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "kilib___Win32_Win4_Unicode_release"
+# PROP BASE Intermediate_Dir "kilib___Win32_Win4_Unicode_release"
+# PROP BASE Ignore_Export_Lib 0
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "kilib___Win32_Win4_Unicode_release"
+# PROP Intermediate_Dir "kilib___Win32_Win4_Unicode_release"
+# PROP Ignore_Export_Lib 0
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /Gr /Zp4 /W3 /Ox /Og /Oi /Os /Ob2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D "UNICOWS" /D TARGET_VER=350 /Yu"stdafx.h" /FD /GF /c
+# ADD CPP /nologo /Gr /Zp4 /W3 /Ox /Og /Oi /Os /Ob2 /Gy /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D "UNICOWS" /Yu"stdafx.h" /FD /GF /c
+# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+# ADD BASE RSC /l 0x411 /d "NDEBUG" /d TARGT_VER=350
+# ADD RSC /l 0x411 /d "NDEBUG"
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+LINK32=link.exe
+# ADD BASE LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /nodefaultlib /out:"release/GPadNT35.exe"
+# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /nodefaultlib /out:"release/GPadNew.exe" /filealign:512 /OPT:REF /OPT:ICF,7
 
 !ENDIF 
 
@@ -184,28 +212,139 @@ LINK32=link.exe
 # Name "kilib - Win32 Unicode Release"
 # Name "kilib - Win32 NT31 Unicode Release"
 # Name "kilib - Win32 Win32s Ansi Release"
+# Name "kilib - Win32 Win4_Unicode release"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
 SOURCE=.\ConfigManager.cpp
+
+!IF  "$(CFG)" == "kilib - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Unicode Release"
+
+# ADD CPP /Oa
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 NT31 Unicode Release"
+
+# ADD CPP /Ox /Oa /Og
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Win32s Ansi Release"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Win4_Unicode release"
+
+# ADD BASE CPP /Oa
+# ADD CPP /Oa
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\GpMain.cpp
+
+!IF  "$(CFG)" == "kilib - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Unicode Release"
+
+# ADD CPP /Oa
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 NT31 Unicode Release"
+
+# ADD CPP /Ox /Oa /Og
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Win32s Ansi Release"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Win4_Unicode release"
+
+# ADD BASE CPP /Oa
+# ADD CPP /Oa
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\OpenSaveDlg.cpp
+
+!IF  "$(CFG)" == "kilib - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Unicode Release"
+
+# ADD CPP /Oa
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 NT31 Unicode Release"
+
+# ADD CPP /Ox /Oa /Og
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Win32s Ansi Release"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Win4_Unicode release"
+
+# ADD BASE CPP /Oa
+# ADD CPP /Oa
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\RSearch.cpp
+
+!IF  "$(CFG)" == "kilib - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Unicode Release"
+
+# ADD CPP /Oa
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 NT31 Unicode Release"
+
+# ADD CPP /Ox /Oa /Og
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Win32s Ansi Release"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Win4_Unicode release"
+
+# ADD BASE CPP /Oa
+# ADD CPP /Oa
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\Search.cpp
+
+!IF  "$(CFG)" == "kilib - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Unicode Release"
+
+# ADD CPP /Oa
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 NT31 Unicode Release"
+
+# ADD CPP /Ox /Oa /Og
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Win32s Ansi Release"
+
+!ELSEIF  "$(CFG)" == "kilib - Win32 Win4_Unicode release"
+
+# ADD BASE CPP /Oa
+# ADD CPP /Oa
+
+!ENDIF 
+
 # End Source File
 # End Group
 # Begin Group "Header Files"
