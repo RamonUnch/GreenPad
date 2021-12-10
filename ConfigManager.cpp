@@ -10,9 +10,21 @@ using namespace editwing;
 
 void BootNewProcess( const TCHAR* cmd ); // in GpMain.cpp
 
-void VConfig::SetFont( const TCHAR* fnam, int fsiz, char fontCS, LONG fw, BYTE ff, int qual )
+void SetFontSize(LOGFONT *font, HDC hDC, int fsiz, int fx)
+{
+	font->lfWidth          = 0;
+	HDC h;
+	h = hDC? hDC: ::GetDC( NULL ); // fallback to current screen DC
+	font->lfHeight = -MulDiv(fsiz, ::GetDeviceCaps(h, LOGPIXELSY), 72);
+	if(fx) font->lfWidth = -MulDiv(fx, ::GetDeviceCaps(h, LOGPIXELSX), 72);
+	if(!hDC) ::ReleaseDC( NULL, h ); // release if captured!
+}
+
+void VConfig::SetFont( const TCHAR* fnam, int fsiz, char fontCS, LONG fw, BYTE ff, int fx, int qual )
 {
 	fontsize              = fsiz;
+	fontwidth             = fx;
+
 	font.lfWidth          = 0;
 	font.lfEscapement     = 0;
 	font.lfOrientation    = 0;
@@ -27,9 +39,8 @@ void VConfig::SetFont( const TCHAR* fnam, int fsiz, char fontCS, LONG fw, BYTE f
 	font.lfCharSet        = fontCS;
 
 	my_lstrcpyn( font.lfFaceName, fnam, LF_FACESIZE );
-	HDC h = ::GetDC( NULL );
-	font.lfHeight = -MulDiv(fsiz, ::GetDeviceCaps(h, LOGPIXELSY), 72);
-	::ReleaseDC( NULL, h );
+
+	SetFontSize( &font, NULL, fsiz, fx);
 }
 
 //-------------------------------------------------------------------------
@@ -496,6 +507,7 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 	{
 		String fontname;
 		int    fontsize=0;
+		int    fontxwidth=0;
 		LONG   fontweight=FW_DONTCARE;
 		BYTE   fontflags=0;
 		int    x;
@@ -530,14 +542,17 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 				clfound = true;
 				dt->vc.color[LN] = GetColor(ptr);
 				break;
+			case 0x00660066: // ff: FONT FLAGS
+				fontflags = GetInt(ptr);
+				break;
 			case 0x00660074: // ft: FONT
 				fontname = ptr;
 				break;
 			case 0x00660077: // fw: FONT WEIGHT
 				fontweight = GetInt(ptr);
 				break;
-			case 0x00660066: // ff: FONT FLAGS
-				fontflags = GetInt(ptr);
+			case 0x00660078: // fw: FONT X Width
+				fontxwidth = GetInt(ptr);
 				break;
 			case 0x0073007A: // sz: SIZE
 				fontsize = GetInt(ptr);
@@ -574,7 +589,8 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		if( !clfound )
 			dt->vc.color[LN] = dt->vc.color[TXT];
 		if( fontname.len()!=0 && fontsize!=0 )
-			dt->vc.SetFont( fontname.c_str(), fontsize, dt->fontCS, fontweight, fontflags, dt->fontQual );
+			dt->vc.SetFont( fontname.c_str(), fontsize, dt->fontCS
+						, fontweight, fontflags, fontxwidth, dt->fontQual );
 	}
 }
 
@@ -761,6 +777,10 @@ void ConfigManager::LoadIni()
 		wndM_ = ini_.GetBool( TEXT("WndM"), false );
 	}
 
+	// Print Margins
+	SetRect(&rcPMargins_, 500, 500, 500, 500);
+	ini_.GetRect( TEXT("PMargin"), &rcPMargins_, &rcPMargins_);
+
 	// TODO: MRU
 	mrus_ = ini_.GetInt( TEXT("MRU"), 4 );
 	mrus_ = Min(Max(0, mrus_), 20);
@@ -800,7 +820,7 @@ void ConfigManager::LoadIni()
 
 void ConfigManager::SaveIni()
 {
-	if(!inichanged_) 
+	if(!inichanged_)
 		return;
 	inichanged_=0;
 
@@ -843,6 +863,9 @@ void ConfigManager::SaveIni()
 	ini_.PutStr( TEXT("NewfileDoctype"), newfileDoctype_.c_str() );
 	ini_.PutInt( TEXT("NewfileLB"),      newfileLB_      );
 
+	// Print Margins
+	ini_.PutRect( TEXT("PMargin"), &rcPMargins_);
+
 	// MRU
 	ini_.PutInt( TEXT("MRU"), mrus_ );
 
@@ -860,6 +883,7 @@ void ConfigManager::SaveIni()
 	for(DtList::iterator i=++dtList_.begin(); i!=dtList_.end(); ++i,++ct)
 		ini_.PutStr( String().SetInt(ct).c_str(), i->name.c_str() );
 	ini_.PutStr( String().SetInt(ct).c_str(), TEXT("") );
+
 }
 
 
@@ -947,7 +971,7 @@ Path ConfigManager::GetMRU( int no ) const
 
 void ConfigManager::RememberWnd( ki::Window* wnd )
 {
-	if( this->rememberWindowPlace_ || this->rememberWindowSize_ ) 
+	if( this->rememberWindowPlace_ || this->rememberWindowSize_ )
 	{
 		RECT rc;
 		wnd->getPos(&rc);

@@ -147,7 +147,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 	// NOTIFY
 	case WM_NOTIFY:
 		if( ((NMHDR*)lp)->code == NM_DBLCLK )
-			if( wp == 1787 ) // Status Bar ID 
+			if( wp == 1787 ) // Status Bar ID
 				on_reopenfile();
 		break;
 
@@ -175,6 +175,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_SAVEFILE:   on_savefile();  break;
 	case ID_CMD_SAVEFILEAS: on_savefileas();break;
 	case ID_CMD_PRINT:      on_print();     break;
+	case ID_CMD_PAGESETUP:  on_pagesetup(); break;
 	case ID_CMD_SAVEEXIT:   if(Save_showDlgIfNeeded()) on_exit();  break;
 	case ID_CMD_DISCARDEXIT: Destroy();     break;
 	case ID_CMD_EXIT:       on_exit();      break;
@@ -302,7 +303,18 @@ void GreenPadWnd::on_savefileas()
 		ReloadConfig(); // 文書タイプに応じて表示を更新
 	}
 }
-
+void GreenPadWnd::on_pagesetup()
+{
+	PAGESETUPDLG psd;
+	mem00(&psd, sizeof(psd));
+	psd.lStructSize = sizeof(psd);
+	// FIXME: use local units...
+	psd.Flags = PSD_INTHOUSANDTHSOFINCHES|PSD_DISABLEORIENTATION|PSD_DISABLEPAPER|PSD_DISABLEPRINTER|PSD_MARGINS;
+	psd.hwndOwner = hwnd();
+	SetRect(&psd.rtMargin, 500, 500, 500, 500); ;
+	PageSetupDlg(&psd);
+	cfg_.SetPrintMargins(&psd.rtMargin);
+}
 void GreenPadWnd::on_print()
 {
 	doc::Document& d = edit_.getDoc();
@@ -310,9 +322,13 @@ void GreenPadWnd::on_print()
 	ulong dpStart = 0, len = 0;
 	short procCopies = 0, totalCopies = 0;
 
+	// Setup print dialog
 	PRINTDLG thePrintDlg = { sizeof(thePrintDlg) };
 	thePrintDlg.Flags = PD_RETURNDC | PD_NOPAGENUMS | PD_NOSELECTION | PD_HIDEPRINTTOFILE;
 	thePrintDlg.nCopies = 1;
+	thePrintDlg.hwndOwner = hwnd();
+	thePrintDlg.hDevNames = NULL;
+	thePrintDlg.hDevMode = NULL;
 
 	if (PrintDlg(&thePrintDlg) == 0) {
 		// cancelled
@@ -346,12 +362,32 @@ void GreenPadWnd::on_print()
 		return;
 		// Handle the error intelligently
 	}
+	// Setup printing font.
+	LOGFONT lf;
+	lf.lfEscapement     = cfg_.vConfig().font.lfEscapement;
+	lf.lfOrientation    = cfg_.vConfig().font.lfOrientation;
+	lf.lfWeight         = cfg_.vConfig().font.lfWeight;
+	lf.lfItalic         = cfg_.vConfig().font.lfItalic;
+	lf.lfUnderline      = cfg_.vConfig().font.lfUnderline;
+	lf.lfStrikeOut      = cfg_.vConfig().font.lfStrikeOut;
+	lf.lfCharSet        = cfg_.vConfig().font.lfCharSet;
+	lf.lfOutPrecision   = cfg_.vConfig().font.lfOutPrecision;
+	lf.lfClipPrecision  = cfg_.vConfig().font.lfClipPrecision;
+	lf.lfQuality        = cfg_.vConfig().font.lfQuality;
+	lf.lfPitchAndFamily = cfg_.vConfig().font.lfPitchAndFamily;
+	my_lstrcpy(lf.lfFaceName, cfg_.vConfig().font.lfFaceName);
+	SetFontSize(&lf, thePrintDlg.hDC, cfg_.vConfig().fontsize, cfg_.vConfig().fontwidth);
+	HFONT printfont = ::CreateFontIndirect(&lf);
+	::SelectObject( thePrintDlg.hDC, printfont );
+
 	::StartPage(thePrintDlg.hDC);
 
 	// Get Printer Caps
 	int cWidthPels, cHeightPels, cLineHeight;
-	cWidthPels = ::GetDeviceCaps(thePrintDlg.hDC, HORZRES);
-	cHeightPels = ::GetDeviceCaps(thePrintDlg.hDC, VERTRES);
+	cWidthPels = ::GetDeviceCaps(thePrintDlg.hDC, HORZRES); // px
+	cHeightPels = ::GetDeviceCaps(thePrintDlg.hDC, VERTRES);// px
+	int logpxx = GetDeviceCaps(thePrintDlg.hDC, LOGPIXELSX);// px/in
+	int logpxy = GetDeviceCaps(thePrintDlg.hDC, LOGPIXELSY);// px/in
 
 	// Get Line height
 	rctmp.right = cWidthPels;
@@ -359,20 +395,30 @@ void GreenPadWnd::on_print()
 	::DrawTextW(thePrintDlg.hDC, L"#", 1, &rctmp, DT_CALCRECT|DT_LEFT|DT_WORDBREAK|DT_EXPANDTABS|DT_EDITCONTROL);
 	cLineHeight = rctmp.bottom-rctmp.top;
 
-	RECT rcPrinter = { 5, 5, cWidthPels - 10, cHeightPels - 10 };
+	RECT rcMargins;
+	// Convert config margins in Inches to pixels
+	rcMargins.left   = (cfg_.PMargins().left  * logpxx)/1000;
+	rcMargins.top    = (cfg_.PMargins().top   * logpxy)/1000;
+	rcMargins.right  = (cfg_.PMargins().right * logpxx)/1000;
+	rcMargins.bottom = (cfg_.PMargins().left  * logpxy)/1000;
+
+	RECT rcPrinter = { rcMargins.left
+				, rcMargins.top
+				, cWidthPels - rcMargins.left - rcMargins.right
+				, cHeightPels - rcMargins.top - rcMargins.bottom };
 
 	int nThisLineHeight, nChars = 0, nHi = 0, nLo = 0;
 	const unicode* uStart;
 
 	// Process with multiple copies
 	do {
-		if(procCopies) 
+		if(procCopies)
 		{
 			::StartPage(thePrintDlg.hDC);
-			rcPrinter.top = 5;
-			rcPrinter.left = 5;
-			rcPrinter.right = cWidthPels - 10;
-			rcPrinter.bottom = cHeightPels - 10;
+			rcPrinter.top = rcMargins.top;
+			rcPrinter.left = rcMargins.left;
+			rcPrinter.right = cWidthPels   - (rcMargins.left+rcMargins.right);
+			rcPrinter.bottom = cHeightPels - (rcMargins.top+rcMargins.bottom);
 		}
 		// Print
 		for( ulong e=d.tln(), dpStart=0; dpStart<e; )
@@ -384,10 +430,10 @@ void GreenPadWnd::on_print()
 				rcPrinter.top += cLineHeight;
 				++dpStart;
 			}
-			else
+			else // non-empty line
 			{
 				rctmp = rcPrinter;
-				nHi = len; 
+				nHi = len;
 				nLo = 0;
 				if(!nChars)
 				{
@@ -402,7 +448,8 @@ void GreenPadWnd::on_print()
 
 				while (nLo < nHi) { // Find maximum number of chars can be printed
 					rctmp.top = rcPrinter.top;
-					nThisLineHeight = ::DrawTextW(thePrintDlg.hDC, uStart, nChars, &rctmp, DT_CALCRECT|DT_WORDBREAK|DT_NOCLIP|DT_EXPANDTABS|DT_NOPREFIX|DT_EDITCONTROL);
+					nThisLineHeight = ::DrawTextW(thePrintDlg.hDC, uStart, nChars, &rctmp
+											, DT_CALCRECT|DT_WORDBREAK|DT_NOCLIP|DT_EXPANDTABS|DT_NOPREFIX|DT_EDITCONTROL);
 					if (rcPrinter.top+nThisLineHeight < rcPrinter.bottom)
 						nLo = nChars;
 					if (rcPrinter.top+nThisLineHeight > rcPrinter.bottom)
@@ -425,28 +472,29 @@ void GreenPadWnd::on_print()
 			{
 				::EndPage(thePrintDlg.hDC);
 				::StartPage(thePrintDlg.hDC);
-				rcPrinter.top = 5;
-				rcPrinter.left = 5;
-				rcPrinter.right = cWidthPels - 10;
-				rcPrinter.bottom = cHeightPels - 10;
+				rcPrinter.top = rcMargins.top;
+				rcPrinter.left = rcMargins.left;
+				rcPrinter.right = cWidthPels   - (rcMargins.left+rcMargins.right);
+				rcPrinter.bottom = cHeightPels - (rcMargins.top+rcMargins.bottom);
 			}
 		}
-
+		// EndPage Does not reste page attributes on NT/9x
 		::EndPage(thePrintDlg.hDC);
 	} while(++procCopies < totalCopies);
 
 	// Close Printer
+	::DeleteObject(printfont);
 	::EndDoc(thePrintDlg.hDC);
 	::DeleteDC(thePrintDlg.hDC);
 
-	/*
+
 	::GlobalUnlock(thePrintDlg.hDevNames);
 	::GlobalUnlock(thePrintDlg.hDevMode);
 
 	// 解放する。
 	::GlobalFree(thePrintDlg.hDevNames);
 	::GlobalFree(thePrintDlg.hDevMode);
-	*/
+
 }
 
 void GreenPadWnd::on_exit()
@@ -595,7 +643,7 @@ void GreenPadWnd::on_config()
 #if defined(TARGET_VER) && TARGET_VER<=350
 /* WIP: Re-implementation of FindWindowEx for NT3.x
  * because of this I have changed the TARGET_VER>310 to 300
- * for those calls so that they can be still disabled easyly */ 
+ * for those calls so that they can be still disabled easyly */
 struct MyFindWindowExstruct {
     HWND after;
 	LPCTSTR lpszClass;
@@ -808,12 +856,12 @@ void GreenPadWnd::SetupMRUMenu()
 {
 	int nmru;
 	HMENU mparent = ::GetSubMenu(::GetMenu(hwnd()),0);
-	if( HMENU m = ::GetSubMenu(mparent, 11) )
+	if( HMENU m = ::GetSubMenu(mparent, 12) )
 	{
 		nmru = cfg_.SetUpMRUMenu( m, ID_CMD_MRU );
 		::DrawMenuBar( hwnd() );
 	}
-	::EnableMenuItem(mparent, 11, MF_BYPOSITION|(nmru?MF_ENABLED:MF_GRAYED));
+	::EnableMenuItem(mparent, 12, MF_BYPOSITION|(nmru?MF_ENABLED:MF_GRAYED));
 }
 
 void GreenPadWnd::on_mru( int no )
@@ -921,7 +969,7 @@ bool GreenPadWnd::Open( const ki::Path& fn, int cs, bool always )
 BOOL CALLBACK GreenPadWnd::SendMsgToFriendsProc(HWND hwnd, LPARAM lPmsg)
 {
 	TCHAR classn[256];
-	if(::IsWindow(hwnd)) 
+	if(::IsWindow(hwnd))
 	{
 		::GetClassName(hwnd, classn, countof(classn));
 		if (!my_lstrcmp(classn, className_))

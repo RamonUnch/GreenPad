@@ -3,7 +3,7 @@
 #include "editwing/editwing.h"
 #include "OpenSaveDlg.h"
 
-
+void SetFontSize(LOGFONT *font, HDC hDC, int fsiz, int fx);
 
 // アプリケーションメッセージ
 #define GPM_MRUCHANGED WM_APP+0
@@ -113,6 +113,8 @@ public:
 	int GetWndH() const;
 	bool GetWndM() const;
 	void RememberWnd( ki::Window* wnd );
+	RECT PMargins() const;
+	void SetPrintMargins(const RECT *rc);
 
 private:
 
@@ -160,6 +162,8 @@ private:
 
 	DtList           dtList_;
 	DtList::iterator curDt_;
+
+	RECT rcPMargins_;
 
 	// 最近使ったファイルのリスト
 	int mrus_;
@@ -254,6 +258,11 @@ inline int ConfigManager::GetWndH() const
 inline bool ConfigManager::GetWndM() const
 	{ return rememberWindowSize_ & wndM_; }
 
+inline RECT ConfigManager::PMargins() const
+	{ return rcPMargins_; }
+
+inline void ConfigManager::SetPrintMargins(const RECT *rc) 
+	{ CopyRect(&rcPMargins_, rc); inichanged_=1; SaveIni(); }
 //=========================================================================
 
 #endif // __ccdoc__
