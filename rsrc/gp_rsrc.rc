@@ -87,15 +87,16 @@ IDR_MAIN MENU
 BEGIN
     POPUP "ファイル(&F)"
     BEGIN
-        MENUITEM "新規作成(&N)\tCtrl+N",        ID_CMD_NEWFILE
+        MENUITEM "新規作成(&N)\tCtrl+N",           ID_CMD_NEWFILE
         MENUITEM SEPARATOR
-        MENUITEM "開く(&O)...\tCtrl+O",         ID_CMD_OPENFILE
-        MENUITEM "開き直す(&R)...\tCtrl+R",     ID_CMD_REOPENFILE
+        MENUITEM "開く(&O)...\tCtrl+O",          ID_CMD_OPENFILE
+        MENUITEM "開き直す(&R)...\tCtrl+R",        ID_CMD_REOPENFILE
         MENUITEM SEPARATOR
-        MENUITEM "保存(&S)\tCtrl+S",            ID_CMD_SAVEFILE
+        MENUITEM "保存(&S)\tCtrl+S",             ID_CMD_SAVEFILE
         MENUITEM "別名で保存(&A)...\tCtrl+Shift+S", ID_CMD_SAVEFILEAS
         MENUITEM SEPARATOR
-        MENUITEM "印刷(&P)...\tCtrl+P",            ID_CMD_PRINT
+        MENUITEM "印刷(&P)...\tCtrl+P",          ID_CMD_PRINT
+        MENUITEM "Page Set&up...",              ID_CMD_PAGESETUP
         MENUITEM SEPARATOR
         POPUP "最近のファイル(&M)"
         BEGIN
@@ -442,7 +443,8 @@ BEGIN
         MENUITEM "&Save\tCtrl+S",               ID_CMD_SAVEFILE
         MENUITEM "Save &As...\tCtrl+Shift+S",   ID_CMD_SAVEFILEAS
         MENUITEM SEPARATOR
-        MENUITEM "&Print...\tCtrl+P",              ID_CMD_PRINT
+        MENUITEM "&Print...\tCtrl+P",           ID_CMD_PRINT
+        MENUITEM "Page Set&up...",               ID_CMD_PAGESETUP
         MENUITEM SEPARATOR
         POPUP "R&ecent Files"
         BEGIN
