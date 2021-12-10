@@ -305,15 +305,24 @@ void GreenPadWnd::on_savefileas()
 }
 void GreenPadWnd::on_pagesetup()
 {
-	PAGESETUPDLG psd;
-	mem00(&psd, sizeof(psd));
-	psd.lStructSize = sizeof(psd);
-	// FIXME: use local units...
-	psd.Flags = PSD_INTHOUSANDTHSOFINCHES|PSD_DISABLEORIENTATION|PSD_DISABLEPAPER|PSD_DISABLEPRINTER|PSD_MARGINS;
-	psd.hwndOwner = hwnd();
-	SetRect(&psd.rtMargin, 500, 500, 500, 500); ;
-	PageSetupDlg(&psd);
-	cfg_.SetPrintMargins(&psd.rtMargin);
+#if UNICOWS || !defined(TARGET_VER) ||  defined(TARGET_VER) && TARGET_VER>=351
+	if (app().Is351p()) 
+	{
+		PAGESETUPDLG psd;
+		mem00(&psd, sizeof(psd));
+		psd.lStructSize = sizeof(psd);
+		// FIXME: use local units...
+		psd.Flags = PSD_INTHOUSANDTHSOFINCHES|PSD_DISABLEORIENTATION|PSD_DISABLEPAPER|PSD_DISABLEPRINTER|PSD_MARGINS;
+		psd.hwndOwner = hwnd();
+		CopyRect(&psd.rtMargin, &cfg_.PMargins());
+		PageSetupDlg(&psd);
+		cfg_.SetPrintMargins(&psd.rtMargin);
+	}
+	else
+	{
+		MessageBox(hwnd(), TEXT("You need at least Windows NT 3.51!\n"), NULL, MB_OK);
+	}
+#endif;
 }
 void GreenPadWnd::on_print()
 {
