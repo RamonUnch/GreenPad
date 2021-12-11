@@ -229,6 +229,7 @@ private:
 		IActiveIMMApp*              immApp_;
 		IActiveIMMMessagePumpOwner* immMsg_;
 	#endif
+	bool hasIMM32_;
 	static IMEManager* pUniqueInstance_;
 
 private:
