@@ -4,6 +4,9 @@
 using namespace ki;
 
 #if defined(TARGET_VER) && TARGET_VER<=350
+#pragma comment(lib, "DelayImp.lib")
+#pragma comment(linker, "/DelayLoad:IMM32.DLL")
+
 // Dynalmically import GetKeyboardLayout for NT3.1 (NT3.5 has a stub).
 typedef HKL(WINAPI *funkk)(DWORD dwLayout);
 static HKL MyGetKeyboardLayout(DWORD dwLayout)
@@ -20,6 +23,24 @@ static HKL MyGetKeyboardLayout(DWORD dwLayout)
   #define MyGetKeyboardLayout GetKeyboardLayout
 #endif // Target_VER
 
+#ifdef UNICOWS //Use A or W version at runtime...
+static BOOL MyImmSetCompositionFont(HIMC hIMC, LPLOGFONTW plf)
+{
+	// Unicode support on Windows NT...
+	if (app().isNT()) return ImmSetCompositionFontW(hIMC, plf);
+
+	// Convert LPLOGFONTW --> LPLOGFONTA
+	LOGFONTA lfa;
+	// Copy lf struct in lfa.
+	memmove((void*)&lfa, (void*)plf, sizeof(lfa));
+	// Convert lfFaceName from W to A.
+	
+	::WideCharToMultiByte(CP_ACP, MB_PRECOMPOSED, plf->lfFaceName, -1 , lfa.lfFaceName, LF_FACESIZE, NULL, NULL);
+	return ImmSetCompositionFontA(hIMC, &lfa);
+}
+#else
+#define MyImmSetCompositionFont ImmSetCompositionFont
+#endif
 //=========================================================================
 // IMEに関するあれこれ
 //=========================================================================
@@ -45,7 +66,10 @@ IMEManager::IMEManager()
 					myIID_IActiveIMMMessagePumpOwner, (void**)&immMsg_ );
 			}
 		}
-	#endif
+	#endif //USEGLOBALIME
+
+	// check if IMM32.DLL can be loaded...
+	hasIMM32_ = !!LoadLibraryA("IMM32.DLL");
 
 	// 唯一のインスタンスは私です
 	pUniqueInstance_ = this;
@@ -79,7 +103,7 @@ void IMEManager::EnableGlobalIME( bool enable )
 
 BOOL IMEManager::IsIME()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	HKL hKL = MyGetKeyboardLayout(GetCurrentThreadId());
 	#ifdef USEGLOBALIME
 		if( immApp_ )
@@ -87,18 +111,18 @@ BOOL IMEManager::IsIME()
 			return immApp_->IsIME( hKL );
 		}
 		else
-	#endif
+	#endif // USEGLOBALIME
+		if (hasIMM32_) 
 		{
 			return ::ImmIsIME( hKL );
 		}
-#else
 	return FALSE;
 #endif // TARGET_VER
 }
 
 BOOL IMEManager::CanReconv()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	HKL hKL = MyGetKeyboardLayout(GetCurrentThreadId());
 	DWORD nImeProps = ImmGetProperty( MyGetKeyboardLayout( 0 ), IGP_SETCOMPSTR );
 	#ifdef USEGLOBALIME
@@ -108,6 +132,7 @@ BOOL IMEManager::CanReconv()
 		}
 		else
 	#endif
+		if (hasIMM32_) 
 		{
 			nImeProps = ::ImmGetProperty( hKL, IGP_SETCOMPSTR );
 		}
@@ -120,7 +145,7 @@ BOOL IMEManager::CanReconv()
 BOOL IMEManager::GetState( HWND wnd )
 {
 	BOOL imeStatus = FALSE;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	HIMC ime;
 	#ifdef USEGLOBALIME
 		if( immApp_ )
@@ -131,6 +156,7 @@ BOOL IMEManager::GetState( HWND wnd )
 		}
 		else
 	#endif
+		if (hasIMM32_) 
 		{
 			ime = ::ImmGetContext( wnd );
 			imeStatus = ::ImmGetOpenStatus(ime );
@@ -142,7 +168,7 @@ BOOL IMEManager::GetState( HWND wnd )
 
 void IMEManager::SetState( HWND wnd, bool enable )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	HIMC ime;
 	#ifdef USEGLOBALIME
 		if( immApp_ )
@@ -153,6 +179,7 @@ void IMEManager::SetState( HWND wnd, bool enable )
 		}
 		else
 	#endif
+		if (hasIMM32_) 
 		{
 			ime = ::ImmGetContext( wnd );
 			::ImmSetOpenStatus(ime, (enable ? TRUE : FALSE) );
@@ -210,7 +237,7 @@ inline void IMEManager::MsgLoopEnd()
 
 void IMEManager::SetFont( HWND wnd, const LOGFONT& lf )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	HIMC ime;
 	LOGFONT* plf = const_cast<LOGFONT*>(&lf);
 
@@ -226,10 +253,12 @@ void IMEManager::SetFont( HWND wnd, const LOGFONT& lf )
 		immApp_->ReleaseContext( wnd, ime );
 	}
 	else
-	#endif
+	#endif //USEGLOBALIME
+	if (hasIMM32_) 
 	{
 		ime = ::ImmGetContext( wnd );
-		::ImmSetCompositionFont( ime, plf );
+		MyImmSetCompositionFont( ime, plf ); // A/W
+		
 		::ImmReleaseContext( wnd, ime );
 	}
 #endif // TARGET_VER
@@ -237,7 +266,7 @@ void IMEManager::SetFont( HWND wnd, const LOGFONT& lf )
 
 void IMEManager::SetPos( HWND wnd, int x, int y )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	HIMC ime;
 	COMPOSITIONFORM cf;
 	cf.dwStyle = CFS_POINT;
@@ -253,6 +282,7 @@ void IMEManager::SetPos( HWND wnd, int x, int y )
 	}
 	else
 	#endif
+	if (hasIMM32_) 
 	{
 		ime = ::ImmGetContext( wnd );
 		::ImmSetCompositionWindow( ime, &cf );
@@ -263,7 +293,7 @@ void IMEManager::SetPos( HWND wnd, int x, int y )
 
 void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	*str = NULL;
 	HIMC ime;
 
@@ -278,12 +308,13 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 		immApp_->ReleaseContext( wnd, ime );
 	}
 	else
-	#endif
+	#endif //USEGLOBALIME
+	if (hasIMM32_) 
 	{
 		ime = ::ImmGetContext( wnd );
 		long s = ::ImmGetCompositionStringW( ime,GCS_RESULTSTR,NULL,0 );
 
-		#ifndef _UNICODE
+		#if  !defined(_UNICODE) || defined(UNICOWS)
 			if( s <= 0 )
 			{
 				s = ::ImmGetCompositionStringA(ime,GCS_RESULTSTR,NULL,0);
@@ -305,13 +336,13 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 			}
 
 		::ImmReleaseContext( wnd, ime );
-	}
-#endif
+	} // endif (hasIMM32_)
+#endif //TARGET_VER
 }
 
 void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	HIMC ime;
 
 	#ifdef USEGLOBALIME
@@ -325,12 +356,13 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 		immApp_->ReleaseContext( wnd, ime );
 	}
 	else
-	#endif
+	#endif //USEGLOBALIME
+	if (hasIMM32_) 
 	{
 		ime = ::ImmGetContext( wnd );
 		long s = ::ImmSetCompositionStringW( ime,SCS_SETSTR,str,len*sizeof(unicode),NULL,0 );
 
-		#ifndef _UNICODE
+		#if  !defined(_UNICODE) || defined(UNICOWS)
 			if( s == 0 )
 			{
 				BOOL defchr = TRUE;
@@ -347,8 +379,8 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 		::ImmNotifyIME( ime, NI_COMPOSITIONSTR, CPS_CONVERT, 0); // 変換実行
 		::ImmNotifyIME( ime, NI_OPENCANDIDATE, 0, 0 ); // 変換候補リスト表示
 		::ImmReleaseContext( wnd, ime );
-	}
-#endif
+	}// endif (hasIMM32_) 
+#endif //TARGET_VER
 }
 
 
