@@ -139,6 +139,7 @@ struct VConfig : public ki::Object
 	//@{ フォント //@}
 	LOGFONT font;
 	int fontsize;
+	int fontwidth;
 
 	//@{ タブ幅文字数 //@}
 	int tabstep;
@@ -181,7 +182,7 @@ struct VConfig : public ki::Object
 	}*/
 	void SetFont( const TCHAR* fnam, int fsiz
 				, char fontCS=DEFAULT_CHARSET
-				, LONG fw=FW_DONTCARE, BYTE ff=0
+				, LONG fw=FW_DONTCARE, BYTE ff=0, int fx=0
 				, int qual=DEFAULT_QUALITY ) ;
 /*	{
 		fontsize              = fsiz;

@@ -16,9 +16,17 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 	PROCESS_INFORMATION psi;
 	::GetStartupInfo( &sti );
 
-	String fcmd = (String)(TEXT("\"")) + Path(Path::ExeName);
-	fcmd += TEXT("\" ");
+	// On Windows NT3.x we cannot have the exe name between ""
+	// On NT5 it seems ok to use "exe name.exe" "file name"
+	// Otherwise we try SHORT/NAME.EXE "file name"
+	// I do not know why the heck it is like this.
+	String fcmd;
+	if (app().isNewTypeWindows()) fcmd = TEXT("\"");
+	fcmd += app().isNewTypeWindows()? Path(Path::ExeName): Path(Path::ExeName).BeShortStyle();
+	fcmd += app().isNewTypeWindows()? TEXT("\" "): TEXT(" ");
+	fcmd += TEXT(" ");
 	fcmd += cmd;
+//	MessageBox(NULL, (TCHAR*)fcmd.c_str(), (TCHAR*)Path(Path::ExeName).c_str(), MB_OK);
 
 	if( ::CreateProcess( NULL, (TCHAR*)fcmd.c_str(),
 			NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL,
@@ -306,7 +314,7 @@ void GreenPadWnd::on_savefileas()
 void GreenPadWnd::on_pagesetup()
 {
 #if UNICOWS || !defined(TARGET_VER) ||  defined(TARGET_VER) && TARGET_VER>=351
-	if (app().Is351p()) 
+	if (app().is351p())
 	{
 		PAGESETUPDLG psd;
 		mem00(&psd, sizeof(psd));
@@ -360,7 +368,6 @@ void GreenPadWnd::on_print()
 	di.lpszOutput = (LPTSTR) NULL;
 	di.lpszDatatype = (LPTSTR) NULL;
 	di.fwType = 0;
-	RECT rctmp = { 0, 0, 0, 0 };
 
 	int nError = ::StartDoc(thePrintDlg.hDC, &di);
 	if (nError == SP_ERROR)
@@ -399,6 +406,9 @@ void GreenPadWnd::on_print()
 	int logpxy = GetDeviceCaps(thePrintDlg.hDC, LOGPIXELSY);// px/in
 
 	// Get Line height
+	RECT rctmp;
+	rctmp.left = 0;
+	rctmp.top = 0;
 	rctmp.right = cWidthPels;
 	rctmp.bottom = cHeightPels;
 	::DrawTextW(thePrintDlg.hDC, L"#", 1, &rctmp, DT_CALCRECT|DT_LEFT|DT_WORDBREAK|DT_EXPANDTABS|DT_EDITCONTROL);
@@ -1032,6 +1042,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 
 	// 開く
 	edit_.getDoc().ClearAll();
+	stb_.SetText(TEXT("Loading file..."));
 	edit_.getDoc().OpenFile( tf );
 
 	// タイトルバー更新

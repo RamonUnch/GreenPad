@@ -23,6 +23,8 @@ typedef unsigned long  ulong;
 // 大きい方、小さい方
 template<typename T> inline T Min(T x,T y) { return (x<y ? x : y); }
 template<typename T> inline T Max(T x,T y) { return (y<x ? x : y); }
+template<typename T> inline T Clamp(T l, T x,T h) { return (x < l)? l: ((x > h)? h: x); }
+template<typename T> inline T NZero(T x)   { return (x==0? 1 : x); }
 
 // 古いC++処理系でも、forで使う変数のスコープを強制的に制限
 #if defined(_MSC_VER) || defined(__DMC__)

@@ -203,16 +203,17 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 	, brush_     ( ::CreateSolidBrush( vc.color[BG] ) )
 	, widthTable_( new int[65536] )
 {
-	// 制御文字を描画するか否か？のフラグを記憶
+	// 制御文字を描画するか否か？のフラグを記憶, 
+	// Whether to draw control characters or not? flag is stored.
 	for( int i=0; i<countof(scDraw_); ++i )
 		scDraw_[i] = vc.sc[i];
 
-	// 文字色を記憶
+	// 文字色を記憶, Memorize text color
 	for( int i=0; i<countof(colorTable_); ++i )
 		colorTable_[i] = vc.color[i];
 		colorTable_[3] = vc.color[CMT];
 
-	// DCにセット
+	// DCにセット, Setup Device Context (DC)
 	::SelectObject( dc_, font_  );
 	::SelectObject( dc_, pen_   );
 	::SelectObject( dc_, brush_ );

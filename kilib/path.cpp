@@ -124,17 +124,15 @@ Path& Path::BeDriveOnly()
 
 Path& Path::BeShortStyle()
 {
-#if 0 && !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+#if defined(UNICOWS) || !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 // In UNICOWS mode the A/W functions are imported dynamically anyway.
 // GetShortPathName needs at least 95/NT4 but there is a stub in NT3.5
-#if (defined(UNICODE) && defined(UNICOWS)) || !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
 	if(app().isNewShell()) // 95/NT4+
 	{
 		TCHAR* buf = ReallocMem( len()+1 );
 		::GetShortPathName( buf, buf, len()+1 );
 		UnlockMem();
 	}
-#endif
 #endif
 	return *this;
 }

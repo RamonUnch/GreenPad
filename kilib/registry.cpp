@@ -42,6 +42,22 @@ bool IniFile::GetBool( const TCHAR* key, bool defval ) const
 	return (0!=::GetPrivateProfileInt(
 		section_.c_str(), key, defval?1:0, iniName_.c_str() ));
 }
+void IniFile::GetRect ( const TCHAR* key, RECT *rc, const RECT *defrc  ) const
+{
+	String rcCN = key;
+
+	String tmp = rcCN + (String)TEXT("L");
+	rc->left  = GetInt(tmp.c_str(), defrc->left);
+
+	tmp = rcCN + (String)TEXT("T");
+	rc->top  = GetInt(tmp.c_str(), defrc->top);	
+
+	tmp = rcCN + (String)TEXT("R");
+	rc->right  = GetInt(tmp.c_str(), defrc->right);	
+
+	tmp = rcCN + (String)TEXT("B");
+	rc->bottom  = GetInt(tmp.c_str(), defrc->bottom);
+}
 
 String IniFile::GetStr ( const TCHAR* key, const String& defval ) const
 {
@@ -117,6 +133,23 @@ bool IniFile::PutInt ( const TCHAR* key, int val )
 bool IniFile::PutBool( const TCHAR* key, bool val )
 {
 	return PutStr( key, val ? TEXT("1") : TEXT("0") );
+}
+
+bool IniFile::PutRect ( const TCHAR* key, const RECT *rc  )
+{
+	String rcCN = key;
+
+	String tmp = rcCN + (String)TEXT("L");
+	PutInt(tmp.c_str(), rc->left);
+
+	tmp = rcCN + (String)TEXT("T");
+	PutInt(tmp.c_str(), rc->top);
+
+	tmp = rcCN + (String)TEXT("R");
+	PutInt(tmp.c_str(), rc->right);
+
+	tmp = rcCN + (String)TEXT("B");
+	return PutInt(tmp.c_str(), rc->bottom);
 }
 
 bool IniFile::PutPath( const TCHAR* key, const Path& val )

@@ -40,6 +40,8 @@ public:
 	int    GetInt ( const TCHAR* key, int   defval ) const;
 	//@{ 真偽値読み込み //@}
 	bool   GetBool( const TCHAR* key, bool  defval ) const;
+	//@{ Get rect from ini file//@}
+	void GetRect (const TCHAR* key, RECT *rc, const RECT *defrc) const;
 	//@{ 文字列読み込み //@}
 	String GetStr ( const TCHAR* key, const String& defval ) const;
 	//@{ パス文字列読み込み //@}
@@ -49,6 +51,8 @@ public:
 	bool PutInt ( const TCHAR* key, int val );
 	//@{ 真偽値書き込み //@}
 	bool PutBool( const TCHAR* key, bool val );
+	//@{ Save rect to ini file //@}
+	bool PutRect( const TCHAR* key, const RECT *rc);
 	//@{ 文字列書き込み //@}
 	bool PutStr ( const TCHAR* key, const TCHAR* val );
 	//@{ パス書き込み //@}
