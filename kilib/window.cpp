@@ -116,8 +116,8 @@ BOOL IMEManager::IsIME()
 		{
 			return ::ImmIsIME( hKL );
 		}
-	return FALSE;
 #endif // TARGET_VER
+	return FALSE;
 }
 
 BOOL IMEManager::CanReconv()
@@ -178,7 +178,7 @@ void IMEManager::SetState( HWND wnd, bool enable )
 			immApp_->ReleaseContext( wnd, ime );
 		}
 		else
-	#endif
+	#endif // USEGLOBALIME
 		if (hasIMM32_) 
 		{
 			ime = ::ImmGetContext( wnd );
@@ -281,7 +281,7 @@ void IMEManager::SetPos( HWND wnd, int x, int y )
 		immApp_->ReleaseContext( wnd, ime );
 	}
 	else
-	#endif
+	#endif // USEGLOBALIME
 	if (hasIMM32_) 
 	{
 		ime = ::ImmGetContext( wnd );

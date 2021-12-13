@@ -22,6 +22,14 @@ class Parser;
 //	キーワードファイルによって指定された強調語を区別するための
 //	解析処理結果用バッファも管理する。文字データに終端NULは
 //	付けないが、解析作業の高速化のため、終端 U+007f が入る。
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// Row buffer structure
+//
+// Holds text data in the form of UCS-2 betas. And at the same time.
+// buffer for parsing results to distinguish emphasized words specified by the keyword file.
+// It also maintains a buffer for the result of parsing. Text data is not terminated with NULs.
+// The character data does not have a terminator NUL, but the terminator
+// U+007f is included to speed up the parsing process
 //@}
 //=========================================================================
 

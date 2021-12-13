@@ -14,7 +14,7 @@ using namespace ki;
 
 		void* __cdecl operator new( size_t siz )
 		{
-			return ::HeapAlloc( g_heap, HEAP_GENERATE_EXCEPTIONS, siz );
+			return ::HeapAlloc( g_heap, 0, siz );
 		}
 
 		void __cdecl operator delete( void* ptr )
@@ -29,7 +29,7 @@ using namespace ki;
 		void* __cdecl operator new( size_t siz )
 		{
 			++allocCounter;
-			return ::HeapAlloc( g_heap, /*HEAP_GENERATE_EXCEPTIONS*/0, siz );
+			return ::HeapAlloc( g_heap, HEAP_GENERATE_EXCEPTIONS, siz );
 		}
 		void __cdecl operator delete( void* ptr )
 		{
@@ -52,7 +52,7 @@ using namespace ki;
 		return buf;
 	}
 	#endif
-	#ifndef __GNUC__
+	#if !defined(__GNUC__)
 	void* __cdecl memmove( void* dst, const void* src, size_t cnt )
 	{
 		__asm {
@@ -117,6 +117,22 @@ using namespace ki;
 			cld                ;U
 			mov  eax, [dst]    ;V  return dst
 		}
+		return dst;
+	}
+	#else
+	// Stupid naive C90 memmove
+	void *__cdecl memmove(void *dst, const void *src, size_t n)
+	{
+		if(dst == src) return dst;
+
+		unsigned char *pd = (unsigned char *)dst;
+		const unsigned char *ps = (const unsigned char *)src;
+		if (ps < pd)
+			for (pd += n, ps += n; n--;)
+				*--pd = *--ps;
+		else
+			while(n--)
+				*pd++ = *ps++;
 		return dst;
 	}
 	#endif
@@ -490,10 +506,9 @@ void* MemoryManager::Alloc( size_t siz )
 {
 	return ::operator new(siz);
 }
-
 void MemoryManager::DeAlloc( void* ptr, size_t siz )
 {
 	::operator delete(ptr);
 }
 
-#endif
+#endif // else USE_ORIGINAL_MEMMAN

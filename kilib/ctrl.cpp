@@ -17,8 +17,9 @@ bool StatusBar::Create( HWND parent )
 	HWND h = NULL;
 #if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	// Avoid using CreateStatusWindow that is not present on NT3.1.
-	h = CreateWindow(
-		STATUSCLASSNAME,  // pointer to registered class name
+	h = CreateWindowEx(
+		0, // ExStyle
+		STATUSCLASSNAME,  // TEXT("msctls_statusbar") for NT3.1
 		NULL, // pointer to window name
 		WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP , // window style
 		0, 0, 0, 0, //x, y, w, h

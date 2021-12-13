@@ -94,7 +94,7 @@ public:
 	static const OSVERSIONINFOA& osver();
 	static bool isWin95();
 	static bool isNT();
-	static bool Is351p();
+	static bool is351p();
 	static bool isNewShell();
 	static bool isNewTypeWindows();
 

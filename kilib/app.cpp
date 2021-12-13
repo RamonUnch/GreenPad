@@ -212,7 +212,7 @@ bool App::isNewShell()
 	return v.dwMajorVersion>3;
 }
 
-bool App::Is351p()
+bool App::is351p()
 {
 	static const OSVERSIONINFOA& v = osver();
 	return v.dwMajorVersion>3 
