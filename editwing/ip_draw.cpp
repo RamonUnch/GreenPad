@@ -521,7 +521,7 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 	register int   x, x2;
 	register ulong i, i2;
 
-	// 論理行単位のLoop
+	// 論理行単位のLoop. Loop per logical line.
 	for( ulong tl=v.TLMIN; a.top<v.YMAX; ++tl )
 	{
 		// 定数２

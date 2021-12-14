@@ -363,7 +363,7 @@ void Cursor::SetROMode( bool bRO )
 }
 
 
-	
+
 //-------------------------------------------------------------------------
 // 文字入力・削除
 //-------------------------------------------------------------------------
@@ -467,6 +467,10 @@ void Cursor::Copy()
 	{
 		// NT系ならそのままダイレクトに
 		h = ::GlobalAlloc( GMEM_MOVEABLE, (len+1)*2 );
+		if (!h) {
+			MessageBox(NULL, TEXT("Selection is too large to hold into memory!"), NULL, MB_OK|MB_TASKMODAL) ;
+			return;
+		}
 		doc_.getText( static_cast<unicode*>(::GlobalLock(h)), dm, dM );
 		::GlobalUnlock( h );
 		clp.SetData( CF_UNICODETEXT, h );
@@ -475,6 +479,10 @@ void Cursor::Copy()
 	{
 		// 9x系なら変換が必要
 		h = ::GlobalAlloc( GMEM_MOVEABLE, (len+1)*3 );
+		if (!h) {
+			MessageBox(NULL, TEXT("Selection is too large to hold into memory!"), NULL, MB_OK|MB_TASKMODAL) ;
+			return;
+		}
 		p = new unicode[len+1];
 		doc_.getText( p, dm, dM );
 		::WideCharToMultiByte( CP_ACP, 0, p, -1,
@@ -520,7 +528,7 @@ unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str)
 	int i, j;
 	bool trim = true;
 	// Go through the string backward
-	for (i = my_lstrlenW(str)-1, j = i; i >= 0; i--) 
+	for (i = my_lstrlenW(str)-1, j = i; i >= 0; i--)
 	{
 		if (trim) { // we trim
 			if (str[i] == ' ' || str[i] == '\t') {
