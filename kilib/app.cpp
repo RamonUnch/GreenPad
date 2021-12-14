@@ -219,6 +219,11 @@ bool App::is351p()
 		|| v.dwMajorVersion==3 && v.dwMinorVersion >= 51;
 }
 
+bool App::isNT31()
+{
+	static const OSVERSIONINFOA& v = osver();
+	return v.dwMajorVersion==3 && v.dwMinorVersion < 50;
+}
 
 //=========================================================================
 

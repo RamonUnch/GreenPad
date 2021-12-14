@@ -35,7 +35,7 @@ static BOOL MyImmSetCompositionFont(HIMC hIMC, LPLOGFONTW plf)
 	memmove((void*)&lfa, (void*)plf, sizeof(lfa));
 	// Convert lfFaceName from W to A.
 	
-	::WideCharToMultiByte(CP_ACP, MB_PRECOMPOSED, plf->lfFaceName, -1 , lfa.lfFaceName, LF_FACESIZE, NULL, NULL);
+	::WideCharToMultiByte(CP_ACP, 0, plf->lfFaceName, -1 , lfa.lfFaceName, LF_FACESIZE, NULL, NULL);
 	return ImmSetCompositionFontA(hIMC, &lfa);
 }
 #else
