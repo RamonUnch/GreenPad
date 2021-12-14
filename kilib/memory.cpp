@@ -14,7 +14,12 @@ using namespace ki;
 
 		void* __cdecl operator new( size_t siz )
 		{
-			return ::HeapAlloc( g_heap, 0, siz );
+			void *ret = ::HeapAlloc( g_heap, 0, siz );
+			if (!ret) {
+				MessageBox(NULL, TEXT("Unable to allocate memory!\nExiting Process."), NULL, MB_OK|MB_TASKMODAL);
+				ExitProcess(1);
+			}
+			return ret;
 		}
 
 		void __cdecl operator delete( void* ptr )
