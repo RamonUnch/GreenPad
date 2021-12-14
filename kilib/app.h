@@ -95,6 +95,7 @@ public:
 	static bool isWin95();
 	static bool isNT();
 	static bool is351p();
+	static bool isNT31();
 	static bool isNewShell();
 	static bool isNewTypeWindows();
 

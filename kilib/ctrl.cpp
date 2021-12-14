@@ -19,12 +19,12 @@ bool StatusBar::Create( HWND parent )
 	// Avoid using CreateStatusWindow that is not present on NT3.1.
 	h = CreateWindowEx(
 		0, // ExStyle
-		STATUSCLASSNAME,  // TEXT("msctls_statusbar") for NT3.1
+		app().isNT31()? TEXT("msctls_statusbar"): STATUSCLASSNAME,  // TEXT("msctls_statusbar") for NT3.1
 		NULL, // pointer to window name
 		WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP , // window style
 		0, 0, 0, 0, //x, y, w, h
 		parent, // handle to parent or owner window
-		(struct HMENU__ *)1787,          // handle to menu or child-window identifier
+		(struct HMENU__ *)1787, // handle to menu or child-window identifier
 		app().hinst(), // handle to application instance
 		NULL // pointer to window-creation data
 	);
@@ -60,6 +60,24 @@ bool StatusBar::PreTranslateMessage( MSG* )
 	return false;
 }
 
+void StatusBar::SetText( const TCHAR* str, int part )
+{
+  # ifdef UNICOWS
+	if (app().isNT() && !app().isNT31())
+  # endif
+	{	// Unicode in UNICOWS mode to be used on NT only from 3.5
+		SendMsg( SB_SETTEXT, part, reinterpret_cast<LPARAM>(str) ); 
+	}
+  # ifdef UNICOWS
+	else 
+	{	// Use ANSI version NT3.1 and Win9x (convert string).
+		char buf[256];
+		long len = ::WideCharToMultiByte(CP_ACP, 0, str, -1 , buf, 255, NULL, NULL);
+		buf[len] = '\0';
+		SendMsg( SB_SETTEXTA, part, reinterpret_cast<LPARAM>(buf) ); 
+	}
+  # endif
+}
 
 
 //=========================================================================

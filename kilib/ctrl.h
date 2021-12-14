@@ -55,9 +55,6 @@ inline bool StatusBar::isStatusBarVisible() const
 inline void StatusBar::SetParts( int n, int* parts )
 	{ SendMsg( SB_SETPARTS, n, reinterpret_cast<LPARAM>(parts) ); }
 
-inline void StatusBar::SetText( const TCHAR* str, int part )
-	{ SendMsg( SB_SETTEXT, part, reinterpret_cast<LPARAM>(str) ); }
-
 inline void StatusBar::SetStatusBarVisible(bool b)
 	{ if(hwnd()) ::ShowWindow( hwnd(), b?SW_SHOW:SW_HIDE ); visible_= b && hwnd(); }
 
