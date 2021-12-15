@@ -776,6 +776,8 @@ void ConfigManager::LoadIni()
 		wndH_ = ini_.GetInt( TEXT("WndH"), CW_USEDEFAULT );
 		wndM_ = ini_.GetBool( TEXT("WndM"), false );
 	}
+	// Exit with the ESC key?
+	useQuickExit_ = ini_.GetBool( TEXT("QuickExit"), true );
 
 	// Print Margins
 	SetRect(&rcPMargins_, 500, 500, 500, 500);
@@ -858,6 +860,9 @@ void ConfigManager::SaveIni()
 		ini_.PutInt( TEXT("WndH"), wndH_ );
 		ini_.PutBool( TEXT("WndM"), wndM_ );
 	}
+	// Exit with the ESC key?
+	ini_.PutBool(TEXT("QuickExit"), useQuickExit_);
+
 	// 新規ファイル関係
 	ini_.PutInt( TEXT("NewfileCharset"), newfileCharset_ );
 	ini_.PutStr( TEXT("NewfileDoctype"), newfileDoctype_.c_str() );

@@ -115,6 +115,7 @@ public:
 	void RememberWnd( ki::Window* wnd );
 	RECT PMargins() const;
 	void SetPrintMargins(const RECT *rc);
+	bool useQuickExit() const;
 
 private:
 
@@ -132,6 +133,7 @@ private:
 	bool       showStatusBar_;
 	bool       rememberWindowSize_;
 	bool       rememberWindowPlace_;
+	bool       useQuickExit_;
 
 	ki::String dateFormat_;
 //	ki::String timeFormat_;
@@ -263,6 +265,9 @@ inline RECT ConfigManager::PMargins() const
 
 inline void ConfigManager::SetPrintMargins(const RECT *rc) 
 	{ CopyRect(&rcPMargins_, rc); inichanged_=1; SaveIni(); }
+
+inline bool ConfigManager::useQuickExit() const
+	{ return useQuickExit_; }
 //=========================================================================
 
 #endif // __ccdoc__

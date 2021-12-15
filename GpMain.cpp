@@ -154,9 +154,9 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 
 	// NOTIFY
 	case WM_NOTIFY:
-		if( ((NMHDR*)lp)->code == NM_DBLCLK )
-			if( wp == 1787 ) // Status Bar ID
-				on_reopenfile();
+		if( wp == 1787 // Status Bar ID to check before[]
+		&& ((NMHDR*)lp)->code == NM_DBLCLK )
+			on_reopenfile();
 		break;
 
 	// その他
@@ -187,6 +187,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_SAVEEXIT:   if(Save_showDlgIfNeeded()) on_exit();  break;
 	case ID_CMD_DISCARDEXIT: Destroy();     break;
 	case ID_CMD_EXIT:       on_exit();      break;
+	case ID_CMD_QUICKEXIT:  if(cfg_.useQuickExit()) on_exit();      break;
 
 	// Edit
 	case ID_CMD_UNDO:       edit_.getDoc().Undo();              break;
@@ -330,7 +331,7 @@ void GreenPadWnd::on_pagesetup()
 	{
 		MessageBox(hwnd(), TEXT("You need at least Windows NT 3.51!\n"), NULL, MB_OK);
 	}
-#endif;
+#endif
 }
 void GreenPadWnd::on_print()
 {
@@ -1013,7 +1014,8 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	}
 
 	// 自分内部の管理情報を更新
-	if( fn[0]==TEXT('\\') || fn[1]==TEXT(':') )
+	if( fn[0]==TEXT('\\') || fn[0]==TEXT('\\')&&fn[1]==TEXT('\\') || fn[1]==TEXT(':') )
+		// Absolute path: '\file', 'x:\file', '\\share\file', '\\?\...', 'c:\\file' etc.
 		filename_ = fn;
 	else
 		filename_ = Path( Path::Cur ) + fn;
@@ -1196,6 +1198,7 @@ bool GreenPadWnd::StartUp( const Path& fn, int cs, int ln )
 {
 	LOGGER( "GreenPadWnd::StartUp begin" );
 	Create( 0, 0, cfg_.GetWndX(), cfg_.GetWndY(), cfg_.GetWndW(), cfg_.GetWndH(), 0 );
+	ShowUp2(); LOGGER( "showup!" );
 	LOGGER( "GreenPadWnd::Created" );
 	if( fn.len()==0 || !OpenByMyself( fn, cs ) )
 	{
@@ -1308,8 +1311,8 @@ int kmain()
 
   //-- メインループ
 
-	wnd.ShowUp2();
-	LOGGER( "showup!" );
+//	wnd.ShowUp2();
+//	LOGGER( "showup!" );
 	wnd.MsgLoop();
 
 	LOGGER( "fin" );
