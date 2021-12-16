@@ -411,6 +411,7 @@ ulong DocImpl::getRangeLength( const DPos& s, const DPos& e )
 
 void DocImpl::getText( unicode* buf, const DPos& s, const DPos& e )
 {
+	if( !buf ) return;
 	if( s.tl == e.tl )
 	{
 		// 一行だけの場合
@@ -467,7 +468,16 @@ bool DocImpl::DeletingOperation
 
 	// Undo操作用バッファ確保
 	undobuf = new unicode[undosiz+1];
-	getText( undobuf, s, e );
+	if(!undobuf) 
+	{ // Settext to "" if we are unable to allocate memory.
+		undobuf = new unicode[1]; 
+		undobuf[0] = 0; 
+		undosiz=0;
+	}
+	else
+	{ // We got enough memory...
+		getText( undobuf, s, e );
+	}
 
 	// 削除る
 	if( s.tl == e.tl )

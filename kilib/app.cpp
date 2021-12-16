@@ -265,8 +265,13 @@ namespace ki
 	}
 }
 
-#ifdef SUPERTINY
+#ifdef __GNUC__
+	extern "C" void __cdecl __cxa_pure_virtual(void) {};
+	extern "C" void __deregister_frame_info() {};
+	extern "C" void __register_frame_info() {};
+#endif
 
+#ifdef SUPERTINY
 	extern "C" int __cdecl _purecall(){return 0;}
 	#ifdef _DEBUG
 		int main(){return 0;}

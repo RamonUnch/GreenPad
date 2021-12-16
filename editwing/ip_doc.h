@@ -37,7 +37,7 @@ class Line : public Object
 {
 public:
 
-	//@{ 指定テキストで初期化 //@}
+	//@{ 指定テキストで初期化, Initialize with specified text //@}
 	Line( const unicode* str, ulong len )
 		: alen_( 10>len ? 10 : len )
 		, len_ ( len )
@@ -55,7 +55,7 @@ public:
 			mem().DeAlloc( str_, (alen_+1)*2+alen_ );
 		}
 
-	//@{ テキスト挿入(指定位置に指定サイズ) //@}
+	//@{ テキスト挿入(指定位置に指定サイズ), Insert text (specified position, specified size)  //@}
 	void InsertAt( ulong at, const unicode* buf, ulong siz )
 		{
 			if( len_+siz > alen_ )
