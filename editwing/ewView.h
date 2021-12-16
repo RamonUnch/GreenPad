@@ -142,6 +142,8 @@ public:
 	void InputChar( unicode ch );
 	void Del();
 	void DelBack();
+	void Return();
+	void Tabulation(int shift);
 
 	// クリップボード
 	void Cut();

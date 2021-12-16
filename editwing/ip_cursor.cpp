@@ -365,17 +365,24 @@ void Cursor::SetROMode( bool bRO )
 
 
 //-------------------------------------------------------------------------
-// 文字入力・削除
+// 文字入力・削除, Character input and deletion
 //-------------------------------------------------------------------------
 
 void Cursor::InputChar( unicode ch )
 {
 	// 「上書モード ＆ 選択状態でない ＆ 行末でない」なら右一文字選択
+	// If you are in overwriting mode, not selected,
+	// and not at the end of a line, select the right character.
 	if( !bIns_ && cur_==sel_ && doc_.len(cur_.tl)!=cur_.ad )
 		Right( false, true );
 
-	// 入力
-	Input( &ch, 1 );
+	// 入力, character input by the user
+	switch(ch)
+	{
+	case L'\r': Return();     break;
+//	case L'\t': Tabulation(0); break;
+	default: Input( &ch, 1 );
+	}
 }
 
 void Cursor::Input( const unicode* str, ulong len )
@@ -416,7 +423,26 @@ void Cursor::Del()
 		doc_.Execute( Delete( cur_, dp ) );
 }
 
+// We must copy the intentation chars at the begining
+// of the line and paste them after the \r.
+void Cursor::Return()
+{   // User pressed the Enter!
+	DPos pos = Min(cur_, sel_);
+	DPos mp1 = DPos(pos.tl, 0); // begining of line.
+	uint len = doc_.getRangeLength( mp1, pos )+1;
+	unicode *p = new unicode[len+1]; // room for the \r and \0...
+	p[0] = L'\r'; // put the \r
+	doc_.getText( &p[1], mp1, pos );
+	uint i;
+	for (i=1; i<len && (p[i] == L' ' || p[i] == L'\t'); i++);
+	p[i] = '\0'; // Null terminate before the nonspaces.
+	Input(p, i);
+}
 
+void Cursor::Tabulation(int shi)
+{
+	// TODO: User pressed tab, indent the whole block.
+}
 
 //-------------------------------------------------------------------------
 // テキスト取得
@@ -515,9 +541,9 @@ unicode* WINAPI Cursor::InvertCaseW(unicode *str)
 	for(int i=0; str[i] != TEXT('\0'); i++)
 	{
 		if(IsCharLowerW(str[i]))
-			str[i] = (wchar_t)CharUpperW((wchar_t *)(str[i]));
+			str[i] = (wchar_t)(DWORD)CharUpperW((wchar_t *)(str[i]));
 		else
-			str[i] = (wchar_t)CharLowerW((wchar_t *)(str[i]));
+			str[i] = (wchar_t)(DWORD)CharLowerW((wchar_t *)(str[i]));
 	}
 	return str;
 }
@@ -554,6 +580,8 @@ void Cursor::ModSelection(ModProc mfunk)
 	DPos ocur=cur_, osel=sel_;
 	if( cur_ > sel_ )
 		dm=sel_, dM=cur_;
+	else if (cur_==sel_)
+		return; // Nothing to do.
 
 	int len = doc_.getRangeLength( dm, dM );
 	unicode *p = new unicode[len+1];

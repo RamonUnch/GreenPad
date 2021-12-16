@@ -4,24 +4,7 @@
 #include "memory.h"
 #include "ktlaptr.h"
 #ifndef __ccdoc__
-namespace ki {
-#endif
-#ifdef _UNICODE
-	#define XTCHAR char
-#else
-	#define XTCHAR wchar_t
-#endif
 
-//=========================================================================
-//@{
-//	•¶š—ñˆ—{ƒ¿‚Q
-//
-//	Wide•¶š”ÅŠÖ”‚ğ©‘O‚Å
-//@}
-//=========================================================================
-//#undef lstrcpy
-//#undef lstrlen
-//#undef lstrcmp
 
 #ifdef UNICODE
 	#define my_lstrcpy my_lstrcpyW
@@ -84,6 +67,24 @@ TCHAR *my_lstrcpyn(TCHAR *out, const TCHAR *in, int outlen)
 	return out;
 }
 
+namespace ki {
+#endif
+#ifdef _UNICODE
+	#define XTCHAR char
+#else
+	#define XTCHAR wchar_t
+#endif
+
+//=========================================================================
+//@{
+//	•¶š—ñˆ—{ƒ¿‚Q
+//
+//	Wide•¶š”ÅŠÖ”‚ğ©‘O‚Å
+//@}
+//=========================================================================
+//#undef lstrcpy
+//#undef lstrlen
+//#undef lstrcmp
 
 
 //=========================================================================

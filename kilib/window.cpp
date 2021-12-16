@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "app.h"
 #include "window.h"
+#ifndef SCS_CAP_SETRECONVERTSTRING
+#define SCS_CAP_SETRECONVERTSTRING 0x00000004
+#endif
 using namespace ki;
 
 #if defined(TARGET_VER) && TARGET_VER<=350

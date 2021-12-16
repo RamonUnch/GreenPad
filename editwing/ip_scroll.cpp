@@ -32,7 +32,8 @@ static int MySetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw
 		return dyn_SetScrollInfo( hwnd, fnBar, lpsi, fredraw );
 
 	// Fallback...
-	::SetScrollRange( hwnd, fnBar, lpsi->nMin, lpsi->nMax, FALSE );
+	if (lpsi->fMask|SIF_RANGE) 
+		::SetScrollRange( hwnd, fnBar, lpsi->nMin, lpsi->nMax, FALSE );
 	return ::SetScrollPos( hwnd, fnBar, lpsi->nPos, fredraw );
 }
 typedef int (WINAPI *gsnfo_funk)(HWND hwnd, int fnBar, LPSCROLLINFO lpsi);
@@ -51,7 +52,9 @@ static int MyGetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 
 	// Fallback...
 	lpsi->nPos = ::GetScrollPos( hwnd, fnBar );
-	return ::GetScrollRange( hwnd, fnBar, &lpsi->nMin, &lpsi->nMax);
+	if(lpsi->fMask|SIF_RANGE) 
+		::GetScrollRange( hwnd, fnBar, &lpsi->nMin, &lpsi->nMax);
+	return 1;
 }
 
 //-------------------------------------------------------------------------
