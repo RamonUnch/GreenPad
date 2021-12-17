@@ -437,6 +437,7 @@ void Cursor::Return()
 	for (i=1; i<len && (p[i] == L' ' || p[i] == L'\t'); i++);
 	p[i] = '\0'; // Null terminate before the nonspaces.
 	Input(p, i);
+	delete [] p;
 }
 
 void Cursor::Tabulation(int shi)
