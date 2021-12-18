@@ -23,11 +23,11 @@ unicode* my_lstrcpyW( unicode* const d, const unicode* s )
 	return d;
 }
 inline static
-int my_lstrlenW( const unicode* const d )
+uint my_lstrlenW( const unicode* const d )
 {
 	const unicode* n;
 	for(n=d; *n; ++n);
-	return static_cast<int>(n-d);
+	return static_cast<uint>(n-d);
 }
 static inline
 int my_lstrcmpW(const unicode *X, const unicode *Y)
@@ -42,11 +42,11 @@ char* my_lstrcpyA( char* const d, const char* s )
 	return d;
 }
 inline static
-int my_lstrlenA( const char* const d )
+uint my_lstrlenA( const char* const d )
 {
 	const char* n;
 	for(n=d; *n; ++n);
-	return static_cast<int>(n-d);
+	return static_cast<uint>(n-d);
 }
 static inline 
 int my_lstrcmpA(const char *X, const char *Y)

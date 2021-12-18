@@ -15,8 +15,8 @@ using doc::Replace;
 //		ところで疑問なのだが Caret って「カレット」と
 //		読むのか「キャレット」と読むのか？
 //
-//---- ip_text.cpp   文字列操作・他
-//---- ip_parse.cpp  キーワード解析
+//---- ip_text.cpp   文字列操作・他, string manipulation, etc.
+//---- ip_parse.cpp  キーワード解析, keyword parsing
 //---- ip_wrap.cpp   折り返し
 //---- ip_scroll.cpp スクロール
 //---- ip_draw.cpp   描画・他
@@ -74,7 +74,7 @@ private:
 
 
 //-------------------------------------------------------------------------
-// カーソル初期化
+// カーソル初期化, Cursor initialization
 //-------------------------------------------------------------------------
 
 Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
@@ -111,7 +111,7 @@ void Cursor::DelHandler( CurEvHandler* ev )
 
 
 //-------------------------------------------------------------------------
-// ヘルパー関数群
+// ヘルパー関数群, helper function group
 //-------------------------------------------------------------------------
 
 void Cursor::UpdateCaretPos()
@@ -187,7 +187,7 @@ bool Cursor::getCurPosUnordered( const VPos** cur, const VPos** sel ) const
 
 
 //-------------------------------------------------------------------------
-// Viewからの指令を処理
+// Viewからの指令を処理, Process commands from View
 //-------------------------------------------------------------------------
 
 void Cursor::on_setfocus()
@@ -216,7 +216,7 @@ void Cursor::on_scroll_end()
 
 void Cursor::ResetPos()
 {
-	// 設定変更などに対応
+	// 設定変更などに対応, Support for changing settings, etc.
 	view_.ConvDPosToVPos( cur_, &cur_ );
 	view_.ConvDPosToVPos( sel_, &sel_ );
 	UpdateCaretPos();
@@ -275,7 +275,7 @@ void Cursor::on_text_update
 
 
 //-------------------------------------------------------------------------
-// キー入力への対応
+// キー入力への対応, Support for keystrokes
 //-------------------------------------------------------------------------
 
 void CurEvHandler::on_char( Cursor& cur, unicode wch )
@@ -316,6 +316,7 @@ void Cursor::on_char( TCHAR ch )
 	#else
 		unicode wc = ch;
 		if( ch & 0x80 ) // 非ASCII文字にはトリビアルでない変換が必要
+			// Non-ASCII characters require non-trivial conversion.
 			::MultiByteToWideChar( CP_ACP, MB_COMPOSITE, &ch, 1, &wc, 1 );
 		pEvHan_->on_char( *this, wc );
 	#endif
@@ -348,7 +349,7 @@ void Cursor::on_keydown( int vk, LPARAM flag )
 
 
 //-------------------------------------------------------------------------
-// モード切替
+// モード切替, mode switching
 //-------------------------------------------------------------------------
 
 void Cursor::SetInsMode( bool bIns )
@@ -396,6 +397,7 @@ void Cursor::Input( const unicode* str, ulong len )
 void Cursor::Input( const char* str, ulong len )
 {
 	unicode* ustr = new unicode[ len*4 ];
+	if(!ustr) return;
 	len = ::MultiByteToWideChar( CP_ACP, 0, str, len, ustr, len*4 );
 	Input( ustr, len );
 	delete [] ustr;
@@ -429,11 +431,12 @@ void Cursor::Return()
 {   // User pressed the Enter!
 	DPos pos = Min(cur_, sel_);
 	DPos mp1 = DPos(pos.tl, 0); // begining of line.
-	uint len = doc_.getRangeLength( mp1, pos )+1;
+	ulong len = doc_.getRangeLength( mp1, pos )+1;
 	unicode *p = new unicode[len+1]; // room for the \r and \0...
+	if(!p) return; // new failed!
 	p[0] = L'\r'; // put the \r
 	doc_.getText( &p[1], mp1, pos );
-	uint i;
+	ulong i;
 	for (i=1; i<len && (p[i] == L' ' || p[i] == L'\t'); i++);
 	p[i] = '\0'; // Null terminate before the nonspaces.
 	Input(p, i);
@@ -446,7 +449,7 @@ void Cursor::Tabulation(int shi)
 }
 
 //-------------------------------------------------------------------------
-// テキスト取得
+// テキスト取得, Get Text
 //-------------------------------------------------------------------------
 
 ki::aarr<unicode> Cursor::getSelectedStr() const
@@ -455,15 +458,15 @@ ki::aarr<unicode> Cursor::getSelectedStr() const
 	if( cur_ > sel_ )
 		dm=sel_, dM=cur_;
 
-	// テキスト取得
-	int len = doc_.getRangeLength( dm, dM );
+	// テキスト取得, Get Text
+	ulong len = doc_.getRangeLength( dm, dM );
 	ki::aarr<unicode> ub( new unicode[len+1] );
 	doc_.getText( ub.get(), dm, dM );
 	return ub;
 }
 
 //-------------------------------------------------------------------------
-// クリップボード処理
+// クリップボード処理, Clipboard processing
 //-------------------------------------------------------------------------
 
 void Cursor::Cut()
@@ -488,11 +491,11 @@ void Cursor::Copy()
 
 	HGLOBAL  h;
 	unicode* p;
-	int    len = doc_.getRangeLength( dm, dM );
+	ulong len = doc_.getRangeLength( dm, dM );
 
 	if( app().isNT() )
 	{
-		// NT系ならそのままダイレクトに
+		// NT系ならそのままダイレクトに, Direct copy
 		h = ::GlobalAlloc( GMEM_MOVEABLE, (len+1)*2 );
 		if (!h) {
 			MessageBox(NULL, TEXT("Selection is too large to hold into memory!"), NULL, MB_OK|MB_TASKMODAL) ;
@@ -504,13 +507,14 @@ void Cursor::Copy()
 	}
 	else
 	{
-		// 9x系なら変換が必要
+		// 9x系なら変換が必要, convert to ANSI before.
 		h = ::GlobalAlloc( GMEM_MOVEABLE, (len+1)*3 );
 		if (!h) {
 			MessageBox(NULL, TEXT("Selection is too large to hold into memory!"), NULL, MB_OK|MB_TASKMODAL) ;
 			return;
 		}
 		p = new unicode[len+1];
+		if(!p) return;
 		doc_.getText( p, dm, dM );
 		::WideCharToMultiByte( CP_ACP, 0, p, -1,
 			static_cast<char*>(::GlobalLock(h)), (len+1)*3, NULL, NULL );
@@ -539,7 +543,7 @@ void Cursor::Paste()
 unicode* WINAPI Cursor::InvertCaseW(unicode *str)
 {
 	if(!str) return NULL;
-	for(int i=0; str[i] != TEXT('\0'); i++)
+	for(ulong i=0; str[i] != TEXT('\0'); i++)
 	{
 		if(IsCharLowerW(str[i]))
 			str[i] = (wchar_t)(DWORD)CharUpperW((wchar_t *)(str[i]));
@@ -552,7 +556,7 @@ unicode* WINAPI Cursor::InvertCaseW(unicode *str)
 unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str)
 {
 
-	int i, j;
+	long i, j;
 	bool trim = true;
 	// Go through the string backward
 	for (i = my_lstrlenW(str)-1, j = i; i >= 0; i--)
@@ -584,7 +588,7 @@ void Cursor::ModSelection(ModProc mfunk)
 	else if (cur_==sel_)
 		return; // Nothing to do.
 
-	int len = doc_.getRangeLength( dm, dM );
+	ulong len = doc_.getRangeLength( dm, dM );
 	unicode *p = new unicode[len+1];
 	doc_.getText( p, dm, dM );
 	unicode *np = mfunk(p);
@@ -613,7 +617,7 @@ void Cursor::TTSpacesSel()
 }
 
 //-------------------------------------------------------------------------
-// カーソル移動
+// カーソル移動, Cursor movement
 //-------------------------------------------------------------------------
 
 void Cursor::MoveCur( const DPos& dp, bool select )
@@ -628,11 +632,13 @@ void Cursor::MoveTo( const VPos& vp, bool sel )
 	if( sel )
 	{
 		// 選択状態が変わる範囲を再描画
+		// Redraw the area where the selection state changes
 		Redraw( vp, cur_ );
 	}
 	else
 	{
 		// 選択解除される範囲を再描画
+		// Redraw the range to be deselected
 		if( cur_ != sel_ )
 			Redraw( cur_, sel_ );
 		sel_ = vp;
@@ -646,9 +652,9 @@ void Cursor::Home( bool wide, bool select )
 {
 	VPos np;
 	np.ad = np.vx = np.rx = np.rl = 0;
-	if( wide ) // 文書の頭へ
+	if( wide ) // 文書の頭へ, Go to the head of the document.
 		np.tl = np.vl = 0;
-	else // 行の頭へ
+	else // 行の頭へ, To the head of the line
 	{
 		// 1.07.4 --> 1.08 :: Virtual Home
 		// np.tl = cur_.tl, np.vl = cur_.vl-cur_.rl;
@@ -664,12 +670,12 @@ void Cursor::Home( bool wide, bool select )
 void Cursor::End( bool wide, bool select )
 {
 	VPos np;
-	if( wide ) // 文書の末尾へ
+	if( wide ) // 文書の末尾へ, To the end of the document
 	{
 		np.tl = doc_.tln()-1;
 		np.vl = view_.vln()-1;
 	}
-	else // 行の末尾へ
+	else // 行の末尾へ, To the end of the line
 	{
 		// 1.07.4 --> 1.08 :: Virtual End
 		// np.tl = cur_.tl;
