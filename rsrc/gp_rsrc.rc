@@ -27,8 +27,8 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,0,0
- PRODUCTVERSION 0,1,8,0
+ FILEVERSION 1,1,1,0
+ PRODUCTVERSION 1,1,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -50,7 +50,7 @@ BEGIN
             VALUE "LegalCopyright", "Written by k.inaba 2002-2008\0"
             VALUE "OriginalFilename", "GreenPad.exe\0"
             VALUE "ProductName", "GreenPad\0"
-            VALUE "ProductVersion", "1.10.0\0"
+            VALUE "ProductVersion", "1.11.0\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -394,7 +394,7 @@ BEGIN
 	"I",            ID_CMD_INVERTCASE,      VIRTKEY, ALT, NOINVERT
 	"W",            ID_CMD_TTSPACES,        VIRTKEY, ALT, NOINVERT
 
-    VK_ESCAPE,      ID_CMD_EXIT,            VIRTKEY, NOINVERT
+    VK_ESCAPE,      ID_CMD_QUICKEXIT,       VIRTKEY, NOINVERT
     VK_DELETE,      ID_CMD_CUT,             VIRTKEY, SHIFT, NOINVERT
     VK_F3,          ID_CMD_FINDNEXT,        VIRTKEY, NOINVERT
     VK_F3,          ID_CMD_FINDPREV,        VIRTKEY, SHIFT, NOINVERT
@@ -434,7 +434,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Open...\tCtrl+O",            ID_CMD_OPENFILE
         MENUITEM "&ReOpen...\tCtrl+R",          ID_CMD_REOPENFILE
-		MENUITEM "Re&fresh\tF5"                 ID_CMD_REFRESHFILE
+		MENUITEM "Re&fresh\tF5",                ID_CMD_REFRESHFILE
         MENUITEM SEPARATOR
         MENUITEM "&Save\tCtrl+S",               ID_CMD_SAVEFILE
         MENUITEM "Save &As...\tCtrl+Shift+S",   ID_CMD_SAVEFILEAS

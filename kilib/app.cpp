@@ -266,12 +266,17 @@ namespace ki
 }
 
 #ifdef __GNUC__
+  #ifdef SUPERTINY
+	extern "C" void WINAPI entryp() { ki::Startup(); }
+  #endif
 	extern "C" void __cdecl __cxa_pure_virtual(void) {};
 	extern "C" void __deregister_frame_info() {};
 	extern "C" void __register_frame_info() {};
+	extern "C" int atexit (void (*func)(void)) {return 0;};
 #endif
 
 #ifdef SUPERTINY
+
 	extern "C" int __cdecl _purecall(){return 0;}
 	#ifdef _DEBUG
 		int main(){return 0;}

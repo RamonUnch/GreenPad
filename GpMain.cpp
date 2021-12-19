@@ -323,7 +323,7 @@ void GreenPadWnd::on_pagesetup()
 		// FIXME: use local units...
 		psd.Flags = PSD_INTHOUSANDTHSOFINCHES|PSD_DISABLEORIENTATION|PSD_DISABLEPAPER|PSD_DISABLEPRINTER|PSD_MARGINS;
 		psd.hwndOwner = hwnd();
-		CopyRect(&psd.rtMargin, &cfg_.PMargins());
+		psd.rtMargin = cfg_.PMargins();
 		PageSetupDlg(&psd);
 		cfg_.SetPrintMargins(&psd.rtMargin);
 	}

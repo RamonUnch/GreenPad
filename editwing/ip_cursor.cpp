@@ -546,9 +546,9 @@ unicode* WINAPI Cursor::InvertCaseW(unicode *str)
 	for(ulong i=0; str[i] != TEXT('\0'); i++)
 	{
 		if(IsCharLowerW(str[i]))
-			str[i] = (wchar_t)(DWORD)CharUpperW((wchar_t *)(str[i]));
+			str[i] = (wchar_t)(LONG_PTR)CharUpperW((wchar_t *)(str[i]));
 		else
-			str[i] = (wchar_t)(DWORD)CharLowerW((wchar_t *)(str[i]));
+			str[i] = (wchar_t)(LONG_PTR)CharLowerW((wchar_t *)(str[i]));
 	}
 	return str;
 }
