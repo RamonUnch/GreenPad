@@ -146,7 +146,22 @@ using namespace ki;
 	}
 	#endif
 
-#endif
+	#ifdef __GNUC__
+	void operator delete(void * ptr, size_t size)
+	{
+		::operator delete(ptr);;
+	}
+	void operator delete [] (void * ptr)
+	{
+		::operator delete(ptr);;
+	}
+	void* operator new[](size_t sz)
+	{
+		return ::operator new(sz);
+	}
+	#endif //__GNUC__
+
+#endif // SUPERTINY
 
 
 

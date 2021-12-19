@@ -39,7 +39,7 @@ OBJS = \
 # -DSUPERTINY  -fpermissive -flto -fuse-linker-plugin
 #,--disable-reloc-section,--disable-runtime-pseudo-reloc
 LIBS = \
- -lkernel32 -nostdlib -Wl,-e_entryp@0 \
+ -lkernel32 -nostdlib -Wl,-eentryp \
  -luser32   \
  -lgdi32    \
  -lshell32  \
@@ -51,7 +51,7 @@ LIBS = \
  -limm32    \
  -Wl,-dynamicbase,-nxcompat,--no-seh,--enable-auto-import,--disable-stdcall-fixup \
  -Wl,--disable-reloc-section,--disable-runtime-pseudo-reloc \
- -Wl,--tsaware,--large-address-aware,-s -s\
+ -Wl,--tsaware,-s -s\
 
 # -Wl,--print-map \
 # -static-libstdc++ \
@@ -66,13 +66,13 @@ RES = $(INTDIR)/gp_rsrc.o
 
 VPATH    = editwing:kilib
 # -DSUPERTINY  -flto -fuse-linker-plugin
-CXXFLAGS = -nostdlib  -m32 -c -Os -march=i386 -mpreferred-stack-boundary=2 -mno-stack-arg-probe -momit-leaf-frame-pointer \
+CXXFLAGS = -nostdlib  -m64 -c -Os -mno-stack-arg-probe -momit-leaf-frame-pointer \
  -fomit-frame-pointer -fno-stack-check -fno-stack-protector -fno-threadsafe-statics -fno-use-cxa-get-exception-ptr \
  -fno-access-control -fno-enforce-eh-specs -fno-nonansi-builtins -fnothrow-opt -fno-optional-diags -fno-use-cxa-atexit \
  -Wno-narrowing -Wno-int-to-pointer-cast -Wstack-usage=4096 \
  -idirafter kilib -D_UNICODE -DUNICODE -UDEBUG -U_DEBUG -DUSEGLOBALIME -DSUPERTINY \
  -fno-exceptions -fno-dwarf2-cfi-asm -fno-asynchronous-unwind-tables -fno-extern-tls-init -fno-rtti
-LOPT     = -m32 -mwindows
+LOPT     = -m64 -mwindows
 
 ifneq ($(NOCHARSET),1)
 CXXFLAGS += -finput-charset=cp932 -fexec-charset=cp932
@@ -82,6 +82,6 @@ $(TARGET) : $(OBJS) $(RES)
 	g++ $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS)
 #	strip -s $(TARGET)
 $(INTDIR)/%.o: rsrc/%.rc
-	windres -Fpe-i386 -l=0x411 -I rsrc $< -O coff -o$@
+	windres -Fpe-x86-64 -l=0x411 -I rsrc $< -O coff -o$@
 $(INTDIR)/%.o: %.cpp
 	g++ $(CXXFLAGS) -o$@ $<

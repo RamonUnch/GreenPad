@@ -55,7 +55,7 @@ PRE:
 RC  = rsrc\gp_rsrc.rc
 RES = $(INTDIR)\gp_rsrc.res
 
-COPT = -Bj -j0 -Ab -w2 -w7 -o -c
+COPT = -Bj -j0 -Ab -w2 -w7 -o -c -DNO_MLANG
 LOPT = -Bj -mn -WA -L/su:Windows:4.0/exet:NT/onerror:noexe
 ROPT = -j -32 -l0411
 

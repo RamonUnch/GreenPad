@@ -1415,7 +1415,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 
 	return cs ? cs : defCs;
 }
-
+const IID myIID_IMultiLanguage2 = {0xDCCFC164, 0x2B38, 0x11d2, {0xB7, 0xEC, 0x00, 0xC0, 0x4F, 0x8F, 0x5D, 0x9A}};
 int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 {
 	int cs = 0;
@@ -1423,7 +1423,7 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 #ifndef NO_MLANG
 	app().InitModule( App::OLE );
 	IMultiLanguage2 *lang = NULL;
-	DWORD ret = ::MyCoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, IID_IMultiLanguage2, (LPVOID*)&lang );
+	DWORD ret = ::MyCoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, myIID_IMultiLanguage2, (LPVOID*)&lang );
 	if( S_OK == ret )
 	{
 		int detectEncCount = 5;

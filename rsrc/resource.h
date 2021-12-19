@@ -108,7 +108,7 @@
 #define ID_CMD_TTSPACES                 50004
 #define ID_CMD_REFRESHFILE              50005
 #define ID_CMD_PAGESETUP                50006
-
+#define ID_CMD_QUICKEXIT                50007
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

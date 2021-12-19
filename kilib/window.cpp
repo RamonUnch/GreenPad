@@ -47,7 +47,9 @@ static BOOL MyImmSetCompositionFont(HIMC hIMC, LPLOGFONTW plf)
 //=========================================================================
 // IMEに関するあれこれ
 //=========================================================================
-static GUID myIID_IActiveIMMMessagePumpOwner = {0xb5cf2cfa,0x8aeb,0x11d1,{0x93,0x64,0x00,0x60,0xb0,0x67,0xb8,0x6e}};
+static const GUID myIID_IActiveIMMMessagePumpOwner = {0xb5cf2cfa,0x8aeb,0x11d1,{0x93,0x64,0x00,0x60,0xb0,0x67,0xb8,0x6e}};
+static const GUID myIID_IActiveIMMApp = {0x08c0e040, 0x62d1, 0x11d1,{0x93,0x26, 0x00,0x60,0xb0,0x67,0xb8,0x6e}};
+static const GUID myCLSID_CActiveIMM = {0x4955dd33, 0xb159, 0x11d0, {0x8f,0xcf, 0x00,0xaa,0x00,0x6b,0xcc,0x59}};
 IMEManager* IMEManager::pUniqueInstance_;
 IMEManager::IMEManager()
 #ifdef USEGLOBALIME
@@ -62,8 +64,8 @@ IMEManager::IMEManager()
 		{
 			app().InitModule( App::OLE );
 			if( S_OK == ::MyCoCreateInstance(
-					CLSID_CActiveIMM, NULL, CLSCTX_INPROC_SERVER,
-					IID_IActiveIMMApp, (void**)&immApp_ ) )
+					myCLSID_CActiveIMM, NULL, CLSCTX_INPROC_SERVER,
+					myIID_IActiveIMMApp, (void**)&immApp_ ) )
 			{
 				immApp_->QueryInterface(
 					myIID_IActiveIMMMessagePumpOwner, (void**)&immMsg_ );
@@ -582,11 +584,11 @@ void WndImpl::SetUpThunk( HWND wnd )
 	//
 	// 参考資料：ATLのソース
 
-#ifdef _M_AMD64
+#if defined(_M_AMD64) || defined(WIN64)
 	*reinterpret_cast<dbyte*>   (thunk_+ 0) = 0xb948;
 	*reinterpret_cast<WndImpl**>(thunk_+ 2) = this;
 	*reinterpret_cast<dbyte*>   (thunk_+10) = 0xb848;
-	*reinterpret_cast<void**>   (thunk_+12) = MainProc;
+	*reinterpret_cast<void**>   (thunk_+12) = (LONG_PTR*)MainProc;
 	*reinterpret_cast<dbyte*>   (thunk_+20) = 0xe0ff;
 #else
 	*reinterpret_cast<qbyte*>   (thunk_+0) = 0x042444C7;
