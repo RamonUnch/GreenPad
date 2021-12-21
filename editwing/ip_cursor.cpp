@@ -303,6 +303,7 @@ void CurEvHandler::on_key( Cursor& cur, int vk, bool sft, bool ctl )
 	case VK_DELETE:	cur.Del();				break;
 	case VK_BACK:	cur.DelBack();			break;
 	case VK_INSERT: cur.SetInsMode(!cur.isInsMode()); break;
+	case VK_TAB:    cur.Tabulation(sft);	break;
 	}
 }
 
@@ -381,7 +382,7 @@ void Cursor::InputChar( unicode ch )
 	switch(ch)
 	{
 	case L'\r': Return();     break;
-//	case L'\t': Tabulation(0); break;
+	case L'\t': break; // Nothing to do
 	default: Input( &ch, 1 );
 	}
 }
@@ -425,6 +426,7 @@ void Cursor::Del()
 		doc_.Execute( Delete( cur_, dp ) );
 }
 
+// SMART INDENT RETURN
 // We must copy the intentation chars at the begining
 // of the line and paste them after the \r.
 void Cursor::Return()
@@ -443,9 +445,58 @@ void Cursor::Return()
 	delete [] p;
 }
 
-void Cursor::Tabulation(int shi)
+
+//-------------------------------------------------------------------------
+// Indent/Un-indent selection with Tab/Shit+Tab.
+//-------------------------------------------------------------------------
+void Cursor::Tabulation(bool shi)
 {
-	// TODO: User pressed tab, indent the whole block.
+	if (cur_.tl == sel_.tl)
+	{
+		Input("\t", 1);
+		return;	 // DONE
+	}
+	// Set cursors at begining of line
+	cur_.ad = sel_.ad = 0;
+	DPos dm=cur_, dM=sel_;
+	DPos ocur=cur_, osel=sel_;
+	if( cur_ > sel_ )
+		dm=sel_, dM=cur_;
+
+	ulong len = doc_.getRangeLength( dm, dM );
+	unicode *p = new unicode[len+1];
+	if(!p) return;
+	doc_.getText( p, dm, dM );
+
+	int nlines;
+	nlines = shi?0: 1 + dM.tl - dm.tl; // max number of tabs to add/min to remove ;
+	unicode *pp = new unicode[len + nlines + 1]; // bufer to copy (un)tabified data
+	if(!pp) { delete [] p ; return; }
+	ulong i=0, j=0;
+	if(!shi)  {
+		pp[j++] = L'\t'; // add a tab!
+	} else {
+		i+= p[0] == L'\t'; // skip a tab?
+	}
+	for (; i < len; i++)
+	{
+		pp[j++] = p[i];
+		if((p[i] == L'\n' && (!i || p[i-1] == L'\r')) // DOS
+		|| (p[i] == L'\n' && (!i || p[i-1] != L'\r')) // UNIX
+		|| (p[i] == L'\r' && p[i+1] != '\n')) // MAC
+		{ // We are at the begining of a line
+			if(!shi) pp[j++] = L'\t';
+			else { j-= p[i+1] == L'\t'; i+= p[i+1] == L'\t'; } // Skip a tab?
+		}
+	}
+	pp[--j] = L'\0';
+	delete [] p;
+	doc_.Execute( Replace(dm, dM, pp, my_lstrlenW(pp)) );
+	MoveCur(osel, false);
+	MoveCur(ocur, true);
+
+	delete [] pp;
+
 }
 
 //-------------------------------------------------------------------------

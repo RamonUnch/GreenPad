@@ -143,7 +143,7 @@ public:
 	void Del();
 	void DelBack();
 	void Return();
-	void Tabulation(int shift);
+	void Tabulation(bool shift);
 
 	// クリップボード
 	void Cut();
