@@ -113,7 +113,7 @@ public:
 	int GetWndH() const;
 	bool GetWndM() const;
 	void RememberWnd( ki::Window* wnd );
-	RECT PMargins() const;
+	const RECT *PMargins() const;
 	void SetPrintMargins(const RECT *rc);
 	bool useQuickExit() const;
 
@@ -260,8 +260,8 @@ inline int ConfigManager::GetWndH() const
 inline bool ConfigManager::GetWndM() const
 	{ return rememberWindowSize_ & wndM_; }
 
-inline RECT ConfigManager::PMargins() const
-	{ return rcPMargins_; }
+inline const RECT *ConfigManager::PMargins() const
+	{ return &rcPMargins_; }
 
 inline void ConfigManager::SetPrintMargins(const RECT *rc) 
 	{ CopyRect(&rcPMargins_, rc); inichanged_=1; SaveIni(); }

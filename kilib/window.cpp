@@ -74,7 +74,11 @@ IMEManager::IMEManager()
 	#endif //USEGLOBALIME
 
 	// check if IMM32.DLL can be loaded...
+	#if defined(TARGET_VER) && TARGET_VER<=350
 	hasIMM32_ = !!LoadLibraryA("IMM32.DLL");
+	#else
+	#define hasIMM32_ 1
+	#endif
 
 	// 唯一のインスタンスは私です
 	pUniqueInstance_ = this;

@@ -23,7 +23,7 @@ unicode* my_lstrcpyW( unicode* const d, const unicode* s )
 	return d;
 }
 inline static
-uint my_lstrlenW( const unicode* const d )
+size_t my_lstrlenW( const unicode* const d )
 {
 	const unicode* n;
 	for(n=d; *n; ++n);
@@ -42,7 +42,7 @@ char* my_lstrcpyA( char* const d, const char* s )
 	return d;
 }
 inline static
-uint my_lstrlenA( const char* const d )
+size_t my_lstrlenA( const char* const d )
 {
 	const char* n;
 	for(n=d; *n; ++n);

@@ -599,8 +599,8 @@ void ViewImpl::InvalidateView( const DPos& dp, bool afterall ) const
 
 	// ‚Ps–Ú‚ğÄ•`‰æ
 	int rb = (r==0 ? 0 : rlend(dp.tl,r-1));
-	int xb = left() + Max( 0UL,
-		CalcLineWidth(doc_.tl(dp.tl)+rb,dp.ad-rb) -rlScr_.nPos );
+	int xb = left() + Max( (ulong)0,
+		CalcLineWidth(doc_.tl(dp.tl)+rb, (ulong)((dp.ad-rb) -rlScr_.nPos) ));
 	if( xb < right() )
 	{
 		RECT rc={xb,yb,right(),yb+H};

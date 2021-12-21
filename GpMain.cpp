@@ -323,7 +323,7 @@ void GreenPadWnd::on_pagesetup()
 		// FIXME: use local units...
 		psd.Flags = PSD_INTHOUSANDTHSOFINCHES|PSD_DISABLEORIENTATION|PSD_DISABLEPAPER|PSD_DISABLEPRINTER|PSD_MARGINS;
 		psd.hwndOwner = hwnd();
-		psd.rtMargin = cfg_.PMargins();
+		CopyRect(&psd.rtMargin, cfg_.PMargins());
 		PageSetupDlg(&psd);
 		cfg_.SetPrintMargins(&psd.rtMargin);
 	}
@@ -417,10 +417,10 @@ void GreenPadWnd::on_print()
 
 	RECT rcMargins;
 	// Convert config margins in Inches to pixels
-	rcMargins.left   = (cfg_.PMargins().left  * logpxx)/1000;
-	rcMargins.top    = (cfg_.PMargins().top   * logpxy)/1000;
-	rcMargins.right  = (cfg_.PMargins().right * logpxx)/1000;
-	rcMargins.bottom = (cfg_.PMargins().left  * logpxy)/1000;
+	rcMargins.left   = (cfg_.PMargins()->left  * logpxx)/1000;
+	rcMargins.top    = (cfg_.PMargins()->top   * logpxy)/1000;
+	rcMargins.right  = (cfg_.PMargins()->right * logpxx)/1000;
+	rcMargins.bottom = (cfg_.PMargins()->left  * logpxy)/1000;
 
 	RECT rcPrinter = { rcMargins.left
 				, rcMargins.top
@@ -718,10 +718,10 @@ static HWND MyFindWindowEx(HWND parent, HWND after, LPCTSTR lpszClass, LPCTSTR l
 	EnumChildWindows(parent, MyFindWindowExProc, (LPARAM)&param);
 	return param.ret;
 }
-#else
+#else // TARGET_VER
 #define MyFindWindowEx FindWindowEx
 #endif // TARGET_VER == NT3.x
-static inline void MyShowWnd( HWND wnd )
+static void MyShowWnd( HWND wnd )
 {
 	if( ::IsIconic(wnd) )
 		::ShowWindow( wnd, SW_RESTORE );

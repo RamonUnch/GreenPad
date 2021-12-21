@@ -206,7 +206,7 @@ void UnReDoChain::Clear()
 
 void UnReDoChain::SetLimit( long lim )
 {
-	limit_ = Max( 1UL, ulong(lim) );
+	limit_ = Max( (ulong)1, ulong(lim) );
 }
 
 inline void UnReDoChain::Undo( Document& doc )

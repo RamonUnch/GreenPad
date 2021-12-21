@@ -45,7 +45,7 @@ public:
 	//		"配列の"サイズではないことに注意。
 	//@}
 	explicit gapbuf( ulong alloc_size=40 )
-		: alen_( Max(alloc_size, 10UL) )
+		: alen_( Max(alloc_size, (ulong)10) )
 		, gs_  ( 0 )
 		, ge_  ( alen_ )
 		, buf_ ( new T[alen_] )

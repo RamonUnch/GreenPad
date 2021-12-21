@@ -54,15 +54,15 @@ PRE:
 
 RC  = rsrc\gp_rsrc.rc
 RES = $(INTDIR)\gp_rsrc.res
-
-COPT = -Bj -j0 -Ab -w2 -w7 -o -c -DNO_MLANG
+#  -DSUPERTINY -DUSEGLOBALIME
+COPT = -Bj -j0 -Ab -w2 -w7 -o -c -DNO_MLANG -DSTRICT -D_UNICODE -DUNICODE
 LOPT = -Bj -mn -WA -L/su:Windows:4.0/exet:NT/onerror:noexe
 ROPT = -j -32 -l0411
 
 $(TARGET) : SETI $(OBJS) $(RES)
 	dmc $(LOPT) -o$(TARGET) $(RES) $(OBJS) $(LIBS)
 	-@del GreenPad_dmc.map
-	brc32 $(RES) $(TARGET) 
+	brc32 $(RES) $(TARGET)
 SETI:
 	@set INCLUDE=kilib;$(INCLUDE)
 

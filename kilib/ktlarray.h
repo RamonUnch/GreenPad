@@ -33,7 +33,7 @@ public:
 	//		"配列の"サイズではないことに注意。
 	//@}
 	explicit storage( ulong allocSize=20 )
-		: alen_( Max( allocSize, 1UL ) )
+		: alen_( Max( allocSize, (ulong)1 ) )
 		, len_ ( 0 )
 		, buf_ ( static_cast<T*>(mem().Alloc(alen_*sizeof(T))) )
 		{}

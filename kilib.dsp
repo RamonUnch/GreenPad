@@ -47,7 +47,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /Gy /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SUPERTINY" /D "USEGLOBALIME" /Yu"stdafx.h" /FD /GF /c
+# ADD CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /Gy /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SUPERTINY" /Yu"stdafx.h" /FD /GF /c
 # SUBTRACT CPP /Gf
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -58,7 +58,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe" /filealign:512 /OPT:REF /OPT:ICF,7
+# ADD LINK32 ole32.lib oleaut32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib delayimp.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe" /filealign:512 /OPT:REF /OPT:ICF,7 /delayload:IMM32.DLL
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "kilib - Win32 Debug"
@@ -75,7 +75,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "UNICODE" /D "_UNICODE" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICOWS" /D "DO_LOGGING" /D TARGET_VER=350 /FR /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /Zp1 /W3 /Gm /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D "SUPERTINY" /D "UNICOWS" /D "DO_LOGGING" /D TARGET_VER=350 /FR /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "_DEBUG"
@@ -85,7 +85,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /profile /map:"release/GreenPad.map" /debug /machine:I386 /nodefaultlib /out:"release/GreenPad.exe" /filealign:512
+# ADD LINK32 unicows.lib ole32.lib oleaut32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib delayimp.lib /nologo /subsystem:windows /profile /map:"release/GreenPad.map" /debug /machine:I386 /nodefaultlib /out:"release/GreenPad.exe" /filealign:512 /LARGEADDRESSAWARE
 
 !ELSEIF  "$(CFG)" == "kilib - Win32 Unicode Release"
 
@@ -103,7 +103,7 @@ LINK32=link.exe
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "SUPERTINY" /D "USEGLOBALIME" /Yu"stdafx.h" /FD /GF /c
 # SUBTRACT BASE CPP /Gf
-# ADD CPP /nologo /Gr /Zp4 /W3 /Ox /Og /Oi /Os /Ob2 /Gy /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D "UNICOWS" /D TARGET_VER=350 /Yu"stdafx.h" /FD /GF /c
+# ADD CPP /nologo /Gr /Zp4 /W3 /Ox /Oa /Og /Oi /Os /Ob2 /Gy /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D "UNICOWS" /D TARGET_VER=350 /Yu"stdafx.h" /FD /GF /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "NDEBUG"
@@ -114,7 +114,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /nodefaultlib /out:"release/GreenPad.exe" /filealign:512 /OPT:REF /OPT:ICF,7
+# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib delayimp.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe" /filealign:512 /OPT:REF /OPT:ICF,7 /LARGEADDRESSAWARE
 
 !ELSEIF  "$(CFG)" == "kilib - Win32 NT31 Unicode Release"
 
@@ -131,8 +131,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /Gr /Zp4 /W3 /Gi /Og /Oi /Os /Oy /Ob1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D TARGET_VER=350 /Yu"stdafx.h" /FD /GF /c
-# ADD CPP /nologo /Gr /Zp4 /W3 /Ox /Og /Oi /Os /Ob2 /Gy /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D "UNICOWS" /D TARGET_VER=310 /Yu"stdafx.h" /FD /GF /GF /c
-# SUBTRACT CPP /Oa
+# ADD CPP /nologo /Gr /Zp4 /W3 /Ox /Oa /Og /Oi /Os /Ob2 /Gy /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "SUPERTINY" /D "USEGLOBALIME" /D "UNICODE" /D "_UNICODE" /D "UNICOWS" /D TARGET_VER=310 /Yu"stdafx.h" /FD /GF /GF /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "NDEBUG"
@@ -143,7 +142,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GPadNT31.exe" /SUBSYSTEM:WINDOWS,3.10 /filealign:512 /OPT:REF /OPT:ICF,7
+# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib delayimp.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GPadNT31.exe" /SUBSYSTEM:WINDOWS,3.10 /filealign:512 /OPT:REF /OPT:ICF,7 /LARGEADDRESSAWARE
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "kilib - Win32 Win32s Ansi Release"
@@ -173,7 +172,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GPad32s.exe" /SUBSYSTEM:WINDOWS,3.10 /FIXED:NO /filealign:512 /OPT:REF /OPT:ICF,7
+# ADD LINK32 ole32.lib oleaut32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib delayimp.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GPad32s.exe" /SUBSYSTEM:WINDOWS,3.10 /FIXED:NO /filealign:512 /OPT:REF /OPT:ICF,7
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "kilib - Win32 Win4_Unicode release"
@@ -201,7 +200,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /nodefaultlib /out:"release/GPadNT35.exe"
-# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /nodefaultlib /out:"release/GPadNew.exe" /filealign:512 /OPT:REF /OPT:ICF,7
+# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib delayimp.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib /out:"release/GPadNew.exe" /filealign:512 /OPT:REF /OPT:ICF,7 /delayload:IMM32.DLL
 
 !ENDIF 
 
