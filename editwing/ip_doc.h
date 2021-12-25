@@ -39,11 +39,11 @@ public:
 
 	//@{ 指定テキストで初期化, Initialize with specified text //@}
 	Line( const unicode* str, ulong len )
-		: alen_( 10>len ? 10 : len )
+		: alen_( Max(len, (ulong)10) )
 		, len_ ( len )
 		, str_ ( static_cast<unicode*>( mem().Alloc((alen_+1)*2+alen_) ) )
 		, flg_ ( reinterpret_cast<uchar*>(str_+alen_+1) )
-		, commentBitReady_( false )
+		, commentBitReady_( 0 )
 		, isLineHeadCommented_( 0 )
 		{
 			memmove( str_, str, len*2 );
@@ -140,7 +140,7 @@ public:
 		{ return flg_; }
 
 	// ask
-	bool isCmtBitReady() const
+	uchar isCmtBitReady() const
 		{ return commentBitReady_; }
 	uchar isLineHeadCmt() const
 		{ return isLineHeadCommented_; }
@@ -163,9 +163,9 @@ private:
 	unicode* str_;
 	uchar*   flg_;
 
+	uchar commentBitReady_;
 	uchar isLineHeadCommented_;
 	uchar commentTransition_;
-	bool  commentBitReady_;
 };
 
 
@@ -219,9 +219,9 @@ public:
 		}
 
 private:
-	bool  empty_;
 	const unicode *ptr_, *end_, **ans_;
 	ulong *aln_;
+	bool  empty_;
 };
 
 

@@ -194,7 +194,8 @@ public:
 	//@{ Žw’è—v‘fˆÈ~‘S‚Ä‚ðíœ //@}
 	void DelAfter( iterator d )
 		{
-			if( d != end() )
+			if( d != end() ) 
+			{
 				if( d == begin() )
 				{
 					empty();
@@ -208,6 +209,7 @@ public:
 					delete p;
 					q->next_ = NULL;
 				}
+			}
 		}
 
 private:

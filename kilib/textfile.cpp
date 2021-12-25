@@ -381,6 +381,7 @@ struct rUtf7 : public rBasicUTF
 	void fillbuf()
 	{
 		if( fb<fe )
+		{
 			if( !inB64 )
 				if( *fb=='+' )
 					if( fb+1<fe && fb[1]=='-' )
@@ -427,6 +428,7 @@ struct rUtf7 : public rBasicUTF
 				if( N==0 )
 					fillbuf();
 			}
+		}
 	}
 };
 
@@ -486,7 +488,7 @@ struct rSCSU : public rBasicUTF
 		, d( 0 ) {}
 
 	const uchar *fb, *fe;
-	char active, mode;
+	uchar active, mode;
 	ulong skip;
 	uchar c, d;
 
@@ -596,12 +598,13 @@ struct rSCSU : public rBasicUTF
 // BOCU-1
 // code portion from BOCU1.pm by Naoya Tozuka
 //-------------------------------------------------------------------------
+#define m1 ((uchar)(-1))
 namespace {
 	static const uchar bocu1_byte_to_trail[256] = {
 //   0x00 - 0x20
-    -1,   0x00, 0x01, 0x02, 0x03, 0x04, 0x05, -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-    0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, -1,   -1,   0x10, 0x11, 0x12, 0x13,
-    -1,
+    m1,   0x00, 0x01, 0x02, 0x03, 0x04, 0x05, m1,   m1,   m1,   m1,   m1,   m1,   m1,   m1,   m1,
+    0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, m1,   m1,   0x10, 0x11, 0x12, 0x13,
+    m1,
 //   0x21 - 0xff
           0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22,
     0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32,
@@ -618,14 +621,15 @@ namespace {
     0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf, 0xe0, 0xe1, 0xe2,
 	0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf0, 0xf1, 0xf2 };
 }
+#undef m1
 struct rBOCU1 : public rBasicUTF
 {
 	rBOCU1( const uchar* b, ulong s )
 		: fb( b )
 		, fe( b+s )
 		, skip( 0 )
-		, pc( 0x40 )
-		, cp( 0 ) {}
+		, cp( 0 )
+		, pc( 0x40 ) {}
 
 	const uchar *fb, *fe;
 	ulong skip;
@@ -732,7 +736,7 @@ namespace
 		if( n          < 0xf0 ) return 3; // 1110xxxx
 		if( n          < 0xf8 ) return 4; // 11110xxx
 		if( n          < 0xfc ) return 5; // 111110xx
-		                        return 6; // 1111110x
+		return 6; // 1111110x
 	}
 
 	static char* WINAPI CharNextUtf8( WORD, const char* p, DWORD )
@@ -1045,16 +1049,19 @@ struct rIso2022 : public TextFileRPimpl
 				G[ 0 ] = ASCII;                     // 1B 28 42
 			else if( *reinterpret_cast<const dbyte*>(p)==0x412E )
 				G[ 2 ] = LATIN;                     // 1B 2E 41
-			else if( p[0]==0x24 )
+			else if( p[0]==0x24 ) {
 				if( p[1]==0x40 || p[1]==0x42 )
 					G[ 0 ] = JIS;                   // 1B 24 [40|42]
 				else if( p[1]==0x41 )
 					G[ 0 ] = GB;                    // 1B 24 41
 				else if( p+2 < fe )
+				{
 					if( p[2]==0x41 )
 						G[ ((*++p)-0x28)%4 ] = GB;  // 1B 24 [28-2B] 41
 					else if( p[2]==0x43 )
 						G[ ((*++p)-0x28)%4 ] = KSX; // 1B 24 [28-2B] 43
+				}
+			}
 		}
 		++p;
 	}
@@ -1517,7 +1524,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 				}
 
 
-	if(hIL = ::LoadLibraryA( "chardet.dll" ))
+	if((hIL = ::LoadLibraryA( "chardet.dll" )))
 	{
 		chardet_create = (int(__cdecl*)(chardet_t*))::GetProcAddress(hIL, "chardet_create");
 		chardet_destroy = (void(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_destroy");
@@ -1614,7 +1621,7 @@ bool TextFileR::IsSurrogateLead(qbyte w) { return 0xD800 <= w && w <= 0xDBFF; }
 
 bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uChrSize, bool LE)
 {
-	qbyte uchr;
+	qbyte uchr = '\0';
 	ulong usize = siz / NZero(uChrSize);
 	ulong unconfidence = 0, confidence = 0, x;
 	bool impossible = false, prevIsNull = false;
@@ -1845,23 +1852,23 @@ struct wUtf9 : public TextFileWPimpl
 		if( c <= 0x7F || (c >= 0xA0 && c <= 0xFF ))
 			fp_.WriteC( static_cast<uchar>(c) );
 		else if( c <= 0x07FF )
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7)) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
+			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7)        ) ),
+			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 		else if( c <= 0xFFFF )
-			fp_.WriteC( static_cast<uchar>(0x90 | (c >> 14)) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
+			fp_.WriteC( static_cast<uchar>(0x90 | (c >> 14)       ) ),
+			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
+			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 		else if( c <= 0x7FFFFF )
-			fp_.WriteC( static_cast<uchar>(0x94 | (c >> 21)) ),
+			fp_.WriteC( static_cast<uchar>(0x94 | (c >> 21)       ) ),
 			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
+			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
+			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 		else
 			fp_.WriteC( static_cast<uchar>(0x98 | (c >> 28) & 0x07) ),
 			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 21) & 0x7F) ),
 			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
+			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
+			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 	}
 };
 
@@ -2018,7 +2025,7 @@ struct wSCSU : public TextFileWPimpl
 
 	void WriteChar( unicode c )
 	{
-		char window; // dynamic window 0..7
+		uchar window; // dynamic window 0..7
 		int w;       // result of getWindow(), -1..7
 
 		if( c<0 || c>0x10ffff || (isUnicodeMode&~1)!=0 || (win&~7)!=0 )
@@ -2143,7 +2150,7 @@ namespace {
 }
 struct wBOCU1 : public TextFileWPimpl
 {
-	wBOCU1( FileW& w ) : TextFileWPimpl(w), pc ( 0x40 ), cp ( 0 ), diff( 0 )
+	wBOCU1( FileW& w ) : TextFileWPimpl(w), cp ( 0 ) , pc ( 0x40 ), diff( 0 )
 	{ // write BOM
 		fp_.WriteC( static_cast<uchar>(0xfb) );
 		fp_.WriteC( static_cast<uchar>(0xee) );
@@ -2452,11 +2459,13 @@ struct wIso2022 : public TextFileWPimpl
 			}
 
 		// ç≈å„ÇÕämé¿Ç…ASCIIÇ…ñﬂÇ∑
-		if( !ascii )
+		if( !ascii ) 
+		{
 			if( hz_ )
 				fp_.WriteC( 0x7E ), fp_.WriteC( 0x7D );
 			else
 				fp_.WriteC( 0x0F );
+		}
 	}
 
 	int  cp_;

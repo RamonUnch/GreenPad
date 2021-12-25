@@ -163,7 +163,7 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 			POINT pt;
 			::GetCaretPos(&pt);
 			ClientToScreen(hwnd(), &pt);
-			lp = MAKELPARAM(pt.x, pt.y);
+			lp = MAKELPARAM(pt.x+1, pt.y+impl().fnt().H()/2);;
 		}
 		if( !cur().on_contextmenu( LOWORD(lp), HIWORD(lp) ) )
 			return WndImpl::on_message( msg, wp, lp );
@@ -212,13 +212,13 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 {
 	// 制御文字を描画するか否か？のフラグを記憶, 
 	// Whether to draw control characters or not? flag is stored.
-	for( int i=0; i<countof(scDraw_); ++i )
+	for( unsigned i=0; i<countof(scDraw_); ++i )
 		scDraw_[i] = vc.sc[i];
 
 	// 文字色を記憶, Memorize text color
-	for( int i=0; i<countof(colorTable_); ++i )
+	for( unsigned i=0; i<countof(colorTable_); ++i )
 		colorTable_[i] = vc.color[i];
-		colorTable_[3] = vc.color[CMT];
+	colorTable_[3] = vc.color[CMT];
 
 	// DCにセット, Setup Device Context (DC)
 	::SelectObject( dc_, font_  );
@@ -525,8 +525,8 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 	// 作業用変数１
 	RECT  a = { 0, v.YMIN, 0, v.YMIN+p.H() };
 	int clr = -1;
-	register int   x, x2;
-	register ulong i, i2;
+	register int   x=0, x2;
+	register ulong i=0, i2;
 
 	// 論理行単位のLoop. Loop per logical line.
 	for( ulong tl=v.TLMIN; a.top<v.YMAX; ++tl )

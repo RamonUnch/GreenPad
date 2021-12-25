@@ -125,10 +125,7 @@ inline void App::SetExitCode( int code )
 void App::InitModule( imflag what )
 {
 	if (hOle32_ == (HINSTANCE)(-1) && what&(OLE|COM|OLEDLL)) 
-	{
 		hOle32_ = ::LoadLibraryA("OLE32.DLL");
-		// MessageBoxA(NULL, "Loading OLE32.DLL", hOle32_?"Sucess": "Failed", MB_OK);
-	}
 
 	// ‰Šú‰»Ï‚Ý‚Å‚È‚¯‚ê‚Î‰Šú‰»‚·‚é
 	bool ret = true;
@@ -149,6 +146,7 @@ void App::InitModule( imflag what )
 			// MessageBoxA(NULL, "OleInitialize", ret?"Sucess": "Failed", MB_OK);
 			break;
 #endif
+		default: break;
 		}
 
 	// ¡‰ñ‰Šú‰»‚µ‚½ƒ‚ƒm‚ð‹L‰¯
@@ -216,7 +214,7 @@ bool App::is351p()
 {
 	static const OSVERSIONINFOA& v = osver();
 	return v.dwMajorVersion>3 
-		|| v.dwMajorVersion==3 && v.dwMinorVersion >= 51;
+		|| (v.dwMajorVersion==3 && v.dwMinorVersion >= 51);
 }
 
 bool App::isNT31()

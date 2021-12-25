@@ -195,8 +195,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_CUT:        edit_.getCursor().Cut();            break;
 	case ID_CMD_COPY:       edit_.getCursor().Copy();           break;
 	case ID_CMD_PASTE:      edit_.getCursor().Paste();          break;
-	case ID_CMD_DELETE: if( edit_.getCursor().isSelected() )
-	                        edit_.getCursor().Del();            break;
+	case ID_CMD_DELETE: if( edit_.getCursor().isSelected() ){ edit_.getCursor().Del();} break;
 	case ID_CMD_SELECTALL:  edit_.getCursor().Home(true,false);
 	                        edit_.getCursor().End(true,true);   break;
 	case ID_CMD_DATETIME:   on_datetime();                      break;
@@ -797,7 +796,7 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 		for( ulong i=0; i<c.ad; ++i )
 			if( cu[i] == L'\t' )
 				cad = (cad/tab+1)*tab;
-			else if( cu[i]<0x80 || 0xff60<=cu[i] && cu[i]<=0xff9f )
+			else if( cu[i]<0x80 || (0xff60<=cu[i] && cu[i]<=0xff9f) )
 				cad = cad + 1;
 			else
 				cad = cad + 2;
@@ -818,7 +817,7 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 			const unicode* su = edit_.getDoc().tl(s.tl);
 			sad = 0;
 			for( ulong i=0; i<s.ad; ++i )
-				sad += (su[i]<0x80 || 0xff60<=su[i] && su[i]<=0xff9f ? 1 : 2);
+				sad += su[i]<0x80 || (0xff60<=su[i] && su[i]<=0xff9f) ? 1 : 2;
 		}
 		str += TEXT(" - (");
 		str += String().SetInt(s.tl+1);
@@ -868,13 +867,13 @@ void GreenPadWnd::UpdateWindowName()
 	name += String(IDS_APPNAME).c_str();
 
 	SetText( name.c_str() );
-	stb_.SetCsText( csi_==0xffffffff?TEXT("UNKN"):charSets_[csi_].shortName );
+	stb_.SetCsText( (uint)csi_==(0xffffffff)?TEXT("UNKN"):charSets_[csi_].shortName );
 	stb_.SetLbText( lb_ );
 }
 
 void GreenPadWnd::SetupMRUMenu()
 {
-	int nmru;
+	int nmru=0;
 	HMENU mparent = ::GetSubMenu(::GetMenu(hwnd()),0);
 	if( HMENU m = ::GetSubMenu(mparent, 12) )
 	{
@@ -1014,7 +1013,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	}
 
 	// Ž©•ª“à•”‚ÌŠÇ—î•ñ‚ðXV
-	if( fn[0]==TEXT('\\') || fn[0]==TEXT('\\')&&fn[1]==TEXT('\\') || fn[1]==TEXT(':') )
+	if( fn[0]==TEXT('\\') || (fn[0]==TEXT('\\')&&fn[1]==TEXT('\\')) || fn[1]==TEXT(':') )
 		// Absolute path: '\file', 'x:\file', '\\share\file', '\\?\...', 'c:\\file' etc.
 		filename_ = fn;
 	else

@@ -49,7 +49,7 @@ struct DPos : public ki::Object
 	bool operator >= ( const DPos& r ) const
 		{ return (tl>r.tl || (tl==r.tl && ad>=r.ad)); }
 
-	DPos( ulong t, ulong a ) : tl(t), ad(a) {}
+	DPos( ulong t, ulong a ) : ad(a), tl(t) {}
 	DPos() {}
 };
 

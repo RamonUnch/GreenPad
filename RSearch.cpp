@@ -331,6 +331,7 @@ RegNode* RegParser::factor()
 	case R_Star: node=make_node(N_Closure,node,NULL); eat_token();break;
 	case R_Plus: node=make_node(N_Closure1,node,NULL);eat_token();break;
 	case R_Quest:node=make_node(N_01,node,NULL );     eat_token();break;
+	default: break;
 	}
 	return node;
 }
@@ -631,11 +632,15 @@ int RegNFA::match( const wchar_t* str, int len, bool caseS )
 
 		// ‚³‚ç‚Éæ‚Ì‘JˆÚ‚ğ’²‚×‚é
 		if( matchpos < len )
+		{
 			for( RegTrans* tr=st[curSt]; tr!=NULL; tr=tr->next.get() )
+			{
 				if( tr->type == RegTrans::Epsilon )
 					push(stack, tr->to, pos);
 				else if( pos<len && tr->match( str[pos], caseS ) )
 					push(stack, tr->to, pos+1);
+			}
+		}
 	}
 
 	return matchpos;

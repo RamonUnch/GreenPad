@@ -39,8 +39,8 @@ void ThreadManager::Run( Runnable& r )
 //=========================================================================
 
 Runnable::Runnable()
-	: hThread_( NULL )
-	, hEvent_ ( NULL )
+	: hEvent_  ( NULL )
+	, hThread_ ( NULL )
 {
 }
 

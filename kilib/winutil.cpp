@@ -11,11 +11,13 @@ using namespace ki;
 Clipboard::Clipboard( HWND owner, bool read )
 	: opened_( false )
 {
-	if( ::OpenClipboard(owner) )
+	if( ::OpenClipboard(owner) ) 
+	{
 		if( read || ::EmptyClipboard() )
 			opened_ = true;
 		else
 			::CloseClipboard();
+	}
 }
 
 Clipboard::~Clipboard()

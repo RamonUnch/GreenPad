@@ -197,8 +197,8 @@ public:
 
 private:
 
-	doc::DocImpl&   doc_;
 	ViewImpl&       view_;
+	doc::DocImpl&   doc_;
 	CurEvHandler*   pEvHan_;
 	ki::dptr<Caret> caret_;
 

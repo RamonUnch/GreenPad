@@ -136,8 +136,8 @@ void Cursor::Redraw( const VPos& s, const VPos& e )
 	int x, y; // Œ´“_
 	view_.GetOrigin( &x, &y );
 
-	POINT sp = {x+s.vx, y+s.vl*view_.fnt().H()};
-	POINT ep = {x+e.vx, y+e.vl*view_.fnt().H()};
+	POINT sp = {x+s.vx, y+(long)s.vl*view_.fnt().H()};
+	POINT ep = {x+e.vx, y+(long)e.vl*view_.fnt().H()};
 	if( s > e ) // Swap
 		sp.x^=ep.x, ep.x^=sp.x, sp.x^=ep.x,
 		sp.y^=ep.y, ep.y^=sp.y, sp.y^=ep.y;
@@ -597,9 +597,9 @@ unicode* WINAPI Cursor::InvertCaseW(unicode *str)
 	for(ulong i=0; str[i] != TEXT('\0'); i++)
 	{
 		if(IsCharLowerW(str[i]))
-			str[i] = (wchar_t)(LONG_PTR)CharUpperW((wchar_t *)(str[i]));
+			str[i] = (wchar_t)(LONG_PTR)CharUpperW((wchar_t *)(LONG_PTR)(str[i]));
 		else
-			str[i] = (wchar_t)(LONG_PTR)CharLowerW((wchar_t *)(str[i]));
+			str[i] = (wchar_t)(LONG_PTR)CharLowerW((wchar_t *)(LONG_PTR)(str[i]));
 	}
 	return str;
 }

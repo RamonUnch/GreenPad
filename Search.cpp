@@ -16,10 +16,10 @@ SearchManager::SearchManager( ki::Window& w, editwing::EwEdit& e )
 	: searcher_( NULL )
 	, edit_( e )
 	, DlgImpl( IDD_FINDREPLACE )
+	, mainWnd_( w )
 	, bIgnoreCase_( true ) // 1.08 default true
 	, bRegExp_( false )
 	, bDownSearch_( true )
-	, mainWnd_( w )
 {
 }
 
@@ -296,12 +296,13 @@ void SearchManager::FindNextImpl(bool redo)
 	// 選択範囲ありなら、選択範囲先頭の１文字先から検索
 	// そうでなければカーソル位置から検索
 	DPos s = *stt;
-	if( *stt != *end )
+	if( *stt != *end ) 
+	{
 		if( stt->ad == edit_.getDoc().len(stt->tl) )
 			s = DPos( stt->tl+1, 0 );
 		else
 			s = DPos( stt->tl, stt->ad+1 );
-
+	}
 	// 検索
 	DPos b, e;
 	if( FindNextFromImpl( s, &b, &e ) )
@@ -404,6 +405,7 @@ void SearchManager::ReplaceImpl()
 	// 選択範囲先頭から検索
 	DPos b, e;
 	if( FindNextFromImpl( *stt, &b, &e ) )
+	{
 		if( e == *end )
 		{
 			const wchar_t* ustr = replStr_.ConvToWChar();
@@ -431,7 +433,7 @@ void SearchManager::ReplaceImpl()
 			edit_.getCursor().MoveCur( e, true );
 			return;
 		}
-
+	}
 	// 見つからなかった場合
 	NotFound();
 }

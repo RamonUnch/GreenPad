@@ -114,10 +114,10 @@ void Canvas::CalcWrapWidth()
 Canvas::Canvas( const View& vw )
 	: wrapType_ ( -1 )
 	, showLN_   ( false )
+	, font_     ( new Painter( ::GetDC(vw.hwnd()),
+	              VConfig(TEXT("FixedSys"),14) ) )
 	, wrapWidth_( 0xffffffff )
 	, figNum_   ( 3 )
-	, font_     ( new Painter( ::GetDC(vw.hwnd()),
-	                  VConfig(TEXT("FixedSys"),14) ) )
 {
 	vw.getClientRect( &txtZone_ );
 }
@@ -228,10 +228,7 @@ ulong ViewImpl::tl2vl( ulong tl ) const
 
 void ViewImpl::UpdateScrollBar()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
-	::SetScrollInfo( hwnd_, SB_HORZ, &rlScr_, TRUE );
-	::SetScrollInfo( hwnd_, SB_VERT, &udScr_, TRUE );
-#elif defined(TARGET_VER) && TARGET_VER<=350 && TARGET_VER>300
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	::MySetScrollInfo( hwnd_, SB_HORZ, &rlScr_, TRUE );
 	::MySetScrollInfo( hwnd_, SB_VERT, &udScr_, TRUE );
 #else
@@ -599,8 +596,8 @@ void ViewImpl::InvalidateView( const DPos& dp, bool afterall ) const
 
 	// ÇPçsñ⁄Ççƒï`âÊ
 	int rb = (r==0 ? 0 : rlend(dp.tl,r-1));
-	int xb = left() + Max( (ulong)0,
-		CalcLineWidth(doc_.tl(dp.tl)+rb, (ulong)((dp.ad-rb) -rlScr_.nPos) ));
+ 	int xb = left() + Max( (ulong)0,
+		CalcLineWidth(doc_.tl(dp.tl)+rb, (ulong) (dp.ad-rb)) - rlScr_.nPos );
 	if( xb < right() )
 	{
 		RECT rc={xb,yb,right(),yb+H};

@@ -39,7 +39,7 @@ OBJS = \
 # -DSUPERTINY  -fpermissive -flto -fuse-linker-plugin
 #,--disable-reloc-section,--disable-runtime-pseudo-reloc
 LIBS = \
- -lkernel32 -nostdlib -Wl,-eentryp \
+ -lkernel32 -nostdlib -Wl,-eentryp -flto -fuse-linker-plugin -flto-partition=none \
  -luser32   \
  -lgdi32    \
  -lshell32  \
@@ -66,12 +66,13 @@ RES = $(INTDIR)/gp_rsrc.o
 
 VPATH    = editwing:kilib
 # -DSUPERTINY  -flto -fuse-linker-plugin
-CXXFLAGS = -nostdlib  -m64 -c -Os -mno-stack-arg-probe -momit-leaf-frame-pointer \
+CXXFLAGS = -nostdlib -m64 -c -Os -mno-stack-arg-probe -momit-leaf-frame-pointer \
+ -flto -fuse-linker-plugin -flto-partition=none \
  -fomit-frame-pointer -fno-stack-check -fno-stack-protector -fno-threadsafe-statics -fno-use-cxa-get-exception-ptr \
  -fno-access-control -fno-enforce-eh-specs -fno-nonansi-builtins -fnothrow-opt -fno-optional-diags -fno-use-cxa-atexit \
+ -fno-exceptions -fno-dwarf2-cfi-asm -fno-asynchronous-unwind-tables -fno-extern-tls-init -fno-rtti \
  -Wno-narrowing -Wno-int-to-pointer-cast -Wstack-usage=4096 \
- -idirafter kilib -D_UNICODE -DUNICODE -UDEBUG -U_DEBUG -DUSEGLOBALIME -DSUPERTINY \
- -fno-exceptions -fno-dwarf2-cfi-asm -fno-asynchronous-unwind-tables -fno-extern-tls-init -fno-rtti
+ -idirafter kilib -D_UNICODE -DUNICODE -UDEBUG -U_DEBUG -DUSEGLOBALIME -DSUPERTINY
 LOPT     = -m64 -mwindows
 
 ifneq ($(NOCHARSET),1)

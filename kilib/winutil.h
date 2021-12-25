@@ -52,9 +52,11 @@ public:
 			: str_(t.str_), mem_(t.mem_) { t.str_=NULL; }
 		~Text()
 			{
-				if( str_ != NULL )
+				if( str_ != NULL ) 
+				{
 					if( mem_==NEW ) delete [] str_;
 					else      GlobalUnlock( str_ );
+				}
 			}
 		const unicode* data() const { return str_; }
 	};

@@ -19,7 +19,7 @@
 inline static
 unicode* my_lstrcpyW( unicode* const d, const unicode* s )
 {
-	for(unicode* n=d; *n++=*s++;);
+	for(unicode* n=d; (*n++ = *s++););
 	return d;
 }
 inline static
@@ -38,7 +38,7 @@ int my_lstrcmpW(const unicode *X, const unicode *Y)
 inline static
 char* my_lstrcpyA( char* const d, const char* s )
 {
-	for(char* n=d; *n++=*s++;);
+	for(char* n=d; (*n++ = *s++););
 	return d;
 }
 inline static

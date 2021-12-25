@@ -162,10 +162,13 @@ ulong ViewImpl::CalcLineWidth( const unicode* txt, ulong len ) const
 	// 行を折り返さずに書いたときの横幅を計算する
 	// ほとんどの行が折り返し無しで表示されるテキストの場合、
 	// この値を計算しておくことで、処理の高速化が可能。
+	// Calculate the width of the text when lines are written without wrapping
+	// For text where most of the lines are displayed without wrapping.
+	// Calculating this value can speed up the process.
 	const Painter& p = cvs_.getPainter();
 
 	ulong w=0;
-	for( ulong i=0; i<len; ++i )
+	for( ulong i=0; i<len ; ++i ) // Also stops at txt[i]=='\0'?
 		if( txt[i] == L'\t' )
 			w = p.nextTab(w);
 		else
@@ -295,6 +298,7 @@ int ViewImpl::ReWrapSingle( const DPos& s )
 
 	// 折り返しなしだと総横幅の更新が必要
 	if( cvs_.wrapType() == NOWRAP )
+	{
 		if( textCx_ <= wl.width() )
 		{
 			textCx_ = wl.width();
@@ -308,6 +312,7 @@ int ViewImpl::ReWrapSingle( const DPos& s )
 		{
 			return 1;
 		}
+	}
 	return 2;
 }
 

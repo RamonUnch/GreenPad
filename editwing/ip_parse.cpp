@@ -550,7 +550,7 @@ public:
 		ulong commentbit = dfa.state&1;
 
 		// ƒ‹[ƒv`
-		const unicode* str = line.str();
+		// const unicode* str = line.str();
 		uchar*         flg = line.flg();
 		ulong       j,k,ie = line.size();
 		for( ulong i=0; i<ie; i=j )
