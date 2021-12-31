@@ -2,6 +2,7 @@
 #include "app.h"
 #include "textfile.h"
 #include "ktlarray.h"
+#include "string.h"
 using namespace ki;
 
 #ifndef NO_CHARDET
@@ -380,6 +381,7 @@ struct rUtf7 : public rBasicUTF
 	void fillbuf()
 	{
 		if( fb<fe )
+		{
 			if( !inB64 )
 				if( *fb=='+' )
 					if( fb+1<fe && fb[1]=='-' )
@@ -426,6 +428,7 @@ struct rUtf7 : public rBasicUTF
 				if( N==0 )
 					fillbuf();
 			}
+		}
 	}
 };
 
@@ -485,7 +488,7 @@ struct rSCSU : public rBasicUTF
 		, d( 0 ) {}
 
 	const uchar *fb, *fe;
-	char active, mode;
+	uchar active, mode;
 	ulong skip;
 	uchar c, d;
 
@@ -595,12 +598,13 @@ struct rSCSU : public rBasicUTF
 // BOCU-1
 // code portion from BOCU1.pm by Naoya Tozuka
 //-------------------------------------------------------------------------
+#define m1 ((uchar)(-1))
 namespace {
 	static const uchar bocu1_byte_to_trail[256] = {
 //   0x00 - 0x20
-    -1,   0x00, 0x01, 0x02, 0x03, 0x04, 0x05, -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-    0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, -1,   -1,   0x10, 0x11, 0x12, 0x13,
-    -1,
+    m1,   0x00, 0x01, 0x02, 0x03, 0x04, 0x05, m1,   m1,   m1,   m1,   m1,   m1,   m1,   m1,   m1,
+    0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, m1,   m1,   0x10, 0x11, 0x12, 0x13,
+    m1,
 //   0x21 - 0xff
           0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22,
     0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32,
@@ -617,14 +621,15 @@ namespace {
     0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf, 0xe0, 0xe1, 0xe2,
 	0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf0, 0xf1, 0xf2 };
 }
+#undef m1
 struct rBOCU1 : public rBasicUTF
 {
 	rBOCU1( const uchar* b, ulong s )
 		: fb( b )
 		, fe( b+s )
 		, skip( 0 )
-		, pc( 0x40 )
-		, cp( 0 ) {}
+		, cp( 0 )
+		, pc( 0x40 ) {}
 
 	const uchar *fb, *fe;
 	ulong skip;
@@ -731,7 +736,7 @@ namespace
 		if( n          < 0xf0 ) return 3; // 1110xxxx
 		if( n          < 0xf8 ) return 4; // 11110xxx
 		if( n          < 0xfc ) return 5; // 111110xx
-		                        return 6; // 1111110x
+		return 6; // 1111110x
 	}
 
 	static char* WINAPI CharNextUtf8( WORD, const char* p, DWORD )
@@ -760,7 +765,24 @@ namespace
 			q = p+2;
 		return const_cast<char*>( q );
 	}
+#if !defined(TARGET_VER) || defined (TARGET_VER) && TARGET_VER>305
+	static char* WINAPI MyCharNextExA(WORD cp, const char *p, DWORD flags)
+	{
+		// Only for Windows >= 4 (NT4/95+) because
+		// CharNextExA is not here on NT3.1 and is a stub on NT3.5
+		if (app().isNewShell()) {
+			static uNextFunc Window_CharNextExA = (uNextFunc)(-1);
+			if (Window_CharNextExA == (uNextFunc)(-1)) // First time!
+				Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandleA("USER32.DLL"), "CharNextExA");
 
+			if (Window_CharNextExA) { // We got the function!
+				return Window_CharNextExA(cp, p, flags);
+			}
+		}
+		// Fallback to increment :)
+		return (char *)++p;
+	}
+#endif
 	// IMultiLanguage2::DetectInputCodepageはGB18030のことを認識できません。
 	static bool IsGB18030Like( const uchar* ptr, ulong siz, int refcs )
 	{
@@ -862,9 +884,8 @@ struct rMBCS : public TextFileRPimpl
 		: fb( reinterpret_cast<const char*>(b) )
 		, fe( reinterpret_cast<const char*>(b+s) )
 		, cp( c==UTF8 ? UTF8N : c )
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
-		, next( cp==UTF8N ?   CharNextUtf8 : cp==GB18030 ? CharNextGB18030 :
-							CharNextExA )
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>305) // 350
+		, next( cp==UTF8N ?   CharNextUtf8 : cp==GB18030 ? CharNextGB18030 : MyCharNextExA )
 #endif
 		, conv( cp==UTF8N && (app().isWin95()||!::IsValidCodePage(65001))
 		                  ? Utf8ToWideChar : MultiByteToWideChar )
@@ -887,7 +908,7 @@ struct rMBCS : public TextFileRPimpl
 				state = EOL;
 				break;
 			}
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>305) //350
 			else if( (*p) & 0x80 && p+1<fe )
 			{
 				p = next(cp,p,0);
@@ -903,7 +924,7 @@ struct rMBCS : public TextFileRPimpl
 #ifndef _UNICODE
 		len = conv( cp, 0, fb, p-fb, buf, siz );
 #else
-		if(!App::isWin3later())
+		if(!app().isNewShell())
 		{
 			len = conv( cp, 0, fb, p-fb, buf, siz );
 		}
@@ -1028,16 +1049,19 @@ struct rIso2022 : public TextFileRPimpl
 				G[ 0 ] = ASCII;                     // 1B 28 42
 			else if( *reinterpret_cast<const dbyte*>(p)==0x412E )
 				G[ 2 ] = LATIN;                     // 1B 2E 41
-			else if( p[0]==0x24 )
+			else if( p[0]==0x24 ) {
 				if( p[1]==0x40 || p[1]==0x42 )
 					G[ 0 ] = JIS;                   // 1B 24 [40|42]
 				else if( p[1]==0x41 )
 					G[ 0 ] = GB;                    // 1B 24 41
 				else if( p+2 < fe )
+				{
 					if( p[2]==0x41 )
 						G[ ((*++p)-0x28)%4 ] = GB;  // 1B 24 [28-2B] 41
 					else if( p[2]==0x43 )
 						G[ ((*++p)-0x28)%4 ] = KSX; // 1B 24 [28-2B] 43
+				}
+			}
 		}
 		++p;
 	}
@@ -1161,16 +1185,58 @@ void TextFileR::Close()
 	fp_.Close();
 }
 
-bool TextFileR::Open( const TCHAR* fname )
+// cs should be below -100;
+int TextFileR::neededCodepage(int cs) 
+{
+	switch(cs)
+	{
+	// Whitelist...
+	// for positives values and values < -100;
+	case UTF1Y: // -64999
+	case UTF9Y: // -65002
+	case UTF7:  // +65000
+	case UTF8:  // -65001
+	case UTF8N: // +65001
+	case SCSU:  // -60000
+	case BOCU1: // -60001
+		return 0 ; // WHITELISTED
+
+	// TYPE -(cp+1)
+	case IsoKR: // -950 => 949
+	case HZ:    // -937 => 936
+	case IsoJP: // -933 => 932
+		return -cs - 1; // Funny cases.
+
+//	case IsoCN:
+//	case EucJP:
+// and all > 0 cases.
+	default:
+		if(cs < -100) // values between 0 and -100 are whitelisted
+			return -cs; // negative sign case.
+		else
+			return cs; // normal case cs == needed cp.
+	}
+}
+bool TextFileR::Open( const TCHAR* fname, bool always )
 {
 	// ファイルを開く
-	if( !fp_.Open(fname) )
+	if( !fp_.Open(fname, always) )
 		return false;
 	const uchar* buf = fp_.base();
 	const ulong  siz = fp_.size();
 
 	// 必要なら自動判定
 	cs_ = AutoDetection( cs_, buf, Min<ulong>(siz,16<<10) ); // 先頭16KB
+	int needed_cs = neededCodepage(cs_);
+
+	if(needed_cs > 0 && !::IsValidCodePage(needed_cs)) 
+	{
+		TCHAR str[128];
+		wsprintf(str, TEXT("Codepage cp%d Is not installed!\nDefaulting to current ACP"), needed_cs);
+		MessageBox(NULL, str, TEXT("Encoding"), MB_OK|MB_TASKMODAL);
+		cs_ = ::GetACP(); // default to ACP...
+	}
+
 
 	// 対応するデコーダを作成
 	switch( cs_ )
@@ -1293,7 +1359,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 	}
 
 //-- chardet and MLang detection
-	if( App::isWin3later() )
+	if( app().isNewShell() )
 	{ // chardet works better when size > 64
 		if( siz > 80 )
 		{
@@ -1301,14 +1367,12 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 			if( cs ) return cs;
 		}
 		cs = MLangAutoDetection( ptr, siz );
-		if( cs ) return cs;
+		if( cs ) return cs;	
 	}
-	else
-	{ // chardet is the only auto detection method
-		cs = chardetAutoDetection( ptr, siz );
-		if( cs ) return cs;
-	}
-
+	// chardet is the only auto detection method
+	cs = chardetAutoDetection( ptr, siz );
+	if( cs ) return cs;
+	
 // last resort
 //-- 暫定版 UTF-8 / 日本語EUC チェック
 
@@ -1358,15 +1422,16 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 
 	return cs ? cs : defCs;
 }
-
+const IID myIID_IMultiLanguage2 = {0xDCCFC164, 0x2B38, 0x11d2, {0xB7, 0xEC, 0x00, 0xC0, 0x4F, 0x8F, 0x5D, 0x9A}};
 int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 {
 	int cs = 0;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>310)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 #ifndef NO_MLANG
 	app().InitModule( App::OLE );
 	IMultiLanguage2 *lang = NULL;
-	if( S_OK == ::CoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, IID_IMultiLanguage2, (LPVOID*)&lang ) )
+	DWORD ret = ::MyCoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, myIID_IMultiLanguage2, (LPVOID*)&lang );
+	if( S_OK == ret )
 	{
 		int detectEncCount = 5;
 		DetectEncodingInfo detectEnc[5];
@@ -1452,14 +1517,14 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 	chardet_t pdet = NULL;
 	char charset[128];
 
-# define STR2CP(a,b) if(0 == ::lstrcmpA(charset,a)) { \
+# define STR2CP(a,b) if(0 == my_lstrcmpA(charset,a)) { \
 					chardet_destroy(pdet); \
 					::FreeLibrary(hIL); \
 					return b; \
 				}
 
 
-	if(hIL = ::LoadLibrary(TEXT("chardet.dll")))
+	if((hIL = ::LoadLibraryA( "chardet.dll" )))
 	{
 		chardet_create = (int(__cdecl*)(chardet_t*))::GetProcAddress(hIL, "chardet_create");
 		chardet_destroy = (void(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_destroy");
@@ -1891,16 +1956,16 @@ bool TextFileR::IsNonUnicodeRange(qbyte u)
 		(0x0E01F0 <= u && u < 0x0F0000) ||
 		//	U+F0000..U+FFFFF	Supplementary Private Use Area-A
 		//	U+100000..U+10FFFF	Supplementary Private Use Area-B
-				(0x110000 <= u);
+		(0x110000 <= u);
 }
 bool TextFileR::IsAscii(uchar c) { return 0x20 <= c && c < 0x80; }
 bool TextFileR::IsSurrogateLead(qbyte w) { return 0xD800 <= w && w <= 0xDBFF; }
 
 bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uChrSize, bool LE)
 {
-	qbyte uchr;
-	ulong usize = siz / uChrSize, x = 0;
-	ulong unconfidence = 0, confidence = 0;
+	qbyte uchr = '\0';
+	ulong usize = siz / NZero(uChrSize);
+	ulong unconfidence = 0, confidence = 0, x;
 	bool impossible = false, prevIsNull = false;
 	for( x=0; x < usize; x++ )
 	{
@@ -2129,23 +2194,23 @@ struct wUtf9 : public TextFileWPimpl
 		if( c <= 0x7F || (c >= 0xA0 && c <= 0xFF ))
 			fp_.WriteC( static_cast<uchar>(c) );
 		else if( c <= 0x07FF )
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7)) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
+			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7)        ) ),
+			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 		else if( c <= 0xFFFF )
-			fp_.WriteC( static_cast<uchar>(0x90 | (c >> 14)) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
+			fp_.WriteC( static_cast<uchar>(0x90 | (c >> 14)       ) ),
+			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
+			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 		else if( c <= 0x7FFFFF )
-			fp_.WriteC( static_cast<uchar>(0x94 | (c >> 21)) ),
+			fp_.WriteC( static_cast<uchar>(0x94 | (c >> 21)       ) ),
 			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
+			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
+			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 		else
 			fp_.WriteC( static_cast<uchar>(0x98 | (c >> 28) & 0x07) ),
 			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 21) & 0x7F) ),
 			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
+			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
+			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 	}
 };
 
@@ -2302,7 +2367,7 @@ struct wSCSU : public TextFileWPimpl
 
 	void WriteChar( unicode c )
 	{
-		char window; // dynamic window 0..7
+		uchar window; // dynamic window 0..7
 		int w;       // result of getWindow(), -1..7
 
 		if( c<0 || c>0x10ffff || (isUnicodeMode&~1)!=0 || (win&~7)!=0 )
@@ -2427,7 +2492,7 @@ namespace {
 }
 struct wBOCU1 : public TextFileWPimpl
 {
-	wBOCU1( FileW& w ) : TextFileWPimpl(w), pc ( 0x40 ), cp ( 0 ), diff( 0 )
+	wBOCU1( FileW& w ) : TextFileWPimpl(w), cp ( 0 ) , pc ( 0x40 ), diff( 0 )
 	{ // write BOM
 		fp_.WriteC( static_cast<uchar>(0xfb) );
 		fp_.WriteC( static_cast<uchar>(0xee) );
@@ -2736,11 +2801,13 @@ struct wIso2022 : public TextFileWPimpl
 			}
 
 		// 最後は確実にASCIIに戻す
-		if( !ascii )
+		if( !ascii ) 
+		{
 			if( hz_ )
 				fp_.WriteC( 0x7E ), fp_.WriteC( 0x7D );
 			else
 				fp_.WriteC( 0x0F );
+		}
 	}
 
 	int  cp_;
