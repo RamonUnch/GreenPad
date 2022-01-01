@@ -92,8 +92,11 @@ public:
 
 	//@{ Windows‚Ìƒo[ƒWƒ‡ƒ“ //@}
 	static const OSVERSIONINFOA& osver();
+	static int  getOSVer();
+	static int  getOSBuild();
 	static bool isWin95();
 	static bool isNT();
+	static bool isWin32s();
 	static bool is351p();
 	static bool isNT31();
 	static bool isNewShell();

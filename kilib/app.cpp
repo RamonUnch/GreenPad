@@ -80,7 +80,7 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 	return TRUE;
 }
 #else
-	#dfine MyGetVersionEx GetVersionExA
+	#define MyGetVersionEx GetVersionExA
 #endif
 
 //=========================================================================
@@ -174,6 +174,18 @@ const OSVERSIONINFOA& App::osver()
 	return s_osVer;
 }
 
+int App::getOSVer()
+{
+	static const OSVERSIONINFOA& v = osver();
+	return v.dwMajorVersion*100+v.dwMinorVersion;
+}
+
+int App::getOSBuild()
+{
+	static const OSVERSIONINFOA& v = osver();
+	return v.dwBuildNumber;
+}
+
 bool App::isNewTypeWindows()
 {
 	static const OSVERSIONINFOA& v = osver();
@@ -198,6 +210,12 @@ bool App::isNT()
 {
 	static const OSVERSIONINFOA& v = osver();
 	return v.dwPlatformId==VER_PLATFORM_WIN32_NT;
+}
+
+bool App::isWin32s()
+{
+	static const OSVERSIONINFOA& v = osver();
+	return v.dwPlatformId==VER_PLATFORM_WIN32s;
 }
 
 bool App::isNewShell()

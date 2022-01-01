@@ -15,11 +15,12 @@ StatusBar::StatusBar()
 bool StatusBar::Create( HWND parent )
 {
 	HWND h = NULL;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	// Avoid using CreateStatusWindow that is not present on NT3.1.
-	h = CreateWindowEx(
+	h = ::CreateWindowEx(
 		0, // ExStyle
-		app().isNT31()? TEXT("msctls_statusbar"): STATUSCLASSNAME,  // TEXT("msctls_statusbar") for NT3.1
+		App::getOSVer() == 310 || (App::getOSVer() == 350 && App::getOSBuild() < 711)
+		? TEXT("msctls_statusbar")   // TEXT("msctls_statusbar") for NT3.1 and 3.5 build <711
+		: STATUSCLASSNAME, // TEXT("msctls_statusbar32")...
 		NULL, // pointer to window name
 		WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP , // window style
 		0, 0, 0, 0, //x, y, w, h
@@ -28,9 +29,7 @@ bool StatusBar::Create( HWND parent )
 		app().hinst(), // handle to application instance
 		NULL // pointer to window-creation data
 	);
-#else 
-	h = NULL;
-#endif
+
 	if( h == NULL )
 		return false;
 
@@ -62,8 +61,9 @@ bool StatusBar::PreTranslateMessage( MSG* )
 
 void StatusBar::SetText( const TCHAR* str, int part )
 {
-  # ifdef UNICOWS
-	if (app().isNT() && !app().isNT31())
+  # if defined(UNICOWS) || (!defined(TARGET_VER) && defined(UNICODE))
+	if ( app().isNT() 
+	&&!( App::getOSVer() == 310 || (App::getOSVer() == 350 && App::getOSBuild() < 711)))
   # endif
 	{	// Unicode in UNICOWS mode to be used on NT only from 3.5
 		SendMsg( SB_SETTEXT, part, reinterpret_cast<LPARAM>(str) ); 

@@ -174,7 +174,8 @@ String Path::CompactIfPossible( unsigned Mx )
 	if (remaining >= 3) {
 		my_lstrcpy(&buf[remaining], fn); // copy fn to the end of buf
 	} else { // remaining < 3
-		my_lstrcpy(&buf[6], &fn[-remaining]); // copy fn to the end of buf
+		my_lstrcpyn(&buf[6], &fn[-remaining+6], Mx-6); // copy fn to the end of buf
+		buf[Mx] = '\0'; // In case
 	}
 	String ans = buf;
 	delete [] buf;
