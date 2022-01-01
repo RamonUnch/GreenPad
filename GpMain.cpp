@@ -70,10 +70,23 @@ int GpStBar::AutoResize( bool maximized )
 
 	HDC dc = ::GetDC( hwnd() );
 	SIZE s;
-	if( ::GetTextExtentPoint32( dc, TEXT("BBBBM"), 5, &s ) ) // Line Ending
-		w[1] = w[2] - s.cx;
-	if( ::GetTextExtentPoint32( dc, TEXT("BBBWWWW"), 7, &s ) ) // Charset
-		w[0] = w[1] - s.cx;
+
+#if defined(TARGET_VER) && TARGET_VER <= 300 // Win32s
+	if( App::isWin32s() )
+	{
+		if( ::GetTextExtentPoint( dc, TEXT("BBBBM"), 5, &s ) ) // Line Ending
+			w[1] = w[2] - s.cx;
+		if( ::GetTextExtentPoint( dc, TEXT("BBBWWWW"), 7, &s ) ) // Charset
+			w[0] = w[1] - s.cx;
+	}
+	else
+#endif
+	{
+		if( ::GetTextExtentPoint32( dc, TEXT("BBBBM"), 5, &s ) ) // Line Ending
+			w[1] = w[2] - s.cx;
+		if( ::GetTextExtentPoint32( dc, TEXT("BBBWWWW"), 7, &s ) ) // Charset
+			w[0] = w[1] - s.cx;
+	}
 	::ReleaseDC( hwnd(), dc );
 
 	SetParts( countof(w), w );
@@ -705,7 +718,7 @@ static BOOL CALLBACK MyFindWindowExProc(HWND hwnd, LPARAM lParam)
 }
 static HWND MyFindWindowEx(HWND parent, HWND after, LPCTSTR lpszClass, LPCTSTR lpszWindow)
 {
-  # if defined(UNICODE) && defined(UNICOWS)
+  # if !defined (TARGET_VER) || defined(UNICODE) && defined(UNICOWS)
 	if (app().isNewShell()) {
 		// In UNICOWS mode FindWindowEx is dynamically
 		// imported and is implemented for 95/NT4+
