@@ -880,7 +880,14 @@ void GreenPadWnd::UpdateWindowName()
 	name += String(IDS_APPNAME).c_str();
 
 	SetText( name.c_str() );
-	stb_.SetCsText( (uint)csi_==(0xffffffff)?TEXT("UNKN"):charSets_[csi_].shortName );
+	// Try to show CP number in the StBar
+	if(csi_ >= 0xf0f00000 && csi_ < 0xf1000000) {
+		TCHAR cpname[10];
+		::wsprintf(cpname,TEXT("CP%d"), csi_ & 0xfffff);
+		stb_.SetCsText( cpname );
+	} else {
+		stb_.SetCsText( csi_==0xffffffff?TEXT("UNKN"):charSets_[csi_].shortName );
+	}
 	stb_.SetLbText( lb_ );
 }
 
@@ -1015,6 +1022,7 @@ BOOL GreenPadWnd::SendMsgToAllFriends(UINT msg)
 }
 bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, bool always )
 {
+//	MessageBox(NULL, fn.c_str(), TEXT("File"), 0);
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
 
@@ -1034,6 +1042,9 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	if( tf->size() )
 	{
 		csi_      = charSets_.findCsi( tf->codepage() );
+		if( csi_ == 0xffffffff )
+			csi_       = 0xf0f00000 & tf->codepage();
+
 		if( tf->nolb_found() )
 			lb_       = cfg_.GetNewfileLB();
 		else
@@ -1135,7 +1146,19 @@ bool GreenPadWnd::AskToSave()
 
 bool GreenPadWnd::Save()
 {
-	TextFileW tf( charSets_[csi_].ID, lb_ );
+//	TextFileW tf( charSets_[csi_].ID, lb_ );
+
+	int save_Csi;
+
+	if(csi_ == 0xffffffff)
+		save_Csi = ::GetACP();
+	else if(csi_ >= 0xf0f00000 && csi_ < 0xf1000000)
+		save_Csi = csi_ & 0xfffff;
+	else
+		save_Csi = charSets_[csi_].ID;
+
+	TextFileW tf( save_Csi, lb_ );
+
 	if( tf.Open( filename_.c_str() ) )
 	{
 		// 無事ファイルに保存できた場合
