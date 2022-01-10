@@ -1043,7 +1043,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	{
 		csi_      = charSets_.findCsi( tf->codepage() );
 		if( csi_ == 0xffffffff )
-			csi_       = 0xf0f00000 & tf->codepage();
+			csi_       = 0xf0f00000 | tf->codepage();
 
 		if( tf->nolb_found() )
 			lb_       = cfg_.GetNewfileLB();
