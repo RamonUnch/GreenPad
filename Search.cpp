@@ -296,7 +296,7 @@ void SearchManager::FindNextImpl(bool redo)
 	// 選択範囲ありなら、選択範囲先頭の１文字先から検索
 	// そうでなければカーソル位置から検索
 	DPos s = *stt;
-	if( *stt != *end ) 
+	if( *stt != *end )
 	{
 		if( stt->ad == edit_.getDoc().len(stt->tl) )
 			s = DPos( stt->tl+1, 0 );
@@ -362,7 +362,7 @@ void SearchManager::FindPrevImpl()
 
 bool SearchManager::FindNextFromImpl( DPos s, DPos* beg, DPos* end )
 {
-	// １行ずつサーチ
+	// １行ずつサー, Search one line at a time
 	doc::Document& d = edit_.getDoc();
 	for( ulong mbg,med,e=d.tln(); s.tl<e; ++s.tl, s.ad=0 )
 		if( searcher_->Search(
@@ -371,7 +371,7 @@ bool SearchManager::FindNextFromImpl( DPos s, DPos* beg, DPos* end )
 			beg->tl = end->tl = s.tl;
 			beg->ad = mbg;
 			end->ad = med;
-			return true; // 発見
+			return true; // 発見, Found!
 		}
 	return false;
 }
@@ -447,11 +447,27 @@ void SearchManager::ReplaceAllImpl()
 	const wchar_t* ustr = replStr_.ConvToWChar();
 	const ulong ulen = my_lstrlenW( ustr );
 
+	// Get selection position
+	const VPos *stt, *end;
+	edit_.getCursor().getCurPos( &stt, &end );
+
+	// Set begining and end for replace all
+	// if multi-line selection
+	DPos s(0,0), dend(0, edit_.getDoc().tln());
+	bool noselection = true;
+	if(stt->tl != end->tl)
+	{ // Multi-line selection
+		noselection = false;
+		s = *stt; // Etart of selection
+		dend = *end; // End of selection
+	}
+
 	// 文書の頭から検索
 	int dif=0;
-	DPos s(0,0), b, e;
-	while( FindNextFromImpl( s, &b, &e ) )
-	{
+	DPos b, e;
+	while( FindNextFromImpl( s, &b, &e )
+	&& (noselection || (e.tl <= dend.tl || (e.tl == dend.tl && e.ad <= dend.ad)) ) )
+	{ // search until the end of selectionif any
 		if( s.tl != b.tl ) dif = 0;
 		s = e;
 
