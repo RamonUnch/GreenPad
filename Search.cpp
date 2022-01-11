@@ -453,21 +453,20 @@ void SearchManager::ReplaceAllImpl()
 
 	// Set begining and end for replace all
 	// if multi-line selection
-	DPos s(0,0), dend(0, edit_.getDoc().tln());
+	DPos s(0,0), dend(0, 0);
 	bool noselection = true;
 	if(stt->tl != end->tl)
 	{ // Multi-line selection
 		noselection = false;
-		s = *stt; // Etart of selection
+		s = *stt; // Start of selection
 		dend = *end; // End of selection
 	}
 
 	// •¶‘‚Ì“ª‚©‚çŒŸõ
 	int dif=0;
 	DPos b, e;
-	while( FindNextFromImpl( s, &b, &e )
-	&& (noselection || (e.tl <= dend.tl || (e.tl == dend.tl && e.ad <= dend.ad)) ) )
-	{ // search until the end of selectionif any
+	while( FindNextFromImpl( s, &b, &e ) && (noselection || e <= dend) )
+	{ // search until the end of selection if any
 		if( s.tl != b.tl ) dif = 0;
 		s = e;
 
