@@ -54,8 +54,12 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 #if TARGET_VER > 300
 	GetVersionEx_funk func = (GetVersionEx_funk)
 		GetProcAddress(GetModuleHandleA("KERNEL32.DLL"), "GetVersionExA");
-	if (func && func( s_osVer )) {
-		// Sucess
+	if (func && func( s_osVer )) 
+	{
+		if (s_osVer->dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) 
+		{   // fixup broken build number in early 9x builds (roytam1)
+			s_osVer->dwBuildNumber &= 0xffff;
+		}
 		return TRUE;
 	}
 #endif
@@ -284,7 +288,8 @@ namespace ki
 	extern "C" void __cdecl __cxa_pure_virtual(void) {};
 	extern "C" void __deregister_frame_info() {};
 	extern "C" void __register_frame_info() {};
-	extern "C" int atexit (void (*func)(void)) {return 0;};
+	extern int __stack_chk_guard = 696115047 ;
+	extern "C" int __stack_chk_fail(){ MessageBoxA(NULL, "__stack_chk_fail", NULL, 0) ; ExitProcess(1); };
 #endif
 
 #ifdef SUPERTINY
