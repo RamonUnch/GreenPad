@@ -421,7 +421,26 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	}
 
 	pThis = this;
-	return ( ::GetOpenFileName(&ofn) != 0 );
+	BOOL ret = ::GetOpenFileName(&ofn);
+	if(ret != TRUE) {
+		DWORD ErrCode = ::GetLastError();
+
+		if(!ErrCode || ErrCode == ERROR_NO_MORE_FILES) {
+			// user pressed Cancel button
+		} else if((ErrCode == ERROR_INVALID_PARAMETER || ErrCode == ERROR_CALL_NOT_IMPLEMENTED || ErrCode == ERROR_INVALID_ACCEL_HANDLE) && ((ofn.Flags & OFN_EXPLORER) == OFN_EXPLORER)) {
+			// maybe Common Dialog DLL doesn't like OFN_EXPLORER, try again without it
+			ofn.Flags &= ~OFN_EXPLORER;
+			ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
+
+			// try again!
+			ret = ::GetOpenFileName(&ofn);
+		} else {
+			TCHAR tmp[128];
+			::wsprintf(tmp,TEXT("GetOpenFileName Error #%d."),ErrCode);
+			::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK|MB_TASKMODAL );
+		}
+	}
+	return ( ret != 0 );
 }
 
 UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp )
@@ -533,8 +552,28 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 		ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
 	}
 
-	pThis        = this;
-	return ( ::GetSaveFileName(&ofn) != 0 );
+	pThis = this;
+	BOOL ret = ::GetSaveFileName(&ofn);
+	if(ret != TRUE) {
+		DWORD ErrCode = ::GetLastError();
+
+		if(!ErrCode || ErrCode == ERROR_NO_MORE_FILES) {
+			// user pressed Cancel button
+		} else if((ErrCode == ERROR_INVALID_PARAMETER || ErrCode == ERROR_CALL_NOT_IMPLEMENTED) && ((ofn.Flags & OFN_EXPLORER) == OFN_EXPLORER)) {
+			// maybe Common Dialog DLL doesn't like OFN_EXPLORER, try again without it
+			ofn.Flags &= ~OFN_EXPLORER;
+		    ofn.lpstrTitle     = TEXT("Save File As");
+			ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
+
+			// try again!
+			ret = ::GetSaveFileName(&ofn);
+		} else {
+			TCHAR tmp[128];
+			::wsprintf(tmp,TEXT("GetSaveFileName Error #%d."),ErrCode);
+			::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK|MB_TASKMODAL );
+		}
+	}
+	return ( ret != 0 );
 }
 
 UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp )
