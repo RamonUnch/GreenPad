@@ -242,7 +242,7 @@ public:
 
 	~TagMap()
 	{
-		// キーワード解放
+		// キーワード解放,
 		delete tag_[0];
 		delete tag_[1];
 		delete tag_[2];
@@ -313,6 +313,7 @@ public:
 
 //-------------------------------------------------------------------------
 // 与えられた文字列がキーワードかどうか高速判定するためのハッシュ表
+// Hash table for fast determination of whether a given string is a keyword
 //-------------------------------------------------------------------------
 
 class KeywordMap
@@ -395,6 +396,7 @@ private:
 
 class editwing::doc::Parser
 {
+public:
 	KeywordMap kwd_;
 	TagMap     tag_;
 
@@ -417,7 +419,7 @@ public:
 	{
 		kwd_.AddKeyword( str, len );
 	}
-
+	
 	// 行データ解析
 	uchar Parse( Line& line, uchar cmst )
 	{
@@ -617,7 +619,6 @@ void DocImpl::SetKeyword( const unicode* defbuf, ulong siz )
 	bool          flags[] = {false,false,false,false};
 	const unicode* tags[] = {NULL,NULL,NULL};
 	ulong        taglen[] = {0,0,0};
-
 	if( siz != 0 )
 	{
 		// １行目:フラグ
@@ -628,6 +629,7 @@ void DocImpl::SetKeyword( const unicode* defbuf, ulong siz )
 
 		// ２～４行目
 		//   ブロコメ開始記号、ブロコメ終了記号、行コメ記号
+		// comment start symbol, end symbol line comment symbol
 		for( int j=0; j<3; ++j )
 		{
 			r.getLine();
@@ -635,6 +637,18 @@ void DocImpl::SetKeyword( const unicode* defbuf, ulong siz )
 			taglen[j] = len;
 		}
 	}
+
+	if (taglen[2])
+	{// Copy single line comment string (LB) in a convenient buffer.
+		ulong cstrlen=Min(taglen[2], (ulong)countof(CommentStr_));
+		my_lstrcpynW(CommentStr_, tags[2], cstrlen);
+		CommentStr_[len]='\0'; // be sure to NULL terminate
+	}
+	else 
+	{// Default comment string is > when there is no .kwd files.
+		CommentStr_[0] = L'>'; CommentStr_[1] = L'\0';
+	}
+
 
 	// パーサー作成
 	aptr<Parser> np( new Parser(

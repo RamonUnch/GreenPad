@@ -445,7 +445,77 @@ void Cursor::Return()
 	delete [] p;
 }
 
+//-------------------------------------------------------------------------
+// Add the quote string at the begining of each line.
+//-------------------------------------------------------------------------
+void Cursor::QuoteSelectionW(const unicode *qs, bool shi)
+{
+	// Set cursors at begining of line
+	DPos dm, dM;
+	if( cur_ < sel_ ) {
+		cur_.ad = 0;
+		dm=cur_; dM=sel_;
+	} else {
+		sel_.ad=0;
+		dm=sel_; dM=cur_;
+	}
+	dm.ad=0;
+	DPos ocur=cur_, osel=sel_; // save original selection
 
+	uint qsl = my_lstrlenW(qs); // length of quote string.
+
+	ulong len = doc_.getRangeLength( dm, dM );
+	unicode *p = new unicode[len+1];
+	if(!p) return;
+	doc_.getText( p, dm, dM );
+
+	ulong nlines = shi?0: 1 + dM.tl - dm.tl; // max number of tabs to add/min to remove ;
+	unicode *pp = new unicode[len + (nlines + 1)*qsl]; // bufer to copy (un)tabified data
+	if(!pp) { delete [] p ; return; } // unable to allocate mem
+	ulong i=0, j=0;
+	if (shi) {
+		// skip a quote?
+		if(my_instringW(p, qs))
+			i+=qsl;
+	} else {
+		// add the quote!
+		my_lstrcpyW(pp, qs);
+		j+=qsl;
+		// shift original selection
+	}
+	for (; i < len; i++)
+	{
+		pp[j++] = p[i];
+		if((p[i] == L'\n' && (!i || p[i-1] == L'\r')) // DOS
+		|| (p[i] == L'\n' && (!i || p[i-1] != L'\r')) // UNIX
+		|| (p[i] == L'\r' && p[i+1] != '\n')) // MAC
+		{ // We are at the begining of a line
+			if(shi) {
+				// Skip the quote string ?
+				if(my_instringW(&p[i+1], qs)) {
+					i+=qsl;
+				}
+			} else {
+				// add the quote string?
+				if (p[i+1] != '\0') {
+					my_lstrcpyW(&pp[j], qs);
+					j+=qsl;
+				}
+			}
+		}
+	}
+	pp[j] = L'\0';
+	delete [] p;
+	doc_.Execute( Replace(dm, dM, pp, my_lstrlenW(pp)) );
+	MoveCur(osel, false);
+	MoveCur(ocur, true);
+
+	delete [] pp;
+}
+void Cursor::QuoteSelection(bool unquote)
+{
+	QuoteSelectionW(doc_.getCommentStr(), unquote);
+}
 //-------------------------------------------------------------------------
 // Indent/Un-indent selection with Tab/Shit+Tab.
 //-------------------------------------------------------------------------
@@ -456,49 +526,8 @@ void Cursor::Tabulation(bool shi)
 		Input("\t", 1);
 		return;	 // DONE
 	}
-	// Set cursors at begining of line
-	cur_.ad = sel_.ad = 0;
-	DPos dm=cur_, dM=sel_;
-	DPos ocur=cur_, osel=sel_;
-	if( cur_ > sel_ )
-		dm=sel_, dM=cur_;
-
-	ulong len = doc_.getRangeLength( dm, dM );
-	unicode *p = new unicode[len+1];
-	if(!p) return;
-	doc_.getText( p, dm, dM );
-
-	int nlines;
-	nlines = shi?0: 1 + dM.tl - dm.tl; // max number of tabs to add/min to remove ;
-	unicode *pp = new unicode[len + nlines + 1]; // bufer to copy (un)tabified data
-	if(!pp) { delete [] p ; return; }
-	ulong i=0, j=0;
-	if(!shi)  {
-		pp[j++] = L'\t'; // add a tab!
-	} else {
-		i+= p[0] == L'\t'; // skip a tab?
-	}
-	for (; i < len; i++)
-	{
-		pp[j++] = p[i];
-		if((p[i] == L'\n' && (!i || p[i-1] == L'\r')) // DOS
-		|| (p[i] == L'\n' && (!i || p[i-1] != L'\r')) // UNIX
-		|| (p[i] == L'\r' && p[i+1] != '\n')) // MAC
-		{ // We are at the begining of a line
-			if(!shi) pp[j++] = L'\t';
-			else { j-= p[i+1] == L'\t'; i+= p[i+1] == L'\t'; } // Skip a tab?
-		}
-	}
-	pp[--j] = L'\0';
-	delete [] p;
-	doc_.Execute( Replace(dm, dM, pp, my_lstrlenW(pp)) );
-	MoveCur(osel, false);
-	MoveCur(ocur, true);
-
-	delete [] pp;
-
+	QuoteSelectionW(L"\t", shi); // Quote with a tab!
 }
-
 //-------------------------------------------------------------------------
 // テキスト取得, Get Text
 //-------------------------------------------------------------------------
@@ -629,6 +658,24 @@ unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str)
 
 	return j!=0 ? &str[j]: NULL; // New string start
 }
+unicode* WINAPI Cursor::StripFirstCharsW(unicode *p)
+{	// Remove first char of each line
+
+	size_t  i, j, len = my_lstrlenW(p);
+	for (i=0, j=0; i < len; )
+	{
+		if((p[i] == L'\n' && (!i || p[i-1] == L'\r')) // DOS
+		|| (p[i] == L'\n' && (!i || p[i-1] != L'\r')) // UNIX
+		|| (p[i] == L'\r' && p[i+1] != '\n')) // MAC
+		{
+			i+=p[i+1] != L'\0';
+		}
+
+		p[j++] = p[++i];
+	}
+	p[j] = L'\0';
+	return p;
+}
 
 void Cursor::ModSelection(ModProc mfunk)
 {
@@ -665,6 +712,15 @@ void Cursor::InvertCaseSel()
 void Cursor::TTSpacesSel()
 {
 	ModSelection(TrimTrailingSpacesW);
+}
+void Cursor::StripFirstChar()
+{
+	if(cur_==sel_) return;
+	if(cur_ < sel_)
+		cur_.ad=0;
+	else
+		sel_.ad=0;
+	ModSelection(StripFirstCharsW);
 }
 
 //-------------------------------------------------------------------------

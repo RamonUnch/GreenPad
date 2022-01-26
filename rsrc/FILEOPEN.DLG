@@ -32,6 +32,12 @@ Revision History:
 #ifndef IDC_STATIC
 #define IDC_STATIC   (-1)
 #endif
+
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
 //
 //  Old File Open and Save As Dialogs.
 //

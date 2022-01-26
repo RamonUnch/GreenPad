@@ -39,7 +39,7 @@ View::View( doc::Document& d, HWND wnd )
 		ClassRegistered = true;
 		WNDCLASS wc    = {0};
 		wc.lpszClassName = className_;
-		wc.style         = CS_DBLCLKS | CS_OWNDC;
+		wc.style         = CS_DBLCLKS | CS_OWNDC | CS_BYTEALIGNCLIENT;
 		wc.hCursor       = app().LoadOemCursor( IDC_IBEAM );
 
 		// GlobalIME‚ð—LŒø‚É‚·‚é

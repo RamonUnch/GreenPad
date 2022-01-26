@@ -219,6 +219,9 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_LOWERCASE:  edit_.getCursor().LowerCaseSel();      break;
 	case ID_CMD_INVERTCASE: edit_.getCursor().InvertCaseSel();     break;
 	case ID_CMD_TTSPACES:   edit_.getCursor().TTSpacesSel();       break;
+	case ID_CMD_SFCHAR:     edit_.getCursor().StripFirstChar();    break;
+	case ID_CMD_QUOTE:      edit_.getCursor().QuoteSelection(false);break;
+	case ID_CMD_UNQUOTE:    edit_.getCursor().QuoteSelection(true); break;
 
 	// Search
 	case ID_CMD_FIND:       search_.ShowDlg();  break;
@@ -918,7 +921,7 @@ void GreenPadWnd::on_mru( int no )
 
 void GreenPadWnd::ReloadConfig( bool noSetDocType )
 {
-	// 文書タイプロード
+	// 文書タイプロード, document type
 	if( !noSetDocType )
 	{
 		int t = cfg_.SetDocType( filename_ );
@@ -927,23 +930,23 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 	}
 	LOGGER("GreenPadWnd::ReloadConfig DocTypeLoaded");
 
-	// Undo回数制限
+	// Undo回数制限, limit undo
 	edit_.getDoc().SetUndoLimit( cfg_.undoLimit() );
 
-	// 行番号
+	// 行番号, line numbers
 	bool ln = cfg_.showLN();
 	edit_.getView().ShowLineNo( ln );
 
-	// 折り返し方式
+	// 折り返し方式, warp method
 	wrap_ = cfg_.wrapType();
 	edit_.getView().SetWrapType( wrap_ );
 
-	// 色・フォント
+	// 色・フォント, colors and font
 	VConfig vc = cfg_.vConfig();
 	edit_.getView().SetFont( vc );
 	LOGGER("GreenPadWnd::ReloadConfig ViewConfigLoaded");
 
-	// キーワードファイル
+	// キーワードファイル, keyword file
 	Path kwd = cfg_.kwdFile();
 	FileR fp;
 	if( kwd.len()!=0 && fp.Open(kwd.c_str()) )
