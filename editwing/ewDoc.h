@@ -73,19 +73,19 @@ public:
 	//@{ 内部実装クラス //@}
 	DocImpl& impl() { return *impl_; }
 
-	//@{ 行数 //@}
+	//@{ 行数, number of lines //@}
 	ulong tln() const;
 
-	//@{ 行バッファ //@}
+	//@{ 行バッファ, line beuufe //@}
 	const unicode* tl( ulong i ) const;
 
-	//@{ 行文字数 //@}
+	//@{ 行文字数 line character count //@}
 	ulong len( ulong i ) const;
 
-	//@{ 指定範囲のテキストの長さ //@}
+	//@{ 指定範囲のテキストの長さ, Length of the specified range of text //@}
 	ulong getRangeLength( const DPos& stt, const DPos& end ) const;
 
-	//@{ 指定範囲のテキスト //@}
+	//@{ 指定範囲のテキスト, Text in the specified range //@}
 	void getText( unicode* buf, const DPos& stt, const DPos& end ) const;
 
 	//@{ アンドゥ可能？ //@}

@@ -21,11 +21,16 @@ using namespace editwing::view;
 typedef int (WINAPI *ssnfo_funk)(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw);
 static int MySetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw)
 {
-	// Should be supported since Windows NT 3.51...
+	// Should be supported since Windows NT 3.51.944
 	static ssnfo_funk dyn_SetScrollInfo = (ssnfo_funk)(-1);
 	if( dyn_SetScrollInfo == (ssnfo_funk)(-1) ) {
 		dyn_SetScrollInfo = (ssnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "SetScrollInfo");
-		if( !app().is351p() ) dyn_SetScrollInfo = NULL;
+		if(!( (!App::isNT() && App::getOSBuild()>=275) 
+		||    (App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944)) ) 
+		{   // Not supported before 95 build 275
+			// Nor NT3.51 before build 944
+			dyn_SetScrollInfo = NULL;
+		}
 	}
 
 	if( dyn_SetScrollInfo )
@@ -43,7 +48,11 @@ static int MyGetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 	static gsnfo_funk dyn_GetScrollInfo = (gsnfo_funk)(-1);
 	if( dyn_GetScrollInfo == (gsnfo_funk)(-1) ) {
 		dyn_GetScrollInfo = (gsnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "GetScrollInfo");
-		if( !app().is351p() ) dyn_GetScrollInfo = NULL;
+		if(!( (!App::isNT() && App::getOSBuild()>=275) 
+		||    (App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944)) ) 
+		{
+			dyn_GetScrollInfo = NULL;
+		}
 	}
 
 	if( dyn_GetScrollInfo ) {

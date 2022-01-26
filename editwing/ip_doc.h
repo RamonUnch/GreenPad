@@ -401,10 +401,13 @@ public:
 	//@{ 変更済み？ //@}
 	bool isModified() const;
 
+	const unicode* getCommentStr() const;
+
 private:
 
 	Document&                      doc_;    // 自分
 	aptr<Parser>                   parser_; // 文字列解析役
+	unicode                        CommentStr_[8];
 	gapbufobj<Line>                text_;   // テキストデータ
 	mutable storage<DocEvHandler*> pEvHan_; // イベント通知先
 	UnReDoChain                    urdo_;   // アンドゥリドゥ
@@ -462,6 +465,8 @@ inline const uchar* DocImpl::pl( ulong i ) const
 			SetCommentBit( x );
 		return x.flg();
 	}
+inline const unicode* DocImpl::getCommentStr() const
+	{ return CommentStr_; }
 
 
 

@@ -393,6 +393,9 @@ BEGIN
     "U",            ID_CMD_UPPERCASE,       VIRTKEY, ALT, NOINVERT
 	"I",            ID_CMD_INVERTCASE,      VIRTKEY, ALT, NOINVERT
 	"W",            ID_CMD_TTSPACES,        VIRTKEY, ALT, NOINVERT
+	"Z",            ID_CMD_SFCHAR,          VIRTKEY, ALT, NOINVERT
+	"Q",            ID_CMD_QUOTE,           VIRTKEY, ALT, NOINVERT
+	"Q",            ID_CMD_UNQUOTE,         VIRTKEY, ALT, SHIFT, NOINVERT
 
     VK_ESCAPE,      ID_CMD_QUICKEXIT,       VIRTKEY, NOINVERT
     VK_DELETE,      ID_CMD_CUT,             VIRTKEY, SHIFT, NOINVERT
@@ -470,6 +473,9 @@ BEGIN
         MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
         MENUITEM "I&nvert Case\tAlt+I",         ID_CMD_INVERTCASE
 		MENUITEM "Tri&m Trailing Spaces\tAlt+W",ID_CMD_TTSPACES
+		MENUITEM "Strip &First Characters\tAlt+Z",ID_CMD_SFCHAR
+        MENUITEM "&Quote\tAlt+Q",               ID_CMD_QUOTE
+        MENUITEM "Unqu&ote\tAlt+Shift+Q",             ID_CMD_UNQUOTE
         MENUITEM SEPARATOR
         MENUITEM "Recon&version",               ID_CMD_RECONV
         MENUITEM "&IME On/Off",                 ID_CMD_TOGGLEIME

@@ -144,6 +144,8 @@ public:
 	void DelBack();
 	void Return();
 	void Tabulation(bool shift);
+	void QuoteSelectionW(const unicode *qs, bool shift);
+	void QuoteSelection(bool unquote);
 
 	// クリップボード
 	void Cut();
@@ -163,8 +165,10 @@ public:
 	void LowerCaseSel();
 	static unicode* WINAPI InvertCaseW(unicode *);
 	static unicode* WINAPI TrimTrailingSpacesW(unicode *);
+	static unicode* WINAPI StripFirstCharsW(unicode *);
 	void InvertCaseSel();
 	void TTSpacesSel();
+	void StripFirstChar();
 
 	// IME
 	void Reconv();

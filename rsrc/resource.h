@@ -109,6 +109,10 @@
 #define ID_CMD_REFRESHFILE              50005
 #define ID_CMD_PAGESETUP                50006
 #define ID_CMD_QUICKEXIT                50007
+#define ID_CMD_SFCHAR                   50008
+#define ID_CMD_QUOTE                    50009
+#define ID_CMD_UNQUOTE                  50010
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

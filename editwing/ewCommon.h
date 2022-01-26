@@ -81,13 +81,13 @@ enum SpecialChars
 enum TokenType
 {
 	TAB = 0x00, // Tab
-	WSP = 0x04, // 半角スペース
-	ALP = 0x08, // 普通の字
-	 CE = 0x0c, // コメント終了タグ
-	 CB = 0x10, // コメント開始タグ
-	 LB = 0x14, // 行コメント開始タグ
-	 Q1 = 0x18, // 単一引用符
-	 Q2 = 0x1c  // 二重引用符
+	WSP = 0x04, // 半角スペース, half-width space
+	ALP = 0x08, // 普通の字, normal character
+	 CE = 0x0c, // コメント終了タグ, comment end tag
+	 CB = 0x10, // コメント開始タグ, comment start tag
+	 LB = 0x14, // 行コメント開始タグ, line comment start tag
+	 Q1 = 0x18, // 単一引用符, single quote
+	 Q2 = 0x1c  // 二重引用符, double quote
 };
 
 
@@ -141,7 +141,7 @@ struct VConfig : public ki::Object
 	int fontsize;
 	int fontwidth;
 
-	//@{ タブ幅文字数 //@}
+	//@{ タブ幅文字数, tab width character count //@}
 	int tabstep;
 
 	//@{ 色 //@}
@@ -153,7 +153,7 @@ struct VConfig : public ki::Object
 	//@{ 危険なデフォルトコンストラクタ //@}
 	VConfig() {}
 
-	//@{ フォント関係初期化 //@}
+	//@{ フォント関係初期化, Initialize font relationship //@}
 	VConfig( const TCHAR* fnam, int fsiz )
 	{
 		SetFont( fnam,fsiz );
