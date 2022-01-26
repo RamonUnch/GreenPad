@@ -8,212 +8,97 @@ using namespace ki;
 // 文字コードリスト
 //------------------------------------------------------------------------
 
+// merge 3 lists into 1 #define for easier management
+//  format: CHARSET_VALUE("jp-text", "en-text", "short-name")
+//  keep forward slash at line-end for non-last-line of list
+//  ordering are important as Enroll/EnrollS/EnrollL uses list in same order
+#define CHARSETS_LIST \
+	CHARSET_VALUE("自動判定",			"AutoDetect",			"") \
+	CHARSET_VALUE("日本語(ShiftJIS)",	"Japanese(ShiftJIS)",	"SJIS") \
+	CHARSET_VALUE("日本語(EUC)",		"Japanese(EUC)",		"EUC") \
+	CHARSET_VALUE("日本語(ISO-2022-JP)","Japanese(ISO-2022-JP)","JIS") \
+	CHARSET_VALUE("韓国語(EUC-KR)",		"Korean(EUC-KR)",		"UHC") \
+	CHARSET_VALUE("韓国語(ISO-2022-KR)","Korean(ISO-2022-KR)",	"I2022KR") \
+	CHARSET_VALUE("韓国語(Johab)",		"Korean(Johab)",		"Johab") \
+	CHARSET_VALUE("中国語(GB18030)",	"Chinese(GB18030)",		"GB18030") \
+	CHARSET_VALUE("中国語(GB2312)",		"Chinese(GB2312)",		"GBK") \
+	CHARSET_VALUE("中国語(ISO-2022-CN)","Chinese(ISO-2022-CN)",	"I2022CN") \
+	CHARSET_VALUE("中国語(HZ)",			"Chinese(HZ)",			"HZ") \
+	CHARSET_VALUE("中国語(Big5)",		"Chinese(Big5)",		"BIG5") \
+	CHARSET_VALUE("中国語(EUC-TW/CNS)",	"Chinese(EUC-TW/CNS)",	"CNS") \
+	CHARSET_VALUE("中国語(TCA)",		"Chinese(TCA)",			"TCA") \
+	CHARSET_VALUE("中国語(ETen)",		"Chinese(ETen)",		"ETEN") \
+	CHARSET_VALUE("中国語(IBM 5550)",	"Chinese(IBM 5550)",	"IBM5550") \
+	CHARSET_VALUE("中国語(Teletext)",	"Chinese(Teletext)",	"TLTEXT") \
+	CHARSET_VALUE("中国語(Wang)",		"Chinese(Wang)",		"WANG") \
+	CHARSET_VALUE("UTF-1",				"UTF-1",				"UTF1") \
+	CHARSET_VALUE("UTF-1(BOM)",			"UTF-1(BOM)",			"UTF1") \
+	CHARSET_VALUE("UTF-5",				"UTF-5",				"UTF5") \
+	CHARSET_VALUE("UTF-7",				"UTF-7",				"UTF7") \
+	CHARSET_VALUE("UTF-8",				"UTF-8",				"UTF8") \
+	CHARSET_VALUE("UTF-8N",				"UTF-8N",				"UTF8") \
+	CHARSET_VALUE("UTF-9(1997)",		"UTF-9(1997)",			"UTF9") \
+	CHARSET_VALUE("UTF-9(1997,BOM)",	"UTF-9(1997,BOM)",		"UTF9") \
+	CHARSET_VALUE("UTF-16BE(BOM)",		"UTF-16BE(BOM)",		"U16BE") \
+	CHARSET_VALUE("UTF-16LE(BOM)",		"UTF-16LE(BOM)",		"U16LE") \
+	CHARSET_VALUE("UTF-16BE",			"UTF-16BE",				"U16BE") \
+	CHARSET_VALUE("UTF-16LE",			"UTF-16LE",				"U16LE") \
+	CHARSET_VALUE("UTF-32BE(BOM)",		"UTF-32BE(BOM)",		"U32BE") \
+	CHARSET_VALUE("UTF-32LE(BOM)",		"UTF-32LE(BOM)",		"U32LE") \
+	CHARSET_VALUE("UTF-32BE",			"UTF-32BE",				"U32BE") \
+	CHARSET_VALUE("UTF-32LE",			"UTF-32LE",				"U32LE") \
+	CHARSET_VALUE("SCSU",				"SCSU",					"SCSU") \
+	CHARSET_VALUE("BOCU",				"BOCU",					"BOCU") \
+	CHARSET_VALUE("FSS-UTF(19920902)",	"FSS-UTF(19920902)",	"FSSUTF") \
+	CHARSET_VALUE("FSS-UTF(19920902,BOM)","FSS-UTF(19920902,BOM)","FSSUTF") \
+	CHARSET_VALUE("欧米(DOS)",			"Latin-1(DOS)",			"LN1DOS") \
+	CHARSET_VALUE("欧米",				"Latin-1",				"LTN1") \
+	CHARSET_VALUE("中欧(DOS)",			"Latin-2(DOS)",			"LN2DOS") \
+	CHARSET_VALUE("中欧",				"Latin-2",				"LTN2") \
+	CHARSET_VALUE("キリル語(IBM)",		"Cyrillic(IBM)",		"CYRIBM") \
+	CHARSET_VALUE("キリル語(MS-DOS)",	"Cyrillic(MS-DOS)",		"CYRDOS") \
+	CHARSET_VALUE("キリル語(Windows)",	"Cyrillic(Windows)",	"CYRL") \
+	CHARSET_VALUE("キリル語(KOI8-R)",	"Cyrillic(KOI8-R)",		"KO8R") \
+	CHARSET_VALUE("キリル語(KOI8-U)",	"Cyrillic(KOI8-U)",		"KO8U") \
+	CHARSET_VALUE("タイ語",				"Thai",					"THAI") \
+	CHARSET_VALUE("トルコ語(DOS)",		"Turkish(DOS)",			"TRKDOS") \
+	CHARSET_VALUE("トルコ語",			"Turkish",				"TRK") \
+	CHARSET_VALUE("バルト語(IBM)",		"Baltic(IBM)",			"BALIBM") \
+	CHARSET_VALUE("バルト語",			"Baltic",				"BALT") \
+	CHARSET_VALUE("ベトナム語",			"Vietnamese",			"VTNM") \
+	CHARSET_VALUE("ギリシャ語(IBM)",	"Greek(IBM)",			"GRKIBM") \
+	CHARSET_VALUE("ギリシャ語(MS-DOS)",	"Greek(MS-DOS)",		"GRKDOS") \
+	CHARSET_VALUE("ギリシャ語",			"Greek",				"GRK") \
+	CHARSET_VALUE("アラビア語(IBM)",	"Arabic(IBM)",			"ARAIBM") \
+	CHARSET_VALUE("アラビア語(MS-DOS)",	"Arabic(MS-DOS)",		"ARADOS") \
+	CHARSET_VALUE("アラビア語",			"Arabic",				"ARA") \
+	CHARSET_VALUE("ヘブライ語(DOS)",	"Hebrew(DOS)",			"HEBDOS") \
+	CHARSET_VALUE("ヘブライ語",			"Hebrew",				"HEB") \
+	CHARSET_VALUE("ポルトガル語(DOS)",	"Portuguese(DOS)",		"PRT") \
+	CHARSET_VALUE("アイスランド語(DOS)","Icelandic(DOS)",		"ICE") \
+	CHARSET_VALUE("フランス語(カナダ)(DOS)","Canadian French(DOS)","CFR") \
+	CHARSET_VALUE("MSDOS(北欧)",		"MSDOS(Nodic)",			"NODIC") \
+	CHARSET_VALUE("MSDOS(us)",			"MSDOS(us)",			"DOS")
+
 CharSetList::CharSetList()
 	: list_( 30 )
 {
 	static const TCHAR* const lnmJp[] = {
-		TEXT("自動判定"),
-		TEXT("日本語(ShiftJIS)"),
-		TEXT("日本語(EUC)"),
-		TEXT("日本語(ISO-2022-JP)"),
-		TEXT("韓国語(EUC-KR)"),
-		TEXT("韓国語(ISO-2022-KR)"),
-		TEXT("韓国語(Johab)"),
-		TEXT("中国語(GB18030)"),
-		TEXT("中国語(GB2312)"),
-		TEXT("中国語(ISO-2022-CN)"),
-		TEXT("中国語(HZ)"),
-		TEXT("中国語(Big5)"),
-		TEXT("中国語(EUC-TW/CNS)"),
-		TEXT("中国語(TCA)"),
-		TEXT("中国語(ETen)"),
-		TEXT("中国語(IBM 5550)"),
-		TEXT("中国語(Teletext)"),
-		TEXT("中国語(Wang)"),
-		TEXT("UTF-1"),
-		TEXT("UTF-1(BOM)"),
-		TEXT("UTF-5"),
-		TEXT("UTF-7"),
-		TEXT("UTF-8"),
-		TEXT("UTF-8N"),
-		TEXT("UTF-9(1997)"),
-		TEXT("UTF-9(1997,BOM)"),
-		TEXT("UTF-16BE(BOM)"),
-		TEXT("UTF-16LE(BOM)"),
-		TEXT("UTF-16BE"),
-		TEXT("UTF-16LE"),
-		TEXT("UTF-32BE(BOM)"),
-		TEXT("UTF-32LE(BOM)"),
-		TEXT("UTF-32BE"),
-		TEXT("UTF-32LE"),
-		TEXT("SCSU"),
-		TEXT("BOCU"),
-		TEXT("FSS-UTF(19920902)"),
-		TEXT("FSS-UTF(19920902,BOM)"),
-		TEXT("欧米(DOS)"),
-		TEXT("欧米"),
-		TEXT("中欧(DOS)"),
-		TEXT("中欧"),
-		TEXT("キリル語(IBM)"),
-		TEXT("キリル語(MS-DOS)"),
-		TEXT("キリル語(Windows)"),
-		TEXT("キリル語(KOI8-R)"),
-		TEXT("キリル語(KOI8-U)"),
-		TEXT("タイ語"),
-		TEXT("トルコ語(DOS)"),
-		TEXT("トルコ語"),
-		TEXT("バルト語(IBM)"),
-		TEXT("バルト語"),
-		TEXT("ベトナム語"),
-		TEXT("ギリシャ語(IBM)"),
-		TEXT("ギリシャ語(MS-DOS)"),
-		TEXT("ギリシャ語"),
-		TEXT("アラビア語(IBM)"),
-		TEXT("アラビア語(MS-DOS)"),
-		TEXT("アラビア語"),
-		TEXT("ヘブライ語(DOS)"),
-		TEXT("ヘブライ語"),
-		TEXT("ポルトガル語(DOS)"),
-		TEXT("アイスランド語(DOS)"),
-		TEXT("フランス語(カナダ)(DOS)"),
-		TEXT("MSDOS(北欧)"),
-		TEXT("MSDOS(us)")
+#define CHARSET_VALUE(a,b,c) TEXT(a),
+CHARSETS_LIST
+#undef CHARSET_VALUE
 	};
+
 	static const TCHAR* const lnmEn[] = {
-		TEXT("AutoDetect"),
-		TEXT("Japanese(ShiftJIS)"),
-		TEXT("Japanese(EUC)"),
-		TEXT("Japanese(ISO-2022-JP)"),
-		TEXT("Korean(EUC-KR)"),
-		TEXT("Korean(ISO-2022-KR)"),
-		TEXT("Korean(Johab)"),
-		TEXT("Chinese(GB18030)"),
-		TEXT("Chinese(GB2312)"),
-		TEXT("Chinese(ISO-2022-CN)"),
-		TEXT("Chinese(HZ)"),
-		TEXT("Chinese(Big5)"),
-		TEXT("Chinese(EUC-TW/CNS)"),
-		TEXT("Chinese(TCA)"),
-		TEXT("Chinese(ETen)"),
-		TEXT("Chinese(IBM 5550)"),
-		TEXT("Chinese(Teletext)"),
-		TEXT("Chinese(Wang)"),
-		TEXT("UTF-1"),
-		TEXT("UTF-1(BOM)"),
-		TEXT("UTF-5"),
-		TEXT("UTF-7"),
-		TEXT("UTF-8"),
-		TEXT("UTF-8N"),
-		TEXT("UTF-9(1997)"),
-		TEXT("UTF-9(1997,BOM)"),
-		TEXT("UTF-16BE(BOM)"),
-		TEXT("UTF-16LE(BOM)"),
-		TEXT("UTF-16BE"),
-		TEXT("UTF-16LE"),
-		TEXT("UTF-32BE(BOM)"),
-		TEXT("UTF-32LE(BOM)"),
-		TEXT("UTF-32BE"),
-		TEXT("UTF-32LE"),
-		TEXT("SCSU"),
-		TEXT("BOCU"),
-		TEXT("FSS-UTF(19920902)"),
-		TEXT("FSS-UTF(19920902,BOM)"),
-		TEXT("Latin-1(DOS)"),
-		TEXT("Latin-1"),
-		TEXT("Latin-2(DOS)"),
-		TEXT("Latin-2"),
-		TEXT("Cyrillic(IBM)"),
-		TEXT("Cyrillic(MS-DOS)"),
-		TEXT("Cyrillic(Windows)"),
-		TEXT("Cyrillic(KOI8-R)"),
-		TEXT("Cyrillic(KOI8-U)"),
-		TEXT("Thai"),
-		TEXT("Turkish(DOS)"),
-		TEXT("Turkish"),
-		TEXT("Baltic(IBM)"),
-		TEXT("Baltic"),
-		TEXT("Vietnamese"),
-		TEXT("Greek(IBM)"),
-		TEXT("Greek(MS-DOS)"),
-		TEXT("Greek"),
-		TEXT("Arabic(IBM)"),
-		TEXT("Arabic(MS-DOS)"),
-		TEXT("Arabic"),
-		TEXT("Hebrew(DOS)"),
-		TEXT("Hebrew"),
-		TEXT("Portuguese(DOS)"),
-		TEXT("Icelandic(DOS)"),
-		TEXT("Canadian French(DOS)"),
-		TEXT("MSDOS(Nodic)"),
-		TEXT("MSDOS(us)")
+#define CHARSET_VALUE(a,b,c) TEXT(b),
+CHARSETS_LIST
+#undef CHARSET_VALUE
 	};
+
 	static const TCHAR* const snm[] = {
-		TEXT(""),
-		TEXT("SJIS"),
-		TEXT("EUC"),
-		TEXT("JIS"),
-		TEXT("UHC"),
-		TEXT("I2022KR"),
-		TEXT("Johab"),
-		TEXT("GB18030"),
-		TEXT("GBK"),
-		TEXT("I2022CN"),
-		TEXT("HZ"),
-		TEXT("BIG5"),
-		TEXT("CNS"),
-		TEXT("TCA"),
-		TEXT("ETEN"),
-		TEXT("IBM5550"),
-		TEXT("TLTEXT"),
-		TEXT("WANG"),
-		TEXT("UTF1"),
-		TEXT("UTF1"),
-		TEXT("UTF5"),
-		TEXT("UTF7"),
-		TEXT("UTF8"),
-		TEXT("UTF8"),
-		TEXT("UTF9"),
-		TEXT("UTF9"),
-		TEXT("U16BE"),
-		TEXT("U16LE"),
-		TEXT("U16BE"),
-		TEXT("U16LE"),
-		TEXT("U32BE"),
-		TEXT("U32LE"),
-		TEXT("U32BE"),
-		TEXT("U32LE"),
-		TEXT("SCSU"),
-		TEXT("BOCU"),
-		TEXT("FSSUTF"),
-		TEXT("FSSUTF"),
-		TEXT("LN1DOS"),
-		TEXT("LTN1"),
-		TEXT("LN2DOS"),
-		TEXT("LTN2"),
-		TEXT("CYRIBM"),
-		TEXT("CYRDOS"),
-		TEXT("CYRL"),
-		TEXT("KO8R"),
-		TEXT("KO8U"),
-		TEXT("THAI"),
-		TEXT("TRKDOS"),
-		TEXT("TRK"),
-		TEXT("BALIBM"),
-		TEXT("BALT"),
-		TEXT("VTNM"),
-		TEXT("GRKIBM"),
-		TEXT("GRKDOS"),
-		TEXT("GRK"),
-		TEXT("ARAIBM"),
-		TEXT("ARADOS"),
-		TEXT("ARA"),
-		TEXT("HEBDOS"),
-		TEXT("HEB"),
-		TEXT("PRT"),
-		TEXT("ICE"),
-		TEXT("CFR"),
-		TEXT("NODIC"),
-		TEXT("DOS")
+#define CHARSET_VALUE(a,b,c) TEXT(c),
+CHARSETS_LIST
+#undef CHARSET_VALUE
 	};
 
 	// 日本語環境なら日本語表示を選ぶ
