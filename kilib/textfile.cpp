@@ -437,7 +437,7 @@ struct rUtf7 : public rBasicUTF
 // Code portion is taken from:
 // http://czyborra.com/scsu/scsu.c written by Roman Czyborra@dds.nl
 //-------------------------------------------------------------------------
-namespace 
+namespace
 {
 	static const int SCSU_win[256]={
 	0x0000, 0x0080, 0x0100, 0x0180, 0x0200, 0x0280, 0x0300, 0x0380,
@@ -506,7 +506,7 @@ struct rSCSU : public rBasicUTF
 		{
 			return c;
 		}
-		else if (!mode && c == 0x0 || c == 0x9 || c == 0xA || c == 0xC || c == 0xD) 
+		else if (!mode && c == 0x0 || c == 0x9 || c == 0xA || c == 0xC || c == 0xD)
 		{
 			return c;
 		}
@@ -724,7 +724,7 @@ struct rBOCU1 : public rBasicUTF
 //  Windowsに全て任せている。
 //-------------------------------------------------------------------------
 
-namespace 
+namespace
 {
 	typedef char* (WINAPI * uNextFunc)(WORD,const char*,DWORD);
 
@@ -924,7 +924,7 @@ struct rMBCS : public TextFileRPimpl
 #ifndef _UNICODE
 		len = conv( cp, 0, fb, p-fb, buf, siz );
 #else
-		if(!app().isNewShell())
+		if(!app().isNewShell() || app().isWin95())
 		{
 			len = conv( cp, 0, fb, p-fb, buf, siz );
 		}
@@ -1070,7 +1070,7 @@ struct rIso2022 : public TextFileRPimpl
 	{
 		// 文字集合取り出し
 		CodeSet cs =
-			(gWhat==2 ? G[2] : 
+			(gWhat==2 ? G[2] :
 			(gWhat==3 ? G[3] :
 			(*p&0x80  ? *GR  : *GL)));
 
@@ -1186,7 +1186,7 @@ void TextFileR::Close()
 }
 
 // cs should be below -100;
-int TextFileR::neededCodepage(int cs) 
+int TextFileR::neededCodepage(int cs)
 {
 	switch(cs)
 	{
@@ -1229,7 +1229,7 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	cs_ = AutoDetection( cs_, buf, Min<ulong>(siz,16<<10) ); // 先頭16KB
 	int needed_cs = neededCodepage(cs_);
 
-	if(needed_cs > 0 && !::IsValidCodePage(needed_cs)) 
+	if(needed_cs > 0 && !::IsValidCodePage(needed_cs))
 	{
 		TCHAR str[128];
 		wsprintf(str, TEXT("Codepage cp%d Is not installed!\nDefaulting to current ACP"), needed_cs);
@@ -1275,7 +1275,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 {
 //-- まず、文字の出現回数の統計を取る
 
-	int  freq[256];
+	ulong  freq[256];
 	bool bit8 = false;
 	mem00( freq, sizeof(freq) );
 	for( ulong i=0; i<siz; ++i )
@@ -1350,7 +1350,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 		return UTF5;
 
 //-- UTF-16/32 detection
-	if( freq[ 0 ] ) // nulls in content?
+	if( freq[ 0 ] > siz >> 11) // More than 1/2048 nulls in content?
 	{ // then it may be UTF-16/32 without BOM
 		if(CheckUTFConfidence(ptr,siz,sizeof(dbyte),true)) return UTF16LE;
 		if(CheckUTFConfidence(ptr,siz,sizeof(dbyte),false)) return UTF16BE;
@@ -1367,12 +1367,12 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 			if( cs ) return cs;
 		}
 		cs = MLangAutoDetection( ptr, siz );
-		if( cs ) return cs;	
+		if( cs ) return cs;
 	}
 	// chardet is the only auto detection method
 	cs = chardetAutoDetection( ptr, siz );
 	if( cs ) return cs;
-	
+
 // last resort
 //-- 暫定版 UTF-8 / 日本語EUC チェック
 
@@ -1544,7 +1544,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 				STR2CP("Shift_JIS",SJIS)
 				STR2CP("EUC-JP",EucJP)
 				STR2CP("EUC-KR",UHC)
-				STR2CP("EUC-TW",CNS)
+				//STR2CP("EUC-TW",CNS)
 				STR2CP("x-euc-tw",CNS)
 				STR2CP("Big5",Big5)
 				STR2CP("GB18030",(::IsValidCodePage(GB18030) ? GB18030 : GBK))
@@ -2801,7 +2801,7 @@ struct wIso2022 : public TextFileWPimpl
 			}
 
 		// 最後は確実にASCIIに戻す
-		if( !ascii ) 
+		if( !ascii )
 		{
 			if( hz_ )
 				fp_.WriteC( 0x7E ), fp_.WriteC( 0x7D );
