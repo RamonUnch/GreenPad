@@ -553,13 +553,23 @@ void ReopenDlg::on_init()
 	for( ulong i=0; i<csl_.size(); ++i )
 		if( csl_[i].type & 1 ) // 2:=SAVE
 			cb.Add( csl_[i].longName );
-	if(csIndex_ < 0 || csIndex_ > (int)csl_.size()) 
+	if(csIndex_ < 0 || csIndex_ > (int)csl_.size())
 		csIndex_ = 0;
 	cb.Select( csl_[csIndex_].longName );
 }
 
 bool ReopenDlg::on_ok()
 {
+	TCHAR buf[32];
+	SendMsgToItem(IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
+	// Typed CP has precedence over droplist
+	if ( buf[0] )
+	{ // Offset of ~1million to avoid covering the index range
+		int cp = Clamp(-65535, String::GetInt(buf), +65535); // Clamp cp
+		csIndex_ = cp + 0x100000;
+		return true;
+	}
+
 	// OKが押されたら、文字コードの選択状況を記録
 	ulong j=0, i=ComboBox(hwnd(),IDC_CODELIST).GetCurSel();
 	for(;;++j,--i)
