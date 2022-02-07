@@ -74,11 +74,13 @@ IMEManager::IMEManager()
 	#endif //USEGLOBALIME
 
 	// check if IMM32.DLL can be loaded...
-	#if defined(TARGET_VER) && TARGET_VER<=350
-	hasIMM32_ = !!LoadLibraryA("IMM32.DLL");
-	#else
+  # if defined(TARGET_VER) && TARGET_VER<=350
+	HINSTANCE h = LoadLibraryA("IMM32.DLL");
+	hasIMM32_ = !!h;
+	FreeLibrary(h);
+  # else
 	#define hasIMM32_ 1
-	#endif
+  # endif
 
 	// 唯一のインスタンスは私です
 	pUniqueInstance_ = this;
@@ -133,7 +135,7 @@ BOOL IMEManager::CanReconv()
 {
 #if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	HKL hKL = MyGetKeyboardLayout(GetCurrentThreadId());
-	DWORD nImeProps = ImmGetProperty( MyGetKeyboardLayout( 0 ), IGP_SETCOMPSTR );
+	DWORD nImeProps = ImmGetProperty( hKL, IGP_SETCOMPSTR );
 	#ifdef USEGLOBALIME
 		if( immApp_ )
 		{
