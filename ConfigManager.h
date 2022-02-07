@@ -122,7 +122,7 @@ private:
 	ki::IniFile ini_;
 	bool        sharedConfigMode_;
 	CharSetList charSets_;
-	bool       inichanged_; // keep track of save to ini.
+	bool        inichanged_; // keep track of save to ini.
 
 	// ‘S‘Ì“I‚Èİ’è
 	int        undoLimit_;

@@ -8,10 +8,12 @@
 
 #ifdef UNICODE
 	#define my_lstrcpy my_lstrcpyW
+	#define my_lstrcpyn my_lstrcpynW
 	#define my_lstrlen my_lstrlenW
 	#define my_lstrcmp my_lstrcmpW
 #else
 	#define my_lstrcpy my_lstrcpyA
+	#define my_lstrcpyn my_lstrcpynA
 	#define my_lstrlen my_lstrlenA
 	#define my_lstrcmp my_lstrcmpA
 #endif
@@ -27,13 +29,19 @@ size_t my_lstrlenW( const unicode* const d )
 {
 	const unicode* n;
 	for(n=d; *n; ++n);
-	return static_cast<uint>(n-d);
+	return static_cast<size_t>(n-d);
 }
 static inline
 int my_lstrcmpW(const unicode *X, const unicode *Y)
 {
    	while (*X && *X == *Y) { X++; Y++; }
    	return *(const unicode*)X - *(const unicode*)Y;
+}
+static inline
+bool my_instringW(const unicode *X, const unicode *Y)
+{ // return true if we find Y in the X string.
+   	while (*X && *X == *Y) { X++; Y++; }
+   	return !*Y; // Match if we reached the end of Y
 }
 inline static
 char* my_lstrcpyA( char* const d, const char* s )
@@ -46,7 +54,7 @@ size_t my_lstrlenA( const char* const d )
 {
 	const char* n;
 	for(n=d; *n; ++n);
-	return static_cast<uint>(n-d);
+	return static_cast<size_t>(n-d);
 }
 static inline 
 int my_lstrcmpA(const char *X, const char *Y)
@@ -56,7 +64,18 @@ int my_lstrcmpA(const char *X, const char *Y)
 }
 
 static inline
-TCHAR *my_lstrcpyn(TCHAR *out, const TCHAR *in, int outlen)
+wchar_t *my_lstrcpynW(wchar_t *out, const wchar_t *in, int outlen)
+{
+	int i;
+	for (i=0; i<outlen && in[i]; i++) 
+	{
+		out[i] = in[i];
+	}
+	out[i] = TEXT('\0');
+	return out;
+}
+static inline
+char *my_lstrcpynA(char *out, const char *in, int outlen)
 {
 	int i;
 	for (i=0; i<outlen && in[i]; i++) 

@@ -129,21 +129,39 @@ using namespace ki;
 		return dst;
 	}
 	#else
-	// Stupid naive C90 memmove
-	void *__cdecl memmove(void *dst, const void *src, size_t n)
+	// Stupid naive C90 memmove for GCC
+	typedef __attribute__((__may_alias__)) size_t WT;
+	#define WS (sizeof(WT))
+	void *__cdecl memmove(void *dest, const void *src, size_t n)
 	{
-		if(dst == src) return dst;
+		if (dest == src)
+			return dest;
 
-		unsigned char *pd = (unsigned char *)dst;
-		const unsigned char *ps = (const unsigned char *)src;
-		if (ps < pd)
-			for (pd += n, ps += n; n--;)
-				*--pd = *--ps;
-		else
-			while(n--)
-				*pd++ = *ps++;
-		return dst;
+		unsigned char *d = (unsigned char *)dest;
+		const unsigned char *s = (const unsigned char *)src;
+
+		if (d < s) {
+			if ((uintptr_t)s % WS == (uintptr_t)d % WS) {
+				while ((uintptr_t)d % WS) {
+					if (!n--) return dest;
+					*d++ = *s++;
+				}
+				for (; n>=WS; n-=WS, d+=WS, s+=WS) *(WT *)d = *(WT *)s;
+			}
+			for (; n; n--) *d++ = *s++;
+		} else {
+			if ((uintptr_t)s % WS == (uintptr_t)d % WS) {
+				while ((uintptr_t)(d+n) % WS) {
+					if (!n--) return dest;
+					d[n] = s[n];
+				}
+				while (n>=WS) n-=WS, *(WT *)(d+n) = *(WT *)(s+n);
+			}
+			while (n) n--, d[n] = s[n];
+		}
+		return dest;
 	}
+
 	#endif
 
 	#ifdef __GNUC__
