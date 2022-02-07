@@ -293,7 +293,10 @@ void GreenPadWnd::on_reopenfile()
 		dlg.GoModal( hwnd() );
 		if( dlg.endcode()==IDOK && AskToSave() )
 		{
-			OpenByMyself( filename_, charSets_[dlg.csi()].ID, false );
+			// if csi > F0000 it means it is equal to the desized CP+0x100000
+			int csi = dlg.csi();
+			int cp = (csi > 0xF0000)? csi-0x100000: charSets_[csi].ID;
+			OpenByMyself( filename_, cp, false );
 		}
 	}
 }
