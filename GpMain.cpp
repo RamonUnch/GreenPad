@@ -130,6 +130,46 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		}
 		break;
 
+	case WM_NCCALCSIZE:{
+		// Handle WM_NCCALCSIZE to avoid ugly resizing
+		int ret = WndImpl::on_message( msg, wp, lp );
+		NCCALCSIZE_PARAMS *nc = (NCCALCSIZE_PARAMS *)lp;
+		RECT wnd;
+		GetWindowRect(hwnd(), &wnd);
+		if( wp && (wnd.left != nc->lppos->x || wnd.top != nc->lppos->y))
+		{ // Resized from the top or left (or both)
+			// Window will BitBlt between those two rects:
+			CopyRect(&nc->rgrc[1], &wnd); // Destination
+			CopyRect(&nc->rgrc[2], &wnd); // Source
+			POINT pt = { 0, 0 };
+			ClientToScreen(hwnd(), &pt); // client coord
+			pt.x -= wnd.left;
+			pt.y -= wnd.top;
+
+			// Adjust rects so that it does not include SB nor scrollbars.
+			nc->rgrc[2].right  -= Max(24, (wnd.right-wnd.left) - nc->lppos->cx+24);
+			nc->rgrc[2].bottom -= Max(45, (wnd.bottom-wnd.top) - nc->lppos->cy+45);
+
+			// Do not include caption+menu in BitBlt
+			nc->rgrc[1].left = nc->lppos->x + pt.x;
+			nc->rgrc[1].top  = nc->lppos->y + pt.y;
+			nc->rgrc[2].top  += pt.y;
+			nc->rgrc[2].left += pt.x;
+
+			return WVR_VALIDRECTS;
+		}
+		return ret;
+		}break;
+
+	case WM_ERASEBKGND:{
+//		// Uncomment to see in black the area that will be repainted
+//		RECT rc;
+//		GetClientRect(hwnd(), &rc);
+//		Sleep(100);
+//		FillRect((HDC)wp, &rc,  (HBRUSH)GetStockObject(BLACK_BRUSH));
+		return 1;
+		}break;
+
 	// システムコマンド。終了ボタンとか。
 	case WM_SYSCOMMAND:
 		if( wp==SC_CLOSE || wp==SC_DEFAULT )
@@ -1199,6 +1239,7 @@ GreenPadWnd::GreenPadWnd()
 	LOGGER( "GreenPadWnd::Construct begin" );
 
 	static WNDCLASS wc;
+	wc.style         = 0; //CS_HREDRAW|CS_VREDRAW;
 	wc.hIcon         = app().LoadIcon( IDR_MAIN );
 	wc.hCursor       = app().LoadOemCursor( IDC_ARROW );
 	wc.lpszMenuName  = MAKEINTRESOURCE( IDR_MAIN );
