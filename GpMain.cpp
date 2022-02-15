@@ -147,8 +147,8 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 			pt.y -= wnd.top;
 
 			// Adjust rects so that it does not include SB nor scrollbars.
-			nc->rgrc[2].right  -= Max(24L, (wnd.right-wnd.left) - nc->lppos->cx+24);
-			nc->rgrc[2].bottom -= Max(45L, (wnd.bottom-wnd.top) - nc->lppos->cy+45);
+			nc->rgrc[2].right  -= Max((long)24, (long)((wnd.right-wnd.left) - nc->lppos->cx+24));
+			nc->rgrc[2].bottom -= Max((long)45, (long)((wnd.bottom-wnd.top) - nc->lppos->cy+45));
 
 			// Do not include caption+menu in BitBlt
 			nc->rgrc[1].left = nc->lppos->x + pt.x;
