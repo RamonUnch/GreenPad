@@ -213,7 +213,8 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 	// Check for readonly flag
 	DWORD fattr = GetFileAttributes(UNCPath);
 	if(fattr!=0xFFFFFFFF && fattr&FILE_ATTRIBUTE_READONLY) {
-		if(IDOK==MessageBox(NULL, TEXT("Read-Only file!\nRemove attribute and Write?"), NULL, MB_OKCANCEL|MB_TASKMODAL))
+		if(IDOK==MessageBox(NULL, TEXT("Read-Only file!\nRemove attribute and Write?")
+				, NULL, MB_OKCANCEL|MB_TASKMODAL|MB_TOPMOST))
 			SetFileAttributes(UNCPath, fattr&~FILE_ATTRIBUTE_READONLY);
 	}
 

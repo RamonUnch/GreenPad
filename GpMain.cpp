@@ -26,7 +26,7 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 	fcmd += app().isNewTypeWindows()? TEXT("\" "): TEXT(" ");
 	fcmd += TEXT(" ");
 	fcmd += cmd;
-//	MessageBox(NULL, (TCHAR*)fcmd.c_str(), (TCHAR*)Path(Path::ExeName).c_str(), MB_OK);
+//	MessageBox(hwnd(), (TCHAR*)fcmd.c_str(), (TCHAR*)Path(Path::ExeName).c_str(), MB_OK);
 
 	if( ::CreateProcess( NULL, (TCHAR*)fcmd.c_str(),
 			NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL,
@@ -434,7 +434,7 @@ void GreenPadWnd::on_print()
 	{
 		TCHAR tmp[128];
 		::wsprintf(tmp,TEXT("StartDoc Error #%d - please check printer."),::GetLastError());
-		::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK|MB_TASKMODAL );
+		::MessageBox( hwnd(), tmp, String(IDS_APPNAME).c_str(), MB_OK|MB_TASKMODAL );
 		return;
 		// Handle the error intelligently
 	}
@@ -1069,7 +1069,7 @@ BOOL GreenPadWnd::SendMsgToAllFriends(UINT msg)
 }
 bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, bool always )
 {
-//	MessageBox(NULL, fn.c_str(), TEXT("File"), 0);
+//	MessageBox(hwnd(), fn.c_str(), TEXT("File"), 0);
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
 
@@ -1136,7 +1136,6 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 bool GreenPadWnd::ShowSaveDlg()
 {
 	// [Save][Cancel] 保存先ファイル名指定ダイアログを表示
-
 	String flst[] = {
 		String(IDS_ALLFILES),
 		String(TEXT("*.*"))
@@ -1144,6 +1143,7 @@ bool GreenPadWnd::ShowSaveDlg()
 	aarr<TCHAR> filt = SaveFileDlg::ConnectWithNull( flst, countof(flst) );
 
 	SaveFileDlg sfd( charSets_, csi_, lb_ );
+	stb_.SetText( TEXT("Saving file...") );
 	if( !sfd.DoModal( hwnd(), filt.get(), filename_.c_str() ) )
 		return false;
 
@@ -1315,7 +1315,7 @@ void GreenPadWnd::ShowUp2()
 
 int kmain()
 {
-	// MessageBox(NULL, GetCommandLine(), TEXT("Command Line"), MB_OK);
+	// MessageBox(hwnd(), GetCommandLine(), TEXT("Command Line"), MB_OK);
 	LOGGER( "kmain() begin" );
 
 	Argv  arg;
