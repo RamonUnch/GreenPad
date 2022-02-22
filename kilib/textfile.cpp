@@ -112,7 +112,7 @@ struct rUCS : public rBasicUTF
 	virtual unicode PeekC() { return (unicode)(be ? swap(*fb) : *fb); }
 };
 
-typedef rUCS< byte> rWest;
+// typedef rUCS< byte> rWest;
 typedef rUCS<dbyte> rUtf16;
 
 // UTF-32“Ç‚Ýž‚Ý
@@ -2108,11 +2108,11 @@ struct wUtf32BE : public TextFileWPimpl
 	}
 };
 
-struct wWest : public TextFileWPimpl
-{
-	wWest( FileW& w ) : TextFileWPimpl(w) {}
-	void WriteChar( unicode ch ) { fp_.WriteC(ch>0xff ? '?' : (uchar)ch); }
-};
+//struct wWest : public TextFileWPimpl
+//{
+//	wWest( FileW& w ) : TextFileWPimpl(w) {}
+//	void WriteChar( unicode ch ) { fp_.WriteC(ch>0xff ? '?' : (uchar)ch); }
+//};
 
 struct wUtf1 : public TextFileWPimpl
 {

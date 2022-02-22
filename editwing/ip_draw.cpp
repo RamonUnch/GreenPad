@@ -98,6 +98,10 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 {
 	switch( msg )
 	{
+	case WM_ERASEBKGND:
+		return 1;
+		break;
+
 	case WM_PAINT:{
 		PAINTSTRUCT ps;
 		::BeginPaint( hwnd(), &ps );
@@ -120,6 +124,11 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 	case WM_MOUSEWHEEL:
 		impl_->on_wheel( HIWORD(wp) );
 		break;
+
+//	case 0x020E:{ //WM_MOUSEHWHEEL
+//		short inc = (short)HIWORD(wp);
+//		impl_->on_hscroll( inc>0? SB_LINERIGHT:SB_LINELEFT, 0 );
+//		}break;
 
 	case WM_SETFOCUS:
 		cur().on_setfocus();
@@ -158,7 +167,7 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		break;
 
 	case WM_CONTEXTMENU:
-		if( LOWORD(lp) == 0xFFFF && HIWORD(lp) == 0xFFFF) 
+		if( LOWORD(lp) == 0xFFFF && HIWORD(lp) == 0xFFFF)
 		{ // User pressed the MENU KEY, use caret pos as lp.
 			POINT pt;
 			::GetCaretPos(&pt);
@@ -210,7 +219,7 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 	, brush_     ( ::CreateSolidBrush( vc.color[BG] ) )
 	, widthTable_( new int[65536] )
 {
-	// 制御文字を描画するか否か？のフラグを記憶, 
+	// 制御文字を描画するか否か？のフラグを記憶,
 	// Whether to draw control characters or not? flag is stored.
 	for( unsigned i=0; i<countof(scDraw_); ++i )
 		scDraw_[i] = vc.sc[i];

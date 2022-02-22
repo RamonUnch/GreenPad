@@ -470,7 +470,7 @@ MemoryManager::~MemoryManager()
 #if defined(SUPERTINY) && defined(_DEBUG)
 	// リーク検出用
 	if( allocCounter != 0 )
-		::MessageBox( NULL, TEXT("MemoryLeak!"), NULL, MB_OK );
+		::MessageBox( NULL, TEXT("MemoryLeak!"), NULL, MB_OK|MB_TOPMOST );
 #endif
 }
 
@@ -540,7 +540,7 @@ MemoryManager::~MemoryManager()
 #if defined(SUPERTINY) && defined(_DEBUG)
 	// リーク検出用
 	if( allocCounter != 0 )
-		::MessageBox( NULL, TEXT("MemoryLeak!"), NULL, MB_OK );
+		::MessageBox( NULL, TEXT("MemoryLeak!"), NULL, MB_OK|MB_TOPMOST );
 #endif
 }
 
