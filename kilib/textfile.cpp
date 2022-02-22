@@ -1232,8 +1232,8 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	if(needed_cs > 0 && !::IsValidCodePage(needed_cs))
 	{
 		TCHAR str[128];
-		wsprintf(str, TEXT("Codepage cp%d Is not installed!\nDefaulting to current ACP"), needed_cs);
-		MessageBox(NULL, str, TEXT("Encoding"), MB_OK|MB_TASKMODAL);
+		::wsprintf(str, TEXT("Codepage cp%d Is not installed!\nDefaulting to current ACP"), needed_cs);
+		::MessageBox(NULL, str, TEXT("Encoding"), MB_OK|MB_TASKMODAL|MB_TOPMOST);
 		cs_ = ::GetACP(); // default to ACP...
 	}
 
@@ -1241,7 +1241,7 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	// 対応するデコーダを作成
 	switch( cs_ )
 	{
-	case Western: impl_ = new rWest(buf,siz,true); break;
+//	case Western: impl_ = new rWest(buf,siz,true); break;
 	case UTF16b:
 	case UTF16BE: impl_ = new rUtf16(buf,siz,true); break;
 	case UTF16l:
@@ -2033,9 +2033,8 @@ protected:
 
 	void ReserveMoreBuffer()
 		{
-			char* nBuf = new char[bsiz_<<=1];
 			delete [] buf_;
-			buf_ = nBuf;
+			char* buf_ = new char[bsiz_<<=1];
 		}
 
 	FileW& fp_;
@@ -3018,7 +3017,7 @@ bool TextFileW::Open( const TCHAR* fname )
 
 	switch( cs_ )
 	{
-	case Western: impl_ = new wWest( fp_ ); break;
+//	case Western: impl_ = new wWest( fp_ ); break;
 	case UTF1Y:
 	case UTF1:    impl_ = new wUtf1( fp_, cs_==UTF1Y ); break;
 	case UTF5:    impl_ = new wUtf5( fp_ ); break;
