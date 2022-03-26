@@ -11,7 +11,7 @@ using namespace ki;
 Clipboard::Clipboard( HWND owner, bool read )
 	: opened_( false )
 {
-	if( ::OpenClipboard(owner) ) 
+	if( ::OpenClipboard(owner) )
 	{
 		if( read || ::EmptyClipboard() )
 			opened_ = true;
@@ -28,7 +28,7 @@ Clipboard::~Clipboard()
 
 Clipboard::Text Clipboard::GetUnicodeText() const
 {
-	if( app().isNT() )
+	if(0&& app().isNT() )
 	{
 		// NTÇ»ÇÁíºê⁄UnicodeÇ≈Ç∆ÇÍÇÈ
 		HANDLE h = GetData( CF_UNICODETEXT );
@@ -51,6 +51,44 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 			::GlobalUnlock( h );
 			return Text( ustr, Text::NEW );
 		}
+	}
+	// No "normal" text in the clipboard...
+	// Maybe paste a list of files?
+	HANDLE h = GetData( CF_HDROP );
+	if( h != NULL )
+	{
+		UINT nf = DragQueryFile((HDROP)h, 0xFFFFFFFF, NULL, 0);
+		size_t totstrlen=0;
+		UINT *lenmap = new UINT[nf];
+		for (uint i=0; i < nf; i++)
+		{	// On Windows NT3.1 DragQueryFile() does not return
+			// The required buffer length hence the Min()...
+			lenmap[i] = Min((UINT)MAX_PATH, DragQueryFile((HDROP)h, i, NULL, 0));
+			totstrlen += lenmap[i];
+		}
+		unicode* ustr = new unicode[totstrlen+2*nf+1];
+		unicode* ptr=ustr; *ptr = L'\0';
+		for (UINT i=0; i < nf; i++)
+		{
+		    // Return the length without NULL and requires length with NULL
+		    #if UNICODE
+			ptr += DragQueryFileW((HDROP)h, i, ptr, Min(lenmap[i]+1, (UINT)MAX_PATH));
+			#else
+			{
+				char buf[MAX_PATH]; // MAX_PATH is the maximum in ANSI mode
+				UINT len = DragQueryFileA((HDROP)h, i, buf, MAX_PATH);
+				::MultiByteToWideChar( CP_ACP, 0, buf, -1, ptr, len );
+				ptr+=len;
+			}
+			#endif
+
+			*ptr++ = L'\r';
+			*ptr++ = L'\n';
+		}
+		*ptr++ = L'\0';
+		delete [] lenmap;
+
+		return Text( ustr, Text::NEW );
 	}
 
 	return Text( NULL, Text::NEW );
