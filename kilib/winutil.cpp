@@ -28,7 +28,7 @@ Clipboard::~Clipboard()
 
 Clipboard::Text Clipboard::GetUnicodeText() const
 {
-	if(0&& app().isNT() )
+	if( app().isNT() )
 	{
 		// NTÇ»ÇÁíºê⁄UnicodeÇ≈Ç∆ÇÍÇÈ
 		HANDLE h = GetData( CF_UNICODETEXT );
