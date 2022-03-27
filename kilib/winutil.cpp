@@ -44,28 +44,30 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 		HANDLE h = GetData( CF_TEXT );
 		if( h != NULL )
 		{
-			// Try to get local id info from Clipboard
-			LCID *lcidpt = (LCID*)GetData( CF_LOCALE );
-			LCID lcid=0;
-			if (lcidpt) {
-				lcid = *(LCID*)::GlobalLock( lcidpt ) ;;
-				::GlobalUnlock( lcidpt );
-			}
-			UINT clipCP = CP_ACP; // default ACP
-			TCHAR cpstr[32];
-			if(::IsValidLocale(lcid, LCID_INSTALLED)
-			&& ::GetLocaleInfo(lcid, LOCALE_IDEFAULTANSICODEPAGE, cpstr, countof(cpstr)))
-			{	// This should be the codepage of the local associated with
-				// the clipboard content, might be different than the default CP_ACP
-				// Or can it?
-				UINT tcp = String::GetInt(cpstr);
-				if (tcp) clipCP = tcp;
-			}
+//			// Seems useless on Win9x where no per-thread local are possible
+//			// Try to get local id info from Clipboard
+//			LCID *lcidpt = (LCID*)GetData( CF_LOCALE );
+//			LCID lcid=0;
+//			if (lcidpt) {
+//				lcid = *(LCID*)::GlobalLock( lcidpt ) ;;
+//				::GlobalUnlock( lcidpt );
+//			}
+//			UINT clipCP = CP_ACP; // default ACP
+//			TCHAR cpstr[32];
+//			if(::IsValidLocale(lcid, LCID_INSTALLED)
+//			&& ::GetLocaleInfo(lcid, LOCALE_IDEFAULTANSICODEPAGE, cpstr, countof(cpstr)))
+//			{	// This should be the codepage of the local associated with
+//				// the clipboard content, might be different than the default CP_ACP
+//				// Or can it?
+//				UINT tcp = String::GetInt(cpstr);
+//				if (tcp) clipCP = tcp;
+//				// MessageBox(NULL, cpstr, NULL, 0);
+//			}
 
 			char* cstr = static_cast<char*>( ::GlobalLock( h ) );
 			int Lu = my_lstrlenA( cstr ) * 3;
 			unicode* ustr = new unicode[Lu];
-			::MultiByteToWideChar( clipCP, 0, cstr, -1, ustr, Lu );
+			::MultiByteToWideChar( CP_ACP, 0, cstr, -1, ustr, Lu );
 			::GlobalUnlock( h );
 			return Text( ustr, Text::NEW );
 		}
