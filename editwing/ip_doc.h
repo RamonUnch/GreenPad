@@ -22,7 +22,7 @@ class Parser;
 //	キーワードファイルによって指定された強調語を区別するための
 //	解析処理結果用バッファも管理する。文字データに終端NULは
 //	付けないが、解析作業の高速化のため、終端 U+007f が入る。
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Row buffer structure
 //
 // Holds text data in the form of UCS-2 betas. And at the same time.
@@ -39,7 +39,7 @@ public:
 
 	//@{ 指定テキストで初期化, Initialize with specified text //@}
 	Line( const unicode* str, ulong len )
-		: alen_( Max(len, (ulong)10) )
+		: alen_( Max(len, (ulong)1) )
 		, len_ ( len )
 		, str_ ( static_cast<unicode*>( mem().Alloc((alen_+1)*2+alen_) ) )
 		, flg_ ( reinterpret_cast<uchar*>(str_+alen_+1) )
