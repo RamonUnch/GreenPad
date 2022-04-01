@@ -29,16 +29,16 @@ using namespace editwing::doc;
 // -----------------------------------------------
 //
 // Line::isLineHeadCommented_
-//    0: 行頭がブロックコメントの内部ではない
-//    1: 行頭がブロックコメントの内部
+//    0: 行頭がブロックコメントの内部ではない, The beginning of the line is not inside the block comment
+//    1: 行頭がブロックコメントの内部,
 //
 // -----------------------------------------------
 //
 // Line::commentTransition_
-//   00: 行末は常にコメントの外
-//   01: 行頭と行末はコメント状態が逆転
-//   10: 行頭と行末はコメント状態が同じ
-//   11: 行末は常にコメントの中
+//   00: 行末は常にコメントの外, End of line always out of comment
+//   01: 行頭と行末はコメント状態が逆転, Comment state is reversed at the beginning of a line and at the end of a line
+//   10: 行頭と行末はコメント状態が同じ, Comment state is the same at the beginning of a line and at the end of a line
+//   11: 行末は常にコメントの中, The end of the line is always in the comment
 //
 // -----------------------------------------------
 //
@@ -53,6 +53,7 @@ using namespace editwing::doc;
 //
 // Line::commentBitReady_
 //   コメントビットが調整済みかどうか
+//   Whether the comment bits have been adjusted or not
 //
 // -----------------------------------------------
 //
@@ -60,43 +61,47 @@ using namespace editwing::doc;
 //   UCS-2ベタで、文字列データがそのまま格納される。
 //   ただし、パーサの高速化のために最終文字の後ろに
 //   0x007fが付加される。
+//   UCS-2 solid, string data is stored as is.
+//   However, to speed up the parser, the last character is followed by
+//   0x007f is appended.
 //
 // -----------------------------------------------
 //
 // Line::flg_
 //   一文字毎に、下のような8bitのフラグを割り当てる
+//   Assign an 8-bit flag as shown below for each character
 //   | aaabbbcd |
 //
 // -----------------------------------------------
 //
 // aaa == "PosInToken"
-//     0: トークンの途中
-//   1-6: トークンの頭。次の頭は1-6文字先。
-//     7: トークンの頭。次の頭は7文字以上先。
+//     0: トークンの途中, Token on the way
+//   1-6: トークンの頭。次の頭は1-6文字先。, Token head. The next head is 1-6 characters ahead.
+//     7: トークンの頭。次の頭は7文字以上先。, Token head. The next head is at least 7 characters ahead.
 //
 // -----------------------------------------------
 //
 // bbb == "TokenType"
-//     0: TAB: タブ文字
-//     1: WSP: ホワイトスペース
-//     2: TXT: 普通の文字
-//     3:  CE: コメント開始タグ
-//     4:  CB: コメント終了タグ
-//     5:  LB: 行コメント開始タグ
-//     6:  Q1: '' 引用符1
-//     7:  Q2: "" 引用符2
+//     0: TAB: タブ文字, tab cahar
+//     1: WSP: ホワイトスペース, white space char
+//     2: TXT: 普通の文字, normal text
+//     3:  CE: コメント開始タグ, comment-start tag
+//     4:  CB: コメント終了タグ, end-of-comment tag
+//     5:  LB: 行コメント開始タグ, line comment start tag
+//     6:  Q1: '' 引用符1, Sinlge Quote
+//     7:  Q2: "" 引用符2, Double Quote
 //
 // -----------------------------------------------
 //
 //  c  == "isKeyword?"
-//     0: キーワードではない
-//     1: キーワード
+//     0: キーワードではない, Not a keyword.
+//     1: キーワード, Keyword
 //
 // -----------------------------------------------
 //
 //  d  == "inComment?"
-//     0: コメントの中ではない
-//     1: コメントの中
+//     0: コメントの中ではない, not in a comment
+//     1: コメントの中, in a comment
 //
 // -----------------------------------------------
 
@@ -211,6 +216,8 @@ static bool compare_i(const unicode* a,const unicode* b,ulong l)
 //-------------------------------------------------------------------------
 // 与えられた記号文字列から、コメント開始等の意味のあるトークンを
 // 切り出してくるための構造。
+// meaningful tokens from a given symbol string, such as the start of a comment.
+// Structure to cut out.
 //-------------------------------------------------------------------------
 
 class TagMap

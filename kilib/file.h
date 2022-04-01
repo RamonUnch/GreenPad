@@ -94,7 +94,7 @@ public:
 	void Write( const void* buf, ulong siz );
 
 	//@{ ˆê•¶š‘‚­ //@}
-	void WriteC( uchar ch );
+	void WriteC( const uchar ch );
 
 public:
 

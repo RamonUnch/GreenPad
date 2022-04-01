@@ -20,7 +20,7 @@ void SetFontSize(LOGFONT *font, HDC hDC, int fsiz, int fx)
 	if(!hDC) ::ReleaseDC( NULL, h ); // release if captured!
 }
 
-void VConfig::SetFont( const TCHAR* fnam, int fsiz, char fontCS, LONG fw, BYTE ff, int fx, int qual )
+void VConfig::SetFont( const TCHAR* fnam, int fsiz, uchar fontCS, LONG fw, BYTE ff, int fx, int qual )
 {
 	fontsize              = fsiz;
 	fontwidth             = fx;
@@ -756,11 +756,7 @@ void ConfigManager::LoadIni()
 	grepExe_   = ini_.GetStr( TEXT("GrepExe"), TEXT("") );
 	openSame_  = ini_.GetBool( TEXT("OpenSame"), false );
 	countbyunicode_ = ini_.GetBool( TEXT("CountUni"), false );
-#if defined(TARGET_VER) && TARGET_VER==300
-	showStatusBar_ = false;
-#else
 	showStatusBar_ = ini_.GetBool( TEXT("StatusBar"), true );
-#endif
 
 	dateFormat_   = ini_.GetStr( TEXT("DateFormat"), TEXT("HH:mm yyyy/MM/dd") );
 

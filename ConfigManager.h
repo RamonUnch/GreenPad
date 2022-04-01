@@ -157,8 +157,8 @@ private:
 		int               wrapType;
 		int               wrapWidth;
 		bool              showLN;
-		char              fontCS;
-		int               fontQual;
+		uchar             fontCS;
+		uchar             fontQual;
 	};
 	typedef ki::olist<DocType> DtList;
 

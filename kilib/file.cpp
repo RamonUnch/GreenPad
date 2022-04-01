@@ -263,7 +263,7 @@ void FileW::Write( const void* dat, ulong siz )
 	bPos_ += siz;
 }
 
-void FileW::WriteC( uchar ch )
+void FileW::WriteC( const uchar ch )
 {
 	if( (BUFSIZE-bPos_) <= 1 )
 		Flush();

@@ -6,7 +6,7 @@
 #endif
 using namespace ki;
 
-#if defined(TARGET_VER) && TARGET_VER<=350
+#if defined(TARGET_VER) && TARGET_VER<=350 && TARGET_VER>300
 #pragma comment(lib, "DelayImp.lib")
 #pragma comment(linker, "/DelayLoad:IMM32.DLL")
 
@@ -22,7 +22,7 @@ static HKL MyGetKeyboardLayout(DWORD dwLayout)
 
 	return NULL;
 }
-#else 
+#else
   #define MyGetKeyboardLayout GetKeyboardLayout
 #endif // Target_VER
 
@@ -37,7 +37,7 @@ static BOOL MyImmSetCompositionFont(HIMC hIMC, LPLOGFONTW plf)
 	// Copy lf struct in lfa.
 	memmove((void*)&lfa, (void*)plf, sizeof(lfa));
 	// Convert lfFaceName from W to A.
-	
+
 	::WideCharToMultiByte(CP_ACP, 0, plf->lfFaceName, -1 , lfa.lfFaceName, LF_FACESIZE, NULL, NULL);
 	return ImmSetCompositionFontA(hIMC, &lfa);
 }
@@ -74,7 +74,9 @@ IMEManager::IMEManager()
 	#endif //USEGLOBALIME
 
 	// check if IMM32.DLL can be loaded...
-  # if defined(TARGET_VER) && TARGET_VER<=350
+  # if defined(TARGET_VER) && TARGET_VER<=300
+	#define hasIMM32_ 0
+  # elif defined(TARGET_VER) && TARGET_VER<=350
 	HINSTANCE h = LoadLibraryA("IMM32.DLL");
 	hasIMM32_ = !!h;
 	FreeLibrary(h);
@@ -123,7 +125,7 @@ BOOL IMEManager::IsIME()
 		}
 		else
 	#endif // USEGLOBALIME
-		if (hasIMM32_) 
+		if (hasIMM32_)
 		{
 			return ::ImmIsIME( hKL );
 		}
@@ -143,7 +145,7 @@ BOOL IMEManager::CanReconv()
 		}
 		else
 	#endif
-		if (hasIMM32_) 
+		if (hasIMM32_)
 		{
 			nImeProps = ::ImmGetProperty( hKL, IGP_SETCOMPSTR );
 		}
@@ -167,7 +169,7 @@ BOOL IMEManager::GetState( HWND wnd )
 		}
 		else
 	#endif
-		if (hasIMM32_) 
+		if (hasIMM32_)
 		{
 			ime = ::ImmGetContext( wnd );
 			imeStatus = ::ImmGetOpenStatus(ime );
@@ -190,7 +192,7 @@ void IMEManager::SetState( HWND wnd, bool enable )
 		}
 		else
 	#endif // USEGLOBALIME
-		if (hasIMM32_) 
+		if (hasIMM32_)
 		{
 			ime = ::ImmGetContext( wnd );
 			::ImmSetOpenStatus(ime, (enable ? TRUE : FALSE) );
@@ -265,11 +267,11 @@ void IMEManager::SetFont( HWND wnd, const LOGFONT& lf )
 	}
 	else
 	#endif //USEGLOBALIME
-	if (hasIMM32_) 
+	if (hasIMM32_)
 	{
 		ime = ::ImmGetContext( wnd );
 		MyImmSetCompositionFont( ime, plf ); // A/W
-		
+
 		::ImmReleaseContext( wnd, ime );
 	}
 #endif // TARGET_VER
@@ -293,7 +295,7 @@ void IMEManager::SetPos( HWND wnd, int x, int y )
 	}
 	else
 	#endif // USEGLOBALIME
-	if (hasIMM32_) 
+	if (hasIMM32_)
 	{
 		ime = ::ImmGetContext( wnd );
 		::ImmSetCompositionWindow( ime, &cf );
@@ -320,7 +322,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 	}
 	else
 	#endif //USEGLOBALIME
-	if (hasIMM32_) 
+	if (hasIMM32_)
 	{
 		ime = ::ImmGetContext( wnd );
 		long s = ::ImmGetCompositionStringW( ime,GCS_RESULTSTR,NULL,0 );
@@ -368,19 +370,18 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 	}
 	else
 	#endif //USEGLOBALIME
-	if (hasIMM32_) 
+	if (hasIMM32_)
 	{
 		ime = ::ImmGetContext( wnd );
-		long s = ::ImmSetCompositionStringW( ime,SCS_SETSTR,str,len*sizeof(unicode),NULL,0 );
+		BOOL s = ::ImmSetCompositionStringW( ime,SCS_SETSTR,str,len*sizeof(unicode),NULL,0 );
 
 		#if  !defined(_UNICODE) || defined(UNICOWS)
 			if( s == 0 )
 			{
-				BOOL defchr = TRUE;
-				len = ::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1,NULL,NULL,"?",&defchr );
+				len = ::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1, NULL,0 ,NULL,NULL );
 				char* tmp = new char[len];
-				
-				::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1,tmp,len,"?",&defchr );
+
+				::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1,tmp,len,NULL,NULL );
 				s = ::ImmSetCompositionStringA(ime,SCS_SETSTR,tmp,len,NULL,0);
 				delete [] tmp;
 			}
@@ -390,7 +391,7 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 		::ImmNotifyIME( ime, NI_COMPOSITIONSTR, CPS_CONVERT, 0); // 変換実行
 		::ImmNotifyIME( ime, NI_OPENCANDIDATE, 0, 0 ); // 変換候補リスト表示
 		::ImmReleaseContext( wnd, ime );
-	}// endif (hasIMM32_) 
+	}// endif (hasIMM32_)
 #endif //TARGET_VER
 }
 

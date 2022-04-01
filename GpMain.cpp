@@ -26,7 +26,7 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 	fcmd += app().isNewTypeWindows()? TEXT("\" "): TEXT(" ");
 	fcmd += TEXT(" ");
 	fcmd += cmd;
-//	MessageBox(hwnd(), (TCHAR*)fcmd.c_str(), (TCHAR*)Path(Path::ExeName).c_str(), MB_OK);
+//	MsgBox((TCHAR*)fcmd.c_str(), (TCHAR*)Path(Path::ExeName).c_str(), MB_OK);
 
 	if( ::CreateProcess( NULL, (TCHAR*)fcmd.c_str(),
 			NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL,
@@ -70,23 +70,11 @@ int GpStBar::AutoResize( bool maximized )
 
 	HDC dc = ::GetDC( hwnd() );
 	SIZE s;
+	if( ::GetTextExtentPoint( dc, TEXT("BBBBM"), 5, &s ) ) // Line Ending
+		w[1] = w[2] - s.cx;
+	if( ::GetTextExtentPoint( dc, TEXT("BBBWWWW"), 7, &s ) ) // Charset
+		w[0] = w[1] - s.cx;
 
-#if defined(TARGET_VER) && TARGET_VER <= 300 // Win32s
-	if( App::isWin32s() )
-	{
-		if( ::GetTextExtentPoint( dc, TEXT("BBBBM"), 5, &s ) ) // Line Ending
-			w[1] = w[2] - s.cx;
-		if( ::GetTextExtentPoint( dc, TEXT("BBBWWWW"), 7, &s ) ) // Charset
-			w[0] = w[1] - s.cx;
-	}
-	else
-#endif
-	{
-		if( ::GetTextExtentPoint32( dc, TEXT("BBBBM"), 5, &s ) ) // Line Ending
-			w[1] = w[2] - s.cx;
-		if( ::GetTextExtentPoint32( dc, TEXT("BBBWWWW"), 7, &s ) ) // Charset
-			w[0] = w[1] - s.cx;
-	}
 	::ReleaseDC( hwnd(), dc );
 
 	SetParts( countof(w), w );
@@ -388,7 +376,7 @@ void GreenPadWnd::on_pagesetup()
 	}
 	else
 	{
-		MessageBox(hwnd(), TEXT("You need at least Windows NT 3.51!\n"), NULL, MB_OK);
+		MsgBox(TEXT("You need at least Windows NT 3.51!\n"), NULL, MB_OK);
 	}
 #endif
 }
@@ -434,7 +422,7 @@ void GreenPadWnd::on_print()
 	{
 		TCHAR tmp[128];
 		::wsprintf(tmp,TEXT("StartDoc Error #%d - please check printer."),::GetLastError());
-		::MessageBox( hwnd(), tmp, String(IDS_APPNAME).c_str(), MB_OK|MB_TASKMODAL );
+		MsgBox(tmp, String(IDS_APPNAME).c_str(), MB_OK|MB_TASKMODAL );
 		return;
 		// Handle the error intelligently
 	}
@@ -606,13 +594,8 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 	::CheckMenuItem( menu, ID_CMD_NOWRAP, MF_BYCOMMAND|(wrap_==-1?MF_CHECKED:MF_UNCHECKED));
 	::CheckMenuItem( menu, ID_CMD_WRAPWIDTH, MF_BYCOMMAND|(wrap_>0?MF_CHECKED:MF_UNCHECKED));
 	::CheckMenuItem( menu, ID_CMD_WRAPWINDOW, MF_BYCOMMAND|(wrap_==0?MF_CHECKED:MF_UNCHECKED));
+	::CheckMenuItem( menu, ID_CMD_STATUSBAR, cfg_.showStatusBar()?MF_CHECKED:MF_UNCHECKED );
 
-#if defined(TARGET_VER) && TARGET_VER==300
-	::EnableMenuItem( menu, ID_CMD_STATUSBAR, MF_BYCOMMAND|MF_GRAYED );
-#else
-	::CheckMenuItem( menu, ID_CMD_STATUSBAR,
-		cfg_.showStatusBar()?MF_CHECKED:MF_UNCHECKED );
-#endif
 	LOGGER("GreenPadWnd::ReloadConfig on_initmenu end");
 }
 
@@ -1069,7 +1052,7 @@ BOOL GreenPadWnd::SendMsgToAllFriends(UINT msg)
 }
 bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, bool always )
 {
-//	MessageBox(hwnd(), fn.c_str(), TEXT("File"), 0);
+//	MsgBox(fn.c_str(), TEXT("File"), 0);
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
 
@@ -1262,11 +1245,7 @@ void GreenPadWnd::on_create( CREATESTRUCT* cs )
 	LOGGER("GreenPadWnd::on_create edit created");
 	edit_.getDoc().AddHandler( this );
 	edit_.getCursor().AddHandler( this );
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	stb_.SetStatusBarVisible( cfg_.showStatusBar() );
-#elif defined(TARGET_VER) && TARGET_VER==300
-	stb_.SetStatusBarVisible( false );
-#endif
 
 	LOGGER("GreenPadWnd::on_create halfway");
 
@@ -1315,7 +1294,7 @@ void GreenPadWnd::ShowUp2()
 
 int kmain()
 {
-	// MessageBox(hwnd(), GetCommandLine(), TEXT("Command Line"), MB_OK);
+	// MsgBox(GetCommandLine(), TEXT("Command Line"), MB_OK);
 	LOGGER( "kmain() begin" );
 
 	Argv  arg;
