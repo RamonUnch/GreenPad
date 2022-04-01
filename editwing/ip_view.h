@@ -72,72 +72,73 @@ public:
 
 	//@{ 文字幅, character width (pixel) //@}
 	int Wc( unicode ch ) const
+	{
+		if( widthTable_[ ch ] == -1 )
 		{
-			if( widthTable_[ ch ] == -1 )
 #ifdef WIN32S
-				if(ch > 0x100)
-				{
-					::GetCharWidthA( dc_, 'x', 'x', widthTable_+ch );
-					widthTable_[ ch ] *= 2;
-				}
-				else
-				{
-					::GetCharWidthA( dc_, ch, ch, widthTable_+ch );
-				}
-#else
-				::GetCharWidthW( dc_, ch, ch, widthTable_+ch );
-#endif
-			return widthTable_[ ch ];
-		}
-	int W( const unicode* pch ) const // 1.08 サロゲートペア回避, Avoid Surrogate Pair
-		{
-			unicode ch = *pch;
-			if( widthTable_[ ch ] == -1 )
+			if(ch > 0x100)
 			{
-				if( isHighSurrogate(ch) )
-				{
-					SIZE sz;
-					if( ::GetTextExtentPoint32W( dc_, pch, 2, &sz ) )
-						return sz.cx;
-					int w = 0;
-#ifdef WIN32S
-					if(ch > 0x100)
-					{
-						::GetCharWidthA( dc_, 'x', 'x', &w );
-						w *= 2;
-					}
-					else
-					{
-						::GetCharWidthA( dc_, ch, ch, &w );
-					}
+				SIZE sz;
+				char strch[16];
+				DWORD len = WideCharToMultiByte(CP_ACP,0, &ch,1, strch,countof(strch), NULL, NULL);
+				if(len && ::GetTextExtentPoint( dc_, strch, len, &sz ) )
+					widthTable_[ ch ] = sz.cx;
+				else
+					widthTable_[ ch ] = 2 * widthTable_[ L'x' ]; // Default 2x width
+			}
+			else
+			{
+				::GetCharWidthA( dc_, ch, ch, widthTable_+ch );
+			}
 #else
-					::GetCharWidthW( dc_, ch, ch, &w );
+			::GetCharWidthW( dc_, ch, ch, widthTable_+ch );
 #endif
-					return w;
-				}
-//				else if ((0x0900 <= ch &&  ch <= 0x097F))
-//				{ // TOO SLOW AND NOT GOOD ENOUGH
-//					SIZE sz1, sz2;
-//					if( ::GetTextExtentPoint32W( dc_, pch, 2, &sz1 ) 
-//					&&  ::GetTextExtentPoint32W( dc_, pch+1, 1, &sz2 ) )
-//						return sz1.cx-sz2.cx;
-//				}
+		}
+		return widthTable_[ ch ];
+	}
+	int W( const unicode* pch ) const // 1.08 サロゲートペア回避, Avoid Surrogate Pair
+	{
+		unicode ch = *pch;
+		if( widthTable_[ ch ] == -1 )
+		{
+			if( isHighSurrogate(ch) )
+			{	// We cannot save the width of chars from the extended
+				// Unicode plane inside the widthTable_[ ]
+				int w = 0;
 #ifdef WIN32S
 				if(ch > 0x100)
-				{
-					::GetCharWidthA( dc_, 'x', 'x', widthTable_+ch );
-					widthTable_[ ch ] *= 2;
-				}
+					w = 2 * widthTable_[ L'x' ]; // Default 2x width (fast)
 				else
-				{
-					::GetCharWidthA( dc_, ch, ch, widthTable_+ch );
-				}
+					::GetCharWidthA( dc_, ch, ch, &w );
 #else
-				::GetCharWidthW( dc_, ch, ch, widthTable_+ch );
+				SIZE sz;
+				if( ::GetTextExtentPoint32W( dc_, pch, 2, &sz ) )
+					return sz.cx;
+				::GetCharWidthW( dc_, ch, ch, &w );
 #endif
+				return w;
 			}
-			return widthTable_[ ch ];
+#ifdef WIN32S
+			if(ch > 0x100)
+			{
+				SIZE sz;
+				char strch[16];
+				DWORD len = WideCharToMultiByte(CP_ACP,0, &ch,1, strch,countof(strch), NULL, NULL);
+				if(len && ::GetTextExtentPoint( dc_, strch, len, &sz ) )
+					widthTable_[ ch ] = sz.cx;
+				else
+					widthTable_[ ch ] = 2 * widthTable_[ L'x' ]; // Default 2x width
+			}
+			else
+			{
+				::GetCharWidthA( dc_, ch, ch, widthTable_+ch );
+			}
+#else
+			::GetCharWidthW( dc_, ch, ch, widthTable_+ch );
+#endif
 		}
+		return widthTable_[ ch ];
+	}
 
 	//@{ 標準文字幅, standard character width (pixel) //@}
 	int W() const { return widthTable_[ L'x' ]; }
