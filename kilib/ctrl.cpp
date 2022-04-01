@@ -15,12 +15,14 @@ StatusBar::StatusBar()
 bool StatusBar::Create( HWND parent )
 {
 	HWND h = NULL;
+	WNDCLASS wc;
 	// Avoid using CreateStatusWindow that is not present on NT3.1.
 	h = ::CreateWindowEx(
 		0, // ExStyle
-		App::getOSVer() == 310 || (App::getOSVer() == 350 && App::getOSBuild() < 711)
-		? TEXT("msctls_statusbar")   // TEXT("msctls_statusbar") for NT3.1 and 3.5 build <711
-		: STATUSCLASSNAME, // TEXT("msctls_statusbar32")...
+		GetClassInfo(NULL, STATUSCLASSNAME, &wc)?
+		STATUSCLASSNAME: // TEXT("msctls_statusbar32")...
+		TEXT("msctls_statusbar"), // TEXT("msctls_statusbar") for NT3.1 and 3.5 build <711
+
 		NULL, // pointer to window name
 		WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP , // window style
 		0, 0, 0, 0, //x, y, w, h
@@ -61,21 +63,21 @@ bool StatusBar::PreTranslateMessage( MSG* )
 
 void StatusBar::SetText( const TCHAR* str, int part )
 {
-  # if defined(UNICOWS) || (!defined(TARGET_VER) && defined(UNICODE))
-	if ( app().isNT() 
+  # if defined(UNICOWS) && defined(UNICODE)
+	if ( app().isNT()
 	&&!( App::getOSVer() == 310 || (App::getOSVer() == 350 && App::getOSBuild() < 711)))
-  # endif
 	{	// Unicode in UNICOWS mode to be used on NT only from 3.5
-		SendMsg( SB_SETTEXT, part, reinterpret_cast<LPARAM>(str) ); 
+		SendMsg( SB_SETTEXTW, part, reinterpret_cast<LPARAM>(str) );
 	}
-  # ifdef UNICOWS
-	else 
+	else
 	{	// Use ANSI version NT3.1 and Win9x (convert string).
 		char buf[256];
-		long len = ::WideCharToMultiByte(CP_ACP, 0, str, -1 , buf, 255, NULL, NULL);
+		long len = ::WideCharToMultiByte(CP_ACP, 0, str, -1 , buf, countof(buf), NULL, NULL);
 		buf[len] = '\0';
-		SendMsg( SB_SETTEXTA, part, reinterpret_cast<LPARAM>(buf) ); 
+		SendMsg( SB_SETTEXTA, part, reinterpret_cast<LPARAM>(buf) );
 	}
+  # else
+	SendMsg( SB_SETTEXT, part, reinterpret_cast<LPARAM>(str) );
   # endif
 }
 
