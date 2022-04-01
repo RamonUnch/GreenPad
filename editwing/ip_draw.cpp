@@ -241,7 +241,7 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 #ifdef WIN32S
 	::GetCharWidthA( dc_, ' ', '~', widthTable_+' ' );
 #else
-	::GetCharWidth32W( dc_, L' ', L'~', widthTable_+L' ' );
+	::GetCharWidthW( dc_, L' ', L'~', widthTable_+L' ' );
 #endif
 	widthTable_[L'\t'] = NZero(W() * Max(1, vc.tabstep));
 	// â∫à ÉTÉçÉQÅ[ÉgÇÕï∂éöïùÉ[Éç (Lower surrogates have zero character width)
@@ -304,8 +304,8 @@ inline void Painter::StringOut
 		dwNum = WideCharToMultiByte(CP_ACP,0, str,len, NULL,0, NULL,NULL);
 		if (dwNum)
 		{
-			psText = new char[dwNum];
-			WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
+			psText = new char[dwNum]; 
+			dwNum = WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
 		}
 		else
 		{
