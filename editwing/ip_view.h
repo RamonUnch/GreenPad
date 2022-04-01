@@ -32,45 +32,45 @@ public:
 
 	~Painter();
 
-	//@{ 指定位置に一文字出力 //@}
+	//@{ 指定位置に一文字出力, Output a single character at the specified position //@}
 	void CharOut( unicode ch, int x, int y );
 
-	//@{ 指定位置に文字列を出力 //@}
+	//@{ 指定位置に文字列を出力, Output a string at the specified position //@}
 	void StringOut( const unicode* str, int len, int x, int y );
 
-	//@{ 文字色切り替え //@}
+	//@{ 文字色切り替え, text color switching //@}
 	void SetColor( int i );
 
-	//@{ 背景色で塗りつぶし //@}
+	//@{ 背景色で塗りつぶし, Fill rect with background color //@}
 	void Fill( const RECT& rc );
 
-	//@{ 反転 //@}
+	//@{ 反転, Invert color in the rectangle //@}
 	void Invert( const RECT& rc );
 
-	//@{ 線を引く //@}
+	//@{ 線を引く, Draw a line from point x to point y //@}
 	void DrawLine( int x1, int y1, int x2, int y2 );
 
-	//@{ クリップ領域設定 //@}
+	//@{ クリップ領域設定, (IntersectClipRect())  //@}
 	void SetClip( const RECT& rc );
 
-	//@{ クリップ領域解除 //@}
+	//@{ クリップ領域解除, SelectClipRgn( dc_, NULL)//@}
 	void ClearClip();
 
-	//@{ 半角スペース用記号描画 //@}
+	//@{ 半角スペース用記号描画, Symbol drawing for half-width space //@}
 	void DrawHSP( int x, int y, int times );
 
-	//@{ 全角スペース用記号描画 //@}
+	//@{ 全角スペース用記号描画, Symbol drawing for full-width spaces //@}
 	void DrawZSP( int x, int y, int times );
 
 public:
 
-	//@{ 高さ(pixel) //@}
+	//@{ 高さ, height(pixel) //@}
 	int H() const { return height_; }
 
-	//@{ 数字幅(pixel) //@}
+	//@{ 数字幅, digit width (pixel) //@}
 	int F() const { return figWidth_; }
 
-	//@{ 文字幅(pixel) //@}
+	//@{ 文字幅, character width (pixel) //@}
 	int Wc( unicode ch ) const
 		{
 			if( widthTable_[ ch ] == -1 )
@@ -89,7 +89,7 @@ public:
 #endif
 			return widthTable_[ ch ];
 		}
-	int W( const unicode* pch ) const // 1.08 サロゲートペア回避
+	int W( const unicode* pch ) const // 1.08 サロゲートペア回避, Avoid Surrogate Pair
 		{
 			unicode ch = *pch;
 			if( widthTable_[ ch ] == -1 )
@@ -115,6 +115,13 @@ public:
 #endif
 					return w;
 				}
+//				else if ((0x0900 <= ch &&  ch <= 0x097F))
+//				{ // TOO SLOW AND NOT GOOD ENOUGH
+//					SIZE sz1, sz2;
+//					if( ::GetTextExtentPoint32W( dc_, pch, 2, &sz1 ) 
+//					&&  ::GetTextExtentPoint32W( dc_, pch+1, 1, &sz2 ) )
+//						return sz1.cx-sz2.cx;
+//				}
 #ifdef WIN32S
 				if(ch > 0x100)
 				{
@@ -132,18 +139,18 @@ public:
 			return widthTable_[ ch ];
 		}
 
-	//@{ 標準文字幅(pixel) //@}
+	//@{ 標準文字幅, standard character width (pixel) //@}
 	int W() const { return widthTable_[ L'x' ]; }
 
-	//@{ 次のタブ揃え位置を計算 //@}
+	//@{ 次のタブ揃え位置を計算, Calculate next tab alignment position //@}
 	//int nextTab(int x) const { int t=T(); return (x/t+1)*t; }
 	int nextTab(int x) const { int t=T(); return ((x+4)/t+1)*t; }
 	private: int T() const { return widthTable_[ L'\t' ]; } public:
 
-	//@{ 現在のフォント情報 //@}
+	//@{ 現在のフォント情報, Current font information //@}
 	const LOGFONT& LogFont() const { return logfont_; }
 
-	//@{ 特別文字を描画するか否か //@}
+	//@{ 特別文字を描画するか否か, Whether to draw special characters or not //@}
 	bool sc( int i ) const { return scDraw_[i]; }
 
 private:
@@ -153,7 +160,7 @@ private:
 	const HPEN   pen_;
 	const HBRUSH brush_;
 	int          height_;
-	int*         widthTable_;
+	int*         widthTable_; // 65536 values => 256KB
 	int          figWidth_;
 	LOGFONT      logfont_;
 	COLORREF     colorTable_[7];

@@ -326,7 +326,7 @@ void SearchManager::NotFound(bool GoingDown)
 			FindNextImpl(true);
 		}
 	} else {
-	    ::MessageBox(hwnd(), String(IDS_NOTFOUND).c_str(), NULL, MB_OK|MB_TASKMODAL);
+	    MsgBox(String(IDS_NOTFOUND).c_str(), NULL, MB_OK|MB_TASKMODAL);
 	}
 }
 

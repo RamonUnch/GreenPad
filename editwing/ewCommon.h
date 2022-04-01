@@ -181,7 +181,7 @@ struct VConfig : public ki::Object
 		SetFont( fnam,fsiz,fontCS,DEFAULT_QUALITY );
 	}*/
 	void SetFont( const TCHAR* fnam, int fsiz
-				, char fontCS=DEFAULT_CHARSET
+				, uchar fontCS=DEFAULT_CHARSET
 				, LONG fw=FW_DONTCARE, BYTE ff=0, int fx=0
 				, int qual=DEFAULT_QUALITY ) ;
 /*	{

@@ -114,7 +114,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib delayimp.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe" /filealign:512 /OPT:REF /OPT:ICF,7 /LARGEADDRESSAWARE
+# ADD LINK32 unicows.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib delayimp.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe" /filealign:512 /OPT:REF /OPT:ICF,20 /LARGEADDRESSAWARE
 
 !ELSEIF  "$(CFG)" == "kilib - Win32 NT31 Unicode Release"
 
@@ -165,14 +165,14 @@ LINK32=link.exe
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x411 /d "NDEBUG"
-# ADD RSC /l 0x411 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG" /d TARGET_VER=300
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GreenPad.exe"
 # SUBTRACT BASE LINK32 /pdb:none
-# ADD LINK32 ole32.lib oleaut32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib imm32.lib delayimp.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GPad32s.exe" /SUBSYSTEM:WINDOWS,3.10 /FIXED:NO /filealign:512 /OPT:REF /OPT:ICF,7
+# ADD LINK32 ole32.lib oleaut32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib /nologo /subsystem:windows /map /machine:I386 /nodefaultlib /out:"release/GPad32s.exe" /SUBSYSTEM:WINDOWS,3.10 /FIXED:NO /filealign:512 /OPT:REF /OPT:ICF,7
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "kilib - Win32 Win4_Unicode release"

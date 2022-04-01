@@ -578,7 +578,7 @@ void Cursor::Copy()
 		// NT系ならそのままダイレクトに, Direct copy
 		h = ::GlobalAlloc( GMEM_MOVEABLE, (len+1)*2 );
 		if (!h) {
-			MessageBox(NULL, TEXT("Selection is too large to hold into memory!"), NULL, MB_OK|MB_TASKMODAL) ;
+			MessageBox(NULL, TEXT("Selection is too large to hold into memory!"), NULL, MB_OK|MB_TASKMODAL|MB_TOPMOST) ;
 			return;
 		}
 		doc_.getText( static_cast<unicode*>(::GlobalLock(h)), dm, dM );
@@ -590,7 +590,7 @@ void Cursor::Copy()
 		// 9x系なら変換が必要, convert to ANSI before.
 		h = ::GlobalAlloc( GMEM_MOVEABLE, (len+1)*3 );
 		if (!h) {
-			MessageBox(NULL, TEXT("Selection is too large to hold into memory!"), NULL, MB_OK|MB_TASKMODAL) ;
+			MessageBox(NULL, TEXT("Selection is too large to hold into memory!"), NULL, MB_OK|MB_TASKMODAL|MB_TOPMOST) ;
 			return;
 		}
 		p = new unicode[len+1];
@@ -802,6 +802,7 @@ void Cursor::End( bool wide, bool select )
 void Cursor::Ud( int dy, bool select )
 {
 	// はみ出す場合は、先頭行/終端行で止まるように制限
+	// Limit overflow to stop at start/end line
 	VPos np = cur_;
 	if( (signed)np.vl + dy < 0 )
 		dy = -(signed)np.vl;
@@ -810,7 +811,7 @@ void Cursor::Ud( int dy, bool select )
 
 	np.vl += dy;
 	np.rl += dy;
-	if( dy<0 ) // 上へ戻る場合
+	if( dy<0 ) // 上へ戻る場合, To go back to the top
 	{
 		// ジャンプ先論理行の行頭へDash!
 		while( (signed)np.rl < 0 )
@@ -825,10 +826,10 @@ void Cursor::Ud( int dy, bool select )
 			np.rl += view_.rln(--np.tl); //行き過ぎ修正～
 	}
 
-	// x座標決定にかかる
+	// x座標決定にかかる, x-coordinate determination
 	const unicode* str = doc_.tl(np.tl);
 
-	// 右寄せになってる。不自然？
+	// 右寄せになってる。不自然？, It's right-justified. Unnatural?
 	np.ad = (np.rl==0 ? 0 : view_.rlend(np.tl,np.rl-1)+1);
 	np.vx = (np.rl==0 ? 0 : view_.fnt().W(&str[np.ad-1]));
 	while( np.vx < np.rx && np.ad < view_.rlend(np.tl,np.rl) )
