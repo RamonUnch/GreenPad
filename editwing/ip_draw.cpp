@@ -241,19 +241,18 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 #ifdef WIN32S
 	::GetCharWidthA( dc_, ' ', '~', widthTable_+' ' );
 #else
-	::GetCharWidthW( dc_, L' ', L'~', widthTable_+L' ' );
+	::GetCharWidth32W( dc_, L' ', L'~', widthTable_+L' ' );
 #endif
 	widthTable_[L'\t'] = NZero(W() * Max(1, vc.tabstep));
 	// 下位サロゲートは文字幅ゼロ (Lower surrogates have zero character width)
 	mem00( widthTable_+0xDC00, (0xE000 - 0xDC00)*sizeof(int) );
-
-	// 数字の最大幅を計算
+	// 数字の最大幅を計算, Calculate maximum width of numbers
 	figWidth_ = 0;
 	for( unicode ch=L'0'; ch<=L'9'; ++ch )
 		if( figWidth_ < widthTable_[ch] )
 			figWidth_ = widthTable_[ch];
 
-	// 高さの情報
+	// 高さの情報, Height Information
 	TEXTMETRIC met;
 	::GetTextMetrics( dc_, &met );
 	height_ = met.tmHeight;
@@ -278,13 +277,10 @@ inline void Painter::CharOut( unicode ch, int x, int y )
 {
 #ifdef WIN32S
 	DWORD dwNum;
-	char *psText;
-	if(dwNum = WideCharToMultiByte(CP_ACP,NULL,&ch,-1,NULL,0,NULL,FALSE))
+	char psText[16]; // Buffer for a SINGLE multibyte character
+	if(dwNum = WideCharToMultiByte(CP_ACP,0, &ch,1, psText,countof(psText), NULL,NULL))
 	{
-		psText = new char[dwNum];
-		WideCharToMultiByte(CP_ACP,NULL,&ch,-1,psText,dwNum,NULL,FALSE);
-		::TextOutA( dc_, x, y, psText, dwNum-1 );
-		delete []psText;
+		::TextOutA( dc_, x, y, psText, dwNum );
 	}
 #else
 	::TextOutW( dc_, x, y, &ch, 1 );
@@ -296,14 +292,29 @@ inline void Painter::StringOut
 {
 #ifdef WIN32S
 	DWORD dwNum;
-	char *psText;
-	if(dwNum = WideCharToMultiByte(CP_ACP,NULL,str,-1,NULL,0,NULL,FALSE))
-	{
-		psText = new char[dwNum];
-		WideCharToMultiByte(CP_ACP,NULL,str,-1,psText,dwNum,NULL,FALSE);
-		::TextOutA( dc_, x, y, psText, dwNum-1 );
-		delete []psText;
+	char psTXT1K[1024];
+	char *psText = psTXT1K;
+	if(!len) return;
+	// 1st try to convert to ANSI with a small stack buffer...
+	dwNum = WideCharToMultiByte(CP_ACP,0, str,len, psText,countof(psTXT1K), NULL,NULL);
+	if (!dwNum)
+	{	// If the small buffer failed, then properly allocate buffer.
+		// This happens verty rarely because token length is typically
+		// a single word, hence less than 128chars.
+		dwNum = WideCharToMultiByte(CP_ACP,0, str,len, NULL,0, NULL,NULL);
+		if (dwNum)
+		{
+			psText = new char[dwNum];
+			WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
+		}
+		else
+		{
+			return;
+		}
 	}
+	::TextOutA( dc_, x, y, psText, dwNum );
+	if (psText != psTXT1K)
+		delete []psText;
 #else
 	::TextOutW( dc_, x, y, str, len );
 #endif
@@ -343,6 +354,7 @@ inline void Painter::ClearClip()
 void Painter::DrawHSP( int x, int y, int times )
 {
 	// 半角スペース記号(ホチキスの芯型)を描く
+	// Draw a half-width space symbol (staple core type)
 	const int w=Wc(L' '), h=H();
 	POINT pt[4] = {
 		{ x    , y+h-4 },
@@ -364,6 +376,7 @@ void Painter::DrawHSP( int x, int y, int times )
 void Painter::DrawZSP( int x, int y, int times )
 {
 	// 全角スペース記号(平たい四角)を描く
+	// Draw a full-width space symbol (flat square)
 	const int w=Wc(0x3000/*L'　'*/), h=H();
 	POINT pt[4] = {
 		{ x    , y+h-4 },
@@ -455,13 +468,13 @@ void ViewImpl::on_paint( const PAINTSTRUCT& ps )
 
 
 //-------------------------------------------------------------------------
-// 行番号ゾーン描画
+// 行番号ゾーン描画, Line Number Zone Drawing
 //-------------------------------------------------------------------------
 
 void ViewImpl::DrawLNA( const VDrawInfo& v, Painter& p )
 {
 	//
-	// 文字列のまま足し算を行うルーチン
+	// 文字列のまま足し算を行うルーチン, Routine for additions as string
 	//
 	struct strint {
 		strint( ulong num ) {
@@ -486,18 +499,18 @@ void ViewImpl::DrawLNA( const VDrawInfo& v, Painter& p )
 		unicode digit[11];
 	};
 
-	// 背面消去
+	// 背面消去, backward erase
 	RECT rc = { v.rc.left, v.rc.top, lna(), v.rc.bottom };
 	p.Fill( rc );
 
 	if( v.rc.top < v.YMAX )
 	{
-		// 境界線表示
+		// 境界線表示, Boundary line indication
 		int line = lna() - p.F()/2;
 		p.DrawLine( line, v.rc.top, line, v.YMAX );
 		p.SetColor( LN );
 
-		// 行番号表示
+		// 行番号表示, line number indication
 		strint n = v.TLMIN+1;
 		int    y = v.YMIN;
 		int edge = lna() - p.F()*2;
@@ -512,7 +525,7 @@ void ViewImpl::DrawLNA( const VDrawInfo& v, Painter& p )
 
 
 //-------------------------------------------------------------------------
-// テキスト描画
+// テキスト描画, text rendering
 //-------------------------------------------------------------------------
 
 inline void ViewImpl::Inv( int y, int xb, int xe, Painter& p )
@@ -526,12 +539,12 @@ inline void ViewImpl::Inv( int y, int xb, int xe, Painter& p )
 
 void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 {
-	// 定数１
+	// 定数１, Constant 1
 //	const int   TAB = p.T();
 	const int     H = p.H();
 	const ulong TLM = doc_.tln()-1;
 
-	// 作業用変数１
+	// 作業用変数１, Working variable 1
 	RECT  a = { 0, v.YMIN, 0, v.YMIN+p.H() };
 	int clr = -1;
 	register int   x=0, x2;
@@ -540,26 +553,26 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 	// 論理行単位のLoop. Loop per logical line.
 	for( ulong tl=v.TLMIN; a.top<v.YMAX; ++tl )
 	{
-		// 定数２
+		// 定数２, Constant 2
 		const unicode* str = doc_.tl(tl);
 		const uchar*   flg = doc_.pl(tl);
 		const int rYMAX = Min<int>( v.YMAX, a.top+rln(tl)*H );
 
-		// 作業用変数２
+		// 作業用変数２, Working variable 2
 		ulong stt=0, end, t, n;
 
 		// 表示行単位のLoop
 		for( ulong rl=0; a.top<rYMAX; ++rl,a.top+=H,a.bottom+=H,stt=end )
 		{
-			// 作業用変数３
+			// 作業用変数３, Working Variable 3
 			end = rlend(tl,rl);
 			if( a.bottom<=v.YMIN )
 				continue;
 
-			// テキストデータ描画
-			for( x2=x=0,i2=i=stt; x<=v.XMAX && i<end; x=x2,i=i2 )
+			// テキストデータ描画, text data rendering
+			for( x2=x=0, i2=i=stt; x<=v.XMAX && i<end; x=x2,i=i2 )
 			{
-				// n := 次のTokenの頭
+				// n := 次のTokenの頭, n := next Token head
 				t = (flg[i]>>5);
 				n = i + t;
 				if( n >= end )
@@ -568,19 +581,18 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 					while( n<end && (flg[n]>>5)==0 )
 						++n;
 
-				// x2, i2 := このTokenの右端
+				// x2, i2 := このTokenの右端, x2, i2 := right end of this Token
 				i2 ++;
 				x2 = (str[i]==L'\t' ? p.nextTab(x2) : x2+p.W(&str[i]));
 			//	if( x2 <= v.XMIN )
 			//		x=x2, i=i2;
 				while( i2<n && x2<=v.XMAX )
 					x2 += p.W( &str[i2++] );
-
-				// 再描画すべき範囲と重なっていない
+				// 再描画すべき範囲と重なっていない, Not overlapping with the area that should be redrawn.
 				if( x2<=v.XMIN )
 					continue;
 
-				// x, i := このトークンの左端
+				// x, i := このトークンの左端, x, i := left end of this token
 				if( x<v.XMIN )
 				{
 					// tabの分が戻りすぎ？
@@ -589,12 +601,12 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 						x -= p.W( &str[--i] );
 				}
 
-				// 背景塗りつぶし
+				// 背景塗りつぶし, background filling
 				a.left  = x + v.XBASE;
 				a.right = x2 + v.XBASE;
 				p.Fill( a );
 
-				// 描画
+				// 描画, Drawing
 				switch( str[i] )
 				{
 				case L'\t':
@@ -623,12 +635,12 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 				}
 			}
 
-			// 選択範囲だったら反転
+			// 選択範囲だったら反転, If it is a selection, invert it.
 			if( v.SYB<=a.top && a.top<=v.SYE )
 				Inv( a.top, a.top==v.SYB?v.SXB:(v.XBASE),
 				            a.top==v.SYE?v.SXE:(v.XBASE+x), p );
 
-			// 行末より後ろの余白を背景色塗
+			// 行末より後ろの余白を背景色塗, Background color fill in the margin after the end of the line
 			if( x<v.XMAX )
 			{
 				a.left = v.XBASE + Max( v.XMIN, x );
@@ -637,7 +649,7 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 			}
 		}
 
-		// 行末記号描画反転
+		// 行末記号描画反転, line end symbol rendering inversion
 		SpecialChars sc = (tl==TLM ? scEOF : scEOL);
 		if( i==doc_.len(tl) && -32768<x+v.XBASE )
 		{
@@ -653,7 +665,7 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 		}
 	}
 
-	// EOF後余白を背景色塗
+	// EOF後余白を背景色塗, EOF after margin background color fill
 	if( a.top < v.rc.bottom )
 	{
 		a.left   = v.rc.left;
