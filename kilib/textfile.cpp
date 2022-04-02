@@ -765,7 +765,7 @@ namespace
 			q = p+2;
 		return const_cast<char*>( q );
 	}
-#if !defined(TARGET_VER) || defined (TARGET_VER) && TARGET_VER>305
+
 	static char* WINAPI MyCharNextExA(WORD cp, const char *p, DWORD flags)
 	{
 		// Only for Windows >= 4 (NT4/95+) because
@@ -782,7 +782,7 @@ namespace
 		// Fallback to increment :)
 		return (char *)++p;
 	}
-#endif
+
 	// IMultiLanguage2::DetectInputCodepageはGB18030のことを認識できません。
 	static bool IsGB18030Like( const uchar* ptr, ulong siz, int refcs )
 	{
@@ -872,21 +872,19 @@ namespace
 
 struct rMBCS : public TextFileRPimpl
 {
-	// ファイルポインタ＆コードページ
+	// ファイルポインタ＆コードページ, File Pointer & Code Page
 	const char* fb;
 	const char* fe;
 	const int   cp;
 	uNextFunc next;
 	uConvFunc conv;
 
-	// 初期設定
+	// 初期設定, Initialization
 	rMBCS( const uchar* b, ulong s, int c )
 		: fb( reinterpret_cast<const char*>(b) )
 		, fe( reinterpret_cast<const char*>(b+s) )
 		, cp( c==UTF8 ? UTF8N : c )
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>305) // 350
-		, next( cp==UTF8N ?   CharNextUtf8 : cp==GB18030 ? CharNextGB18030 : MyCharNextExA )
-#endif
+		, next( cp==UTF8N ? CharNextUtf8 : cp==GB18030 ? CharNextGB18030 : MyCharNextExA )
 		, conv( cp==UTF8N && (app().isWin95()||!::IsValidCodePage(65001))
 		                  ? Utf8ToWideChar : MultiByteToWideChar )
 	{
@@ -898,42 +896,31 @@ struct rMBCS : public TextFileRPimpl
 	size_t ReadLine( unicode* buf, ulong siz )
 	{
 		// バッファの終端か、ファイルの終端の近い方まで読み込む
+		// Read to the end of the buffer or near the end of the file
 		const char *p, *end = Min( fb+siz/2, fe );
 		state = (end==fe ? EOF : EOB);
 
-		// 改行が出るまで進む
+		// 改行が出るまで進む,  Proceed until the line breaks.
 		for( p=fb; p<end; )
 			if( *p=='\r' || *p=='\n' )
 			{
 				state = EOL;
 				break;
 			}
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>305) //350
 			else if( (*p) & 0x80 && p+1<fe )
 			{
 				p = next(cp,p,0);
 			}
-#endif
 			else
 			{
 				++p;
 			}
 
-		// Unicodeへ変換
+		// Unicodeへ変換, convertion to Unicode
 		ulong len;
-#ifndef _UNICODE
 		len = conv( cp, 0, fb, p-fb, buf, siz );
-#else
-		if(!app().isNewShell() || app().isWin95())
-		{
-			len = conv( cp, 0, fb, p-fb, buf, siz );
-		}
-		else
-		{
-			len = ::MultiByteToWideChar( cp, 0, fb, int(p-fb), buf, siz );
-		}
-#endif
-		// 改行コードスキップ処理
+
+		// 改行コードスキップ処理, Newline code skipping process
 		if( state == EOL )
 			if( *(p++)=='\r' && p<fe && *p=='\n' )
 				++p;
@@ -1241,7 +1228,7 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	// 対応するデコーダを作成
 	switch( cs_ )
 	{
-//	case Western: impl_ = new rWest(buf,siz,true); break;
+//	case Western: impl_ = new rWest(buf,siz,true); break; // use rMBCS instead
 	case UTF16b:
 	case UTF16BE: impl_ = new rUtf16(buf,siz,true); break;
 	case UTF16l:
@@ -3051,9 +3038,9 @@ bool TextFileW::Open( const TCHAR* fname )
 	case UTF8N:
 	default:
 #ifndef _UNICODE
-		if( /*app().isWin95() &&*/ (cs_==UTF8 || cs_==UTF8N) )
+		if( (cs_==UTF8 || cs_==UTF8N) )
 			impl_ = new wUTF8( fp_, cs_ );
-		else if( /*app().isWin95() &&*/ cs_==UTF7 )
+		else if( cs_==UTF7 )
 			impl_ = new wUTF7( fp_ );
 		else
 #else
