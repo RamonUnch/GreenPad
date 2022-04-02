@@ -703,9 +703,7 @@ void GreenPadWnd::on_config()
 	}
 }
 #if defined(TARGET_VER) && TARGET_VER<=350
-/* WIP: Re-implementation of FindWindowEx for NT3.x
- * because of this I have changed the TARGET_VER>310 to 300
- * for those calls so that they can be still disabled easyly */
+/* WIP: Re-implementation of FindWindowEx for NT3.x */
 struct MyFindWindowExstruct {
     HWND after;
 	LPCTSTR lpszClass;
@@ -772,7 +770,6 @@ static void MyShowWnd( HWND wnd )
 
 void GreenPadWnd::on_nextwnd()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	if( HWND next = ::MyFindWindowEx( NULL, hwnd(), className_, NULL ) )
 	{
 		HWND last=next, pos;
@@ -783,12 +780,10 @@ void GreenPadWnd::on_nextwnd()
 				0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_SHOWWINDOW );
 		MyShowWnd( next );
 	}
-#endif
 }
 
 void GreenPadWnd::on_prevwnd()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 	HWND pos=NULL, next=::MyFindWindowEx( NULL,NULL,className_,NULL );
 	if( next==hwnd() )
 	{
@@ -804,7 +799,6 @@ void GreenPadWnd::on_prevwnd()
 		if( next!=NULL )
 			MyShowWnd( pos );
 	}
-#endif
 }
 
 void GreenPadWnd::on_statusBar()
