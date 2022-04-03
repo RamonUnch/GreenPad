@@ -28,7 +28,7 @@ class Parser;
 // Holds text data in the form of UCS-2 betas. And at the same time.
 // buffer for parsing results to distinguish emphasized words specified by the keyword file.
 // It also maintains a buffer for the result of parsing. Text data is not terminated with NULs.
-// The character data does not have a terminator NUL, but the terminator
+// The character data does not have a terminator NULL, but the terminator
 // U+007f is included to speed up the parsing process
 //@}
 //=========================================================================
@@ -39,10 +39,10 @@ public:
 
 	//@{ 指定テキストで初期化, Initialize with specified text //@}
 	Line( const unicode* str, ulong len )
-		: alen_( Max(len, (ulong)1) )
+		: alen_( len )
 		, len_ ( len )
 		, str_ ( static_cast<unicode*>( mem().Alloc((alen_+1)*2+alen_) ) )
-		, flg_ ( reinterpret_cast<uchar*>(str_+alen_+1) )
+//		, flg_ ( reinterpret_cast<uchar*>(str_+alen_+1) ) // Useless pointer to flags
 		, commentBitReady_( 0 )
 		, isLineHeadCommented_( 0 )
 		{
@@ -60,9 +60,9 @@ public:
 		{
 			if( len_+siz > alen_ )
 			{
-				// バッファ拡張
+				// バッファ拡張, extend buffer.
 				ulong psiz = (alen_+1)*2+alen_;
-				alen_ = Max( alen_<<1, len_+siz );
+				alen_ = Max( (ulong)alen_<<1, len_+siz );
 				unicode* tmpS =
 					static_cast<unicode*>( mem().Alloc((alen_+1)*2+alen_) );
 				uchar*   tmpF =
@@ -70,16 +70,16 @@ public:
 				// コピー
 				memmove( tmpS,        str_,             at*2 );
 				memmove( tmpS+at+siz, str_+at, (len_-at+1)*2 );
-				memmove( tmpF,        flg_,             at   );
+				memmove( tmpF,        flg(),             at   );
 				// 古いのを削除
 				mem().DeAlloc( str_, psiz );
 				str_ = tmpS;
-				flg_ = tmpF;
+				//flg_ = tmpF;
 			}
 			else
 			{
 				memmove( str_+at+siz, str_+at, (len_-at+1)*2 );
-				memmove( flg_+at+siz, flg_+at, (len_-at)     );
+				memmove( flg()+at+siz, flg()+at, (len_-at)     );
 			}
 			memmove( str_+at, buf, siz*sizeof(unicode) );
 			len_ += siz;
@@ -95,7 +95,7 @@ public:
 	void RemoveAt( ulong at, ulong siz )
 		{
 			memmove( str_+at, str_+at+siz, (len_-siz-at+1)*2 );
-			memmove( flg_+at, flg_+at+siz, (len_-siz-at)     );
+			memmove( flg()+at, flg()+at+siz, (len_-siz-at)     );
 			len_ -= siz;
 		}
 
@@ -133,11 +133,11 @@ public:
 
 	//@{ 解析結果 //@}
 	uchar* flg()
-		{ return flg_; }
+		{ return reinterpret_cast<uchar*>(str_+alen_+1); }
 
 	//@{ 解析結果(const) //@}
 	const uchar* flg() const
-		{ return flg_; }
+		{ return reinterpret_cast<uchar*>(str_+alen_+1); }
 
 	// ask
 	uchar isCmtBitReady() const
@@ -161,7 +161,7 @@ private:
 	ulong    alen_;
 	ulong    len_;
 	unicode* str_;
-	uchar*   flg_;
+//	uchar*   flg_; // Useless pointer always equal str_+alen_+1
 
 	uchar commentBitReady_;
 	uchar isLineHeadCommented_;
