@@ -39,7 +39,7 @@ public:
 
 	//@{ 指定テキストで初期化, Initialize with specified text //@}
 	Line( const unicode* str, ulong len )
-		: alen_( len )
+		: alen_( Min(len, (ulong)1) )
 		, len_ ( len )
 		, str_ ( static_cast<unicode*>( mem().Alloc((alen_+1)*2+alen_) ) )
 //		, flg_ ( reinterpret_cast<uchar*>(str_+alen_+1) ) // Useless pointer to flags
@@ -62,6 +62,7 @@ public:
 			{
 				// バッファ拡張, extend buffer.
 				ulong psiz = (alen_+1)*2+alen_;
+				uchar *oflg=flg();
 				alen_ = Max( (ulong)alen_<<1, len_+siz );
 				unicode* tmpS =
 					static_cast<unicode*>( mem().Alloc((alen_+1)*2+alen_) );
@@ -70,7 +71,7 @@ public:
 				// コピー
 				memmove( tmpS,        str_,             at*2 );
 				memmove( tmpS+at+siz, str_+at, (len_-at+1)*2 );
-				memmove( tmpF,        flg(),             at   );
+				memmove( tmpF,        oflg,             at   );
 				// 古いのを削除
 				mem().DeAlloc( str_, psiz );
 				str_ = tmpS;
