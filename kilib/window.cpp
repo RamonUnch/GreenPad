@@ -311,9 +311,6 @@ void IMEManager::SetPos( HWND wnd, int x, int y )
 
 void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 {
-	*str = NULL;
-	len=0;
-
 #ifndef NO_IME
 	HIMC ime;
 	#ifdef USEGLOBALIME
@@ -355,7 +352,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 			}
 
 		::ImmReleaseContext( wnd, ime );
-	} // endif (hasIMM32_)
+	} // end if (hasIMM32_)
 #endif //NO_IME
 }
 
