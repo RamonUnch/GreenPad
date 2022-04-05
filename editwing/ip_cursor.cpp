@@ -6,6 +6,7 @@ using doc::Insert;
 using doc::Delete;
 using doc::Replace;
 
+HKL MyGetKeyboardLayout(DWORD dwLayout);
 
 
 //=========================================================================
@@ -312,20 +313,37 @@ void Cursor::on_char( TCHAR ch )
 	if( !bRO_ && ch!=0x7f
 	 && ((unsigned)ch>=0x20 || ch==TEXT('\r') || ch==TEXT('\t')) )
 	{
-	#ifdef _UNICODE
-		pEvHan_->on_char( *this, ch );
-	#else
-		unicode wc = ch;
-		if( ch & 0x80 ) // 非ASCII文字にはトリビアルでない変換が必要
-			// Non-ASCII characters require non-trivial conversion.
-			::MultiByteToWideChar( CP_ACP, MB_COMPOSITE, &ch, 1, &wc, 1 );
-		pEvHan_->on_char( *this, wc );
-	#endif
+		if( UNICODEBOOL && app().isNT() )
+		{ // In unicode mode we have Wide Chars ON NT
+			pEvHan_->on_char( *this, ch );
+		}
+		else
+		{
+			unicode wc = ch;
+			if( ch & 0x80 ) // 非ASCII文字にはトリビアルでない変換が必要
+			{
+				// Non-ASCII characters require non-trivial conversion.
+				UINT kb_cp = CP_ACP; // default ACP
+				LCID lcid = LOWORD(MyGetKeyboardLayout(0));
+				TCHAR cpstr[8];
+				if(::IsValidLocale(lcid, LCID_INSTALLED)
+				&& ::GetLocaleInfo(lcid, LOCALE_IDEFAULTANSICODEPAGE, cpstr, countof(cpstr)))
+				{	// This should be the codepage of the local associated with
+					// the current keyboard layout
+					UINT tcp = String::GetInt(cpstr);
+					if (::IsValidCodePage(tcp))
+						kb_cp = tcp;
+				}
+				::MultiByteToWideChar( kb_cp, MB_COMPOSITE, (char*)&ch, 1, &wc, 1 );
+			}
+			pEvHan_->on_char( *this, wc );
+		}
 	}
 }
 
 void Cursor::on_ime_composition( LPARAM lp )
 {
+#ifndef NO_IME
 	view_.ScrollTo( cur_ );
 	if( !bRO_ && (lp&GCS_RESULTSTR) )
 	{
@@ -338,6 +356,7 @@ void Cursor::on_ime_composition( LPARAM lp )
 			delete [] str;
 		}
 	}
+#endif // NO_IME
 }
 
 void Cursor::on_keydown( int vk, LPARAM flag )
@@ -570,38 +589,48 @@ void Cursor::Copy()
 		dm=sel_, dM=cur_;
 
 	HGLOBAL  h;
-	unicode* p;
 	ulong len = doc_.getRangeLength( dm, dM );
 
-	if( app().isNT() )
+	if( UNICODEBOOL || app().isNT() )
 	{
 		// NT系ならそのままダイレクトに, Direct copy
+		// Also on Win9x we can use CF_UNICODETEXT with UNICOWS
+		// In MBCS build we still copy in CF_UNICODETEXT if running on NT
 		h = ::GlobalAlloc( GMEM_MOVEABLE, (len+1)*2 );
 		if (!h) {
-			MessageBox(NULL, TEXT("Selection is too large to hold into memory!"), NULL, MB_OK|MB_TASKMODAL|MB_TOPMOST) ;
+			MessageBox(NULL, TEXT("Selection is too large to hold into memory!")
+				, NULL, MB_OK|MB_TASKMODAL|MB_TOPMOST) ;
 			return;
 		}
 		doc_.getText( static_cast<unicode*>(::GlobalLock(h)), dm, dM );
 		::GlobalUnlock( h );
 		clp.SetData( CF_UNICODETEXT, h );
 	}
-	else
+
+#if !defined(_UNICODE) || defined(UNICOWS)
+	if( !app().isNT() )
 	{
+		// On 9x With UNICOWS We need to also write to the clipboard in ANSI
+		// So that other programs can access the clipboard.
+		// Same for pure ansi mode.
 		// 9x系なら変換が必要, convert to ANSI before.
 		h = ::GlobalAlloc( GMEM_MOVEABLE, (len+1)*3 );
 		if (!h) {
-			MessageBox(NULL, TEXT("Selection is too large to hold into memory!"), NULL, MB_OK|MB_TASKMODAL|MB_TOPMOST) ;
+			MessageBox(NULL, TEXT("Selection is too large to hold into memory!")
+				, NULL, MB_OK|MB_TASKMODAL|MB_TOPMOST) ;
 			return;
 		}
-		p = new unicode[len+1];
+		unicode *p = new unicode[len+1];
 		if(!p) return;
 		doc_.getText( p, dm, dM );
-		::WideCharToMultiByte( CP_ACP, 0, p, -1,
+
+		::WideCharToMultiByte( CP_ACP, 0, p, len+1,
 			static_cast<char*>(::GlobalLock(h)), (len+1)*3, NULL, NULL );
 		::GlobalUnlock( h );
 		clp.SetData( CF_TEXT, h );
 		delete [] p;
 	}
+#endif // !defined(_UNICODE) || defined(UNICOWS)
 }
 
 void Cursor::Paste()
@@ -983,6 +1012,7 @@ void Cursor::MoveByMouse( int x, int y )
 
 void Cursor::Reconv()
 {
+#ifndef NO_IME
 	if( isSelected() && ime().IsIME() && ime().CanReconv() )
 	{
 		aarr<unicode> ub = getSelectedStr();
@@ -990,14 +1020,17 @@ void Cursor::Reconv()
 		for(len=0; ub[len]; ++len);
 		ime().SetString( caret_->hwnd(), ub.get(), len);
 	}
+#endif
 }
 
 void Cursor::ToggleIME()
 {
+#ifndef NO_IME
 	if( ime().IsIME() )
 	{
 		ime().SetState( caret_->hwnd(), !ime().GetState( caret_->hwnd() ) );
 	}
+#endif
 }
 
 //-------------------------------------------------------------------------
@@ -1006,6 +1039,7 @@ void Cursor::ToggleIME()
 
 int Cursor::on_ime_reconvertstring( RECONVERTSTRING* rs )
 {
+#ifndef NO_IME
 	if( ! isSelected() || cur_.tl != sel_.tl )
 		return 0;
 
@@ -1044,6 +1078,9 @@ int Cursor::on_ime_reconvertstring( RECONVERTSTRING* rs )
 		}
 	}
 	return sizeof(RECONVERTSTRING) + (len+1)*sizeof(TCHAR);
+#else
+	return 0;
+#endif // NO_IME
 }
 
 bool Cursor::on_ime_confirmreconvertstring( RECONVERTSTRING* rs )
