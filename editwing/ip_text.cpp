@@ -732,7 +732,13 @@ void DocImpl::OpenFile( aptr<TextFileR> tf )
 	// ‘}“ü, Insertion
 	DPos e(0,0);
 
-	unicode buf[1024];
+	// unicode buf[1024];
+	// Use big buffer (much faster on long lines)
+#ifdef WIN64
+	static unicode buf[2097152]; // 4MB on x64
+#else
+	static unicode buf[65536]; // 128KB on i386
+#endif
 	for( ulong i=0; tf->state(); )
 	{
 		if( size_t L = tf->ReadLine( buf, countof(buf) ) )
