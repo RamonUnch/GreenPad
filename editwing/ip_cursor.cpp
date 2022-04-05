@@ -347,8 +347,8 @@ void Cursor::on_ime_composition( LPARAM lp )
 	view_.ScrollTo( cur_ );
 	if( !bRO_ && (lp&GCS_RESULTSTR) )
 	{
-		unicode* str;
-		ulong    len;
+		unicode* str=NULL;
+		ulong    len=0;
 		ime().GetString( caret_->hwnd(), &str, &len );
 		if( str )
 		{
@@ -542,7 +542,7 @@ void Cursor::Tabulation(bool shi)
 {
 	if (cur_.tl == sel_.tl)
 	{
-		Input("\t", 1);
+		Input(TEXT("\t"), 1);
 		return;	 // DONE
 	}
 	QuoteSelectionW(L"\t", shi); // Quote with a tab!
