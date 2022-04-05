@@ -21,11 +21,14 @@
 #include <imm.h>
 // dimm.hが無くてエラーになる場合、プロジェクトの設定でUSEGLOBALIMEの定義を
 // 削除するか、最新の Platform SDK を導入すればビルドが通るようになります。
-#if defined(USEGLOBALIME) && defined(TARGET_VER) && TARGET_VER<=300
-#undef USEGLOBALIME
-#endif
 #ifdef USEGLOBALIME
 #include <dimm.h>
+#endif
+
+#ifdef _UNICODE
+  #define UNICODEBOOL true
+#else 
+  #define UNICODEBOOL false
 #endif
 
 #ifndef NO_MLANG
