@@ -35,7 +35,9 @@ HKL MyGetKeyboardLayout(DWORD dwLayout)
 static BOOL MyImmSetCompositionFont(HIMC hIMC, LPLOGFONTW plf)
 {
 	// Unicode support on Windows NT...
-	if (app().isNT()) return ImmSetCompositionFontW(hIMC, plf);
+	BOOL s = ImmSetCompositionFontW(hIMC, plf);
+	if( s )
+		return s;
 
 	// Convert LPLOGFONTW --> LPLOGFONTA
 	LOGFONTA lfa;
@@ -330,26 +332,26 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 		ime = ::ImmGetContext( wnd );
 		long s = ::ImmGetCompositionStringW( ime,GCS_RESULTSTR,NULL,0 );
 
-		#if  !defined(_UNICODE) || defined(UNICOWS)
-			if( s <= 0 )
+		if( s > 0 )
+		{
+			*str = new unicode[ (*len=s/2)+1 ];
+			::ImmGetCompositionStringW( ime, GCS_RESULTSTR, *str, s );
+		}
+	#if  !defined(_UNICODE) || defined(UNICOWS)
+		else
+		{ // Try to get the ansi string if W version failed
+			s = ::ImmGetCompositionStringA(ime,GCS_RESULTSTR,NULL,0);
+			if( s > 0 )
 			{
-				s = ::ImmGetCompositionStringA(ime,GCS_RESULTSTR,NULL,0);
-				if( s > 0 )
-				{
-					char* tmp = new char[s];
-					*str = new unicode[*len=s*2];
-					::ImmGetCompositionStringA( ime,GCS_RESULTSTR,tmp,s );
-					*len = ::MultiByteToWideChar(
-						CP_ACP, MB_PRECOMPOSED, tmp, s, *str, *len );
-					delete [] tmp;
-				}
+				char* tmp = new char[s];
+				*str = new unicode[*len=s*2];
+				::ImmGetCompositionStringA( ime,GCS_RESULTSTR,tmp,s );
+				*len = ::MultiByteToWideChar(
+					CP_ACP, MB_PRECOMPOSED, tmp, s, *str, *len );
+				delete [] tmp;
 			}
-			else
-		#endif
-			{
-				*str = new unicode[ (*len=s/2)+1 ];
-				::ImmGetCompositionStringW( ime, GCS_RESULTSTR, *str, s );
-			}
+		}
+	#endif
 
 		::ImmReleaseContext( wnd, ime );
 	} // end if (hasIMM32_)
@@ -388,7 +390,6 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 				s = ::ImmSetCompositionStringA(ime,SCS_SETSTR,tmp,len,NULL,0);
 				delete [] tmp;
 			}
-			else
 		#endif
 
 		::ImmNotifyIME( ime, NI_COMPOSITIONSTR, CPS_CONVERT, 0); // ïœä∑é¿çs
