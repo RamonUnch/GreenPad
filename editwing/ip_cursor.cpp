@@ -311,7 +311,7 @@ void CurEvHandler::on_key( Cursor& cur, int vk, bool sft, bool ctl )
 void Cursor::on_char( TCHAR ch )
 {
 	if( !bRO_ && ch!=0x7f
-	 && ((unsigned)ch>=0x20 || ch==TEXT('\r') || ch==TEXT('\t')) )
+	&& ((unsigned)ch>=0x20 || ch==TEXT('\r') || ch==TEXT('\t')) )
 	{
 		if( UNICODEBOOL && app().isNT() )
 		{ // In unicode mode we have Wide Chars ON NT
@@ -320,6 +320,18 @@ void Cursor::on_char( TCHAR ch )
 		else
 		{
 			unicode wc = ch;
+//			if (IsDBCSLeadByte(ch))
+//			{ // store and block DBCSLeadByte
+//				prevchar_ = ch;
+//				return;
+//			}
+//			else if (IsDBCSLeadByte(prevchar_))
+//			{
+//				unsigned x = (prevchar_) | (ch<<8);
+//				prevchar_ = 0;
+//				::MultiByteToWideChar( CP_ACP, MB_COMPOSITE, (char*)&x, 2, &wc, 1 );
+//			}
+//			else
 			if( ch & 0x80 ) // 非ASCII文字にはトリビアルでない変換が必要
 			{
 				// Non-ASCII characters require non-trivial conversion.
