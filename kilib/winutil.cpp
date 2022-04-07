@@ -28,7 +28,8 @@ Clipboard::~Clipboard()
 
 Clipboard::Text Clipboard::GetUnicodeText() const
 {
-	if( UNICODEBOOL || app().isNT() )
+	// Always try to get the best available clipboard data.
+	if( IsClipboardFormatAvailable(CF_UNICODETEXT) )
 	{
 		// NTÇ»ÇÁíºê⁄UnicodeÇ≈Ç∆ÇÍÇÈ
 		// Also on Win9x we can use CF_UNICODETEXT with UNICOWS
@@ -41,6 +42,8 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 	}
 
 	#ifndef _UNICODE
+	// ANSI text, not needed in Unicode/Unicows builds
+	else if( IsClipboardFormatAvailable(CF_TEXT) )
 	{
 		// Fallback to ANSI clipboard data.
 		// 9xÇ»ÇÁïœä∑Ç™ïKóv
@@ -57,6 +60,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 	}
 	#endif
 
+	else if( IsClipboardFormatAvailable(CF_HDROP) )
 	{
 		// No "normal" text in the clipboard...
 		// Maybe paste a list of files?
@@ -99,6 +103,5 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 			return Text( ustr, Text::NEW );
 		}
 	}
-
 	return Text( NULL, Text::NEW );
 }
