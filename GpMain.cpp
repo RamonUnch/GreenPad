@@ -16,17 +16,18 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 	PROCESS_INFORMATION psi;
 	::GetStartupInfo( &sti );
 
-	// On Windows NT3.x we cannot have the exe name between ""
+	// On Windows NT3.x/Win9x we cannot have the exe name between ""
 	// On NT5 it seems ok to use "exe name.exe" "file name"
 	// Otherwise we try SHORT/NAME.EXE "file name"
 	// I do not know why the heck it is like this.
+	bool quotedexe = app().getOSVer() >= 500 && app().isNT();
 	String fcmd;
-	if (app().isNewTypeWindows()) fcmd = TEXT("\"");
-	fcmd += app().isNewTypeWindows()? Path(Path::ExeName): Path(Path::ExeName).BeShortStyle();
-	fcmd += app().isNewTypeWindows()? TEXT("\" "): TEXT(" ");
-	fcmd += TEXT(" ");
+	if( quotedexe ) fcmd = TEXT("\"");
+	fcmd += quotedexe? Path(Path::ExeName): Path(Path::ExeName).BeShortStyle();
+	if( quotedexe ) fcmd += TEXT("\" ");
+	else fcmd += TEXT(" ");
 	fcmd += cmd;
-//	MsgBox((TCHAR*)fcmd.c_str(), (TCHAR*)Path(Path::ExeName).c_str(), MB_OK);
+	// MessageBox(NULL, (TCHAR*)fcmd.c_str(), (TCHAR*)Path(Path::ExeName).c_str(), MB_OK);
 
 	if( ::CreateProcess( NULL, (TCHAR*)fcmd.c_str(),
 			NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL,
@@ -241,8 +242,10 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_SELECTALL:  edit_.getCursor().Home(true,false);
 	                        edit_.getCursor().End(true,true);   break;
 	case ID_CMD_DATETIME:   on_datetime();                      break;
+#ifndef NO_IME
 	case ID_CMD_RECONV:     on_reconv();                        break;
 	case ID_CMD_TOGGLEIME:  on_toggleime();                     break;
+#endif
     // More edit
 	case ID_CMD_UPPERCASE:  edit_.getCursor().UpperCaseSel();      break;
 	case ID_CMD_LOWERCASE:  edit_.getCursor().LowerCaseSel();      break;
@@ -578,9 +581,10 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 	::EnableMenuItem( menu, ID_CMD_DELETE, MF_BYCOMMAND|(edit_.getCursor().isSelected() ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_UNDO, MF_BYCOMMAND|(edit_.getDoc().isUndoAble() ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_REDO, MF_BYCOMMAND|(edit_.getDoc().isRedoAble() ? MF_ENABLED : MF_GRAYED) );
+#ifndef NO_IME
 	::EnableMenuItem( menu, ID_CMD_RECONV, MF_BYCOMMAND|(edit_.getCursor().isSelected() && ime().IsIME() && ime().CanReconv() ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_TOGGLEIME, MF_BYCOMMAND|(ime().IsIME() ? MF_ENABLED : MF_GRAYED) );
-
+#endif
 	if( editmenu_only )
 	{
 		LOGGER("GreenPadWnd::ReloadConfig on_initmenu end");
@@ -1223,9 +1227,9 @@ GreenPadWnd::GreenPadWnd()
 	wc.lpszMenuName  = MAKEINTRESOURCE( IDR_MAIN );
 	wc.lpszClassName = className_;
 	WndImpl::Register( &wc );
-
+#ifndef NO_IME
 	ime().EnableGlobalIME( true );
-
+#endif
 	LOGGER( "GreenPadWnd::Construct end" );
 }
 
