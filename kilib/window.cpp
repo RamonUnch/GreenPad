@@ -6,13 +6,15 @@
 #endif
 using namespace ki;
 
-#if defined(TARGET_VER) && TARGET_VER<=350 && TARGET_VER>300
+#if defined(TARGET_VER) && TARGET_VER<=350 && !defined(NO_IME)
 #pragma comment(lib, "DelayImp.lib")
 #pragma comment(linker, "/DelayLoad:IMM32.DLL")
+#endif
 
+#if defined(TARGET_VER) && TARGET_VER<=350
 // Dynalmically import GetKeyboardLayout for NT3.1 (NT3.5 has a stub).
 typedef HKL(WINAPI *funkk)(DWORD dwLayout);
-static HKL MyGetKeyboardLayout(DWORD dwLayout)
+HKL MyGetKeyboardLayout(DWORD dwLayout)
 {
 	static funkk func = (funkk)(-1);
 	if(func == (funkk)(-1)) {
@@ -23,14 +25,19 @@ static HKL MyGetKeyboardLayout(DWORD dwLayout)
 	return NULL;
 }
 #else
-  #define MyGetKeyboardLayout GetKeyboardLayout
-#endif // Target_VER
+	HKL MyGetKeyboardLayout(DWORD dwLayout)
+	{ // Use native version NT 3.51+
+		return ::GetKeyboardLayout(dwLayout);
+  	}
+#endif // Target_VER && IME
 
 #ifdef UNICOWS //Use A or W version at runtime...
 static BOOL MyImmSetCompositionFont(HIMC hIMC, LPLOGFONTW plf)
 {
 	// Unicode support on Windows NT...
-	if (app().isNT()) return ImmSetCompositionFontW(hIMC, plf);
+	BOOL s = ImmSetCompositionFontW(hIMC, plf);
+	if( s )
+		return s;
 
 	// Convert LPLOGFONTW --> LPLOGFONTA
 	LOGFONTA lfa;
@@ -74,14 +81,14 @@ IMEManager::IMEManager()
 	#endif //USEGLOBALIME
 
 	// check if IMM32.DLL can be loaded...
-  # if defined(TARGET_VER) && TARGET_VER<=300
-	#define hasIMM32_ 0
+  # ifdef NO_IME
+	hasIMM32_ = 0;
   # elif defined(TARGET_VER) && TARGET_VER<=350
 	HINSTANCE h = LoadLibraryA("IMM32.DLL");
 	hasIMM32_ = !!h;
 	FreeLibrary(h);
   # else
-	#define hasIMM32_ 1
+	hasIMM32_ = 1;
   # endif
 
 	// 唯一のインスタンスは私です
@@ -116,7 +123,7 @@ void IMEManager::EnableGlobalIME( bool enable )
 
 BOOL IMEManager::IsIME()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+#ifndef NO_IME
 	HKL hKL = MyGetKeyboardLayout(GetCurrentThreadId());
 	#ifdef USEGLOBALIME
 		if( immApp_ )
@@ -129,15 +136,15 @@ BOOL IMEManager::IsIME()
 		{
 			return ::ImmIsIME( hKL );
 		}
-#endif // TARGET_VER
+#endif // NO_IME
 	return FALSE;
 }
 
 BOOL IMEManager::CanReconv()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+#ifndef NO_IME
 	HKL hKL = MyGetKeyboardLayout(GetCurrentThreadId());
-	DWORD nImeProps = ImmGetProperty( hKL, IGP_SETCOMPSTR );
+	DWORD nImeProps = 0; //= ImmGetProperty( hKL, IGP_SETCOMPSTR );
 	#ifdef USEGLOBALIME
 		if( immApp_ )
 		{
@@ -152,13 +159,13 @@ BOOL IMEManager::CanReconv()
 		return (nImeProps & SCS_CAP_SETRECONVERTSTRING) != 0;
 #else
 	return FALSE;
-#endif // TARGET_VER
+#endif // NO_IME
 }
 
 BOOL IMEManager::GetState( HWND wnd )
 {
 	BOOL imeStatus = FALSE;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+#ifndef NO_IME
 	HIMC ime;
 	#ifdef USEGLOBALIME
 		if( immApp_ )
@@ -175,13 +182,13 @@ BOOL IMEManager::GetState( HWND wnd )
 			imeStatus = ::ImmGetOpenStatus(ime );
 			::ImmReleaseContext( wnd, ime );
 		}
-#endif // TARGET_VER
+#endif // NO_IME
 	return imeStatus;
 }
 
 void IMEManager::SetState( HWND wnd, bool enable )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+#ifndef NO_IME
 	HIMC ime;
 	#ifdef USEGLOBALIME
 		if( immApp_ )
@@ -198,7 +205,7 @@ void IMEManager::SetState( HWND wnd, bool enable )
 			::ImmSetOpenStatus(ime, (enable ? TRUE : FALSE) );
 			::ImmReleaseContext( wnd, ime );
 		}
-#endif // TARGET_VER
+#endif // NO_IME
 }
 
 void IMEManager::FilterWindows( ATOM* lst, UINT siz )
@@ -250,7 +257,7 @@ inline void IMEManager::MsgLoopEnd()
 
 void IMEManager::SetFont( HWND wnd, const LOGFONT& lf )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+#ifndef NO_IME
 	HIMC ime;
 	LOGFONT* plf = const_cast<LOGFONT*>(&lf);
 
@@ -274,12 +281,12 @@ void IMEManager::SetFont( HWND wnd, const LOGFONT& lf )
 
 		::ImmReleaseContext( wnd, ime );
 	}
-#endif // TARGET_VER
+#endif // NO_IME
 }
 
 void IMEManager::SetPos( HWND wnd, int x, int y )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+#ifndef NO_IME
 	HIMC ime;
 	COMPOSITIONFORM cf;
 	cf.dwStyle = CFS_POINT;
@@ -301,15 +308,13 @@ void IMEManager::SetPos( HWND wnd, int x, int y )
 		::ImmSetCompositionWindow( ime, &cf );
 		::ImmReleaseContext( wnd, ime );
 	}
-#endif // TARGET_VER
+#endif // NO_IME
 }
 
 void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
-	*str = NULL;
+#ifndef NO_IME
 	HIMC ime;
-
 	#ifdef USEGLOBALIME
 	if( immApp_ )
 	{
@@ -327,35 +332,35 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 		ime = ::ImmGetContext( wnd );
 		long s = ::ImmGetCompositionStringW( ime,GCS_RESULTSTR,NULL,0 );
 
-		#if  !defined(_UNICODE) || defined(UNICOWS)
-			if( s <= 0 )
+		if( s > 0 )
+		{
+			*str = new unicode[ (*len=s/2)+1 ];
+			::ImmGetCompositionStringW( ime, GCS_RESULTSTR, *str, s );
+		}
+	#if  !defined(_UNICODE) || defined(UNICOWS)
+		else
+		{ // Try to get the ansi string if W version failed
+			s = ::ImmGetCompositionStringA(ime,GCS_RESULTSTR,NULL,0);
+			if( s > 0 )
 			{
-				s = ::ImmGetCompositionStringA(ime,GCS_RESULTSTR,NULL,0);
-				if( s > 0 )
-				{
-					char* tmp = new char[s];
-					*str = new unicode[*len=s*2];
-					::ImmGetCompositionStringA( ime,GCS_RESULTSTR,tmp,s );
-					*len = ::MultiByteToWideChar(
-						CP_ACP, MB_PRECOMPOSED, tmp, s, *str, *len );
-					delete [] tmp;
-				}
+				char* tmp = new char[s];
+				*str = new unicode[*len=s*2];
+				::ImmGetCompositionStringA( ime,GCS_RESULTSTR,tmp,s );
+				*len = ::MultiByteToWideChar(
+					CP_ACP, MB_PRECOMPOSED, tmp, s, *str, *len );
+				delete [] tmp;
 			}
-			else
-		#endif
-			{
-				*str = new unicode[ (*len=s/2)+1 ];
-				::ImmGetCompositionStringW( ime, GCS_RESULTSTR, *str, s );
-			}
+		}
+	#endif
 
 		::ImmReleaseContext( wnd, ime );
-	} // endif (hasIMM32_)
-#endif //TARGET_VER
+	} // end if (hasIMM32_)
+#endif //NO_IME
 }
 
 void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+#ifndef NO_IME
 	HIMC ime;
 
 	#ifdef USEGLOBALIME
@@ -385,16 +390,14 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 				s = ::ImmSetCompositionStringA(ime,SCS_SETSTR,tmp,len,NULL,0);
 				delete [] tmp;
 			}
-			else
 		#endif
 
 		::ImmNotifyIME( ime, NI_COMPOSITIONSTR, CPS_CONVERT, 0); // 変換実行
 		::ImmNotifyIME( ime, NI_OPENCANDIDATE, 0, 0 ); // 変換候補リスト表示
 		::ImmReleaseContext( wnd, ime );
 	}// endif (hasIMM32_)
-#endif //TARGET_VER
+#endif //NO_IME
 }
-
 
 
 //=========================================================================
@@ -418,14 +421,12 @@ void Window::MsgLoop()
 	// メインメッセージループを回す
 	isLooping_ = true;
 	ime().MsgLoopBegin();
-
 	for( MSG msg; ::GetMessage( &msg, NULL, 0, 0 ); )
 		if( !PreTranslateMessage( &msg ) )
 		{
 			ime().TranslateMsg( &msg );
 			::DispatchMessage( &msg );
 		}
-
 	ime().MsgLoopEnd();
 	isLooping_ = false;
 }
@@ -434,7 +435,6 @@ void Window::ProcessMsg()
 {
 	// こっちはグローバル関数。
 	// 未処理メッセージを一掃
-
 	ime().MsgLoopBegin();
 	for( MSG msg; ::PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ); )
 	{
