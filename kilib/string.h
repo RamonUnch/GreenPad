@@ -27,8 +27,8 @@ unicode* my_lstrcpyW( unicode* const d, const unicode* s )
 inline static
 size_t my_lstrlenW( const unicode* const d )
 {
-	const unicode* n;
-	for(n=d; *n; ++n);
+	const unicode* n=d;
+	for(; *n; ++n);
 	return static_cast<size_t>(n-d);
 }
 static inline

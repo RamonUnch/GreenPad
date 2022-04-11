@@ -18,6 +18,7 @@ using namespace editwing::view;
 //---- ip_cursor.cpp カーソルコントロール
 //=========================================================================
 
+#if defined(TARGET_VER) && TARGET_VER<351 && TARGET_VER>=305
 typedef int (WINAPI *ssnfo_funk)(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw);
 static int MySetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw)
 {
@@ -25,8 +26,8 @@ static int MySetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw
 	static ssnfo_funk dyn_SetScrollInfo = (ssnfo_funk)(-1);
 	if( dyn_SetScrollInfo == (ssnfo_funk)(-1) ) {
 		dyn_SetScrollInfo = (ssnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "SetScrollInfo");
-		if(!( (!App::isNT() && App::getOSBuild()>=275) 
-		||    (App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944)) ) 
+		if(!( (!App::isNT() && App::getOSBuild()>=275)
+		||    (App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944)) )
 		{   // Not supported before 95 build 275
 			// Nor NT3.51 before build 944
 			dyn_SetScrollInfo = NULL;
@@ -37,7 +38,7 @@ static int MySetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw
 		return dyn_SetScrollInfo( hwnd, fnBar, lpsi, fredraw );
 
 	// Fallback...
-	if (lpsi->fMask|SIF_RANGE) 
+	if (lpsi->fMask|SIF_RANGE)
 		::SetScrollRange( hwnd, fnBar, lpsi->nMin, lpsi->nMax, FALSE );
 	return ::SetScrollPos( hwnd, fnBar, lpsi->nPos, fredraw );
 }
@@ -48,8 +49,9 @@ static int MyGetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 	static gsnfo_funk dyn_GetScrollInfo = (gsnfo_funk)(-1);
 	if( dyn_GetScrollInfo == (gsnfo_funk)(-1) ) {
 		dyn_GetScrollInfo = (gsnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "GetScrollInfo");
-		if(!( (!App::isNT() && App::getOSBuild()>=275) 
-		||    (App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944)) ) 
+		if(!(  (!App::isNT() && App::getOSVer()>=400 && App::getOSBuild()>=275) // Win95 4.00.275
+			|| ( App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944))// WinNT 3.51.944
+		    )
 		{
 			dyn_GetScrollInfo = NULL;
 		}
@@ -61,10 +63,14 @@ static int MyGetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 
 	// Fallback...
 	lpsi->nPos = ::GetScrollPos( hwnd, fnBar );
-	if(lpsi->fMask|SIF_RANGE) 
+	if(lpsi->fMask|SIF_RANGE)
 		::GetScrollRange( hwnd, fnBar, &lpsi->nMin, &lpsi->nMax);
 	return 1;
 }
+#else
+#define MyGetScrollInfo GetScrollInfo
+#define MySetScrollInfo SetScrollInfo
+#endif //305<=TARGET_VER<NT3.51
 
 //-------------------------------------------------------------------------
 // 描画領域サイズ管理
@@ -237,7 +243,7 @@ ulong ViewImpl::tl2vl( ulong tl ) const
 
 void ViewImpl::UpdateScrollBar()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>=305)
 	::MySetScrollInfo( hwnd_, SB_HORZ, &rlScr_, TRUE );
 	::MySetScrollInfo( hwnd_, SB_VERT, &udScr_, TRUE );
 #else
@@ -396,13 +402,11 @@ void ViewImpl::ScrollView( int dx, int dy, bool update )
 		// 範囲チェック
 		if( rlScr_.nPos+dx < 0 )
 			dx = -rlScr_.nPos;
-		else if( rlScr_.nMax-(signed)rlScr_.nPage < rlScr_.nPos+dx ) 
+		else if( rlScr_.nMax-(signed)rlScr_.nPage < rlScr_.nPos+dx )
 			dx = rlScr_.nMax-rlScr_.nPage-rlScr_.nPos+1;
 
 		rlScr_.nPos += dx;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
-		::SetScrollInfo( hwnd_, SB_HORZ, &rlScr_, TRUE );
-#elif defined(TARGET_VER) && TARGET_VER<=350 && TARGET_VER>300
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>=305)
 		::MySetScrollInfo( hwnd_, SB_HORZ, &rlScr_, TRUE );
 #else
 		::SetScrollPos( hwnd_, SB_HORZ, rlScr_.nPos, TRUE );
@@ -436,7 +440,7 @@ void ViewImpl::ScrollView( int dx, int dy, bool update )
 		else
 		{
 			// 再描画の不要な領域をスクロール
-			::ScrollWindowEx( hwnd_, dx, dy, NULL, 
+			::ScrollWindowEx( hwnd_, dx, dy, NULL,
 					clip, NULL, NULL, SW_INVALIDATE );
 
 			// 即時再描画？
@@ -478,7 +482,7 @@ void ViewImpl::on_hscroll( int code, int pos )
 	case SB_PAGELEFT:  dx= -(cx()>>1); break;
 	case SB_PAGERIGHT: dx= +(cx()>>1); break;
 	case SB_THUMBTRACK:
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>305)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>=305)
 		{
 			SCROLLINFO si = { sizeof(SCROLLINFO), SIF_TRACKPOS };
 			si.nTrackPos = pos;
@@ -509,7 +513,7 @@ void ViewImpl::on_vscroll( int code, int pos )
 	case SB_PAGEUP:   dy= -( cy() / NZero(cvs_.getPainter().H()) ); break;
 	case SB_PAGEDOWN: dy= +( cy() / NZero(cvs_.getPainter().H()) ); break;
 	case SB_THUMBTRACK:
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>305)
+#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>=305)
 		{
 			SCROLLINFO si = { sizeof(SCROLLINFO), SIF_TRACKPOS };
 			si.nTrackPos = pos; // in case
@@ -539,7 +543,7 @@ void ViewImpl::UpDown( int dy, bool thumb )
   // １．udScr_.nPos + dy が正常範囲に収まるように補正
 	if( udScr_.nPos+dy < 0 )
 		dy = -udScr_.nPos;
-	else if( udScr_.nMax+1-(signed)udScr_.nPage < udScr_.nPos+dy ) 
+	else if( udScr_.nMax+1-(signed)udScr_.nPage < udScr_.nPos+dy )
 		dy = udScr_.nMax+1-udScr_.nPage-udScr_.nPos;
 	if( dy==0 )
 		return;

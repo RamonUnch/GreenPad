@@ -241,7 +241,8 @@ inline bool Cursor::isInsMode() const
 inline bool Cursor::isROMode() const
 	{ return bRO_; }
 
-
+//inline void Cursor::on_input_lang_change(int cp, HKL hkl)
+//	{ kbcp_ = cp; hkl_ = hkl; }
 
 //=========================================================================
 

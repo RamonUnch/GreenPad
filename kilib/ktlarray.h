@@ -91,6 +91,7 @@ private:
 			memmove( newbuf, buf_, len_*sizeof(T) );
 			mem().DeAlloc( buf_, p );
 			buf_ = newbuf;
+//			buf_ = static_cast<T*>(mem().ReAlloc(buf_, (alen_=siz)*sizeof(T) ));
 		}
 
 private:

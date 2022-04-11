@@ -179,7 +179,6 @@ inline bool Window::isAlive() const
 //	マクロ USEGLOBALIME が定義されていなければその辺は処理しない。
 //@}
 //=========================================================================
-
 class IMEManager
 {
 public:
@@ -229,9 +228,7 @@ private:
 		IActiveIMMApp*              immApp_;
 		IActiveIMMMessagePumpOwner* immMsg_;
 	#endif
-	#if defined(TARGET_VER) && TARGET_VER<=350
 	bool hasIMM32_;
-	#endif
 	static IMEManager* pUniqueInstance_;
 
 private:
@@ -322,7 +319,6 @@ private:
 	const DWORD style_, styleEx_;
 	byte*       thunk_;
 };
-
 
 
 //=========================================================================

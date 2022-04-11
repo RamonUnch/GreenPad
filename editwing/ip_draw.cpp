@@ -178,6 +178,7 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 			return WndImpl::on_message( msg, wp, lp );
 		break;
 
+#ifndef NO_IME
 	case WM_IME_REQUEST:
 		switch( wp )
 		{
@@ -199,7 +200,7 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		if( lp&GCS_RESULTSTR )
 			break;
 		// fall through...
-
+#endif
 	default:
 		return WndImpl::on_message( msg, wp, lp );
 	}
@@ -211,13 +212,14 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 //-------------------------------------------------------------------------
 // 線を引くとか四角く塗るとか、そーいう基本的な処理
 //-------------------------------------------------------------------------
-
+static int wtable[65536]; // static width table
 Painter::Painter( HDC hdc, const VConfig& vc )
 	: dc_        ( hdc )
 	, font_      ( ::CreateFontIndirect( &vc.font ) )
 	, pen_       ( ::CreatePen( PS_SOLID, 0, vc.color[CTL] ) )
 	, brush_     ( ::CreateSolidBrush( vc.color[BG] ) )
-	, widthTable_( new int[65536] )
+//	, widthTable_( new int[65536] )
+	, widthTable_( wtable )
 {
 	// 制御文字を描画するか否か？のフラグを記憶,
 	// Whether to draw control characters or not? flag is stored.
@@ -243,6 +245,9 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 #else
 	::GetCharWidthW( dc_, L' ', L'~', widthTable_+L' ' );
 #endif
+	const unicode zsp=0x3000; // L'　'
+	W(&zsp); // Initialize width of L'　'
+
 	widthTable_[L'\t'] = NZero(W() * Max(1, vc.tabstep));
 	// 下位サロゲートは文字幅ゼロ (Lower surrogates have zero character width)
 	mem00( widthTable_+0xDC00, (0xE000 - 0xDC00)*sizeof(int) );
@@ -270,7 +275,7 @@ Painter::~Painter()
 	::DeleteObject( font_ );
 	::DeleteObject( pen_ );
 	::DeleteObject( brush_ );
-	delete [] widthTable_;
+//	delete [] widthTable_;
 }
 
 inline void Painter::CharOut( unicode ch, int x, int y )
@@ -304,7 +309,7 @@ inline void Painter::StringOut
 		dwNum = WideCharToMultiByte(CP_ACP,0, str,len, NULL,0, NULL,NULL);
 		if (dwNum)
 		{
-			psText = new char[dwNum]; 
+			psText = new char[dwNum];
 			dwNum = WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
 		}
 		else

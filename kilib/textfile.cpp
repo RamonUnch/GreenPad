@@ -1413,7 +1413,6 @@ const IID myIID_IMultiLanguage2 = {0xDCCFC164, 0x2B38, 0x11d2, {0xB7, 0xEC, 0x00
 int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 {
 	int cs = 0;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 #ifndef NO_MLANG
 	app().InitModule( App::OLE );
 	IMultiLanguage2 *lang = NULL;
@@ -1484,7 +1483,6 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 			lang->Release();
 	}
 #endif //NO_MLANG
-#endif //TARGET_VER
 	return cs;
 }
 
@@ -2027,8 +2025,13 @@ protected:
 
 	void ReserveMoreBuffer()
 		{
+//			char *ob=buf_;
+//			char* nb = new char[bsiz_<<=1];
+//			buf_ = nb;
+//			delete [] ob;
+
 			delete [] buf_;
-			char* buf_ = new char[bsiz_<<=1];
+			buf_ = new char[bsiz_<<=1];
 		}
 
 	FileW& fp_;
