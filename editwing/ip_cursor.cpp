@@ -338,7 +338,7 @@ void Cursor::on_char( TCHAR ch )
 				UINT kb_cp = CP_ACP; // default ACP
 				LCID lcid = LOWORD(MyGetKeyboardLayout(0));
 				TCHAR cpstr[8];
-				if(::IsValidLocale(lcid, LCID_INSTALLED)
+				if(lcid /*::IsValidLocale(lcid, LCID_INSTALLED)*/
 				&& ::GetLocaleInfo(lcid, LOCALE_IDEFAULTANSICODEPAGE, cpstr, countof(cpstr)))
 				{	// This should be the codepage of the local associated with
 					// the current keyboard layout
@@ -1028,7 +1028,7 @@ void Cursor::Reconv()
 	if( isSelected() && ime().IsIME() && ime().CanReconv() )
 	{
 		aarr<unicode> ub = getSelectedStr();
-		ulong len;
+		ulong len=0;
 		for(len=0; ub[len]; ++len);
 		ime().SetString( caret_->hwnd(), ub.get(), len);
 	}

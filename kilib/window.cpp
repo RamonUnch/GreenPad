@@ -29,7 +29,7 @@ HKL MyGetKeyboardLayout(DWORD dwLayout)
 	{ // Use native version NT 3.51+
 		return ::GetKeyboardLayout(dwLayout);
   	}
-#endif // Target_VER && IME
+#endif // Target_VER
 
 #ifdef UNICOWS //Use A or W version at runtime...
 static BOOL MyImmSetCompositionFont(HIMC hIMC, LPLOGFONTW plf)
@@ -67,7 +67,8 @@ IMEManager::IMEManager()
 	#ifdef USEGLOBALIME
 		// êFÅXñ ì|Ç»ÇÃÇ≈Win95Ç≈ÇÕGlobalIMEñ≥Çµ
 		// No global IME on Win95 because it is buggy...
-		if( !app().isWin95() )
+		// RamonUnch: I found it is not so buggy so I re-enabled it!
+		if( 1 /* !app().isWin95() */ )
 		{
 			app().InitModule( App::OLE );
 			if( S_OK == ::MyCoCreateInstance(

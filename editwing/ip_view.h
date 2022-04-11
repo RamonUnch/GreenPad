@@ -71,29 +71,9 @@ public:
 	int F() const { return figWidth_; }
 
 	//@{ 文字幅, character width (pixel) //@}
-	int Wc( unicode ch ) const
-	{
-		if( widthTable_[ ch ] == -1 )
-		{
-#ifdef WIN32S
-			if(ch > 0x100)
-			{
-				SIZE sz;
-				char strch[16];
-				DWORD len = WideCharToMultiByte(CP_ACP,0, &ch,1, strch,countof(strch), NULL, NULL);
-				if(len && ::GetTextExtentPoint( dc_, strch, len, &sz ) )
-					widthTable_[ ch ] = sz.cx;
-				else
-					widthTable_[ ch ] = 2 * widthTable_[ L'x' ]; // Default 2x width
-			}
-			else
-			{
-				::GetCharWidthA( dc_, ch, ch, widthTable_+ch );
-			}
-#else
-			::GetCharWidthW( dc_, ch, ch, widthTable_+ch );
-#endif
-		}
+	int Wc( const unicode ch ) const
+	{ // Direclty return the character width!
+	  // You must have initialized it before...
 		return widthTable_[ ch ];
 	}
 	int W( const unicode* pch ) const // 1.08 サロゲートペア回避, Avoid Surrogate Pair
@@ -104,27 +84,24 @@ public:
 			if( isHighSurrogate(ch) )
 			{	// We cannot save the width of chars from the extended
 				// Unicode plane inside the widthTable_[ ]
-				int w = 0;
-#ifdef WIN32S
-				if(ch > 0x100)
-					w = 2 * widthTable_[ L'x' ]; // Default 2x width (fast)
-				else
-					::GetCharWidthA( dc_, ch, ch, &w );
-#else
+				// We could in the future increase the widthTable_[ ]
+				// For each extended plane that will have to be mapped.
+#ifndef WIN32S
 				SIZE sz;
-				if( ::GetTextExtentPoint32W( dc_, pch, 2, &sz ) )
-					return sz.cx;
-				::GetCharWidthW( dc_, ch, ch, &w );
+				if( isLowSurrogate(pch[1])
+				&&::GetTextExtentPoint32W( dc_, pch, 2, &sz ) )
+					return sz.cx; // Valid surrogate pair.
 #endif
-				return w;
+				// Not a proper surrogate pair fallback to 2x (fast)
+				return 2 * widthTable_[ L'x' ];
 			}
 #ifdef WIN32S
 			if(ch > 0x100)
 			{
 				SIZE sz;
-				char strch[16];
+				char strch[8]; // Small buffer for a single multi-byte character.
 				DWORD len = WideCharToMultiByte(CP_ACP,0, &ch,1, strch,countof(strch), NULL, NULL);
-				if(len && ::GetTextExtentPoint( dc_, strch, len, &sz ) )
+				if(len && ::GetTextExtentPointA( dc_, strch, len, &sz ) )
 					widthTable_[ ch ] = sz.cx;
 				else
 					widthTable_[ ch ] = 2 * widthTable_[ L'x' ]; // Default 2x width
@@ -135,6 +112,11 @@ public:
 			}
 #else
 			::GetCharWidthW( dc_, ch, ch, widthTable_+ch );
+//			TODO: use GetTextExtentPointW when dc_ defaults to fallback font
+//			But HOW? Even beter, get the fallback font and use its char width.
+//			SIZE sz;
+//			::GetTextExtentPointW( dc_, &ch, 1, &sz );
+//			widthTable_[ ch ] = sz.cx;
 #endif
 		}
 		return widthTable_[ ch ];
@@ -145,7 +127,7 @@ public:
 
 	//@{ 次のタブ揃え位置を計算, Calculate next tab alignment position //@}
 	//int nextTab(int x) const { int t=T(); return (x/t+1)*t; }
-	int nextTab(int x) const { int t=T(); return ((x+4)/t+1)*t; }
+	inline int nextTab(int x) const { int t=T(); return ((x+4)/t+1)*t; }
 	private: int T() const { return widthTable_[ L'\t' ]; } public:
 
 	//@{ 現在のフォント情報, Current font information //@}
@@ -161,7 +143,7 @@ private:
 	const HPEN   pen_;
 	const HBRUSH brush_;
 	int          height_;
-	int*         widthTable_; // 65536 values => 256KB
+	int*         widthTable_; // [65535] // values => 256KB
 	int          figWidth_;
 	LOGFONT      logfont_;
 	COLORREF     colorTable_[7];

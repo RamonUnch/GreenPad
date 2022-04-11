@@ -395,7 +395,7 @@ BEGIN
 	"W",            ID_CMD_TTSPACES,        VIRTKEY, ALT, NOINVERT
 	"Z",            ID_CMD_SFCHAR,          VIRTKEY, ALT, NOINVERT
 	"Q",            ID_CMD_QUOTE,           VIRTKEY, ALT, NOINVERT
-	"Q",            ID_CMD_UNQUOTE,         VIRTKEY, ALT, SHIFT, NOINVERT
+	"N",            ID_CMD_UNQUOTE,         VIRTKEY, ALT, NOINVERT
 
     VK_ESCAPE,      ID_CMD_QUICKEXIT,       VIRTKEY, NOINVERT
     VK_DELETE,      ID_CMD_CUT,             VIRTKEY, SHIFT, NOINVERT
@@ -475,10 +475,14 @@ BEGIN
 		MENUITEM "Tri&m Trailing Spaces\tAlt+W",ID_CMD_TTSPACES
 		MENUITEM "Strip &First Characters\tAlt+Z",ID_CMD_SFCHAR
         MENUITEM "&Quote\tAlt+Q",               ID_CMD_QUOTE
-        MENUITEM "Unqu&ote\tAlt+Shift+Q",             ID_CMD_UNQUOTE
+        MENUITEM "Unqu&ote\tAlt+N",             ID_CMD_UNQUOTE
+
+      # ifndef NO_IME
         MENUITEM SEPARATOR
         MENUITEM "Recon&version",               ID_CMD_RECONV
         MENUITEM "&IME On/Off",                 ID_CMD_TOGGLEIME
+      # endif
+
     END
     POPUP "&Search"
     BEGIN

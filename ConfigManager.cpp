@@ -512,6 +512,7 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		BYTE   fontflags=0;
 		int    x;
 		bool   clfound = false;
+		dt->fontCS = DEFAULT_CHARSET;
 
 		unicode buf[1024], *ptr=buf+3;
 		while( tf.state() != 0 ) // !EOF
