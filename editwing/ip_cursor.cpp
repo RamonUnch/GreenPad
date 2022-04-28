@@ -336,6 +336,8 @@ void Cursor::on_char( TCHAR ch )
 			{
 				// Non-ASCII characters require non-trivial conversion.
 				UINT kb_cp = CP_ACP; // default ACP
+
+#if defined(UNICOWS) || !defined(TARGET_VER) || (TARGET_VER >= 350)
 				LCID lcid = LOWORD(MyGetKeyboardLayout(0));
 				TCHAR cpstr[8];
 				if(lcid /*::IsValidLocale(lcid, LCID_INSTALLED)*/
@@ -346,6 +348,7 @@ void Cursor::on_char( TCHAR ch )
 					if (::IsValidCodePage(tcp))
 						kb_cp = tcp;
 				}
+#endif
 				::MultiByteToWideChar( kb_cp, MB_COMPOSITE, (char*)&ch, 1, &wc, 1 );
 			}
 			pEvHan_->on_char( *this, wc );
