@@ -129,7 +129,7 @@ inline BOOL Window::PostMsg( UINT msg, WPARAM wp, LPARAM lp )
 	{ return ::PostMessage( wnd_, msg, wp, lp ); }
 
 inline int Window::MsgBox( LPCTSTR m, LPCTSTR c, UINT y ) const
-	{ return ::MessageBox( wnd_, m, c, y ); }
+	{ return ::MessageBox( wnd_?wnd_:GetActiveWindow(), m, c, y ); }
 
 inline void Window::ShowUp( int sw )
 	{ ::ShowWindow( wnd_, sw ), ::UpdateWindow( wnd_ ); }
