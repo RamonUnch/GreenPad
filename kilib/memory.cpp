@@ -17,7 +17,7 @@ using namespace ki;
 			TRYLBL:
 			void *ret = ::HeapAlloc( g_heap, 0, siz );
 			if (!ret) {
-				DWORD ans = MessageBox(NULL, TEXT("Unable to allocate memory!"), NULL, MB_ABORTRETRYIGNORE|MB_TASKMODAL);
+				DWORD ans = MessageBox(GetActiveWindow(), TEXT("Unable to allocate memory!"), NULL, MB_ABORTRETRYIGNORE|MB_TASKMODAL);
 				switch(ans) {
 				case IDABORT: ExitProcess(1); break;
 				case IDRETRY: goto TRYLBL; break;
@@ -201,7 +201,7 @@ MemoryManager::~MemoryManager()
 #if defined(SUPERTINY) && defined(_DEBUG)
 	// リーク検出用
 	if( allocCounter != 0 )
-		::MessageBox( NULL, TEXT("MemoryLeak!"), NULL, MB_OK|MB_TOPMOST );
+		::MessageBox( GetActiveWindow(), TEXT("MemoryLeak!"), NULL, MB_OK|MB_TOPMOST );
 #endif
 }
 
