@@ -50,7 +50,7 @@ void SearchManager::ShowDlg()
 //	GoModal( ::GetParent(edit_.hwnd()) );
 	if( isAlive() )
 	{
-		SetFront();
+		SetActive();
 	}
 	else
 	{
@@ -378,7 +378,7 @@ bool SearchManager::FindNextFromImpl( DPos s, DPos* beg, DPos* end )
 
 bool SearchManager::FindPrevFromImpl( DPos s, DPos* beg, DPos* end )
 {
-	// １行ずつサーチ
+	// １行ずつサーチ, Search one line at a time
 	doc::Document& d = edit_.getDoc();
 	for( ulong mbg,med; ; s.ad=d.len(--s.tl) )
 	{
@@ -388,7 +388,7 @@ bool SearchManager::FindPrevFromImpl( DPos s, DPos* beg, DPos* end )
 			beg->tl = end->tl = s.tl;
 			beg->ad = mbg;
 			end->ad = med;
-			return true; // 発見
+			return true; // 発見, Found!
 		}
 		if( s.tl==0 )
 			break;

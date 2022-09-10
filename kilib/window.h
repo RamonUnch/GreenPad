@@ -61,6 +61,8 @@ public:
 	//@{ Å‘O–Ê‚ÖGo! //@}
 	void SetFront();
 
+	void SetActive();
+
 	//@{ ‰æ–Ê’†‰›‚ÖGo! //@}
 	void SetCenter();
 
@@ -145,6 +147,9 @@ inline void Window::SetFocus()
 
 inline void Window::SetFront()
 	{ SetFront( wnd_ ); }
+
+inline void Window::SetActive()
+	{ ::SetActiveWindow( wnd_ ); }
 
 inline void Window::SetCenter()
 	{ SetCenter( wnd_ ); }
