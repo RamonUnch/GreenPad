@@ -135,9 +135,18 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 			pt.x -= wnd.left;
 			pt.y -= wnd.top;
 
+			// Calculat right and bottom margins
+			long rmargin = GetSystemMetrics(SM_CXVSCROLL)+GetSystemMetrics(SM_CXSIZEFRAME)+GetSystemMetrics(SM_CXEDGE);
+			long bmargin = GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYEDGE);
+			RECT rcSB;
+			if (stb_.isStatusBarVisible() && GetWindowRect(stb_.hwnd(), &rcSB))
+				bmargin += rcSB.bottom-rcSB.top; // Add height of status bar if present.
+			if(GetWindowLongPtr(edit_.getView().hwnd(), GWL_STYLE)&WS_HSCROLL)
+				bmargin += GetSystemMetrics(SM_CYHSCROLL); // Add HSCOLL bar height if needed.
+
 			// Adjust rects so that it does not include SB nor scrollbars.
-			nc->rgrc[2].right  -= Max((long)24, (long)((wnd.right-wnd.left) - nc->lppos->cx+24));
-			nc->rgrc[2].bottom -= Max((long)45, (long)((wnd.bottom-wnd.top) - nc->lppos->cy+45));
+			nc->rgrc[2].right  -= Max(rmargin, (wnd.right-wnd.left) - nc->lppos->cx + rmargin);
+			nc->rgrc[2].bottom -= Max(bmargin, (wnd.bottom-wnd.top) - nc->lppos->cy + bmargin);
 
 			// Do not include caption+menu in BitBlt
 			nc->rgrc[1].left = nc->lppos->x + pt.x;
@@ -252,6 +261,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_INVERTCASE: edit_.getCursor().InvertCaseSel();     break;
 	case ID_CMD_TTSPACES:   edit_.getCursor().TTSpacesSel();       break;
 	case ID_CMD_SFCHAR:     edit_.getCursor().StripFirstChar();    break;
+	case ID_CMD_SLCHAR:     edit_.getCursor().StripLastChar();     break;
 	case ID_CMD_QUOTE:      edit_.getCursor().QuoteSelection(false);break;
 	case ID_CMD_UNQUOTE:    edit_.getCursor().QuoteSelection(true); break;
 
