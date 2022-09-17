@@ -482,12 +482,12 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 	}
 	else
 	{
-		// 組み込みのデフォルト設定をロード
+		// 組み込みのデフォルト設定をロード, Load built-in default settings
 		dt->vc.SetTabStep( 4 );
-		dt->vc.color[TXT] = RGB(0,0,0);
+		dt->vc.color[TXT] =
+		dt->vc.color[CMT] = ::GetSysColor(COLOR_WINDOWTEXT);
 		dt->vc.color[KWD] = RGB(0,90,230);
-		dt->vc.color[CMT] = RGB(0,0,0);
-		dt->vc.color[BG]  = RGB(255,255,255);
+		dt->vc.color[BG]  = ::GetSysColor(COLOR_WINDOW);
 		dt->vc.color[CTL] = RGB(240,200,240);
 		dt->vc.color[LN]  = RGB(0,0,0);
 		dt->vc.sc[scEOF]  = dt->vc.sc[scEOL]=true;
