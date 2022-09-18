@@ -9,7 +9,9 @@ using namespace ki;
 //=========================================================================
 
 String::StringData* String::nullData_;
+#if !defined(_UNICODE) && defined(_MBCS)
 char                String::lb_[256];
+#endif
 
 void String::LibInit()
 {

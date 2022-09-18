@@ -230,7 +230,9 @@ private:
 
 	StringData*        data_;
 	static StringData* nullData_;
+#if !defined(_UNICODE) && defined(_MBCS)
 	static char        lb_[256];
+#endif
 
 private:
 
