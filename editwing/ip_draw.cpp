@@ -98,9 +98,9 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 {
 	switch( msg )
 	{
-	case WM_ERASEBKGND:
+	case WM_ERASEBKGND: {
 		return 1;
-		break;
+		}break;
 
 	case WM_PAINT:{
 		PAINTSTRUCT ps;
@@ -264,6 +264,7 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 
 	// LOGFONT
 	::GetObject( font_, sizeof(LOGFONT), &logfont_ );
+	// ::ReleaseDC(::WindowFromDC(dc_), dc_);
 }
 
 Painter::~Painter()
@@ -317,11 +318,22 @@ inline void Painter::StringOut
 			return;
 		}
 	}
-	::TextOutA( dc_, x, y, psText, dwNum );
+	BOOL ret = ::TextOutA( dc_, x, y, psText, dwNum );
+#ifdef USE_ORIGINAL_MEMMAN
+	if( !ret ) ::TextOutA( dc_, x, y, psText, dwNum ); // What the fuck?
+#endif
 	if (psText != psTXT1K)
 		delete []psText;
-#else
-	::TextOutW( dc_, x, y, str, len );
+
+#else // WIN32S
+
+    // It seems that when USING ORIGINAL MEMMAN TextOutW can Fail
+    // and we must draw the text twice. There must be some race condition
+    // and I cannot figure it out.
+	BOOL ret = ::TextOutW( dc_, x, y, str, len );
+#ifdef USE_ORIGINAL_MEMMAN
+	if( !ret ) ::TextOutW( dc_, x, y, str, len ); // What the fuck?
+#endif
 #endif
 }
 
@@ -408,17 +420,17 @@ void Painter::DrawZSP( int x, int y, int times )
 
 void ViewImpl::ReDraw( ReDrawType r, const DPos* s )
 {
-	// まずスクロールバーを更新
+	// まずスクロールバーを更新, First update the scroll-bars
 	UpdateScrollBar();
 
 	switch( r )
 	{
-	case ALL: // 全画面
+	case ALL: // 全画面, The whole client area
 
 		::InvalidateRect( hwnd_, NULL, FALSE );
 		break;
 
-	case LNAREA: // 行番号表示域のみ
+	case LNAREA: // 行番号表示域のみ, Line number display area only
 
 		if( lna() > 0 )
 		{
@@ -427,8 +439,8 @@ void ViewImpl::ReDraw( ReDrawType r, const DPos* s )
 		}
 		break;
 
-	case LINE: // 指定した行の後半
-	case AFTER: // 指定した行以下全部
+	case LINE: // 指定した行の後半, Second half of the specified line
+	case AFTER: // 指定した行以下全部, Everything below the specified line
 
 		{
 			DPos st = ( s->ad==0 ? *s : doc_.leftOf(*s,true) );
@@ -445,24 +457,24 @@ void ViewImpl::ReDraw( ReDrawType r, const DPos* s )
 
 void ViewImpl::on_paint( const PAINTSTRUCT& ps )
 {
-	// 描画範囲の情報を詳しく取得
+	// 描画範囲の情報を詳しく取得, Obtain detailed information about the drawing area
 	Painter& p = cvs_.getPainter();
 	VDrawInfo v( ps.rcPaint );
 	GetDrawPosInfo( v );
 
 	if( ps.rcPaint.right <= lna()  )
 	{
-		// case A: 行番号表示域のみ更新
+		// case A: 行番号表示域のみ更新, Only the line number display area is updated.
 		DrawLNA( v, p );
 	}
 	else if( lna() <= ps.rcPaint.left )
 	{
-		// case B: テキスト表示域のみ更新
+		// case B: テキスト表示域のみ更新, Update text display area only
 		DrawTXT( v, p );
 	}
 	else
 	{
-		// case C: 両方更新
+		// case C: 両方更新, Both updates
 		DrawLNA( v, p );
 		p.SetClip( cvs_.zone() );
 		DrawTXT( v, p );
@@ -610,7 +622,7 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 				a.left  = x + v.XBASE;
 				a.right = x2 + v.XBASE;
 				p.Fill( a );
-
+				// GdiFlush();
 				// 描画, Drawing
 				switch( str[i] )
 				{
@@ -636,6 +648,8 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 					p.StringOut( str+i, i2-i, x+v.XBASE, a.top );
 					//p.StringOut( str+i, i2-i, x+v.XBASE, a.top );
 					// 何故だか２度描きしないとうまくいかん…
+					// RAMON: I take care of it in the StringOut function.
+					// If TextOut fails, I paint a second time.
 					break;
 				}
 			}
