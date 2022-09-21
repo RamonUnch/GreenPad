@@ -12,9 +12,9 @@ namespace ki {
 //	#define USE_ORIGINAL_MEMMAN
 //#endif
 
-// 小規模と見なすオブジェクトの最大サイズ
+// 小規模と見なすオブジェクトの最大サイズ, Maximum size of objects considered small
 #define SMALL_MAX 64
-// 一度に確保するヒープブロックのサイズ
+// 一度に確保するヒープブロックのサイズ, Size of heap block to be allocated at one time
 #define BLOCK_SIZ 4096
 // 内部実装
 struct MemBlock;
