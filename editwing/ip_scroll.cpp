@@ -364,17 +364,17 @@ void ViewImpl::GetDrawPosInfo( VDrawInfo& v ) const
 		while( y + (signed)rln(tl) <= top )
 			y += rln( tl++ );
 
-		// 縦座標
+		// 縦座標, Vertical coordinates
 		v.YMIN  = y * H;
 		v.YMAX  = Min( v.rc.bottom, most_under );
 		v.TLMIN = tl;
 
-		// 横座標
+		// 横座標, Horizontal coordinates
 		v.XBASE = left() - rlScr_.nPos;
 		v.XMIN  = v.rc.left  - v.XBASE;
 		v.XMAX  = v.rc.right - v.XBASE;
 
-		// 選択範囲
+		// 選択範囲, Selection range
 		v.SXB = v.SXE = v.SYB = v.SYE = 0x7fffffff;
 
 		const VPos *bg, *ed;
@@ -390,16 +390,16 @@ void ViewImpl::GetDrawPosInfo( VDrawInfo& v ) const
 
 void ViewImpl::ScrollView( int dx, int dy, bool update )
 {
-	// スクロール開始通知
+	// スクロール開始通知, Scroll notification start
 	cur_.on_scroll_begin();
 
 	const RECT* clip = (dy==0 ? &cvs_.zone() : NULL);
 	const int H = cvs_.getPainter().H();
 
-	// スクロールバー更新
+	// スクロールバー更新, Scrollbar updated
 	if( dx != 0 )
 	{
-		// 範囲チェック
+		// 範囲チェック, range check
 		if( rlScr_.nPos+dx < 0 )
 			dx = -rlScr_.nPos;
 		else if( rlScr_.nMax-(signed)rlScr_.nPage < rlScr_.nPos+dx )
@@ -440,28 +440,39 @@ void ViewImpl::ScrollView( int dx, int dy, bool update )
 		else
 		{
 			// 再描画の不要な領域をスクロール
+			// Scroll through areas that do not need redrawing
 			::ScrollWindowEx( hwnd_, dx, dy, NULL,
 					clip, NULL, NULL, SW_INVALIDATE );
 
-			// 即時再描画？
+			// 即時再描画？, Immediate redraw?
 			if( update )
 			{
-				// 縦スクロールは高速化したいので一工夫
+				// 縦スクロールは高速化したいので一工夫, Vertical scrolling is one way to speed up the process.
 				if( dy != 0 )
 				{
 					// 再描画の必要な領域を自分で計算
-					RECT rc = {0,0,right(),bottom()};
+					// Calculate the area that needs to be redrawn
+					RECT rc = { 0, 0, right(), bottom() };
 					if( dy < 0 ) rc.top  = rc.bottom + dy;
 					else         rc.bottom = dy;
 
 					// インテリマウスの中ボタンクリックによる
 					// オートスクロール用カーソルの下の部分を先に描く
 					// ２回に分けることで、小さな矩形部分二つで済むので高速
+					// By clicking the middle button of the IntelliMouse
+					// Draw the area under the cursor for auto scrolling first.
+					// By splitting it into two parts,
+					// only two small rectangles are needed, which is faster.
 					::ValidateRect( hwnd_, &rc );
-					::UpdateWindow( hwnd_ );
+					//::UpdateWindow( hwnd_ );
 					::InvalidateRect( hwnd_, &rc, FALSE );
 				}
-				::UpdateWindow( hwnd_ );
+				// RAMON: I much prefer to have a slightly sloppy drawing
+				// on slow computers rather than have my scroll messages pile up
+				// and keep scrolling the window when I stopped scrolling.
+				// Reactivity is more important than perfect drawing.
+				// This is why I commented out the ::UpdateWindow() calls
+				//::UpdateWindow( hwnd_ );
 			}
 		}
 	}
