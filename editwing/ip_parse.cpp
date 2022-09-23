@@ -400,7 +400,6 @@ private:
 // 以上の道具立てでもって、テキストの解析を行うParser
 //-------------------------------------------------------------------------
 }
-
 class editwing::doc::Parser
 {
 public:
@@ -426,7 +425,7 @@ public:
 	{
 		kwd_.AddKeyword( str, len );
 	}
-	
+
 	// 行データ解析
 	uchar Parse( Line& line, uchar cmst )
 	{
@@ -436,15 +435,54 @@ public:
 		// シフト無しでTokenTypeに流用出来るようにするため、
 		// 値が４飛びになってます
 		enum { T=0, W=4, A=8, S=12, O=0 };
-		static const uchar letter_type[128] = {
-			O,O,O,O,O,O,O,O,O,T,O,O,O,O,O,O,
-			O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
-			W,S,S,S,S,S,S,S,S,S,S,S,S,S,S,S,
-			A,A,A,A,A,A,A,A,A,A,S,S,S,S,S,S,
-			S,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
-			A,A,A,A,A,A,A,A,A,A,A,S,S,S,S,A,
-			S,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
-			A,A,A,A,A,A,A,A,A,A,A,S,S,S,S,O,
+		static const uchar letter_type[688] = {
+			O,O,O,O,O,O,O,O,O,T,O,O,O,O,O,O, // NULL-SHI_IN
+			O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O, // DLE-US
+			W,S,S,S,S,S,S,S,S,S,S,S,S,S,S,S, //  !"#$%&'()*+,-./
+			A,A,A,A,A,A,A,A,A,A,S,S,S,S,S,S, // 0123456789:;<=>?
+			S,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A, // @ABCDEFGHIJKLMNO
+			A,A,A,A,A,A,A,A,A,A,A,S,S,S,S,A, // PQRSTUVWXYZ[\]^_
+			S,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A, // `abcdefghijklmno
+			A,A,A,A,A,A,A,A,A,A,A,S,S,S,S,O, // pqrstuvwxyz{|}~
+			// Latin-1 Supplement (0x0080-0x00FF)
+			O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O, // C1 Controls
+			O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O, // C1 Controls
+			S,A,A,A,A,A,S,A,A,A,A,S,A,A,A,S, //  !￠￡?\|§¨ca≪￢[SHY-]R￣
+			A,S,A,A,A,A,S,S,A,S,A,S,A,A,A,S, // °±23´μ¶・，1o≫????
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A, // AAAAAAACEEEEIIII
+			A,A,A,A,A,A,A,S,A,A,A,A,A,A,A,A, // DNOOOOO×OUUUUYTs
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A, // aaaaaaaceeeeiiii
+			A,A,A,A,A,A,A,S,A,A,A,A,A,A,A,A, // dnooooo÷ouuuuyty
+			// Latin Extended-A (0x0100-0x017f)
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			// Latin Extended-B (0x0180-0x024f)
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			// IPA Extensions (0x0250-0x02af)
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
+			A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,
 		};
 
 		// PosInToken算出用の距離エンコーダ( 5bitシフト済み )
@@ -471,18 +509,23 @@ public:
 			j = i;
 
 			// ASCII文字でない場合 (Not ASCII char)
-			if( str[i] >= 0x007f )
+			// was 0x007f (ASCII) I replaced by 0x250
+			// that corresponds to all extended latin charatcter.
+			// This is needed if yu want to ctrl+select words that
+			// have a mix of ASCII and other LATIN characters.
+			if( str[i] >= 0x02B0 ) // Non latin
 			{
 				f = (ALP | commentbit);
 				if( str[i] == 0x3000 )//L'　' )
 					while( str[++j] == 0x3000 )
 						flg[j] = f;
 				else
-					while( str[++j] >= 0x80 && str[j]!=0x3000 )
+					while( str[++j] >= 0x02B0 && str[j]!=0x3000 )
 						flg[j] = f;
 				flg[i] = static_cast<uchar>(tkenc(j-i) | f);
 			}
 			// ASCII文字の場合?? (ASCII char?)
+			// All latin chars up to IPA Extensions 0x0000-0x02Af
 			else
 			{
 				t = letter_type[str[i]];
@@ -492,7 +535,7 @@ public:
 							j++;
 					while( str[++j]<0x7f && S==letter_type[str[j]] );
 				else
-					while( str[++j]<0x7f && t==letter_type[str[j]] );
+					while( ++j<ie && str[j]<0x02B0 && t==letter_type[str[j]] );
 
 				f = (t | commentbit);
 
@@ -500,7 +543,8 @@ public:
 				{
 				// アルファベット＆数字, Alphabets & Numbers (a-Z, 0-9)
 				case A:
-					f |= kwd_.isKeyword( str+i, j-i );
+					if( str[i] < 0x007f ) // ASCII only
+						f |= kwd_.isKeyword( str+i, j-i );
 					// fall...
 
 				// タブ・制御文字, Tabs and control characters (0-31, 127)
@@ -594,7 +638,6 @@ public:
 };
 
 
-
 //-------------------------------------------------------------------------
 // 定義ファイル読みとり処理とか
 //-------------------------------------------------------------------------
@@ -651,7 +694,7 @@ void DocImpl::SetKeyword( const unicode* defbuf, ulong siz )
 		my_lstrcpynW(CommentStr_, tags[2], cstrlen);
 		CommentStr_[len]='\0'; // be sure to NULL terminate
 	}
-	else 
+	else
 	{// Default comment string is > when there is no .kwd files.
 		CommentStr_[0] = L'>'; CommentStr_[1] = L'\0';
 	}
@@ -683,16 +726,19 @@ bool DocImpl::ReParse( ulong s, ulong e )
 	ulong i;
 	uchar cmt = text_[s].isLineHeadCmt();
 
-	// まずは変更範囲を再解析
+	// まずは変更範囲を再解析, First, reanalyze the scope of the change
 	for( i=s; i<=e; ++i )
 		cmt = parser_->Parse( text_[i], cmt );
 
 	// コメントアウト状態に変化がなかったらここでお終い。
+	// If there is no change in the commented-out status, we are done here.
 	if( i==tln() || text_[i].isLineHeadCmt()==cmt )
 		return false;
 
 	// 例えば、/* が入力された場合などは、下の方の行まで
 	// コメントアウト状態の変化を伝達する必要がある。
+	// For example, if a /* is entered, then down to the bottom line.
+	// need to communicate the change in commented-out status.
 	do
 		cmt = text_[i++].TransitCmt( cmt );
 	while( i<tln() && text_[i].isLineHeadCmt()!=cmt );
