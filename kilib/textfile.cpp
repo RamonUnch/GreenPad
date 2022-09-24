@@ -113,6 +113,37 @@ struct rUCS : public rBasicUTF
 };
 
 // typedef rUCS< byte> rWest;
+//struct rWest : public rUCS<byte>
+//{
+//	rWest( const uchar* b, ulong s, bool bigendian )
+//		: rUCS<byte>(b,s,bigendian) {}
+//
+//	virtual unicode PeekC()
+//	{
+//		static const unicode cp1252map[256] = {
+//		0,    1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+//		16,  17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+//		32,  33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+//		48,  49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+//		64,  65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+//		80,  81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+//		96,  97, 98, 99,100,101,102,103,104,105,106,107,108,109,110,111,
+//		112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,
+//
+//		0x20ac,129,0x201a,0x0192,0x201E,0x2026,0x2020,0x2021,0x02C6,0x2030,0x0160,0x2039,0x0152,141,0x017D,143,
+//		144,0x2018,0x2019,0x201C,0x201D,0x2022,0x2013,0x2014,0x02DC,0x2122,0x0161,0x203A,0x0153,157,0x017E,0x0178,
+//
+//		160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,
+//		176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
+//		192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
+//		208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
+//		224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
+//		240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,
+//		};
+//		byte c = *fb;
+//		return cp1252map[c];
+//	}
+//};
 typedef rUCS<dbyte> rUtf16;
 
 // UTF-32ì«Ç›çûÇ›
@@ -766,21 +797,26 @@ namespace
 		return const_cast<char*>( q );
 	}
 
-	static char* WINAPI MyCharNextExA(WORD cp, const char *p, DWORD flags)
+	static char* WINAPI IncCharNextExA(WORD cp, const char *p, DWORD flags)
+	{
+		return (char *)++p;
+	}
+	static uNextFunc GetCharNextExA(void)
 	{
 		// Only for Windows >= 4 (NT4/95+) because
 		// CharNextExA is not here on NT3.1 and is a stub on NT3.5
-		if (app().isNewShell()) {
-			static uNextFunc Window_CharNextExA = (uNextFunc)(-1);
-			if (Window_CharNextExA == (uNextFunc)(-1)) // First time!
-				Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandleA("USER32.DLL"), "CharNextExA");
-
-			if (Window_CharNextExA) { // We got the function!
-				return Window_CharNextExA(cp, p, flags);
-			}
+		uNextFunc Window_CharNextExA;
+		if (app().isNewShell())
+		{
+			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandleA("USER32.DLL"), "CharNextExA");
 		}
-		// Fallback to increment :)
-		return (char *)++p;
+
+		if (Window_CharNextExA) // We got the function!
+		{
+			return Window_CharNextExA;
+		}
+		// Fallback for WinNT3.x / Win32s.
+		return IncCharNextExA;
 	}
 
 	// IMultiLanguage2::DetectInputCodepageÇÕGB18030ÇÃÇ±Ç∆ÇîFéØÇ≈Ç´Ç‹ÇπÇÒÅB
@@ -884,7 +920,7 @@ struct rMBCS : public TextFileRPimpl
 		: fb( reinterpret_cast<const char*>(b) )
 		, fe( reinterpret_cast<const char*>(b+s) )
 		, cp( c==UTF8 ? UTF8N : c )
-		, next( cp==UTF8N ? CharNextUtf8 : cp==GB18030 ? CharNextGB18030 : MyCharNextExA )
+		, next( cp==UTF8N ? CharNextUtf8 : cp==GB18030 ? CharNextGB18030 : GetCharNextExA() )
 		, conv( cp==UTF8N && (app().isWin95()||!::IsValidCodePage(65001))
 		                  ? Utf8ToWideChar : MultiByteToWideChar )
 	{
@@ -1186,6 +1222,7 @@ int TextFileR::neededCodepage(int cs)
 	case UTF8N: // +65001
 	case SCSU:  // -60000
 	case BOCU1: // -60001
+//	case WesternOS2: // TODO (1004) internally handeled.
 		return 0 ; // WHITELISTED
 
 	// TYPE -(cp+1)
@@ -1339,10 +1376,14 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 //-- UTF-16/32 detection
 	if( freq[ 0 ] > siz >> 11) // More than 1/2048 nulls in content?
 	{ // then it may be UTF-16/32 without BOM
-		if(CheckUTFConfidence(ptr,siz,sizeof(dbyte),true)) return UTF16LE;
-		if(CheckUTFConfidence(ptr,siz,sizeof(dbyte),false)) return UTF16BE;
-		if(CheckUTFConfidence(ptr,siz,sizeof(qbyte),true)) return UTF32LE;
-		if(CheckUTFConfidence(ptr,siz,sizeof(qbyte),false)) return UTF32BE;
+		// Note: even and odd checks will only apply
+		// if the file is smaller than the test buffer.
+		// UTF-16 byte count will always be even
+		if(!(siz&1) && CheckUTFConfidence(ptr,siz,sizeof(dbyte),true)) return UTF16LE;
+		if(!(siz&1) && CheckUTFConfidence(ptr,siz,sizeof(dbyte),false)) return UTF16BE;
+		// UTF-32 byte count will always be multiple of 4
+		if(!(siz&3) && CheckUTFConfidence(ptr,siz,sizeof(qbyte),true)) return UTF32LE;
+		if(!(siz&3) && CheckUTFConfidence(ptr,siz,sizeof(qbyte),false)) return UTF32BE;
 	}
 
 //-- chardet and MLang detection
