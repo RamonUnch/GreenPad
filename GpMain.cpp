@@ -247,7 +247,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_CUT:        edit_.getCursor().Cut();            break;
 	case ID_CMD_COPY:       edit_.getCursor().Copy();           break;
 	case ID_CMD_PASTE:      edit_.getCursor().Paste();          break;
-	case ID_CMD_DELETE: if( edit_.getCursor().isSelected() ){ edit_.getCursor().Del();} break;
+	case ID_CMD_DELETE: if( edit_.getCursor().isSelected() ){ edit_.getCursor().Del(false);} break;
 	case ID_CMD_SELECTALL:  edit_.getCursor().Home(true,false);
 	                        edit_.getCursor().End(true,true);   break;
 	case ID_CMD_DATETIME:   on_datetime();                      break;

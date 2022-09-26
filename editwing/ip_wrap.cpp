@@ -168,7 +168,7 @@ ulong ViewImpl::CalcLineWidth( const unicode* txt, ulong len ) const
 	const Painter& p = cvs_.getPainter();
 
 	ulong w=0;
-	for( ulong i=0; i<len ; ++i ) // Also stops at txt[i]=='\0'?
+	for( ulong i=0; i<len ; ++i )
 		if( txt[i] == L'\t' )
 			w = p.nextTab(w);
 		else

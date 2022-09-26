@@ -140,8 +140,8 @@ public:
 	void Input( const unicode* str, ulong len );
 	void Input( const char* str, ulong len );
 	void InputChar( unicode ch );
-	void Del();
-	void DelBack();
+	void Del(bool wide);
+	void DelBack(bool wide);
 	void Return();
 	void Tabulation(bool shift);
 	void QuoteSelectionW(const unicode *qs, bool shift);
@@ -166,10 +166,11 @@ public:
 	static unicode* WINAPI InvertCaseW(unicode *);
 	static unicode* WINAPI TrimTrailingSpacesW(unicode *);
 	static unicode* WINAPI StripFirstCharsW(unicode *);
+	static unicode* WINAPI StripLastCharsW(unicode *);
 	void InvertCaseSel();
 	void TTSpacesSel();
 	void StripFirstChar();
-
+	void StripLastChar();
 	// IME
 	void Reconv();
 	void ToggleIME();
@@ -208,14 +209,15 @@ private:
 
 	VPos cur_;  // カーソル位置
 	VPos sel_;  // 選択時の軸足位置
-	bool bIns_; // 挿入モード？
-	bool bRO_;  // 読取専用？
+	bool bIns_; // 挿入モード？, Insertion mode?
+	bool bRO_;  // 読取専用？, Read Only?
+	bool lineSelectMode_; // 行選択モード？
+//	bool squareSelect_; // Select in square AA mode
 
 	UINT_PTR timerID_;// マウスドラッグ制御用の
 	int  keyRepTime_; // タイマー関係
 	int  dragX_;      // 位置
 	int  dragY_;      // 位置
-	bool lineSelectMode_; // 行選択モード？
 
 	CurEvHandler defaultHandler_;
 

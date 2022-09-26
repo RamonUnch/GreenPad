@@ -247,6 +247,10 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 #endif
 	const unicode zsp=0x3000; // L'　'
 	W(&zsp); // Initialize width of L'　'
+	const unicode nbsp=0x00A0;
+	W(&nbsp); // Initialize width of non-break space
+	// TODO: Narrow Non-Break Space 0x202F.
+	// We Must do like with ZSP (0x3000) in the Parser.
 
 	widthTable_[L'\t'] = NZero(W() * Max(1, vc.tabstep));
 	// 下位サロゲートは文字幅ゼロ (Lower surrogates have zero character width)
@@ -634,9 +638,16 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 							p.CharOut( L'>', x+v.XBASE, a.top );
 					}
 					break;
-				case L' ':
+				case L' ': // Normal ASCII space (0x0020)
 					if( p.sc(scHSP) )
 						p.DrawHSP( x+v.XBASE, a.top, i2-i );
+					break;
+				case 0x00a0: // NBSP No-Break Space
+					if( p.sc(scZSP) )
+					{
+						p.SetColor( clr=CTL );
+						p.CharOut( L'^', x+v.XBASE, a.top );
+					}
 					break;
 				case 0x3000://L'　':
 					if( p.sc(scZSP) )

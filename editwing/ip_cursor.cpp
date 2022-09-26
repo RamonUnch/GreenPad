@@ -85,8 +85,8 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 	, caret_  ( new Caret(wnd) )
 	, bIns_   ( true )
 	, bRO_    ( false )
-	, timerID_( 0 )
 	, lineSelectMode_( false )
+	, timerID_( 0 )
 {
 	// てきとーに情報初期化
 	::SystemParametersInfo( SPI_GETKEYBOARDSPEED, 0, &keyRepTime_, 0 );
@@ -301,10 +301,10 @@ void CurEvHandler::on_key( Cursor& cur, int vk, bool sft, bool ctl )
 	case VK_DOWN:	cur.Down( ctl, sft );	break;
 	case VK_PRIOR:	cur.PageUp( sft );		break;
 	case VK_NEXT:	cur.PageDown( sft );	break;
-	case VK_DELETE:	cur.Del();				break;
-	case VK_BACK:	cur.DelBack();			break;
+	case VK_DELETE:	cur.Del( ctl );			break;
+	case VK_BACK:	cur.DelBack( ctl );		break;
 	case VK_INSERT: cur.SetInsMode(!cur.isInsMode()); break;
-	case VK_TAB:    cur.Tabulation(sft);	break;
+	case VK_TAB:    cur.Tabulation( sft );	break;
 	}
 }
 
@@ -438,23 +438,27 @@ void Cursor::Input( const char* str, ulong len )
 	delete [] ustr;
 }
 
-void Cursor::DelBack()
+void Cursor::DelBack( bool wide )
 {
 	// 選択状態なら BackSpace == Delete
 	// でなければ、 BackSpace == Left + Delete (手抜き
+	// Ctrl+BackSpace == Leftword + delete
 	if( cur_ == sel_ )
 	{
 		if( cur_.tl==0 && cur_.ad==0 )
 			return;
-		Left( false, false );
+		Left( wide, /*select*/ wide );
 	}
-	Del();
+	Del( false );
 }
 
-void Cursor::Del()
+void Cursor::Del( bool wide )
 {
 	// 選択状態なら cur_ ～ sel_ を削除
 	// でなければ、 cur_ ～ rightOf(cur_) を削除
+	// Ctrl+Del == Right + delete
+	if( wide )
+		Right( true, true );
 	DPos dp = (cur_==sel_ ? doc_.rightOf(cur_) : (DPos)sel_ );
 	if( cur_ != dp )
 		doc_.Execute( Delete( cur_, dp ) );
@@ -589,7 +593,7 @@ void Cursor::Cut()
 	{
 		// コピーして削除
 		Copy();
-		Del();
+		Del( false );
 	}
 }
 
@@ -720,6 +724,20 @@ unicode* WINAPI Cursor::StripFirstCharsW(unicode *p)
 	p[j] = L'\0';
 	return p;
 }
+unicode* WINAPI Cursor::StripLastCharsW(unicode *p)
+{	// Remove last char of each line
+
+	size_t  i, j, len = my_lstrlenW(p);
+	for (i=0, j=0; i < len; )
+	{
+		// Skip if the next character is a CR or LF, while preserving CRLF
+		i += p[i+1] != '\0' && ((p[i+1] == '\n' || p[i+1] == '\r') && p[i+2] != '\r');
+
+		p[j++] = p[i++];
+	}
+	p[j] = L'\0';
+	return p;
+}
 
 void Cursor::ModSelection(ModProc mfunk)
 {
@@ -766,7 +784,11 @@ void Cursor::StripFirstChar()
 		sel_.ad=0;
 	ModSelection(StripFirstCharsW);
 }
-
+void Cursor::StripLastChar()
+{
+	if(cur_==sel_) return;
+	ModSelection(StripLastCharsW);
+}
 //-------------------------------------------------------------------------
 // カーソル移動, Cursor movement
 //-------------------------------------------------------------------------
@@ -933,7 +955,24 @@ void Cursor::Right( bool wide, bool select )
 	MoveTo( np, select );
 }
 
+// Go to the matching brace
+#if 0
+void Cursor::GotoMatchingBrace()
+{
+    unicode p[8];
+    VPos np;
+    static const unicode *braces=L"()[]{}<>";
+    if( cur_!=sel_ ) return;
+	DPos ssel = DPos(cur.tl, cur.ad); // only next char.
+	rightOf(&ssel, 0) // Next char
+//	ulong len = doc_.getRangeLength( cur_, ssel )+1;
+	doc_.getText( p, cur_, &ssel );
+	if (*p == '(')
+	{
 
+	}
+}
+#endif
 
 //-------------------------------------------------------------------------
 // マウス入力への対応
