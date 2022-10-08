@@ -483,6 +483,24 @@ void Cursor::Return()
 	delete [] p;
 }
 
+void Cursor::DelToEndline( bool wide )
+{
+	if( cur_!=sel_ )
+		MoveCur( Min(cur_, sel_), false );
+	End( wide, true);
+	if( cur_ != sel_ )
+		doc_.Execute( Delete( cur_, sel_ ) );
+}
+
+void Cursor::DelToStartline( bool wide )
+{
+	if( cur_!=sel_ )
+		MoveCur( Max(cur_, sel_), false );
+	Home( wide, true);
+	if( cur_ != sel_ )
+		doc_.Execute( Delete( cur_, sel_ ) );
+}
+
 //-------------------------------------------------------------------------
 // Add the quote string at the begining of each line.
 //-------------------------------------------------------------------------

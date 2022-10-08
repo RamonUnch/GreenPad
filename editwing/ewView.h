@@ -142,6 +142,8 @@ public:
 	void InputChar( unicode ch );
 	void Del(bool wide);
 	void DelBack(bool wide);
+	void DelToEndline( bool wide );
+	void DelToStartline( bool wide );
 	void Return();
 	void Tabulation(bool shift);
 	void QuoteSelectionW(const unicode *qs, bool shift);

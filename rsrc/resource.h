@@ -114,7 +114,11 @@
 #define ID_CMD_SFCHAR                   50008
 #define ID_CMD_QUOTE                    50009
 #define ID_CMD_UNQUOTE                  50010
-
+#define ID_CMD_SLCHAR                   50011
+#define ID_CMD_DELENDLINE               50012
+#define ID_CMD_DELSTALINE               50013
+#define ID_CMD_DELENDFILE               50014
+#define ID_CMD_DELSTAFILE               50015
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
