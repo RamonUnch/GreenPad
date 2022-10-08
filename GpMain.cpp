@@ -264,6 +264,10 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_SLCHAR:     edit_.getCursor().StripLastChar();     break;
 	case ID_CMD_QUOTE:      edit_.getCursor().QuoteSelection(false);break;
 	case ID_CMD_UNQUOTE:    edit_.getCursor().QuoteSelection(true); break;
+	case ID_CMD_DELENDLINE: edit_.getCursor().DelToEndline(false); break;
+	case ID_CMD_DELSTALINE: edit_.getCursor().DelToStartline(false); break;
+	case ID_CMD_DELENDFILE: edit_.getCursor().DelToEndline(true); break;
+	case ID_CMD_DELSTAFILE: edit_.getCursor().DelToStartline(true); break;
 
 	// Search
 	case ID_CMD_FIND:       search_.ShowDlg();  break;

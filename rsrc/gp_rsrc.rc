@@ -27,8 +27,8 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,4,0
- PRODUCTVERSION 1,1,4,0
+ FILEVERSION 1,1,5,0
+ PRODUCTVERSION 1,1,5,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -50,7 +50,7 @@ BEGIN
             VALUE "LegalCopyright", "Written by k.inaba 2002-2008\0"
             VALUE "OriginalFilename", "GreenPad.exe\0"
             VALUE "ProductName", "GreenPad\0"
-            VALUE "ProductVersion", "1.14.0\0"
+            VALUE "ProductVersion", "1.15.0\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -394,8 +394,13 @@ BEGIN
 	"I",            ID_CMD_INVERTCASE,      VIRTKEY, ALT, NOINVERT
 	"W",            ID_CMD_TTSPACES,        VIRTKEY, ALT, NOINVERT
 	"Z",            ID_CMD_SFCHAR,          VIRTKEY, ALT, NOINVERT
+	"A",            ID_CMD_SLCHAR,          VIRTKEY, ALT, NOINVERT
 	"Q",            ID_CMD_QUOTE,           VIRTKEY, ALT, NOINVERT
 	"N",            ID_CMD_UNQUOTE,         VIRTKEY, ALT, NOINVERT
+	"K",            ID_CMD_DELENDLINE,      VIRTKEY, CONTROL, NOINVERT
+	"U",            ID_CMD_DELSTALINE,      VIRTKEY, CONTROL, NOINVERT
+	"K",            ID_CMD_DELENDFILE,      VIRTKEY, SHIFT, CONTROL, NOINVERT
+	"U",            ID_CMD_DELSTAFILE,      VIRTKEY, SHIFT, CONTROL, NOINVERT
 
     VK_ESCAPE,      ID_CMD_QUICKEXIT,       VIRTKEY, NOINVERT
     VK_DELETE,      ID_CMD_CUT,             VIRTKEY, SHIFT, NOINVERT
@@ -474,6 +479,7 @@ BEGIN
         MENUITEM "I&nvert Case\tAlt+I",         ID_CMD_INVERTCASE
 		MENUITEM "Tri&m Trailing Spaces\tAlt+W",ID_CMD_TTSPACES
 		MENUITEM "Strip &First Characters\tAlt+Z",ID_CMD_SFCHAR
+		MENUITEM "Strip &Last Characters\tAlt+A",ID_CMD_SFCHAR
         MENUITEM "&Quote\tAlt+Q",               ID_CMD_QUOTE
         MENUITEM "Unqu&ote\tAlt+N",             ID_CMD_UNQUOTE
 
