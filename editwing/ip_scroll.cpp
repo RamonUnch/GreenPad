@@ -543,10 +543,25 @@ void ViewImpl::on_vscroll( int code, int pos )
 	UpDown( dy, code==SB_THUMBTRACK );
 }
 
+int ViewImpl::getNumScrollLines( void )
+{
+	uint scrolllines = 3; // Number of lines to scroll (default 3).
+	if( App::getOSVer() >= 400 )
+	{   // Read the system value for the wheel scroll lines.
+		UINT numlines;
+		if( ::SystemParametersInfo( SPI_GETWHEELSCROLLLINES, 0, &numlines, 0 ) )
+			scrolllines = numlines; // Sucess!
+	}
+	// If the number of lines is larger than a single page then we only scroll a page.
+	// This automatically takes into account the page scroll mode where
+	// SPI_GETWHEELSCROLLLINES value if 0xFFFFFFFF.
+	return (int)Min( scrolllines, (uint)cy() / (uint)NZero(cvs_.getPainter().H()) );
+}
+
 void ViewImpl::on_wheel( short delta )
 {
 	// ÉXÉNÉçÅ[Éã
-	UpDown( -delta / WHEEL_DELTA * 3, false );
+	UpDown( (-(int)delta * getNumScrollLines()) / WHEEL_DELTA, false );
 }
 
 void ViewImpl::UpDown( int dy, bool thumb )
