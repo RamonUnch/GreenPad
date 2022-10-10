@@ -561,7 +561,26 @@ int ViewImpl::getNumScrollLines( void )
 void ViewImpl::on_wheel( short delta )
 {
 	// ÉXÉNÉçÅ[Éã
-	UpDown( (-(int)delta * getNumScrollLines()) / WHEEL_DELTA, false );
+	int nl = getNumScrollLines();
+	int step = (-(int)delta * nl) / WHEEL_DELTA;
+
+	if( step == 0 )
+	{   // step is too small, we need to accumulate delta
+		static short accdelta=0;
+		accdelta += delta;
+		// Recalculate the step.
+		step = (-(int)accdelta * nl) / WHEEL_DELTA;
+		if( step )
+		{
+			UpDown( step, false );
+			// set accumulator to the remainder.
+			accdelta -= (-step * WHEEL_DELTA) / nl;
+		}
+	}
+	else
+	{
+		UpDown( step, false );
+	}
 }
 
 void ViewImpl::UpDown( int dy, bool thumb )
