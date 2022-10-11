@@ -219,6 +219,7 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 	, pen_       ( ::CreatePen( PS_SOLID, 0, vc.color[CTL] ) )
 	, brush_     ( ::CreateSolidBrush( vc.color[BG] ) )
 //	, widthTable_( new int[65536] )
+	, fontranges_( NULL )
 	, widthTable_( wtable )
 {
 	// 制御文字を描画するか否か？のフラグを記憶,
@@ -268,6 +269,23 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 
 	// LOGFONT
 	::GetObject( font_, sizeof(LOGFONT), &logfont_ );
+
+	// Try to get the unicode ranges for the selected font.
+	typedef DWORD (WINAPI *GetFontUnicodeRanges_type)(HDC hdc,LPGLYPHSET lpgs);
+	GetFontUnicodeRanges_type myGetFontUnicodeRanges =
+		(GetFontUnicodeRanges_type)GetProcAddress(GetModuleHandle(TEXT("GDI32.DLL")), "GetFontUnicodeRanges");
+	if( myGetFontUnicodeRanges )
+	{ // We found the function
+		DWORD frlen = myGetFontUnicodeRanges( dc_, NULL );
+		if( frlen && (fontranges_ = (GLYPHSET*) new BYTE[frlen]) )
+		{
+			if(frlen != myGetFontUnicodeRanges( dc_, fontranges_ ))
+			{ // Failed!
+				delete [] ((BYTE*)fontranges_);
+				fontranges_ = NULL;
+			}
+		}
+	}
 	// ::ReleaseDC(::WindowFromDC(dc_), dc_);
 }
 
@@ -280,6 +298,7 @@ Painter::~Painter()
 	::DeleteObject( font_ );
 	::DeleteObject( pen_ );
 	::DeleteObject( brush_ );
+	delete [] ((BYTE *)fontranges_); // As BYTES...
 //	delete [] widthTable_;
 }
 

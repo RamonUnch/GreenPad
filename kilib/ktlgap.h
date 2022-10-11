@@ -44,8 +44,8 @@ public:
 	//		最初に確保する"メモリの"サイズ。
 	//		"配列の"サイズではないことに注意。
 	//@}
-	explicit gapbuf( ulong alloc_size=40 )
-		: alen_( Max(alloc_size, (ulong)10) )
+	explicit gapbuf( ulong alloc_size=32 )
+		: alen_( Max(alloc_size, (ulong)16) )
 		, gs_  ( 0 )
 		, ge_  ( alen_ )
 		, buf_ ( new T[alen_] )
@@ -208,7 +208,7 @@ class gapbufobj : public gapbuf<T*>
 {
 public:
 
-	explicit gapbufobj( ulong alloc_size=40 )
+	explicit gapbufobj( ulong alloc_size=32 )
 		: gapbuf<T*>( alloc_size )
 		{ }
 

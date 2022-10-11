@@ -30,6 +30,7 @@ enum charset {
 
 	WesternDOS = 850,  // ‰¢•Ä      (CP850 != ISO-8859-1)
 	Western    = 1252, // ‰¢•Ä      (Windows1252 >> ISO-8859-1)
+//	WesternOS2 = 1004  // CP1004 OS/2 encoding ~ Windows1252
 	WesternMAC = 10000,// ‰¢•Ä      (x-mac-roman != ISO-8859-1)
 	WesternISO = 28605,// ‰¢•Ä      (ISO-8859-15)
 	TurkishDOS = 857,  // ƒgƒ‹ƒRŒê   (CP857 != ISO-8859-9)
