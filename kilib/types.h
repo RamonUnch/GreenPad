@@ -28,12 +28,26 @@ template<typename T> inline T NZero(T x)   { return (x==0? 1 : x); }
 
 // 古いC++処理系でも、forで使う変数のスコープを強制的に制限
 #if defined(_MSC_VER) || defined(__DMC__)
-#define for if(0);else for 
+#define for if(0);else for
 #endif
 
 // コピー禁止オブジェクト
 #define NOCOPY(T) T( const T& ); T& operator=( const T& )
 
+#ifndef GS_8BIT_INDICES
+#define GS_8BIT_INDICES 0x00000001
+typedef struct tagWCRANGE {
+  WCHAR wcLow;
+  USHORT cGlyphs;
+} WCRANGE,*PWCRANGE,*LPWCRANGE;
 
+typedef struct tagGLYPHSET {
+  DWORD   cbThis;
+  DWORD   flAccel;
+  DWORD   cGlyphsSupported;
+  DWORD   cRanges;
+  WCRANGE ranges[1];
+} GLYPHSET, *PGLYPHSET, *LPGLYPHSET;
+#endif
 
 #endif // _KILIB_TYPES_H_

@@ -111,12 +111,17 @@ public:
 				::GetCharWidthA( dc_, ch, ch, widthTable_+ch );
 			}
 #else
-			::GetCharWidthW( dc_, ch, ch, widthTable_+ch );
-//			TODO: use GetTextExtentPointW when dc_ defaults to fallback font
-//			But HOW? Even beter, get the fallback font and use its char width.
-//			SIZE sz;
-//			::GetTextExtentPointW( dc_, &ch, 1, &sz );
-//			widthTable_[ ch ] = sz.cx;
+			if( isInFontRange( ch ) )
+			{
+				::GetCharWidthW( dc_, ch, ch, widthTable_+ch );
+			}
+			else
+			{	// Use GetTextExtentPointW when dc_ defaults to fallback font
+				// TODO: Even beter, get the fallback font and use its char width.
+				SIZE sz;
+				::GetTextExtentPointW( dc_, &ch, 1, &sz );
+				widthTable_[ ch ] = sz.cx;
+			}
 #endif
 		}
 		return widthTable_[ ch ];
@@ -124,6 +129,23 @@ public:
 
 	//@{ 標準文字幅, standard character width (pixel) //@}
 	int W() const { return widthTable_[ L'x' ]; }
+
+	//@{ Is the character is in the selected font? //@}
+	bool isInFontRange( const unicode ch ) const
+	{
+		if( fontranges_ )
+		{
+			WCRANGE *range = fontranges_->ranges;
+			for(uint i=0; i < fontranges_->cRanges; i++)
+			{
+				if( range[i].wcLow <= ch && ch <= range[i].wcLow + range[i].cGlyphs)
+					return true;
+			}
+			return false;
+		}
+		// If we have no font range then we always use GetCharWidthW.
+		return true;
+	}
 
 	//@{ 次のタブ揃え位置を計算, Calculate next tab alignment position //@}
 	//int nextTab(int x) const { int t=T(); return (x/t+1)*t; }
@@ -146,6 +168,7 @@ private:
 	int*         widthTable_; // [65535] // values => 256KB
 	int          figWidth_;
 	LOGFONT      logfont_;
+	GLYPHSET     *fontranges_;
 	COLORREF     colorTable_[7];
 	bool         scDraw_[5];
 
