@@ -85,7 +85,7 @@ static int MyGetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 		int MULT = lpsi->nMax - 65400 + 1; // 65401 => MULT = 2
 		lpsi->nMax      *= MULT;
 		lpsi->nPos      *= MULT;
-		lpsi->nTrackPos *= MULT; // This own has to be set by the user.
+		lpsi->nTrackPos *= MULT; // This has to be set by the user.
 	}
 	return 1; // sucess!
 }
@@ -233,15 +233,24 @@ bool ViewImpl::ReSetScrollInfo()
 //	rlScr_.nMax  = Max( textCx_, cx );
 //	rlScr_.nPos  = Min<int>( rlScr_.nPos, rlScr_.nMax-rlScr_.nPage+1 );
 	rlScr_.nPage = cx + 1;
-	rlScr_.nMax  = Max( textCx_+3, cx );
+	rlScr_.nMax  = Max( textCx_+cvs_.getPainter().W()+3, cx );
 	rlScr_.nPos  = Min<int>( rlScr_.nPos, rlScr_.nMax-rlScr_.nPage+1 );
 
 	// 縦はnPageとnMaxはとりあえず補正
 	// nPosは場合によって直し方が異なるので別ルーチンにて
 	udScr_.nPage = cy / NZero(cvs_.getPainter().H()) + 1;
-	// Adjust so that scroll bar appears only when we are shy oneline from the page.
-	udScr_.nMax  = vln() + udScr_.nPage - Max( 2, Min<int>( udScr_.nPage-1, doc_.tln()+1 ) );
 	//udScr_.nMax  = vln() + udScr_.nPage - 2; // Old code (not so nice)
+
+	// WIP: Adjust so that scroll bar appears only when we are shy oneline from the page.
+	// PB: Drawing problem when adding/removing line and scroll bar did not kick in.
+	// We need to do a proper InvalidateRect in the TextUpdate_ScrollBar()?
+	// udScr_.nMax  = vln() + udScr_.nPage - Max( 2, Min<int>( udScr_.nPage-1, vln()+1 ) );
+
+	// Limit more scrolling when there is more tha a single page
+	if( vln()*cvs_.getPainter().H() < cy )
+		udScr_.nMax  = vln() + udScr_.nPage - 2;
+	else
+		udScr_.nMax  = vln() + udScr_.nPage - Max( 2, Min<int>( udScr_.nPage-1, vln()+1 ) );
 
 	// 横スクロールが起きたらtrue
 	return (prevRlPos != rlScr_.nPos);
@@ -267,6 +276,7 @@ ulong ViewImpl::tl2vl( ulong tl ) const
 
 void ViewImpl::UpdateScrollBar()
 {
+	const int H =  cvs_.getPainter().H();
 	::MySetScrollInfo( hwnd_, SB_HORZ, &rlScr_, TRUE );
 	::MySetScrollInfo( hwnd_, SB_VERT, &udScr_, TRUE );
 }
@@ -301,6 +311,7 @@ ReDrawType ViewImpl::TextUpdate_ScrollBar
 		}
 		else
 		{
+
 			// パターン2-2：
 			// スクロール無し
 			while( udScr_vrl_ >= rln(udScr_tl_) )
@@ -677,7 +688,7 @@ void ViewImpl::InvalidateView( const DPos& dp, bool afterall ) const
 {
 	const int H = cvs_.getPainter().H();
 
-	// 表示域より上での更新
+	// 表示域より上での更新, Update above the display area
 	if( dp.tl < udScr_tl_ )
 	{
 		if( afterall )
@@ -685,17 +696,17 @@ void ViewImpl::InvalidateView( const DPos& dp, bool afterall ) const
 		return;
 	}
 
-	// 開始y座標計算
+	// 開始y座標計算, Start y-coordinate calculation
 	int r=0, yb=-(signed)udScr_vrl_;
 	for( int t=udScr_tl_, ybe=cy() / NZero(H); (unsigned)t<dp.tl; yb+=rln(t++) )
 		if( yb >= ybe )
 			return;
 	for( ; dp.ad>rlend(dp.tl,r); ++r,++yb );
-	yb = H * Max( yb, -100 ); // 上にはみ出し過ぎないよう調整
+	yb = H * Max( yb, -100 ); // 上にはみ出し過ぎないよう調整, Adjustment to avoid overhang on top
 	if( yb >= cy() )
 		return;
 
-	// １行目を再描画
+	// １行目を再描画, Redraw the first line
 	int rb = (r==0 ? 0 : rlend(dp.tl,r-1));
  	int xb = left() + Max( (ulong)0,
 		CalcLineWidth(doc_.tl(dp.tl)+rb, (ulong) (dp.ad-rb)) - rlScr_.nPos );
@@ -705,7 +716,7 @@ void ViewImpl::InvalidateView( const DPos& dp, bool afterall ) const
 		::InvalidateRect( hwnd_, &rc, FALSE );
 	}
 
-	// 残り
+	// 残り, remaining
 	int ye;
 	yb += H;
 	if( afterall )
