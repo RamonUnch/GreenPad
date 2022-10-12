@@ -628,7 +628,7 @@ void GreenPadWnd::on_drop( HDROP hd )
 		TCHAR *str = new TCHAR [len];
 		::DragQueryFile( hd, i, str, len );
 		Open( str, AutoDetect );
-        delete [] str;
+		delete [] str;
 	}
 	::DragFinish( hd );
 }
@@ -694,11 +694,24 @@ void GreenPadWnd::on_grep()
 void GreenPadWnd::on_datetime()
 {
 	String g = cfg_.dateFormat();
-	TCHAR buf[255], tmp[255];
+	TCHAR buf[255], tmp[255]=TEXT("");
+	TCHAR *lpFormat = g.len()?const_cast<TCHAR*>(g.c_str()):TEXT("HH:mm yyyy/MM/dd");
+#ifdef WIN32S
+	// Dynamically import GetTime/DateFormat on win32s build
+	// So that it can run on NT3.1
+	typedef int (WINAPI *GetDTFormat_type)( LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCTSTR lpFormat, LPTSTR lpTimeStr,int cchTime);
+	GetDTFormat_type MyGetTimeFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetTimeFormatA");
+	GetDTFormat_type MyGetDateFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetDateFormatA");
+	if( MyGetTimeFormatA )
+		MyGetTimeFormatA( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
+	if( MyGetDateFormatA )
+		MyGetDateFormatA( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
+#else
 	::GetTimeFormat
-		( LOCALE_USER_DEFAULT, 0, NULL, g.len()?const_cast<TCHAR*>(g.c_str()):TEXT("HH:mm yyyy/MM/dd"), buf, countof(buf));
+		( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
 	::GetDateFormat
 		( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
+#endif
 	edit_.getCursor().Input( tmp, my_lstrlen(tmp) );
 }
 
@@ -723,9 +736,9 @@ void GreenPadWnd::on_config()
 #if defined(TARGET_VER) && TARGET_VER<=350
 /* WIP: Re-implementation of FindWindowEx for NT3.x */
 struct MyFindWindowExstruct {
-    HWND after;
+	HWND after;
 	LPCTSTR lpszClass;
-    LPCTSTR lpszWindow;
+	LPCTSTR lpszWindow;
 	HWND ret;
 };
 static BOOL CALLBACK MyFindWindowExProc(HWND hwnd, LPARAM lParam)
