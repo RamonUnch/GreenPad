@@ -125,10 +125,9 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		impl_->on_wheel( HIWORD(wp) );
 		break;
 
-//	case 0x020E:{ //WM_MOUSEHWHEEL
-//		short inc = (short)HIWORD(wp);
-//		impl_->on_hscroll( inc>0? SB_LINERIGHT:SB_LINELEFT, 0 );
-//		}break;
+	case 0x020E: //WM_MOUSEHWHEEL
+		impl_->on_hwheel( (short)HIWORD(wp) );
+		break;
 
 	case WM_SETFOCUS:
 		cur().on_setfocus();
