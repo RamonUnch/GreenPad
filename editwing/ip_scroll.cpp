@@ -26,21 +26,37 @@ static int MySetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw
 	static ssnfo_funk dyn_SetScrollInfo = (ssnfo_funk)(-1);
 	if( dyn_SetScrollInfo == (ssnfo_funk)(-1) ) {
 		dyn_SetScrollInfo = (ssnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "SetScrollInfo");
-		if(!( (!App::isNT() && App::getOSBuild()>=275)
-		||    (App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944)) )
+		if(!(  (!App::isNT() && App::getOSVer()>=400 && App::getOSBuild()>=275) // Win95 4.00.275
+			|| ( App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944))// WinNT 3.51.944
+		    )
 		{   // Not supported before 95 build 275
 			// Nor NT3.51 before build 944
 			dyn_SetScrollInfo = NULL;
 		}
 	}
-
 	if( dyn_SetScrollInfo )
 		return dyn_SetScrollInfo( hwnd, fnBar, lpsi, fredraw );
 
-	// Fallback...
+	// Smart Fallback...
+	// We must use SetScrollRange but it is mimited to 65535.
+	// So we can avoid oveflow by dividing range and position values
+	// In GreenPad we can assume that only nMax can go beyond range.
+	int MULT=1;
+	int nMax = lpsi->nMax;
+	// If we go beyond 65400 then we use a divider
+	if (nMax > 65400)
+	{   // 65501 - 65535 = 35 values MULT from 2-136
+		// Like this the new range is around 8912896 instead of 65535
+		MULT = Min( nMax / 65536 + 1,  136 );
+		// We store the divider in the last 135 values
+		// of the max scroll range.
+		nMax = 65400 + MULT - 1 ; // 65401 => MULT = 2
+	}
+
 	if (lpsi->fMask|SIF_RANGE)
-		::SetScrollRange( hwnd, fnBar, lpsi->nMin, lpsi->nMax, FALSE );
-	return ::SetScrollPos( hwnd, fnBar, lpsi->nPos, fredraw );
+		::SetScrollRange( hwnd, fnBar, lpsi->nMin, nMax, FALSE );
+
+	return ::SetScrollPos( hwnd, fnBar, lpsi->nPos/MULT, fredraw );
 }
 typedef int (WINAPI *gsnfo_funk)(HWND hwnd, int fnBar, LPSCROLLINFO lpsi);
 static int MyGetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
@@ -56,16 +72,22 @@ static int MyGetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 			dyn_GetScrollInfo = NULL;
 		}
 	}
-
-	if( dyn_GetScrollInfo ) {
+	if( dyn_GetScrollInfo )
 		return dyn_GetScrollInfo( hwnd, fnBar, lpsi );
-	}
 
-	// Fallback...
-	lpsi->nPos = ::GetScrollPos( hwnd, fnBar );
-	if(lpsi->fMask|SIF_RANGE)
+	// Smart Fallback...
+	if( lpsi->fMask|SIF_RANGE )
 		::GetScrollRange( hwnd, fnBar, &lpsi->nMin, &lpsi->nMax);
-	return 1;
+	lpsi->nPos = ::GetScrollPos( hwnd, fnBar );
+	// Scroll range indicates a multiplier was used...
+	if( lpsi->nMax > 65400 )
+	{ // Apply multipler
+		int MULT = lpsi->nMax - 65400 + 1; // 65401 => MULT = 2
+		lpsi->nMax      *= MULT;
+		lpsi->nPos      *= MULT;
+		lpsi->nTrackPos *= MULT; // This own has to be set by the user.
+	}
+	return 1; // sucess!
 }
 #else
 #define MyGetScrollInfo GetScrollInfo
@@ -217,7 +239,9 @@ bool ViewImpl::ReSetScrollInfo()
 	// 縦はnPageとnMaxはとりあえず補正
 	// nPosは場合によって直し方が異なるので別ルーチンにて
 	udScr_.nPage = cy / NZero(cvs_.getPainter().H()) + 1;
-	udScr_.nMax  = vln() + udScr_.nPage - 2;
+	// Adjust so that scroll bar appears only when we are shy oneline from the page.
+	udScr_.nMax  = vln() + udScr_.nPage - Max( 2, Min<int>( udScr_.nPage-1, doc_.tln()+1 ) );
+	//udScr_.nMax  = vln() + udScr_.nPage - 2; // Old code (not so nice)
 
 	// 横スクロールが起きたらtrue
 	return (prevRlPos != rlScr_.nPos);
@@ -243,15 +267,8 @@ ulong ViewImpl::tl2vl( ulong tl ) const
 
 void ViewImpl::UpdateScrollBar()
 {
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>=305)
 	::MySetScrollInfo( hwnd_, SB_HORZ, &rlScr_, TRUE );
 	::MySetScrollInfo( hwnd_, SB_VERT, &udScr_, TRUE );
-#else
-	::SetScrollRange( hwnd_, SB_HORZ, rlScr_.nMin, rlScr_.nMax, FALSE );
-	::SetScrollPos( hwnd_, SB_HORZ, rlScr_.nPos, TRUE );
-	::SetScrollRange( hwnd_, SB_VERT, udScr_.nMin, udScr_.nMax, FALSE );
-	::SetScrollPos( hwnd_, SB_VERT, udScr_.nPos, TRUE );
-#endif
 }
 
 ReDrawType ViewImpl::TextUpdate_ScrollBar
@@ -406,25 +423,14 @@ void ViewImpl::ScrollView( int dx, int dy, bool update )
 			dx = rlScr_.nMax-rlScr_.nPage-rlScr_.nPos+1;
 
 		rlScr_.nPos += dx;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>=305)
 		::MySetScrollInfo( hwnd_, SB_HORZ, &rlScr_, TRUE );
-#else
-		::SetScrollPos( hwnd_, SB_HORZ, rlScr_.nPos, TRUE );
-#endif
 		dx = -dx;
 	}
 	if( dy != 0 )
 	{
 		// 範囲チェック…は前処理で終わってる。
-
 		udScr_.nPos += dy;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>350)
-		::SetScrollInfo( hwnd_, SB_VERT, &udScr_, TRUE );
-#elif defined(TARGET_VER) && TARGET_VER<=350 && TARGET_VER>300
 		::MySetScrollInfo( hwnd_, SB_VERT, &udScr_, TRUE );
-#else
-		::SetScrollPos( hwnd_, SB_VERT, udScr_.nPos, TRUE );
-#endif
 		dy *= -H;
 	}
 	if( dx!=0 || dy!=0 )
@@ -493,17 +499,13 @@ void ViewImpl::on_hscroll( int code, int pos )
 	case SB_PAGELEFT:  dx= -(cx()>>1); break;
 	case SB_PAGERIGHT: dx= +(cx()>>1); break;
 	case SB_THUMBTRACK:
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>=305)
-		{
-			SCROLLINFO si = { sizeof(SCROLLINFO), SIF_TRACKPOS };
-			si.nTrackPos = pos;
-			::MyGetScrollInfo( hwnd_, SB_HORZ, &si );
-			dx = si.nTrackPos - rlScr_.nPos;
-			break;
-		}
-#else
-		dx = pos - rlScr_.nPos; break;
-#endif
+	{
+		SCROLLINFO si = { sizeof(SCROLLINFO), SIF_TRACKPOS };
+		si.nTrackPos = pos;
+		::MyGetScrollInfo( hwnd_, SB_HORZ, &si );
+		dx = si.nTrackPos - rlScr_.nPos;
+		break;
+	}
 	case SB_LEFT:    dx = -rlScr_.nPos; break;
 	case SB_RIGHT:   dx = rlScr_.nMax+1-(signed)rlScr_.nPage-rlScr_.nPos; break;
 	}
@@ -524,17 +526,13 @@ void ViewImpl::on_vscroll( int code, int pos )
 	case SB_PAGEUP:   dy= -( cy() / NZero(cvs_.getPainter().H()) ); break;
 	case SB_PAGEDOWN: dy= +( cy() / NZero(cvs_.getPainter().H()) ); break;
 	case SB_THUMBTRACK:
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>=305)
-		{
-			SCROLLINFO si = { sizeof(SCROLLINFO), SIF_TRACKPOS };
-			si.nTrackPos = pos; // in case
-			::MyGetScrollInfo( hwnd_, SB_VERT, &si );
-			dy = si.nTrackPos - udScr_.nPos;
-			break;
-		}
-#else
-		dy = pos - udScr_.nPos; break;
-#endif
+	{
+		SCROLLINFO si = { sizeof(SCROLLINFO), SIF_TRACKPOS };
+		si.nTrackPos = pos; // in case
+		::MyGetScrollInfo( hwnd_, SB_VERT, &si );
+		dy = si.nTrackPos - udScr_.nPos;
+		break;
+	}
 	case SB_TOP:      dy = -udScr_.nPos; break;
 	case SB_BOTTOM:   dy = udScr_.nMax+1-(signed)udScr_.nPage-udScr_.nPos; break;
 	}
@@ -555,7 +553,13 @@ int ViewImpl::getNumScrollLines( void )
 	// If the number of lines is larger than a single page then we only scroll a page.
 	// This automatically takes into account the page scroll mode where
 	// SPI_GETWHEELSCROLLLINES value if 0xFFFFFFFF.
-	return (int)Min( scrolllines, (uint)cy() / (uint)NZero(cvs_.getPainter().H()) );
+	uint nlpage;
+	if ( cy() < cvs_.getPainter().H() )
+		nlpage = 1;
+	else
+		nlpage = Max( (uint)cy() / (uint)NZero(cvs_.getPainter().H()), 1U );
+	// scrolllines can be zero, in this case no scroll should occur.
+	return (int)Min( scrolllines, nlpage );
 }
 
 void ViewImpl::on_wheel( short delta )
