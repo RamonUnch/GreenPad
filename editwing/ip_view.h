@@ -374,6 +374,7 @@ public:
 	void on_hscroll( int code, int pos );
 	void on_vscroll( int code, int pos );
 	void on_wheel( short delta );
+	void on_hwheel( short delta );
 
 	void GetVPos( int x, int y, VPos* vp, bool linemode=false ) const;
 	void GetOrigin( int* x, int* y ) const;
@@ -381,6 +382,7 @@ public:
 	void ScrollTo( const VPos& vp );
 	int  GetLastWidth( ulong tl ) const;
 	int  getNumScrollLines( void );
+	int  getNumScrollRaws( void );
 
 public:
 
@@ -402,6 +404,7 @@ private:
 	ulong            vlNum_;
 	ulong            textCx_;
 	short            accdelta_;
+	short            accdeltax_;
 
 private:
 

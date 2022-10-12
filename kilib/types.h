@@ -50,4 +50,8 @@ typedef struct tagGLYPHSET {
 } GLYPHSET, *PGLYPHSET, *LPGLYPHSET;
 #endif
 
+#ifndef SPI_GETWHEELSCROLLCHARS
+#define SPI_GETWHEELSCROLLCHARS 0x006C
+#endif
+
 #endif // _KILIB_TYPES_H_
