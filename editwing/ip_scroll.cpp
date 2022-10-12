@@ -140,7 +140,7 @@ void Canvas::CalcWrapWidth()
 		wrapWidth_ = 0xffffffff;
 		break;
 	case RIGHTEDGE:
-		wrapWidth_ = txtZone_.right - txtZone_.left - 3;
+		wrapWidth_ = txtZone_.right - txtZone_.left - font_->W() - 3;
 		break; //Caret‚Ì•ª-3•â³
 	default:
 		wrapWidth_ = wrapType_ * font_->W();
@@ -276,7 +276,6 @@ ulong ViewImpl::tl2vl( ulong tl ) const
 
 void ViewImpl::UpdateScrollBar()
 {
-	const int H =  cvs_.getPainter().H();
 	::MySetScrollInfo( hwnd_, SB_HORZ, &rlScr_, TRUE );
 	::MySetScrollInfo( hwnd_, SB_VERT, &udScr_, TRUE );
 }
