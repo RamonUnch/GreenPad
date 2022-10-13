@@ -140,7 +140,7 @@ void Canvas::CalcWrapWidth()
 		wrapWidth_ = 0xffffffff;
 		break;
 	case RIGHTEDGE:
-		wrapWidth_ = txtZone_.right - txtZone_.left - font_->W() - 3;
+		wrapWidth_ = txtZone_.right - txtZone_.left - font_->W()/2 - 1;
 		break; //CaretÇÃï™-3ï‚ê≥
 	default:
 		wrapWidth_ = wrapType_ * font_->W();
@@ -233,7 +233,7 @@ bool ViewImpl::ReSetScrollInfo()
 //	rlScr_.nMax  = Max( textCx_, cx );
 //	rlScr_.nPos  = Min<int>( rlScr_.nPos, rlScr_.nMax-rlScr_.nPage+1 );
 	rlScr_.nPage = cx + 1;
-	rlScr_.nMax  = Max( textCx_+cvs_.getPainter().W()+3, cx );
+	rlScr_.nMax  = Max( textCx_+cvs_.getPainter().W()/2+1, cx );
 	rlScr_.nPos  = Min<int>( rlScr_.nPos, rlScr_.nMax-rlScr_.nPage+1 );
 
 	// ècÇÕnPageÇ∆nMaxÇÕÇ∆ÇËÇ†Ç¶Ç∏ï‚ê≥
