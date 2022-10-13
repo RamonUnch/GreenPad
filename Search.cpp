@@ -73,7 +73,10 @@ void SearchManager::on_init()
 	if( bRegExp_ )
 		SendMsgToItem( IDC_REGEXP, BM_SETCHECK, BST_CHECKED );
 
-	if( edit_.getCursor().isSelected() )
+	const VPos *stt, *end;
+	edit_.getCursor().getCurPos( &stt, &end );
+	// Set non multiline selection as find string.
+	if( edit_.getCursor().isSelected() && stt->tl == end->tl )
 	{
 		// 選択されている状態では、基本的にそれをボックスに表示
 		ulong dmy;
@@ -450,6 +453,7 @@ void SearchManager::ReplaceAllImpl()
 	// Get selection position
 	const VPos *stt, *end;
 	edit_.getCursor().getCurPos( &stt, &end );
+	DPos oristt = *stt;
 
 	// Set begining and end for replace all
 	// if multi-line selection
@@ -462,7 +466,7 @@ void SearchManager::ReplaceAllImpl()
 		dend = *end; // End of selection
 	}
 
-	// 文書の頭から検索
+	// 文書の頭から検索, Search from the beginning of the document (or selection)
 	int dif=0;
 	DPos b, e;
 	while( FindNextFromImpl( s, &b, &e ) && (noselection || e <= dend) )
@@ -482,7 +486,15 @@ void SearchManager::ReplaceAllImpl()
 		edit_.getDoc().Execute( mcr );
 		// カーソル移動
 		e.ad = b.ad + ulen;
-		edit_.getCursor().MoveCur( e, false );
+		if (noselection)
+		{
+			edit_.getCursor().MoveCur( e, false );
+		}
+		else
+		{ // Re-select the text that was modified if needed.
+			edit_.getCursor().MoveCur( oristt, false );
+			edit_.getCursor().MoveCur( DPos(dend.tl, dend.ad+dif), true );
+		}
 		// 閉じる？
 		End( IDOK );
 	}
