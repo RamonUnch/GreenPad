@@ -20,7 +20,29 @@ struct CaseSensitive
 struct IgnoreCase
 {
 	static unicode map( unicode c )
-		{ return (L'a'<=c && c<=L'z' ? c-L'a'+L'A' : c); }
+	{ // Map to uppercase everything.
+		if( c < 128 ) // ASCII
+		{
+			if( L'a'<=c && c<=L'z' )
+				return c - L'a' + L'A';
+			return c;
+		}
+	// Non ASCII characters...
+	#if _UNICODE
+		return (unicode)(LONG_PTR)::CharUpperW( (wchar_t *)(LONG_PTR)c ) ;
+	#else
+		char buf[4];
+		BOOL defcharused=FALSE;
+		if( ::WideCharToMultiByte( CP_ACP, 0, &c, 1, buf, 4, NULL, &defcharused ) != 1 || defcharused )
+			return c; // Cannot convert to a single char!
+
+		char uc = (char)(LONG_PTR)::CharUpperW( (wchar_t *)(LONG_PTR)((uchar)buf[0]) ) ;
+		unicode uuc;
+		if( ::MultiByteToWideChar( CP_ACP, 0, &uc, 1, &uuc, 1 ))
+			return uuc;
+		return c; // Convertion failed!
+	#endif
+	}
 	static bool not_equal( unicode c1, unicode c2 )
 		{ return map(c1)!=map(c2); }
 };
