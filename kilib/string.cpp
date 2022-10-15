@@ -4,10 +4,109 @@
 #include "string.h"
 using namespace ki;
 
+static wchar_t SingleCharUpperW_nonNT(wchar_t c)
+{
+	char buf[4];
+	BOOL defcharused=FALSE;
+	if( ::WideCharToMultiByte( CP_ACP, 0, &c, 1, buf, 4, NULL, &defcharused ) != 1 || defcharused )
+		return c; // Cannot convert to a single char!
+
+	char uc = (char)(LONG_PTR)::CharUpperA( (char *)(LONG_PTR)((uchar)buf[0]) ) ;
+	unicode uuc;
+	if( ::MultiByteToWideChar( CP_ACP, 0, &uc, 1, &uuc, 1 ))
+		return uuc;
+	return c; // Convertion failed!
+}
+wchar_t * WINAPI my_CharUpperWW(wchar_t *s)
+{
+	if( !( (LONG_PTR)s &0xffff0000 ) )
+	{
+		wchar_t c = (wchar_t)(LONG_PTR)s;
+		return (wchar_t *)(LONG_PTR)SingleCharUpperW_nonNT( c );
+	}
+	else
+	{
+		wchar_t *os = s;
+		while( (*s = SingleCharUpperW_nonNT( *s )) )
+			*s++;
+		return os;
+	}
+}
+
+static wchar_t SingleCharLowerW_nonNT(wchar_t c)
+{
+	char buf[4];
+	BOOL defcharused=FALSE;
+	if( ::WideCharToMultiByte( CP_ACP, 0, &c, 1, buf, 4, NULL, &defcharused ) != 1 || defcharused )
+		return c; // Cannot convert to a single char!
+
+	char uc = (char)(LONG_PTR)::CharLowerA( (char *)(LONG_PTR)((uchar)buf[0]) ) ;
+	unicode uuc;
+	if( ::MultiByteToWideChar( CP_ACP, 0, &uc, 1, &uuc, 1 ))
+		return uuc;
+	return c; // Convertion failed!
+}
+wchar_t * WINAPI my_CharLowerWW(wchar_t *s)
+{
+	if( !( (LONG_PTR)s &0xffff0000 ) )
+	{
+		wchar_t c = (wchar_t)(LONG_PTR)s;
+		return (wchar_t *)(LONG_PTR)SingleCharLowerW_nonNT( c );
+	}
+	else
+	{
+		wchar_t *os = s;
+		while( (*s = SingleCharLowerW_nonNT( *s )) )
+			*s++;
+		return os;
+	}
+}
+wchar_t my_CharUpperSingleW(wchar_t c)
+{
+#if defined(UNICOWS) || !defined(_UNICODE)
+	if( App::isNT() )
+		return (wchar_t)(LONG_PTR)::CharUpperW( (wchar_t *)(LONG_PTR)c );
+	else
+		return SingleCharUpperW_nonNT(c);
+#else
+	return (wchar_t)(LONG_PTR)::CharUpperW( (wchar_t *)(LONG_PTR)c );
+#endif
+}
+wchar_t my_CharLowerSingleW(wchar_t c)
+{
+#if defined(UNICOWS) || !defined(_UNICODE)
+	if( App::isNT() )
+		return (wchar_t)(LONG_PTR)::CharLowerW( (wchar_t *)(LONG_PTR)c );
+	else
+		return SingleCharLowerW_nonNT(c);
+#else
+	return (wchar_t)(LONG_PTR)::CharLowerW( (wchar_t *)(LONG_PTR)c );
+#endif
+}
+static BOOL my_IsCharLowerW_nonNT(wchar_t c)
+{
+	char buf[4];
+	BOOL defcharused=FALSE;
+	if( ::WideCharToMultiByte( CP_ACP, 0, &c, 1, buf, 4, NULL, &defcharused ) != 1 || defcharused )
+		return FALSE; // Cannot convert to a single char!
+
+	return ::IsCharLowerA( buf[0] );
+}
+BOOL my_IsCharLowerW(wchar_t c)
+{
+#if defined(UNICOWS) || !defined(_UNICODE)
+	if( App::isNT() )
+		return ::IsCharLowerW( c );
+	else
+		return my_IsCharLowerW_nonNT(c);
+#else
+	return ::IsCharLowerW( c );
+#endif
+
+}
 
 
 //=========================================================================
-
 String::StringData* String::nullData_;
 #if !defined(_UNICODE) && defined(_MBCS)
 char                String::lb_[256];

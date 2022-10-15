@@ -483,6 +483,10 @@ void ViewImpl::on_paint( const PAINTSTRUCT& ps )
 	Painter& p = cvs_.getPainter();
 	VDrawInfo v( ps.rcPaint );
 	GetDrawPosInfo( v );
+//	Uncomment if you want to see the drawing.
+//	FillRect( ps.hdc, &ps.rcPaint, (HBRUSH)(COLOR_HIGHLIGHT+1) );
+//	GdiFlush( );
+//	Sleep( 200 );
 
 	if( ps.rcPaint.right <= lna()  )
 	{
