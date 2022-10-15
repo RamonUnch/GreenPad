@@ -18,6 +18,14 @@
 	#define my_lstrcmp my_lstrcmpA
 #endif
 
+wchar_t * WINAPI my_CharUpperWW(wchar_t *s);
+wchar_t * WINAPI my_CharLowerWW(wchar_t *s);
+#define my_CharUpperW my_CharUpperWW
+#define my_CharLowerW my_CharLowerWW
+wchar_t my_CharUpperSingleW(wchar_t c);
+wchar_t my_CharLowerSingleW(wchar_t c);
+BOOL my_IsCharLowerW(wchar_t c);
+
 inline static
 unicode* my_lstrcpyW( unicode* const d, const unicode* s )
 {
@@ -56,7 +64,7 @@ size_t my_lstrlenA( const char* const d )
 	for(n=d; *n; ++n);
 	return static_cast<size_t>(n-d);
 }
-static inline 
+static inline
 int my_lstrcmpA(const char *X, const char *Y)
 {
    	while (*X && *X == *Y) { X++; Y++; }
@@ -67,7 +75,7 @@ static inline
 wchar_t *my_lstrcpynW(wchar_t *out, const wchar_t *in, int outlen)
 {
 	int i;
-	for (i=0; i<outlen && in[i]; i++) 
+	for (i=0; i<outlen && in[i]; i++)
 	{
 		out[i] = in[i];
 	}
@@ -78,7 +86,7 @@ static inline
 char *my_lstrcpynA(char *out, const char *in, int outlen)
 {
 	int i;
-	for (i=0; i<outlen && in[i]; i++) 
+	for (i=0; i<outlen && in[i]; i++)
 	{
 		out[i] = in[i];
 	}

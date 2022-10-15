@@ -689,12 +689,12 @@ void Cursor::Paste()
 unicode* WINAPI Cursor::InvertCaseW(unicode *str)
 {
 	if(!str) return NULL;
-	for(ulong i=0; str[i] != TEXT('\0'); i++)
+	for(ulong i=0; str[i] != L'\0'; i++)
 	{
-		if(IsCharLowerW(str[i]))
-			str[i] = (wchar_t)(LONG_PTR)CharUpperW((wchar_t *)(LONG_PTR)(str[i]));
+		if(my_IsCharLowerW(str[i]))
+			str[i] = my_CharUpperSingleW(str[i]);
 		else
-			str[i] = (wchar_t)(LONG_PTR)CharLowerW((wchar_t *)(LONG_PTR)(str[i]));
+			str[i] = my_CharLowerSingleW(str[i]);
 	}
 	return str;
 }
@@ -779,11 +779,19 @@ void Cursor::ModSelection(ModProc mfunk)
 }
 void Cursor::UpperCaseSel()
 {
+#if defined(UNICOWS) || !defined(_UNICODE)
+	ModSelection(App::isNT()? CharUpperW: my_CharUpperW);
+#else
 	ModSelection(CharUpperW);
+#endif
 }
 void Cursor::LowerCaseSel()
 {
+#if defined(UNICOWS) || !defined(_UNICODE)
+	ModSelection(App::isNT()? CharLowerW: my_CharLowerW);
+#else
 	ModSelection(CharLowerW);
+#endif
 }
 void Cursor::InvertCaseSel()
 {
