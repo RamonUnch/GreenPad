@@ -697,7 +697,7 @@ void GreenPadWnd::on_datetime()
 	TCHAR buf[255], tmp[255]=TEXT("");
 	const TCHAR *lpFormat = g.len()?const_cast<TCHAR*>(g.c_str()):TEXT("HH:mm yyyy/MM/dd");
 #ifdef WIN32S
-	if( !app().isNT )
+	if( !app().isNT() )
 	{	// Dynamically import GetTime/DateFormat on win32s build
 		// So that it can run on NT3.1
 		typedef int (WINAPI *GetDTFormat_type)( LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCTSTR lpFormat, LPTSTR lpTimeStr,int cchTime);
@@ -709,7 +709,7 @@ void GreenPadWnd::on_datetime()
 			MyGetDateFormatA( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
 		
 		edit_.getCursor().Input( tmp, my_lstrlen(tmp) );
-		return
+		return;
 	}
 #endif
 
