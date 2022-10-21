@@ -16,6 +16,7 @@ using namespace ki;
 		{
 			TRYLBL:
 			void *ret = ::HeapAlloc( g_heap, HEAP_NO_SERIALIZE, siz );
+			//void *ret = ::VirtualAlloc(NULL, siz, MEM_COMMIT, PAGE_READWRITE);
 			if (!ret) {
 				DWORD ans = MessageBox(GetActiveWindow(), TEXT("Unable to allocate memory!"), NULL, MB_ABORTRETRYIGNORE|MB_TASKMODAL);
 				switch(ans) {
@@ -31,6 +32,7 @@ using namespace ki;
 			if (ptr != NULL)
 			{   // It is not Guarenteed that HeapFree can free NULL.
 				::HeapFree( g_heap, HEAP_NO_SERIALIZE, ptr );
+				//::VirtualFree(ptr, MEM_RELEASE, 0);
 			}
 		}
 
@@ -540,12 +542,8 @@ MemoryManager* MemoryManager::pUniqueInstance_;
 MemoryManager::MemoryManager()
 {
 #ifdef SUPERTINY
-	// g_heap = ::GetProcessHeap();
-	// Create our own non-serialized heap
-	// Because we only use single thread (may change later)
-	g_heap = ::HeapCreate( HEAP_NO_SERIALIZE, 1, 0 );
+	g_heap = ::GetProcessHeap();
 #endif
-
 	// 唯一のインスタンスは私です
 	pUniqueInstance_ = this;
 }
