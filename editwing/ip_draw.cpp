@@ -278,6 +278,9 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 		DWORD frlen = myGetFontUnicodeRanges( dc_, NULL );
 		if( frlen && (fontranges_ = (GLYPHSET*) new BYTE[frlen]) )
 		{
+			mem00(fontranges_, frlen);
+			fontranges_->cbThis = frlen;
+			fontranges_->flAccel = 0;
 			if(frlen != myGetFontUnicodeRanges( dc_, fontranges_ ))
 			{ // Failed!
 				delete [] ((BYTE*)fontranges_);
@@ -285,7 +288,7 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 			}
 		}
 	}
-	// ::ReleaseDC(::WindowFromDC(dc_), dc_);
+//	::ReleaseDC(::WindowFromDC(dc_), dc_);
 }
 
 Painter::~Painter()
