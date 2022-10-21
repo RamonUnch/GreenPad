@@ -223,7 +223,7 @@ static bool compare_i(const unicode* a,const unicode* b,ulong l)
 class TagMap
 {
 	Keyword* tag_[3]; // 0:CE 1:CB 2:LB
-	bool esc_, q1_, q2_, map_[128];
+	bool esc_, q1_, q2_, map_[768]; // 128
 
 public:
 
@@ -274,6 +274,7 @@ public:
 		int i;
 		ulong ans=0;
 		for( sym=sXXX, mlen=1; ans<len; ++ans )
+		{
 			if( map_[str[ans]] )
 			{
 				for( i=2; i>=0; --i )
@@ -310,6 +311,7 @@ public:
 						++ans;
 				}
 			}
+		}
 
 	symbolfound:
 		return ans;
