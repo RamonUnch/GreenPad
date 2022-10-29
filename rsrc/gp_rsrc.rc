@@ -27,8 +27,8 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,5,0
- PRODUCTVERSION 1,1,5,0
+ FILEVERSION 1,1,6,0
+ PRODUCTVERSION 1,1,6,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -50,7 +50,7 @@ BEGIN
             VALUE "LegalCopyright", "Written by k.inaba 2002-2008\0"
             VALUE "OriginalFilename", "GreenPad.exe\0"
             VALUE "ProductName", "GreenPad\0"
-            VALUE "ProductVersion", "1.15.0\0"
+            VALUE "ProductVersion", "1.16.0\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -405,6 +405,7 @@ BEGIN
     VK_ESCAPE,      ID_CMD_QUICKEXIT,       VIRTKEY, NOINVERT
     VK_DELETE,      ID_CMD_CUT,             VIRTKEY, SHIFT, NOINVERT
     VK_F3,          ID_CMD_FINDNEXT,        VIRTKEY, NOINVERT
+    VK_F2,          ID_CMD_FINDPREV,        VIRTKEY, NOINVERT
     VK_F3,          ID_CMD_FINDPREV,        VIRTKEY, SHIFT, NOINVERT
     VK_F4,          ID_CMD_EXIT,            VIRTKEY, CONTROL, NOINVERT
     VK_F5,          ID_CMD_REFRESHFILE,     VIRTKEY, NOINVERT
