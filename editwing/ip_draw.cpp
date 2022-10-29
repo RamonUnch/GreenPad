@@ -212,14 +212,20 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 // 線を引くとか四角く塗るとか、そーいう基本的な処理
 //-------------------------------------------------------------------------
 static int wtable[65536]; // static width table
+static const uchar ctlMap[32] = {
+	'0','1','2','3','4','5','6','7',
+	'8','>','A','B','C','D','E','F',
+	'G','H','I','J','K','L','M','N',
+	'O','P','Q','R','S','T','U','V',
+};
 Painter::Painter( HDC hdc, const VConfig& vc )
 	: dc_        ( hdc )
 	, font_      ( ::CreateFontIndirect( &vc.font ) )
 	, pen_       ( ::CreatePen( PS_SOLID, 0, vc.color[CTL] ) )
 	, brush_     ( ::CreateSolidBrush( vc.color[BG] ) )
 //	, widthTable_( new int[65536] )
-	, fontranges_( NULL )
 	, widthTable_( wtable )
+	, fontranges_( NULL )
 {
 	// 制御文字を描画するか否か？のフラグを記憶,
 	// Whether to draw control characters or not? flag is stored.
@@ -247,12 +253,7 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 #endif
 	const unicode zsp=0x3000; // L'　'
 	W(&zsp); // Initialize width of L'　'
-	const unicode nbsp=0x00A0;
-	W(&nbsp); // Initialize width of non-break space
-	// TODO: Narrow Non-Break Space 0x202F.
-	// We Must do like with ZSP (0x3000) in the Parser.
 
-	widthTable_[L'\t'] = NZero(W() * Max(1, vc.tabstep));
 	// 下位サロゲートは文字幅ゼロ (Lower surrogates have zero character width)
 	mem00( widthTable_+0xDC00, (0xE000 - 0xDC00)*sizeof(int) );
 	// 数字の最大幅を計算, Calculate maximum width of numbers
@@ -260,6 +261,17 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 	for( unicode ch=L'0'; ch<=L'9'; ++ch )
 		if( figWidth_ < widthTable_[ch] )
 			figWidth_ = widthTable_[ch];
+	for( unicode ch=L'\0'; ch<L' '; ++ch )
+		widthTable_[ch]  =  widthTable_[ctlMap[ch]];
+	widthTable_[127] = widthTable_[L'Z']; // DEL  shown as Z
+	if( sc(scZSP) )
+		widthTable_[0x00A0]=widthTable_[L'^']; // show NBSP like ^
+	// C1 Controls shown as X
+	for (unicode ch=128; ch<=159; ++ch)
+		widthTable_[ch] = widthTable_[L'X'];
+
+	// Set the width of a Tabulation
+	widthTable_[L'\t'] = NZero(W() * Max(1, vc.tabstep));
 
 	// 高さの情報, Height Information
 	TEXTMETRIC met;
@@ -655,7 +667,7 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 				// 描画, Drawing
 				switch( str[i] )
 				{
-				case L'\t':
+				case L'\t': // 9
 					if( p.sc(scTAB) )
 					{
 						p.SetColor( clr=CTL );
@@ -679,6 +691,15 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 						p.DrawZSP( x+v.XBASE, a.top, i2-i );
 					break;
 				default:
+					const unicode u = str[i] ;
+					if( u <= 31 || (127 <=u && u <= 159) )
+					{ // ASCII C0 and C1 Control caracters
+						p.SetColor( clr=CTL );
+						unicode c = str[i];
+						c = c<32? ctlMap[c]: c==127? L'Z': L'X';
+						p.CharOut( c, x+v.XBASE, a.top );
+						break;
+					}
 					if( clr != (flg[i]&3) )
 						p.SetColor( clr=(flg[i]&3) );
 					p.StringOut( str+i, i2-i, x+v.XBASE, a.top );

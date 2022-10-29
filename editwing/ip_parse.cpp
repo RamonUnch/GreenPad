@@ -231,9 +231,9 @@ public:
 		    const unicode* ce, ulong celen,
 		    const unicode* lb, ulong lblen,
 		    bool q1, bool q2, bool esc )
-		: q1_ ( q1 )
+		: esc_( esc )
+		, q1_ ( q1 )
 		, q2_ ( q2 )
-		, esc_( esc )
 	{
 		// '/' で始まる記号は使われているか…？
 		// みたいな、１文字目のみのチェックに使う表を作成
@@ -417,8 +417,8 @@ public:
 		bool q1, bool q2, bool esc,
 		bool casesensitive
 	)
-		: tag_( cb, cblen, ce, celen, lb, lblen, q1, q2, esc )
-		, kwd_( casesensitive )
+		: kwd_( casesensitive )
+		, tag_( cb, cblen, ce, celen, lb, lblen, q1, q2, esc )
 	{
 	}
 
@@ -436,7 +436,7 @@ public:
 		// ASCII振り分けテーブル。
 		// シフト無しでTokenTypeに流用出来るようにするため、
 		// 値が４飛びになってます
-		enum { T=0, W=4, A=8, S=12, O=0 };
+		enum { T=0, W=4, A=8, S=12, O=12 };
 		static const uchar letter_type[768] = {
 			O,O,O,O,O,O,O,O,O,T,O,O,O,O,O,O, // NULL-SHI_IN
 			O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O, // DLE-US
