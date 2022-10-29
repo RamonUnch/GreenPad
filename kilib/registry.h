@@ -62,7 +62,7 @@ private:
 
 	Path   iniName_;
 	String section_;
-	char m_StrBuf[256];
+//	char m_StrBuf[256];
 };
 
 
