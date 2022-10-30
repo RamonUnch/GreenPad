@@ -151,9 +151,9 @@ void DocImpl::Fire_MODIFYFLAGCHANGE()
 //-------------------------------------------------------------------------
 
 UnReDoChain::Node::Node( Command* c, Node* p, Node* n )
-	: cmd_ ( c )
+	: next_( n )
 	, prev_( p )
-	, next_( n )
+	, cmd_ ( c )
 {
 }
 
@@ -175,8 +175,8 @@ void UnReDoChain::Node::ResetCommand( Command* cmd )
 }
 
 UnReDoChain::UnReDoChain()
-	: lastOp_  ( &headTail_ )
-	, savedPos_( &headTail_ )
+	: savedPos_( &headTail_ )
+	, lastOp_  ( &headTail_ )
 	, num_     ( 0 )
 	, limit_   ( static_cast<ulong>(-1) )
 {

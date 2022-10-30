@@ -42,14 +42,14 @@ size_t my_lstrlenW( const unicode* const d )
 static inline
 int my_lstrcmpW(const unicode *X, const unicode *Y)
 {
-   	while (*X && *X == *Y) { X++; Y++; }
-   	return *(const unicode*)X - *(const unicode*)Y;
+	while (*X && *X == *Y) { X++; Y++; }
+	return *(const unicode*)X - *(const unicode*)Y;
 }
 static inline
 bool my_instringW(const unicode *X, const unicode *Y)
 { // return true if we find Y in the X string.
-   	while (*X && *X == *Y) { X++; Y++; }
-   	return !*Y; // Match if we reached the end of Y
+	while (*X && *X == *Y) { X++; Y++; }
+	return !*Y; // Match if we reached the end of Y
 }
 inline static
 char* my_lstrcpyA( char* const d, const char* s )
@@ -67,8 +67,8 @@ size_t my_lstrlenA( const char* const d )
 static inline
 int my_lstrcmpA(const char *X, const char *Y)
 {
-   	while (*X && *X == *Y) { X++; Y++; }
-   	return *(const unsigned char*)X - *(const unsigned char*)Y;
+	while (*X && *X == *Y) { X++; Y++; }
+	return *(const unsigned char*)X - *(const unsigned char*)Y;
 }
 
 static inline

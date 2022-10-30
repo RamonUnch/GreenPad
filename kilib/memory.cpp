@@ -169,7 +169,7 @@ using namespace ki;
 		}
 		return dest;
 	}
-	#pragma GCC pop_options
+	#pragma GCC pop_options ("O3")
 	#endif
 
 	#ifdef __GNUC__
@@ -462,8 +462,11 @@ MemoryManager::MemoryManager()
 	g_heap = ::HeapCreate( HEAP_NO_SERIALIZE, 1, 0 );
 #endif
 
+	static FixedSizeMemBlockPool staticpools[SMALL_MAX];
+	pools_ = staticpools;
 	// メモリプールをZEROクリア
-	mem00( pools_, sizeof(pools_) );
+//	pools_ = new FixedSizeMemBlockPool[ SMALL_MAX ];
+//	mem00( pools_, /*sizeof(pools_)*/ sizeof(FixedSizeMemBlockPool) * SMALL_MAX );
 
 	// 唯一のインスタンスは私です
 	pUniqueInstance_ = this;
@@ -476,6 +479,7 @@ MemoryManager::~MemoryManager()
 		if( pools_[i].isValid() )
 			pools_[i].Destruct();
 
+//	delete [] pools_;
 #if defined(SUPERTINY)
 	::HeapDestroy( g_heap );
 #if defined(_DEBUG)
