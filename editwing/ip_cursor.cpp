@@ -639,9 +639,16 @@ void Cursor::Copy()
 				, NULL, MB_OK|MB_TASKMODAL|MB_TOPMOST) ;
 			return;
 		}
-		doc_.getText( static_cast<unicode*>(::GlobalLock(h)), dm, dM );
+		unicode *uh = static_cast<unicode*>(::GlobalLock(h));
+		doc_.getText( uh, dm, dM );
+		// Replace null characters by spaces when copying.
+		for (ulong i=0; i < len; i++ )
+			if( uh[i] == L'\0' )
+				uh[i] = L' ';
+		uh[len] = L'\0'; // in case.
 		::GlobalUnlock( h );
-		clp.SetData( CF_UNICODETEXT, h );
+		if( !clp.SetData( CF_UNICODETEXT, h ) )
+			GlobalFree(h); // Could not set data
 	}
 
 #if !defined(_UNICODE) || defined(UNICOWS)
@@ -660,12 +667,18 @@ void Cursor::Copy()
 		unicode *p = new unicode[len+1];
 		if(!p) return;
 		doc_.getText( p, dm, dM );
+		// Replace null characters by spaces when copying.
+		for (ulong i=0; i < len; i++ )
+			if( p[i] == L'\0' )
+				p[i] = L' ';
+		p[len] = L'\0'; // in case.
 
 		::WideCharToMultiByte( CP_ACP, 0, p, len+1,
 			static_cast<char*>(::GlobalLock(h)), (len+1)*3, NULL, NULL );
 		::GlobalUnlock( h );
-		clp.SetData( CF_TEXT, h );
 		delete [] p;
+		if( !clp.SetData( CF_TEXT, h ) )
+			GlobalFree(h); // Could not set data
 	}
 #endif // !defined(_UNICODE) || defined(UNICOWS)
 }
