@@ -117,26 +117,37 @@ protected:
 //	不完全な排他制御を行います。２本目のスレッド立ち上げの瞬間が危ない。
 //@}
 //=========================================================================
-
 class EzLockable
 {
 protected:
 	EzLockable()
-		{ ::InitializeCriticalSection( &csection_ ); }
+		{
+		#ifdef USE_THREADS
+			::InitializeCriticalSection( &csection_ ); 
+		#endif
+		}
 	~EzLockable()
-		{ ::DeleteCriticalSection( &csection_ ); }
+		{
+		#ifdef USE_THREADS
+			::DeleteCriticalSection( &csection_ ); 
+		#endif
+		}
 
 	struct AutoLock
 	{
 		AutoLock( EzLockable* host )
 		{
+		#ifdef USE_THREADS
 			if( NULL != (pCs_=(thd().isMT() ? &host->csection_ : NULL)) )
 				::EnterCriticalSection( pCs_ );
+		#endif
 		}
 		~AutoLock()
 		{
+		#ifdef USE_THREADS
 			if( pCs_ )
 				::LeaveCriticalSection( pCs_ );
+		#endif
 		}
 	private:
 		NOCOPY(AutoLock);
@@ -164,7 +175,7 @@ private:
 //	行います。万全を期すならかならずこのクラスを用いましょう。
 //@}
 //=========================================================================
-
+#if 0 // Not used.
 class Lockable
 {
 protected:
@@ -193,7 +204,7 @@ protected:
 private:
 	CRITICAL_SECTION csection_;
 };
-
+#endif // Not used
 
 
 //=========================================================================

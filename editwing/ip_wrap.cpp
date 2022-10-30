@@ -28,9 +28,9 @@ ViewImpl::ViewImpl( View& vw, DocImpl& dc )
 	: doc_   ( dc )
 	, cvs_   ( vw )
 	, cur_   ( vw.hwnd(), *this, dc )
-	, hwnd_  ( vw.hwnd() )
 	, vlNum_ ( 0 )
 	, textCx_( 0 )
+	, hwnd_  ( vw.hwnd() )
 {
 	// “K“–‚ÉÜ‚è•Ô‚µî•ñ‰Šú‰»
 	InsertMulti( 0, doc_.tln()-1 );

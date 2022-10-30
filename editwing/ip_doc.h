@@ -323,7 +323,10 @@ inline bool UnReDoChain::isModified() const
 //@}
 //=========================================================================
 
-class DocImpl : public Object, EzLockable, Runnable
+class DocImpl : public Object, EzLockable
+#ifdef USE_THREADS
+                             , Runnable
+#endif
 {
 public:
 

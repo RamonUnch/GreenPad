@@ -130,6 +130,7 @@ public:
 	//@{ •W€•¶š•, standard character width (pixel) //@}
 	int W() const { return widthTable_[ L'x' ]; }
 
+
 	//@{ Is the character is in the selected font? //@}
 	bool isInFontRange( const unicode ch ) const
 	{

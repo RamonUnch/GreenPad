@@ -92,10 +92,10 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 App* App::pUniqueInstance_;
 
 inline App::App()
-	: exitcode_    (-1)
+	: hOle32_      ((HINSTANCE)(-1))
+	, exitcode_    (-1)
 	, loadedModule_(0)
 	, hInst_       (::GetModuleHandle(NULL))
-	, hOle32_      ((HINSTANCE)(-1))
 {
 	// 唯一のインスタンスは私です。
 	pUniqueInstance_ = this;
@@ -260,9 +260,11 @@ namespace ki
 		App myApp;
 		{
 			LOGGER( "StartUp app ok" );
+			#ifdef USE_THREADS
 			ThreadManager myThr;
 			{
 				LOGGER( "StartUp thr ok" );
+			#endif
 				MemoryManager myMem;
 				{
 					LOGGER( "StartUp mem ok" );
@@ -276,7 +278,9 @@ namespace ki
 						}
 					}
 				}
-			}
+			#ifdef USE_THREADS
+			} // myThr, ~ThreadManager
+			#endif
 		}
 	}
 }
