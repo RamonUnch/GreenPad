@@ -28,7 +28,7 @@ wchar_t * WINAPI my_CharUpperWW(wchar_t *s)
 	{
 		wchar_t *os = s;
 		while( (*s = SingleCharUpperW_nonNT( *s )) )
-			*s++;
+			s++;
 		return os;
 	}
 }
@@ -57,7 +57,7 @@ wchar_t * WINAPI my_CharLowerWW(wchar_t *s)
 	{
 		wchar_t *os = s;
 		while( (*s = SingleCharLowerW_nonNT( *s )) )
-			*s++;
+			s++;
 		return os;
 	}
 }
