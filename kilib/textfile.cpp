@@ -805,7 +805,7 @@ namespace
 	{
 		// Only for Windows >= 4 (NT4/95+) because
 		// CharNextExA is not here on NT3.1 and is a stub on NT3.5
-		uNextFunc Window_CharNextExA;
+		uNextFunc Window_CharNextExA = (uNextFunc)NULL ;
 		if (app().isNewShell())
 		{
 			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandleA("USER32.DLL"), "CharNextExA");
@@ -1260,6 +1260,7 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 		::MessageBox(NULL, str, TEXT("Encoding"), MB_OK|MB_TASKMODAL|MB_TOPMOST);
 		cs_ = ::GetACP(); // default to ACP...
 	}
+	if( !cs_ ) cs_ = ::GetACP();
 
 
 	// 対応するデコーダを作成
@@ -1387,14 +1388,10 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 	}
 
 //-- chardet and MLang detection
-	if( app().isNewShell() )
-	{ // chardet works better when size > 64
-		if( siz > 80 )
-		{
-			cs = chardetAutoDetection( ptr, siz );
-			if( cs ) return cs;
-		}
-		cs = MLangAutoDetection( ptr, siz );
+	// chardet works better when size > 64
+	if( siz <= 80 )
+	{
+		cs = app().isNewShell()? MLangAutoDetection( ptr, siz ): 0;
 		if( cs ) return cs;
 	}
 	// chardet is the only auto detection method
@@ -1464,7 +1461,7 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 		DetectEncodingInfo detectEnc[5];
 		lang->DetectInputCodepage(MLDETECTCP_DBCS, 0, (char *)(ptr), (INT *)(&siz), detectEnc, &detectEncCount); // 2 ugly C-cast here
 
-# ifdef MLANG_DEBUG
+	# ifdef MLANG_DEBUG
 		TCHAR otmp[1024];
 		TCHAR stmp[64];
 		::wsprintf(otmp,TEXT("detectEncCount = %d\n"),detectEncCount);
@@ -1475,7 +1472,7 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 
 		}
 		::MessageBox(NULL,otmp,TEXT("MLangDetect"),0);
-# endif
+	# endif
 
 		// MLang fine tunes
 		if ( detectEncCount > 1 && detectEnc[0].nCodePage == 1252 ) // sometimes it gives multiple results with 1252 in the first
@@ -1511,11 +1508,11 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 			cs =  detectEnc[0].nCodePage;
 		}
 
-# ifdef MLANG_DEBUG
+	# ifdef MLANG_DEBUG
 		TCHAR tmp[10];
 		::wsprintf(tmp,TEXT("%d"),cs);
 		::MessageBox(NULL,tmp,TEXT("MLangDetect"),0);
-# endif
+	# endif
 
 		if (cs == 20127) cs = 0; // 20127 == ASCII, 0 = unknown
 		if (cs == 65000) cs = 0; // 65000 == UTF-7, let's disable misdetecting as UTF-7
@@ -1565,8 +1562,16 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 		chardet_data_end = (int(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_data_end");
 		chardet_get_charset = (int(__cdecl*)(chardet_t, char*, unsigned int))::GetProcAddress(hIL, "chardet_get_charset");
 		//chardet_reset = (int(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_reset");
+		
+		if( !(chardet_create && chardet_destroy && chardet_handle_data && chardet_data_end && chardet_get_charset) )
+		{
+			#ifdef MLANG_DEBUG
+			::MessageBox(NULL,TEXT("Unable to find all procs in chardet.dll"),NULL,0);
+			#endif
+			return cs;
+		}
 
-	    if( (chardet_create && chardet_destroy && chardet_handle_data && chardet_data_end && chardet_get_charset) && 0 == chardet_create(&pdet) )
+	    if( 0 == chardet_create(&pdet) )
 	    {
 			if(siz == 16384) siz-=1; // prevert off-by-one error
 			if(0 == chardet_handle_data(pdet, (const char *)ptr, siz))
@@ -1609,10 +1614,25 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 
 			}
 		}
+		else
+		{
+			#ifdef MLANG_DEBUG
+			::MessageBox(NULL,TEXT("chardet_create() failed!"),NULL,0);
+			#endif
+		}
 
+	}
+	else
+	{
+		#ifdef MLANG_DEBUG
+		::MessageBox(NULL,TEXT("Cannot Load CHARDET.DLL"),NULL,0);
+		#endif
 	}
 # undef STR2CP
 #endif //NO_CHARDET
+	#ifdef MLANG_DEBUG
+	::MessageBox(NULL,cs? TEXT("Chardet sucess!"): TEXT("Detection failed") ,TEXT("CHARDET"),0);
+	#endif
 	return cs;
 }
 
