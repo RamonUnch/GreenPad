@@ -13,9 +13,9 @@ using view::VPos;
 //-------------------------------------------------------------------------
 
 SearchManager::SearchManager( ki::Window& w, editwing::EwEdit& e )
-	: searcher_( NULL )
+	: DlgImpl( IDD_FINDREPLACE )
 	, edit_( e )
-	, DlgImpl( IDD_FINDREPLACE )
+	, searcher_( NULL )
 	, mainWnd_( w )
 	, bIgnoreCase_( true ) // 1.08 default true
 	, bRegExp_( false )

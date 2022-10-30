@@ -55,6 +55,7 @@ using namespace ki;
 	CHARSET_VALUE("‰¢•Ä",				"Latin-1",				"LTN1") \
 	CHARSET_VALUE("’†‰¢(DOS)",			"Latin-2(DOS)",			"LN2DOS") \
 	CHARSET_VALUE("’†‰¢",				"Latin-2",				"LTN2") \
+/*	CHARSET_VALUE("“ì‰¢(ISO)",			"Latin-3 (ISO)",		"LTN3")*/ \
 	CHARSET_VALUE("ƒLƒŠƒ‹Œê(IBM)",		"Cyrillic(IBM)",		"CYRIBM") \
 	CHARSET_VALUE("ƒLƒŠƒ‹Œê(MS-DOS)",	"Cyrillic(MS-DOS)",		"CYRDOS") \
 	CHARSET_VALUE("ƒLƒŠƒ‹Œê(Windows)",	"Cyrillic(Windows)",	"CYRL") \
@@ -159,6 +160,7 @@ CHARSETS_LIST
 	                               Enroll(  Western,        39 );
 	if( ::IsValidCodePage(852) )   Enroll(  CentralDOS,     40 );
 	if( ::IsValidCodePage(28592) ) Enroll(  Central,        41 );
+//	if( ::IsValidCodePage(28593) ) Enroll(  EsperantoISO,   42 );
 	if( ::IsValidCodePage(855) )   Enroll(  CyrillicIBM,    42 );
 	if( ::IsValidCodePage(866) )   Enroll(  CyrillicDOS,    43 );
 	if( ::IsValidCodePage(28595) ) Enroll(  Cyrillic,       44 );

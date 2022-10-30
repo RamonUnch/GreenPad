@@ -401,7 +401,7 @@ void GreenPadWnd::on_print()
 {
 	doc::Document& d = edit_.getDoc();
 	const unicode* buf;
-	ulong dpStart = 0, len = 0;
+	ulong /*dpStart = 0,*/ len = 0;
 	short procCopies = 0, totalCopies = 0;
 
 	// Setup print dialog
@@ -707,7 +707,7 @@ void GreenPadWnd::on_datetime()
 			MyGetTimeFormatA( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
 		if( MyGetDateFormatA )
 			MyGetDateFormatA( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
-		
+
 		edit_.getCursor().Input( tmp, my_lstrlen(tmp) );
 		return;
 	}
@@ -1246,10 +1246,10 @@ GreenPadWnd::ClsName GreenPadWnd::className_ = TEXT("GreenPad MainWnd");
 
 GreenPadWnd::GreenPadWnd()
 	: WndImpl  ( className_, WS_OVERLAPPEDWINDOW, WS_EX_ACCEPTFILES )
+	, search_  ( *this, edit_ )
 	, charSets_( cfg_.GetCharSetList() )
 	, csi_     ( cfg_.GetNewfileCsi() )
 	, lb_      ( cfg_.GetNewfileLB() )
-	, search_  ( *this, edit_ )
 {
 	LOGGER( "GreenPadWnd::Construct begin" );
 
