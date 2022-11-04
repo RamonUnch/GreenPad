@@ -18,26 +18,14 @@ using namespace editwing::view;
 //---- ip_cursor.cpp カーソルコントロール
 //=========================================================================
 
-#if defined(TARGET_VER) && TARGET_VER<351 && TARGET_VER>=305
+#if defined(TARGET_VER) && TARGET_VER < 351
 typedef int (WINAPI *ssnfo_funk)(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw);
-static int MySetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw)
-{
-	// Should be supported since Windows NT 3.51.944
-	static ssnfo_funk dyn_SetScrollInfo = (ssnfo_funk)(-1);
-	if( dyn_SetScrollInfo == (ssnfo_funk)(-1) ) {
-		dyn_SetScrollInfo = (ssnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "SetScrollInfo");
-		if(!(  (!App::isNT() && App::getOSVer()>=400 && App::getOSBuild()>=275) // Win95 4.00.275
-			|| ( App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944))// WinNT 3.51.944
-		    )
-		{   // Not supported before 95 build 275
-			// Nor NT3.51 before build 944
-			dyn_SetScrollInfo = NULL;
-		}
-	}
-	if( dyn_SetScrollInfo )
-		return dyn_SetScrollInfo( hwnd, fnBar, lpsi, fredraw );
+static int WINAPI MySetScrollInfo_1st(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw);
+static ssnfo_funk MySetScrollInfo = MySetScrollInfo_1st;
 
-	// Smart Fallback...
+static int WINAPI MySetScrollInfo_fb(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw)
+{
+	// Fallback function for NT3.1/3.5 and win32s
 	// We must use SetScrollRange but it is mimited to 65535.
 	// So we can avoid oveflow by dividing range and position values
 	// In GreenPad we can assume that only nMax can go beyond range.
@@ -58,23 +46,36 @@ static int MySetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw
 
 	return ::SetScrollPos( hwnd, fnBar, lpsi->nPos/MULT, fredraw );
 }
-typedef int (WINAPI *gsnfo_funk)(HWND hwnd, int fnBar, LPSCROLLINFO lpsi);
-static int MyGetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
+// First time function.
+static int WINAPI MySetScrollInfo_1st(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw)
 {
-	// Should be supported since Windows NT 3.51...
-	static gsnfo_funk dyn_GetScrollInfo = (gsnfo_funk)(-1);
-	if( dyn_GetScrollInfo == (gsnfo_funk)(-1) ) {
-		dyn_GetScrollInfo = (gsnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "GetScrollInfo");
-		if(!(  (!App::isNT() && App::getOSVer()>=400 && App::getOSBuild()>=275) // Win95 4.00.275
-			|| ( App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944))// WinNT 3.51.944
-		    )
-		{
-			dyn_GetScrollInfo = NULL;
-		}
+	// Should be supported since Windows NT 3.51.944
+	ssnfo_funk dyn_SetScrollInfo = (ssnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "SetScrollInfo");
+	if( dyn_SetScrollInfo
+	&& !(  (!App::isNT() && App::getOSVer()>=400 && App::getOSBuild()>=275) // Win95 4.00.275
+		|| ( App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944))// WinNT 3.51.944
+	    )
+	{   // Not supported before 95 build 275
+		// Nor NT3.51 before build 944
+		dyn_SetScrollInfo = NULL;
 	}
-	if( dyn_GetScrollInfo )
-		return dyn_GetScrollInfo( hwnd, fnBar, lpsi );
 
+	if( dyn_SetScrollInfo )
+	{
+		MySetScrollInfo = dyn_SetScrollInfo;
+		return dyn_SetScrollInfo( hwnd, fnBar, lpsi, fredraw );
+	}
+	// Use fallback function
+	MySetScrollInfo = MySetScrollInfo_fb;
+	return MySetScrollInfo_fb( hwnd, fnBar, lpsi, fredraw );
+}
+
+typedef int (WINAPI *gsnfo_funk)(HWND hwnd, int fnBar, LPSCROLLINFO lpsi);
+static int WINAPI MyGetScrollInfo_1st(HWND hwnd, int fnBar, LPSCROLLINFO lpsi);
+static gsnfo_funk MyGetScrollInfo = MyGetScrollInfo_1st;
+
+static int WINAPI MyGetScrollInfo_fb(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
+{
 	// Smart Fallback...
 	if( lpsi->fMask|SIF_RANGE )
 		::GetScrollRange( hwnd, fnBar, &lpsi->nMin, &lpsi->nMax);
@@ -88,6 +89,28 @@ static int MyGetScrollInfo(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 		lpsi->nTrackPos *= MULT; // This has to be set by the user.
 	}
 	return 1; // sucess!
+}
+// First time function.
+static int WINAPI MyGetScrollInfo_1st(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
+{
+	// Should be supported since Windows NT 3.51...
+	gsnfo_funk dyn_GetScrollInfo = (gsnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "GetScrollInfo");
+	if( dyn_GetScrollInfo
+	&& !(  (!App::isNT() && App::getOSVer()>=400 && App::getOSBuild()>=275) // Win95 4.00.275
+		|| ( App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944))// WinNT 3.51.944
+	    )
+	{
+		dyn_GetScrollInfo = NULL;
+	}
+
+	if( dyn_GetScrollInfo )
+	{
+		MyGetScrollInfo = dyn_GetScrollInfo;
+		return dyn_GetScrollInfo( hwnd, fnBar, lpsi );
+	}
+	// Use fallback function
+	MyGetScrollInfo = MyGetScrollInfo_fb;
+	return MyGetScrollInfo_fb( hwnd, fnBar, lpsi );
 }
 #else
 #define MyGetScrollInfo GetScrollInfo
