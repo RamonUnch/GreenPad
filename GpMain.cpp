@@ -697,28 +697,26 @@ void GreenPadWnd::on_datetime()
 	TCHAR buf[255], tmp[255]=TEXT("");
 	const TCHAR *lpFormat = g.len()?const_cast<TCHAR*>(g.c_str()):TEXT("HH:mm yyyy/MM/dd");
 #ifdef WIN32S
-	if( !app().isNT() )
-	{	// Dynamically import GetTime/DateFormat on win32s build
-		// So that it can run on NT3.1
-		typedef int (WINAPI *GetDTFormat_type)( LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCTSTR lpFormat, LPTSTR lpTimeStr,int cchTime);
-		GetDTFormat_type MyGetTimeFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetTimeFormatA");
-		GetDTFormat_type MyGetDateFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetDateFormatA");
-		if( MyGetTimeFormatA )
-			MyGetTimeFormatA( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
-		if( MyGetDateFormatA )
-			MyGetDateFormatA( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
+	// Dynamically import GetTime/DateFormat on win32s build
+	// So that it can run on NT3.1
+	typedef int (WINAPI *GetDTFormat_type)( LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCTSTR lpFormat, LPTSTR lpTimeStr,int cchTime);
+	GetDTFormat_type MyGetTimeFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetTimeFormatA");
+	GetDTFormat_type MyGetDateFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetDateFormatA");
+	if( MyGetTimeFormatA )
+		MyGetTimeFormatA( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
+	if( MyGetDateFormatA )
+		MyGetDateFormatA( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
 
-		edit_.getCursor().Input( tmp, my_lstrlen(tmp) );
-		return;
-	}
-#endif
-
+	edit_.getCursor().Input( tmp, my_lstrlen(tmp) );
+	return;
+#else
 	::GetTimeFormat
 		( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
 	::GetDateFormat
 		( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
 
 	edit_.getCursor().Input( tmp, my_lstrlen(tmp) );
+#endif
 }
 
 void GreenPadWnd::on_doctype( int no )
@@ -1083,7 +1081,7 @@ BOOL GreenPadWnd::SendMsgToAllFriends(UINT msg)
 }
 bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, bool always )
 {
-//	MsgBox(fn.c_str(), TEXT("File"), 0);
+//	MsgBox(fn.c_str(), TEXT("File:"), 0);
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
 
