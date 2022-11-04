@@ -694,22 +694,45 @@ void GreenPadWnd::on_grep()
 void GreenPadWnd::on_datetime()
 {
 	String g = cfg_.dateFormat();
+
+#ifdef WIN32S
+	if( !app().isNT() )
+	{	// Dynamically import GetTime/DateFormat on win32s build
+		// So that it can run on NT3.1
+		CHAR buf[255], tmp[255]="";
+		const CHAR *lpFormat = g.len()?const_cast<CHAR*>(g.c_str()):"HH:mm yyyy/MM/dd";
+
+		typedef int (WINAPI *GetDTFormat_type)( LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCTSTR lpFormat, LPSTR lpTimeStr,int cchTime);
+		GetDTFormat_type MyGetTimeFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetTimeFormatA");
+		GetDTFormat_type MyGetDateFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetDateFormatA");
+		if( MyGetTimeFormatA )
+			MyGetTimeFormatA( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
+		if( MyGetDateFormatA )
+			MyGetDateFormatA( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
+
+		edit_.getCursor().Input( tmp, my_lstrlenA(tmp) );
+		return;
+	}
+	else
+	{	// If we are under NT then we need to use unicode version.
+		WCHAR buf[255], tmp[255]=L"";
+		const WCHAR *lpFormat = g.len()?const_cast<WCHAR*>(g.ConvToWChar()):L"HH:mm yyyy/MM/dd";
+
+		typedef int (WINAPI *GetDTFormat_typeW)(LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCWSTR lpFormat, LPWSTR lpTimeStr,int cchTime);
+		GetDTFormat_typeW MyGetTimeFormatW = (GetDTFormat_typeW)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetTimeFormatW");
+		GetDTFormat_typeW MyGetDateFormatW = (GetDTFormat_typeW)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetDateFormatW");
+		if( MyGetTimeFormatW )
+			MyGetTimeFormatW( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
+		if( MyGetDateFormatW )
+			MyGetDateFormatW( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
+
+		edit_.getCursor().Input( tmp, my_lstrlenW(tmp) );
+		return;
+	}
+#else
 	TCHAR buf[255], tmp[255]=TEXT("");
 	const TCHAR *lpFormat = g.len()?const_cast<TCHAR*>(g.c_str()):TEXT("HH:mm yyyy/MM/dd");
-#ifdef WIN32S
-	// Dynamically import GetTime/DateFormat on win32s build
-	// So that it can run on NT3.1
-	typedef int (WINAPI *GetDTFormat_type)( LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCTSTR lpFormat, LPTSTR lpTimeStr,int cchTime);
-	GetDTFormat_type MyGetTimeFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetTimeFormatA");
-	GetDTFormat_type MyGetDateFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetDateFormatA");
-	if( MyGetTimeFormatA )
-		MyGetTimeFormatA( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
-	if( MyGetDateFormatA )
-		MyGetDateFormatA( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
 
-	edit_.getCursor().Input( tmp, my_lstrlen(tmp) );
-	return;
-#else
 	::GetTimeFormat
 		( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
 	::GetDateFormat
