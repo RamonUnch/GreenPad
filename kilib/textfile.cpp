@@ -112,10 +112,10 @@ struct rUCS : public rBasicUTF
 	virtual unicode PeekC() { return (unicode)(be ? swap(*fb) : *fb); }
 };
 
-// typedef rUCS< byte> rWest;
-//struct rWest : public rUCS<byte>
+typedef rUCS< byte> rWestISO88591;
+//struct rWest1ISO : public rUCS<byte>
 //{
-//	rWest( const uchar* b, ulong s, bool bigendian )
+//	rWest1ISO( const uchar* b, ulong s, bool bigendian )
 //		: rUCS<byte>(b,s,bigendian) {}
 //
 //	virtual unicode PeekC()
@@ -809,11 +809,8 @@ namespace
 		if (app().isNewShell())
 		{
 			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandleA("USER32.DLL"), "CharNextExA");
-		}
-
-		if (Window_CharNextExA) // We got the function!
-		{
-			return Window_CharNextExA;
+			if (Window_CharNextExA) // We got the function!
+				return Window_CharNextExA;
 		}
 		// Fallback for WinNT3.x / Win32s.
 		return IncCharNextExA;
@@ -1222,6 +1219,7 @@ int TextFileR::neededCodepage(int cs)
 	case UTF8N: // +65001
 	case SCSU:  // -60000
 	case BOCU1: // -60001
+	case 28591: // ISO-8859-1
 //	case WesternOS2: // TODO (1004) internally handeled.
 		return 0 ; // WHITELISTED
 
@@ -1258,7 +1256,15 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 		TCHAR str[128];
 		::wsprintf(str, TEXT("Codepage cp%d Is not installed!\nDefaulting to current ACP"), needed_cs);
 		::MessageBox(NULL, str, TEXT("Encoding"), MB_OK|MB_TASKMODAL|MB_TOPMOST);
-		cs_ = ::GetACP(); // default to ACP...
+		if( cs_ == Western )
+		{	// Codepage 1252 is not installed,
+			// default to ISO-8859-1 (CP28591)
+			cs_ = 28591;
+		}
+		else
+		{
+			cs_ = ::GetACP(); // default to ACP...
+		}
 	}
 	if( !cs_ ) cs_ = ::GetACP();
 
@@ -1266,7 +1272,7 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	// 対応するデコーダを作成
 	switch( cs_ )
 	{
-//	case Western: impl_ = new rWest(buf,siz,true); break; // use rMBCS instead
+	case 28591:   impl_ = new rWestISO88591(buf,siz,true); break; // ISO-8859-1
 	case UTF16b:
 	case UTF16BE: impl_ = new rUtf16(buf,siz,true); break;
 	case UTF16l:
@@ -2166,11 +2172,11 @@ struct wUtf32BE : public TextFileWPimpl
 	}
 };
 
-//struct wWest : public TextFileWPimpl
-//{
-//	wWest( FileW& w ) : TextFileWPimpl(w) {}
-//	void WriteChar( unicode ch ) { fp_.WriteC(ch>0xff ? '?' : (uchar)ch); }
-//};
+struct wWestISO88591 : public TextFileWPimpl
+{
+	wWestISO88591( FileW& w ) : TextFileWPimpl(w) {}
+	void WriteChar( unicode ch ) { fp_.WriteC(ch>0xff ? '?' : (uchar)ch); }
+};
 
 struct wUtf1 : public TextFileWPimpl
 {
@@ -3075,7 +3081,7 @@ bool TextFileW::Open( const TCHAR* fname )
 
 	switch( cs_ )
 	{
-//	case Western: impl_ = new wWest( fp_ ); break;
+	case 28591: impl_ = new wWestISO88591( fp_ ); break; // ISO-8859-1
 	case UTF1Y:
 	case UTF1:    impl_ = new wUtf1( fp_, cs_==UTF1Y ); break;
 	case UTF5:    impl_ = new wUtf5( fp_ ); break;
