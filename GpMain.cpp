@@ -12,30 +12,64 @@ using namespace editwing;
 
 void BootNewProcess( const TCHAR* cmd = TEXT("") )
 {
-	STARTUPINFO         sti;
 	PROCESS_INFORMATION psi;
-	::GetStartupInfo( &sti );
 
 	// On Windows NT3.x/Win9x we cannot have the exe name between ""
 	// On NT5 it seems ok to use "exe name.exe" "file name"
 	// Otherwise we try SHORT/NAME.EXE "file name"
 	// I do not know why the heck it is like this.
-	bool quotedexe = app().getOSVer() >= 500 && app().isNT();
+	bool quotedexe = 1; //app().getOSVer() >= 500 && app().isNT();
 	String fcmd;
 	if( quotedexe ) fcmd = TEXT("\"");
 	fcmd += quotedexe? Path(Path::ExeName): Path(Path::ExeName).BeShortStyle();
 	if( quotedexe ) fcmd += TEXT("\" ");
 	else fcmd += TEXT(" ");
 	fcmd += cmd;
-	// MessageBox(NULL, (TCHAR*)fcmd.c_str(), (TCHAR*)Path(Path::ExeName).c_str(), MB_OK);
+//	MessageBox(NULL, (TCHAR*)fcmd.c_str(), (TCHAR*)Path(Path::ExeName).c_str(), MB_OK);
 
+#ifdef UNICOWS
+	if( app().isNT() )
+	{
+		STARTUPINFO         sti;
+		::GetStartupInfo( &sti );
+		if( ::CreateProcess( NULL, (TCHAR*)fcmd.c_str(),
+				NULL, NULL, 0, NORMAL_PRIORITY_CLASS, NULL, NULL,
+				&sti, &psi ) )
+		{
+			::CloseHandle( psi.hThread );
+			::CloseHandle( psi.hProcess );
+		}
+	}
+	else
+	{
+		STARTUPINFOA         stia;
+		::GetStartupInfoA( &stia );
+		char *p = (char *)fcmd.ConvToChar();
+		if( !p ) return;
+		if( ::CreateProcessA(NULL, p,
+				NULL, NULL, 0, NORMAL_PRIORITY_CLASS, NULL, NULL,
+				&stia, &psi ) )
+		{
+			::CloseHandle( psi.hThread );
+			::CloseHandle( psi.hProcess );
+		}
+		else
+		{
+			
+		}
+		delete [] p;
+	}
+#else
+	STARTUPINFO         sti;
+	::GetStartupInfo( &sti );
 	if( ::CreateProcess( NULL, (TCHAR*)fcmd.c_str(),
-			NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL,
+			NULL, NULL, 0, NORMAL_PRIORITY_CLASS, NULL, NULL,
 			&sti, &psi ) )
 	{
 		::CloseHandle( psi.hThread );
 		::CloseHandle( psi.hProcess );
 	}
+#endif
 }
 
 
@@ -716,7 +750,8 @@ void GreenPadWnd::on_datetime()
 	else
 	{	// If we are under NT then we need to use unicode version.
 		WCHAR buf[255], tmp[255]=L"";
-		const WCHAR *lpFormat = g.len()?const_cast<WCHAR*>(g.ConvToWChar()):L"HH:mm yyyy/MM/dd";
+		wchar_t *wfmt = NULL;
+		const WCHAR *lpFormat = g.len()?wfmt=const_cast<WCHAR*>(g.ConvToWChar()):L"HH:mm yyyy/MM/dd";
 
 		typedef int (WINAPI *GetDTFormat_typeW)(LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCWSTR lpFormat, LPWSTR lpTimeStr,int cchTime);
 		GetDTFormat_typeW MyGetTimeFormatW = (GetDTFormat_typeW)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetTimeFormatW");
@@ -727,6 +762,7 @@ void GreenPadWnd::on_datetime()
 			MyGetDateFormatW( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
 
 		edit_.getCursor().Input( tmp, my_lstrlenW(tmp) );
+		if (wfmt) delete [] wfmt; // Cannot be the same than c_str so we must delete it.
 		return;
 	}
 #else

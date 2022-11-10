@@ -186,6 +186,7 @@ public:
 
 	//@{ ワイド文字列に変換して返す //@}
 	const wchar_t* ConvToWChar() const;
+	const char* ConvToChar() const;
 
 	//@{ ConvToWCharの返値バッファの解放 //@}
 	void FreeWCMem( const wchar_t* wc ) const;

@@ -337,3 +337,17 @@ const wchar_t* String::ConvToWChar() const
 #endif
 }
 
+const char* String::ConvToChar() const
+{
+#ifdef _UNICODE
+	int ln = ::WideCharToMultiByte( CP_ACP, 0, c_str(), -1, NULL, 0, NULL, NULL );
+	char* p = new char[ln+32];
+	::WideCharToMultiByte( CP_ACP,  0, c_str(), -1 , p, ln+1, NULL, NULL );
+//	MessageBoxA(NULL, p, NULL, 0);
+	return p;
+#else
+	return c_str();
+#endif
+}
+
+
