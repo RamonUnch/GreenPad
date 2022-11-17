@@ -114,7 +114,7 @@ char                String::lb_[256];
 
 void String::LibInit()
 {
-	static int nullstr_image[4];
+	static size_t nullstr_image[4];
 	nullstr_image[0] = 1;
 	nullstr_image[1] = 1;
 	nullstr_image[2] = 4;
@@ -165,12 +165,12 @@ String::~String()
 	ReleaseData();
 }
 
-TCHAR* String::ReallocMem( ulong minimum=0 )
+TCHAR* String::ReallocMem( size_t minimum=0 )
 {
 	return AllocMemHelper( minimum, c_str(), len()+1 );
 }
 
-String& String::SetString( const TCHAR* str, ulong siz )
+String& String::SetString( const TCHAR* str, size_t siz )
 {
 	TCHAR* buf = AllocMem( siz+1 );
 
@@ -181,7 +181,7 @@ String& String::SetString( const TCHAR* str, ulong siz )
 	return *this;
 }
 
-String& String::CatString( const TCHAR* str, ulong siz )
+String& String::CatString( const TCHAR* str, size_t siz )
 {
 	const int plen = len();
 	TCHAR* buf = ReallocMem( plen + siz + 1 );
@@ -193,7 +193,7 @@ String& String::CatString( const TCHAR* str, ulong siz )
 	return *this;
 }
 
-TCHAR* String::AllocMemHelper( ulong minimum, const TCHAR* str, ulong siz )
+TCHAR* String::AllocMemHelper( size_t minimum, const TCHAR* str, size_t siz )
 {
 	if( data_->ref > 1 || data_->alen < minimum )
 	{
@@ -249,7 +249,7 @@ String& String::Load( UINT rsrcID )
 		return (*this = tmp);
 
 	// ­‚µ‚¸‚Â‘‚â‚µ‚Ä‘Î‰ž‚µ‚Ä‚Ý‚é
-	int siz = step;
+	size_t siz = step;
 	do
 	{
 		siz+= step;
@@ -262,7 +262,7 @@ String& String::Load( UINT rsrcID )
 	return *this;
 }
 
-void String::TrimRight( ulong siz )
+void String::TrimRight( size_t siz )
 {
 	if( siz >= len() )
 	{
