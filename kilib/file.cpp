@@ -3,63 +3,71 @@
 #include "app.h"
 using namespace ki;
 
-#if UNICODE
+#ifdef UNICODE
 static TCHAR *GetUNCPath(const TCHAR *ifn)
 {
 	if(!ifn) return NULL;
-    // Actually for GetFullPathName it is not needed to
-    // add the funny \\?\ prefix to get the full path name.
-    // However we add it in to the buffer for future uses...
-    // also we should not add it if it is alrady an UNC
-    // and we should prefix with \\?\UNC\ in case of Network path
+	// Actually for GetFullPathName it is not needed to
+	// add the funny \\?\ prefix to get the full path name.
+	// However we add it in to the buffer for future uses...
+	// also we should not add it if it is alrady an UNC
+	// and we should prefix with \\?\UNC\ in case of Network path
 	ULONG len = GetFullPathName(ifn, 0, 0, 0);
-    // Note that it seems that UNC are not working on NT 3.1
+	// Note that it seems that UNC are not working on NT 3.1
 	// So we only convert them if the path is longer than MAX_PATH
-	if (len > MAX_PATH) { // len includes the terminating \0.
-        TCHAR *buf = new TCHAR [(len + 16) * sizeof(wchar_t)];
-        if (!buf) return NULL;
-        int buffstart = 0;
-        if (ifn[0] == '\\' && ifn[1] == '\\') {
-            if (ifn[2] == '?') {
-                // Already an UNC...
-                buffstart = 0;
-            } else {
-                // Network path "\\server\share" style...
-                buf[0] = '\\'; buf[1] = '\\';  buf[2] = '?'; buf[3] = '\\';
-                buf[4] = 'U'; buf[5] = 'N';
-                buffstart = 6;
-            }
-        } else {
-            // Relative or non UNC path.
-            buf[0] = '\\'; buf[1] = '\\';  buf[2] = '?'; buf[3] = '\\';
-            buffstart = 4;
-        }
-        // Get the real pathname this time...
-        ULONG nlen = GetFullPathName(ifn, len, &buf[buffstart], NULL);
-		if (nlen) {
-            // We got the FullPathName
-            if (buffstart == 6) {
-                buf[6] = 'C'; // Network path
-            } else if (buffstart == 4 && buf[4] == '\\' && buf[5] == '\\') {
-                // it was a relative network path, 
-                // so now it is in the \\?\\\server\share format (BAD).
-                // shift the full path two char to the right.
-                int i = nlen + buffstart;
-                for (; i > 4; i--) { buf[i+2] = buf[i]; }
-                // Add UNC so that we have \\?\UNC\server\share
-                buf[4] = 'U'; buf[5] = 'N'; buf[6] = 'C';
-            }
-            return buf;
-        } else {
-            // Unable to get full path name for ifn
-            delete [] buf;
-        }
-    }
-    return NULL;
+	// this also mean we do not have to check for Win9x/NT versions.
+	if (len > MAX_PATH) // len includes the terminating '\0'.
+	{
+		TCHAR *buf = new TCHAR [(len + 16) * sizeof(wchar_t)];
+		if (!buf) return NULL;
+		int buffstart = 0;
+		if (ifn[0] == '\\' && ifn[1] == '\\')
+		{
+			if (ifn[2] == '?') {
+				// Already an UNC...
+				buffstart = 0;
+			} else {
+				// Network path "\\server\share" style...
+				buf[0] = '\\'; buf[1] = '\\';  buf[2] = '?'; buf[3] = '\\';
+				buf[4] = 'U'; buf[5] = 'N';
+				buffstart = 6;
+			}
+		}
+		else
+		{
+			// Relative or non UNC path.
+			buf[0] = '\\'; buf[1] = '\\';  buf[2] = '?'; buf[3] = '\\';
+			buffstart = 4;
+		}
+		// Get the real pathname this time...
+		ULONG nlen = GetFullPathName(ifn, len, &buf[buffstart], NULL);
+		if (nlen)
+		{
+			// We got the FullPathName
+			if (buffstart == 6) {
+				buf[6] = 'C'; // Network path set again the C from \\?\UNC
+			} else if (buffstart == 4 && buf[4] == '\\' && buf[5] == '\\') {
+				// it was a relative network path,
+				// so now it is in the \\?\\\server\share format (BAD).
+				// shift the full path two char to the right.
+				int i = nlen + buffstart;
+				for (; i > 4; i--) { buf[i+2] = buf[i]; }
+				// Add UNC so that we have \\?\UNC\server\share
+				buf[4] = 'U'; buf[5] = 'N'; buf[6] = 'C';
+			}
+			return buf;
+		}
+		else
+		{
+			// Unable to get full path name for ifn
+			delete [] buf;
+		}
+	}
+	return NULL;
 }
 #endif
 
-static HANDLE CreateFileUNC(  
+static HANDLE CreateFileUNC(
 	LPCTSTR fname,
 	DWORD dwDesiredAccess,
 	DWORD dwShareMode,
@@ -69,8 +77,8 @@ static HANDLE CreateFileUNC(
 	HANDLE hTemplateFile)
 {
 	TCHAR *UNCPath = (TCHAR *)fname;
-#if UNICODE && (!defined(TARGET_VER) || defined(TARGET_VER) && TARGET_VER>300)
-	// UNC are supported only un Unicode mode on Windows NT 
+#ifdef UNICODE
+	// UNC are supported only un Unicode mode on Windows NT
 	if(App::isNT())
 		UNCPath = GetUNCPath(fname);
 	if(!UNCPath) // Failed then fallback to non UNC
@@ -79,12 +87,12 @@ static HANDLE CreateFileUNC(
 
 	// ファイルを読みとり専用で開く
 	HANDLE hFile = ::CreateFile(
-		UNCPath, 
+		UNCPath,
 		dwDesiredAccess,
-		dwShareMode, 
+		dwShareMode,
 		lpSecurityAttributes,
 		dwCreationDisposition,
-		dwFlagsAndAttributes, 
+		dwFlagsAndAttributes,
 		hTemplateFile
 	);
 #if UNICODE && (!defined(TARGET_VER) || defined(TARGET_VER) && TARGET_VER>300)
@@ -202,8 +210,8 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 	Close();
 
 	TCHAR *UNCPath = (TCHAR *)fname;
-#if UNICODE && (!defined(TARGET_VER) || defined(TARGET_VER) && TARGET_VER>300)
-	// UNC are supported only un Unicode mode on Windows NT 
+#ifdef UNICODE
+	// UNC are supported only un Unicode mode on Windows NT
 	if(App::isNT())
 		UNCPath = GetUNCPath(fname);
 	if(!UNCPath) // Failed then fallback to non UNC
@@ -222,9 +230,9 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 	handle_ = ::CreateFile( UNCPath,
 		GENERIC_WRITE, FILE_SHARE_READ, NULL,
 		creat ? CREATE_ALWAYS : OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL );	
+		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL );
 
-#if UNICODE && (!defined(TARGET_VER) || defined(TARGET_VER) && TARGET_VER>300)
+#ifdef UNICODE
 	if(UNCPath && UNCPath != fname) // Was allocated...
 		delete [] UNCPath;
 #endif
