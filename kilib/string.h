@@ -165,7 +165,7 @@ public:
 	String& Load( UINT rsrcID );
 
 	//@{ 右を削る //@}
-	void TrimRight( ulong siz );
+	void TrimRight( size_t siz );
 
 	//@{ intから文字列へ変換 //@}
 	String& SetInt( int n );
@@ -179,7 +179,7 @@ public:
 	const TCHAR* c_str() const;
 
 	//@{ 長さ //@}
-	ulong len() const;
+	size_t len() const;
 
 	//@{ 要素 //@}
 	const TCHAR operator[](int n) const;
@@ -206,8 +206,8 @@ public:
 protected:
 
 	// 書き込み可能なバッファを、終端含めて最低でもminimum文字分用意する
-	TCHAR* AllocMem( ulong minimum );
-	TCHAR* ReallocMem( ulong minimum );
+	TCHAR* AllocMem( size_t minimum );
+	TCHAR* ReallocMem( size_t minimum );
 
 	// 書き込み終了後、長さを再設定
 	void UnlockMem( long siz=-1 );
@@ -217,8 +217,8 @@ private:
 	struct StringData
 	{
 		long  ref;         // 参照カウンタ
-		ulong len;         // 終端'\0'を含める長さ
-		ulong alen;        // 割り当てられているメモリのサイズ
+		size_t len;        // 終端'\0'を含める長さ
+		size_t alen;       // 割り当てられているメモリのサイズ
 		TCHAR* buf() const // TCHAR buf[alen]
 			{ return reinterpret_cast<TCHAR*>(
 				const_cast<StringData*>(this+1)
@@ -227,9 +227,9 @@ private:
 
 private:
 
-	TCHAR*  AllocMemHelper( ulong minimum, const TCHAR* str, ulong siz );
-	String& CatString( const TCHAR* str, ulong siz );
-	String& SetString( const TCHAR* str, ulong siz );
+	TCHAR*  AllocMemHelper( size_t minimum, const TCHAR* str, size_t siz );
+	String& CatString( const TCHAR* str, size_t siz );
+	String& SetString( const TCHAR* str, size_t siz );
 	void    SetData( StringData* d );
 	void    ReleaseData();
 	static  StringData* null();
@@ -282,7 +282,7 @@ inline String::String( const String& obj )
 #endif
 
 // 内部メモリ確保
-inline TCHAR* String::AllocMem( ulong minimum )
+inline TCHAR* String::AllocMem( size_t minimum )
 	{ return AllocMemHelper( minimum, TEXT(""), 1 ); }
 // 内部メモリ固定
 inline void String::UnlockMem( long siz )
@@ -302,7 +302,7 @@ inline void String::SetData( String::StringData* d )
 inline const TCHAR* String::c_str() const
 	{ return data_->buf(); }
 // 属性
-inline ulong String::len() const
+inline size_t String::len() const
 	{ return data_->len-1; }
 // 要素
 inline const TCHAR String::operator[](int n) const
@@ -370,8 +370,8 @@ inline void String::FreeWCMem( const wchar_t* wc ) const
 
 struct RawString : public String
 {
-	TCHAR* AllocMem( ulong m ) { return String::AllocMem(m); }
-	void UnlockMem()           { String::UnlockMem(); }
+	TCHAR* AllocMem( size_t m ) { return String::AllocMem(m); }
+	void UnlockMem()            { String::UnlockMem(); }
 };
 
 }      // namespace ki
