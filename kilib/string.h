@@ -11,11 +11,15 @@
 	#define my_lstrcpyn my_lstrcpynW
 	#define my_lstrlen my_lstrlenW
 	#define my_lstrcmp my_lstrcmpW
+	#define my_lstrchr my_lstrchrW
+	#define my_lstrcat my_lstrcatW
 #else
 	#define my_lstrcpy my_lstrcpyA
 	#define my_lstrcpyn my_lstrcpynA
 	#define my_lstrlen my_lstrlenA
 	#define my_lstrcmp my_lstrcmpA
+	#define my_lstrchr my_lstrchrA
+	#define my_lstrcat my_lstrcatA
 #endif
 
 wchar_t * WINAPI my_CharUpperWW(wchar_t *s);
@@ -25,6 +29,43 @@ wchar_t * WINAPI my_CharLowerWW(wchar_t *s);
 wchar_t my_CharUpperSingleW(wchar_t c);
 wchar_t my_CharLowerSingleW(wchar_t c);
 BOOL my_IsCharLowerW(wchar_t c);
+
+inline static
+const char *my_lstrcatA(char *dest, const char *src)
+{
+	char *orig=dest;
+	for (; *dest; ++dest) ;	/* go to end of dest */
+	for (; (*dest=*src); ++src,++dest) ;	/* then append from src */
+	return orig;
+}
+
+inline static
+const wchar_t *my_lstrcatW(wchar_t *dest, const wchar_t *src)
+{
+	wchar_t *orig=dest;
+	for (; *dest; ++dest) ;	/* go to end of dest */
+	for (; (*dest=*src); ++src,++dest) ;	/* then append from src */
+	return orig;
+}
+
+inline static
+const char *my_lstrchrA(const char *str, char c)
+{
+    while(*str != c) {
+        if(!*str) return NULL;
+        str++;
+    }
+    return str;
+}
+inline static
+const unicode *my_lstrchrW(const unicode *str, unicode c)
+{
+    while(*str != c) {
+        if(!*str) return NULL;
+        str++;
+    }
+    return str;
+}
 
 inline static
 unicode* my_lstrcpyW( unicode* const d, const unicode* s )
@@ -190,6 +231,7 @@ public:
 
 	//@{ ConvToWCharの返値バッファの解放 //@}
 	void FreeWCMem( const wchar_t* wc ) const;
+	void FreeCMem( const char* str ) const;
 
 public:
 
@@ -354,6 +396,13 @@ inline void String::FreeWCMem( const wchar_t* wc ) const
 	{}
 #else // _MBCS or _SBCS
 	{ delete [] const_cast<wchar_t*>(wc); }
+#endif
+
+inline void String::FreeCMem( const char* str ) const
+#ifdef _UNICODE
+	{ delete [] const_cast<char*>(str); }
+#else // _MBCS or _SBCS
+	{}
 #endif
 
 
