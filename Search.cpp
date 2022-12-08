@@ -20,6 +20,7 @@ SearchManager::SearchManager( ki::Window& w, editwing::EwEdit& e )
 	, bIgnoreCase_( true ) // 1.08 default true
 	, bRegExp_( false )
 	, bDownSearch_( true )
+	, inichanged_( false )
 {
 }
 
@@ -29,13 +30,18 @@ SearchManager::~SearchManager()
 
 void SearchManager::SaveToINI( ki::IniFile& ini )
 {
-	ini.SetSectionAsUserName();
-	ini.PutBool( TEXT("SearchIgnoreCase"), bIgnoreCase_ );
-	ini.PutBool( TEXT("SearchRegExp"), bRegExp_ );
+	if (inichanged_)
+	{
+		inichanged_ = false;
+		ini.SetSectionAsUserName();
+		ini.PutBool( TEXT("SearchIgnoreCase"), bIgnoreCase_ );
+		ini.PutBool( TEXT("SearchRegExp"), bRegExp_ );
+	}
 }
 
 void SearchManager::LoadFromINI( ki::IniFile& ini )
 {
+	inichanged_ = false;
 	ini.SetSectionAsUserName();
 	bIgnoreCase_ = ini.GetBool( TEXT("SearchIgnoreCase"), bIgnoreCase_ );
 	bRegExp_     = ini.GetBool( TEXT("SearchRegExp"), bRegExp_ );
@@ -55,6 +61,7 @@ void SearchManager::ShowDlg()
 	else
 	{
 		GoModeless( ::GetParent(edit_.hwnd()) );
+		SetCenter(hwnd(), edit_.hwnd());
 		ShowUp();
 	}
 }
@@ -201,10 +208,15 @@ void SearchManager::on_replaceall()
 void SearchManager::UpdateData()
 {
 	// ダイアログから変更点を取り込み
-	bIgnoreCase_ =
+	bool IgnoreCase =
 		(BST_CHECKED==SendMsgToItem( IDC_IGNORECASE, BM_GETCHECK ));
-	bRegExp_ =
+	bool RegExp =
 		(BST_CHECKED==SendMsgToItem( IDC_REGEXP, BM_GETCHECK ));
+
+	// Must we save save to ini?
+	inichanged_ = bIgnoreCase_ != IgnoreCase || RegExp != bRegExp_;
+	bIgnoreCase_ = IgnoreCase;
+	bRegExp_ = RegExp;
 
 	TCHAR* str;
 	LRESULT n = SendMsgToItem( IDC_FINDBOX, WM_GETTEXTLENGTH );
