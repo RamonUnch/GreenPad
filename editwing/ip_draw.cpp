@@ -218,6 +218,13 @@ static const uchar ctlMap[32] = {
 	'G','H','I','J','K','L','M','N',
 	'O','P','Q','R','S','T','U','V',
 };
+static const uchar ctl2Map[33] = {
+	'~', // DEL!
+	'W','X','Y','Z','a','b','c','d',
+	'e','f','g','h','i','j','k','l',
+	'm','n','o','p','q','r','s','t',
+	'u','v','w','x','y','z','+','/',
+};
 Painter::Painter( HDC hdc, const VConfig& vc )
 	: dc_        ( hdc )
 	, font_      ( ::CreateFontIndirect( &vc.font ) )
@@ -245,30 +252,40 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 	::SetMapMode(   dc_, MM_TEXT );
 
 	// 文字幅テーブル初期化（ASCII範囲の文字以外は遅延処理）
-	memFF( widthTable_, 65536*sizeof(int) );
+	memFF( widthTable_, 65536*sizeof(*widthTable_) );
 #ifdef WIN32S
-	::GetCharWidthA( dc_, ' ', '~', widthTable_+' ' );
-#else
-	::GetCharWidthW( dc_, L' ', L'~', widthTable_+L' ' );
+	if (App::isWin32s() )
+	{
+		::GetCharWidthA( dc_, ' ', '~', widthTable_+' ' );
+	}
+	else
 #endif
+	{
+		::GetCharWidthW( dc_, L' ', L'~', widthTable_+L' ' );
+	}
+
 	const unicode zsp=0x3000; // L'　'
 	W(&zsp); // Initialize width of L'　'
 
 	// 下位サロゲートは文字幅ゼロ (Lower surrogates have zero character width)
-	mem00( widthTable_+0xDC00, (0xE000 - 0xDC00)*sizeof(int) );
+	mem00( widthTable_+0xDC00, (0xE000 - 0xDC00)*sizeof(*widthTable_) );
 	// 数字の最大幅を計算, Calculate maximum width of numbers
 	figWidth_ = 0;
 	for( unicode ch=L'0'; ch<=L'9'; ++ch )
 		if( figWidth_ < widthTable_[ch] )
 			figWidth_ = widthTable_[ch];
+
+	// C0 control shown as colored 0-9+ A-W
 	for( unicode ch=L'\0'; ch<L' '; ++ch )
 		widthTable_[ch]  =  widthTable_[ctlMap[ch]];
-	widthTable_[127] = widthTable_[L'Z']; // DEL  shown as Z
+
+	// C1 Controls shown as colored W-Z, a-z, +, /,
+	// + DEL (127) shown as colored '~'
+	for (unicode ch=127; ch<=159; ++ch)
+		widthTable_[ch] = widthTable_[ctl2Map[ch-(unicode)127]];
+
 	if( sc(scZSP) )
 		widthTable_[0x00A0]=widthTable_[L'^']; // show NBSP like ^
-	// C1 Controls shown as X
-	for (unicode ch=128; ch<=159; ++ch)
-		widthTable_[ch] = widthTable_[L'X'];
 
 	// Set the width of a Tabulation
 	widthTable_[L'\t'] = NZero(W() * Max(1, vc.tabstep));
@@ -293,7 +310,7 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 			mem00(fontranges_, frlen);
 			fontranges_->cbThis = frlen;
 			fontranges_->flAccel = 0;
-			if(frlen != myGetFontUnicodeRanges( dc_, fontranges_ ))
+			if( frlen != myGetFontUnicodeRanges( dc_, fontranges_ ) )
 			{ // Failed!
 				delete [] ((BYTE*)fontranges_);
 				fontranges_ = NULL;
@@ -312,66 +329,75 @@ Painter::~Painter()
 	::DeleteObject( font_ );
 	::DeleteObject( pen_ );
 	::DeleteObject( brush_ );
-	delete [] ((BYTE *)fontranges_); // As BYTES...
+	if( fontranges_ )
+		delete [] ((BYTE *)fontranges_); // As BYTES...
 //	delete [] widthTable_;
 }
 
 inline void Painter::CharOut( unicode ch, int x, int y )
 {
 #ifdef WIN32S
-	DWORD dwNum;
-	char psText[8]; // Buffer for a SINGLE multibyte character
-	if(dwNum = WideCharToMultiByte(CP_ACP,0, &ch,1, psText,countof(psText), NULL,NULL))
+	if( App::isWin32s() )
 	{
-		::TextOutA( dc_, x, y, psText, dwNum );
+		DWORD dwNum;
+		char psText[8]; // Buffer for a SINGLE multibyte character
+		if(dwNum = WideCharToMultiByte(CP_ACP,0, &ch,1, psText,countof(psText), NULL,NULL))
+		{
+			::TextOutA( dc_, x, y, psText, dwNum );
+		}
 	}
-#else
-	::TextOutW( dc_, x, y, &ch, 1 );
+	else
 #endif
+	{ // Windows 9x/NT
+		::TextOutW( dc_, x, y, &ch, 1 );
+	}
 }
 
 inline void Painter::StringOut
 	( const unicode* str, int len, int x, int y )
 {
 #ifdef WIN32S
-	DWORD dwNum;
-	char psTXT1K[1024];
-	char *psText = psTXT1K;
-	if(!len) return;
-	// 1st try to convert to ANSI with a small stack buffer...
-	dwNum = WideCharToMultiByte(CP_ACP,0, str,len, psText,countof(psTXT1K), NULL,NULL);
-	if (!dwNum)
-	{	// If the small buffer failed, then properly allocate buffer.
-		// This happens verty rarely because token length is typically
-		// a single word, hence less than 128chars.
-		dwNum = WideCharToMultiByte(CP_ACP,0, str,len, NULL,0, NULL,NULL);
-		if (dwNum)
-		{
-			psText = new char[dwNum];
-			dwNum = WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
+	if( App::isWin32s() )
+	{
+		DWORD dwNum;
+		char psTXT1K[1024];
+		char *psText = psTXT1K;
+		if(!len) return;
+		// 1st try to convert to ANSI with a small stack buffer...
+		dwNum = WideCharToMultiByte(CP_ACP,0, str,len, psText,countof(psTXT1K), NULL,NULL);
+		if (!dwNum)
+		{	// If the small buffer failed, then properly allocate buffer.
+			// This happens verty rarely because token length is typically
+			// a single word, hence less than 128chars.
+			dwNum = WideCharToMultiByte(CP_ACP,0, str,len, NULL,0, NULL,NULL);
+			if (dwNum)
+			{
+				psText = new char[dwNum];
+				dwNum = WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
+			}
+			else
+			{
+				return;
+			}
 		}
-		else
-		{
-			return;
-		}
+		BOOL ret = ::TextOutA( dc_, x, y, psText, dwNum );
+		#ifdef USE_ORIGINAL_MEMMAN
+		if( !ret ) ::TextOutA( dc_, x, y, psText, dwNum ); // What the fuck?
+		#endif
+		if (psText != psTXT1K)
+			delete []psText;
 	}
-	BOOL ret = ::TextOutA( dc_, x, y, psText, dwNum );
-#ifdef USE_ORIGINAL_MEMMAN
-	if( !ret ) ::TextOutA( dc_, x, y, psText, dwNum ); // What the fuck?
-#endif
-	if (psText != psTXT1K)
-		delete []psText;
-
-#else // WIN32S
-
-    // It seems that when USING ORIGINAL MEMMAN TextOutW can Fail
-    // and we must draw the text twice. There must be some race condition
-    // and I cannot figure it out.
-	BOOL ret = ::TextOutW( dc_, x, y, str, len );
-#ifdef USE_ORIGINAL_MEMMAN
-	if( !ret ) ::TextOutW( dc_, x, y, str, len ); // What the fuck?
-#endif
-#endif
+	else
+#endif // WIN32S
+	{
+	    // It seems that when USING ORIGINAL MEMMAN TextOutW can Fail
+	    // and we must draw the text twice. There must be some race condition
+	    // and I cannot figure it out.
+		BOOL ret = ::TextOutW( dc_, x, y, str, len );
+		#ifdef USE_ORIGINAL_MEMMAN
+		if( !ret ) ::TextOutW( dc_, x, y, str, len ); // What the fuck?
+		#endif
+	}
 }
 
 inline void Painter::SetColor( int i )
@@ -498,7 +524,8 @@ void ViewImpl::on_paint( const PAINTSTRUCT& ps )
 	Painter& p = cvs_.getPainter();
 	VDrawInfo v( ps.rcPaint );
 	GetDrawPosInfo( v );
-//	Uncomment if you want to see the drawing.
+//	// Uncomment if you want to see the drawing.
+//	Sleep( 200 );
 //	FillRect( ps.hdc, &ps.rcPaint, (HBRUSH)(COLOR_HIGHLIGHT+1) );
 //	GdiFlush( );
 //	Sleep( 200 );
@@ -696,7 +723,7 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 					{ // ASCII C0 and C1 Control caracters
 						p.SetColor( clr=CTL );
 						unicode c = str[i];
-						c = c<32? ctlMap[c]: c==127? L'Z': L'X';
+						c = c<32? ctlMap[c]: ctl2Map[c-L'~'];
 						p.CharOut( c, x+v.XBASE, a.top );
 						break;
 					}
