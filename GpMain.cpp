@@ -5,20 +5,17 @@ using namespace ki;
 using namespace editwing;
 
 
-
 //-------------------------------------------------------------------------
 // 新規プロセス起動
 //-------------------------------------------------------------------------
 
 void BootNewProcess( const TCHAR* cmd = TEXT("") )
 {
-	PROCESS_INFORMATION psi;
-
 	// On Windows NT3.x/Win9x we cannot have the exe name between ""
 	// On NT5 it seems ok to use "exe name.exe" "file name"
 	// Otherwise we try SHORT/NAME.EXE "file name"
 	// I do not know why the heck it is like this.
-	bool quotedexe = 1; //app().getOSVer() >= 500 && app().isNT();
+	bool quotedexe = app().getOSVer() >= 500 && app().isNT();
 	String fcmd;
 	if( quotedexe ) fcmd = TEXT("\"");
 	fcmd += quotedexe? Path(Path::ExeName): Path(Path::ExeName).BeShortStyle();
@@ -30,36 +27,38 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 #ifdef UNICOWS
 	if( app().isNT() )
 	{
-		STARTUPINFO         sti;
-		::GetStartupInfo( &sti );
-		if( ::CreateProcess( NULL, (TCHAR*)fcmd.c_str(),
+		PROCESS_INFORMATION psi;
+		STARTUPINFOW        stiw;
+		::GetStartupInfoW( &stiw );
+		const wchar_t *p = fcmd.ConvToWChar();
+		if( !p ) return;
+		if( ::CreateProcessW( NULL, (wchar_t *)p,
 				NULL, NULL, 0, NORMAL_PRIORITY_CLASS, NULL, NULL,
-				&sti, &psi ) )
+				&stiw, &psi ) )
 		{
 			::CloseHandle( psi.hThread );
 			::CloseHandle( psi.hProcess );
 		}
+		fcmd.FreeWCMem(p);
 	}
 	else
 	{
+		PROCESS_INFORMATION psi;
 		STARTUPINFOA         stia;
 		::GetStartupInfoA( &stia );
-		char *p = (char *)fcmd.ConvToChar();
+		const char *p = fcmd.ConvToChar();
 		if( !p ) return;
-		if( ::CreateProcessA(NULL, p,
+		if( ::CreateProcessA(NULL, (char *)p,
 				NULL, NULL, 0, NORMAL_PRIORITY_CLASS, NULL, NULL,
 				&stia, &psi ) )
 		{
 			::CloseHandle( psi.hThread );
 			::CloseHandle( psi.hProcess );
 		}
-		else
-		{
-			
-		}
-		delete [] p;
+		fcmd.FreeCMem(p);
 	}
-#else
+#else // non unicows mode.
+	PROCESS_INFORMATION psi;
 	STARTUPINFO         sti;
 	::GetStartupInfo( &sti );
 	if( ::CreateProcess( NULL, (TCHAR*)fcmd.c_str(),
@@ -69,7 +68,7 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 		::CloseHandle( psi.hThread );
 		::CloseHandle( psi.hProcess );
 	}
-#endif
+#endif // UNICOWS
 }
 
 
@@ -153,8 +152,13 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		}
 		break;
 
-	case WM_NCCALCSIZE:{
+	case WM_NCCALCSIZE: {
+		#ifdef FORCE_RTL_LAYOUT
+		if ( WS_EX_LAYOUTRTL & GetWindowLongPtr(hwnd(), GWL_EXSTYLE) )
+			return WndImpl::on_message( msg, wp, lp );
+		#endif
 		// Handle WM_NCCALCSIZE to avoid ugly resizing
+		// TODO: handle properly the right to left layout mode...
 		int ret = WndImpl::on_message( msg, wp, lp );
 		NCCALCSIZE_PARAMS *nc = (NCCALCSIZE_PARAMS *)lp;
 		RECT wnd;
@@ -265,6 +269,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_NEWFILE:    on_newfile();   break;
 	case ID_CMD_OPENFILE:   on_openfile();  break;
 	case ID_CMD_REOPENFILE: on_reopenfile();break;
+	case ID_CMD_OPENELEVATED: on_openelevated(); break;
 	case ID_CMD_REFRESHFILE:on_refreshfile();break;
 	case ID_CMD_SAVEFILE:   on_savefile();  break;
 	case ID_CMD_SAVEFILEAS: on_savefileas();break;
@@ -373,7 +378,7 @@ void GreenPadWnd::on_reopenfile()
 		dlg.GoModal( hwnd() );
 		if( dlg.endcode()==IDOK && AskToSave() )
 		{
-			// if csi > F0000 it means it is equal to the desized CP+0x100000
+			// if csi > F0000 it means it is equal to the desired CP+0x100000
 			int csi = dlg.csi();
 			int cp = (csi > 0xF0000)? csi-0x100000: charSets_[csi].ID;
 			OpenByMyself( filename_, cp, false );
@@ -381,6 +386,21 @@ void GreenPadWnd::on_reopenfile()
 	}
 }
 
+void GreenPadWnd::on_openelevated()
+{
+	const view::VPos *cur, *sel;
+	bool selected = edit_.getCursor().getCurPosUnordered(&cur, &sel);
+	int cp = (csi_ >= 0xf0f00000 && csi_ < 0xf1000000)? csi_ & 0xfffff
+	       : (csi_ > 0 && csi_ <100)? charSets_[csi_].ID: 0;
+
+	String cmdl = TEXT( "-c") + String().SetInt(cp)
+	            + TEXT(" -l") + String().SetInt(cur->tl+1)
+	            + TEXT(" \"") + filename_ + TEXT("\"");
+//	MessageBox(NULL, cmdl.c_str(), Path(Path::ExeName).c_str(), 0);
+	HINSTANCE ret = ShellExecute(NULL, TEXT("runas"), Path(Path::ExeName).c_str(), cmdl.c_str(), NULL, SW_SHOWNORMAL);
+	if( (LONG_PTR)ret > 32 )
+		on_exit();
+}
 // Keeps cursor position...
 // TOTO: also set VPos so that it does not scroll...
 void GreenPadWnd::on_refreshfile()
@@ -391,7 +411,10 @@ void GreenPadWnd::on_refreshfile()
 		bool selected = edit_.getCursor().getCurPosUnordered(&cur, &sel);
 		unsigned sline = cur->tl, scol = cur->ad;
 		unsigned eline = sel->tl, ecol = sel->ad;
-		OpenByMyself(filename_, charSets_[csi_].ID, false);
+		int cp = (csi_ >= 0xf0f00000 && csi_ < 0xf1000000)? csi_ & 0xfffff
+		       : (csi_ > 0 && csi_ <100)? charSets_[csi_].ID: 0;
+
+		OpenByMyself(filename_, cp, false);
 		if (selected) edit_.getCursor().MoveCur(DPos(eline, ecol), false);
 		edit_.getCursor().MoveCur(DPos(sline, scol), selected);
 	}
@@ -412,7 +435,7 @@ void GreenPadWnd::on_savefileas()
 }
 void GreenPadWnd::on_pagesetup()
 {
-#if UNICOWS || !defined(TARGET_VER) ||  defined(TARGET_VER) && TARGET_VER>=351
+#if defined(UNICOWS) || !defined(TARGET_VER) ||  defined(TARGET_VER) && TARGET_VER>=351
 	if (app().is351p())
 	{
 		PAGESETUPDLG psd;
@@ -734,9 +757,10 @@ void GreenPadWnd::on_datetime()
 	{	// Dynamically import GetTime/DateFormat on win32s build
 		// So that it can run on NT3.1
 		CHAR buf[255], tmp[255]="";
-		const CHAR *lpFormat = g.len()?const_cast<CHAR*>(g.c_str()):"HH:mm yyyy/MM/dd";
+		CHAR *sfmt=NULL;
+		const CHAR *lpFormat = g.len()?sfmt=const_cast<CHAR*>(g.ConvToChar()):"HH:mm yyyy/MM/dd";
 
-		typedef int (WINAPI *GetDTFormat_type)( LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCTSTR lpFormat, LPSTR lpTimeStr,int cchTime);
+		typedef int (WINAPI *GetDTFormat_type)( LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCSTR lpFormat, LPSTR lpTimeStr,int cchTime);
 		GetDTFormat_type MyGetTimeFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetTimeFormatA");
 		GetDTFormat_type MyGetDateFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetDateFormatA");
 		if( MyGetTimeFormatA )
@@ -745,6 +769,7 @@ void GreenPadWnd::on_datetime()
 			MyGetDateFormatA( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
 
 		edit_.getCursor().Input( tmp, my_lstrlenA(tmp) );
+		if( sfmt ) g.FreeCMem(sfmt);
 		return;
 	}
 	else
@@ -762,7 +787,7 @@ void GreenPadWnd::on_datetime()
 			MyGetDateFormatW( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
 
 		edit_.getCursor().Input( tmp, my_lstrlenW(tmp) );
-		if (wfmt) delete [] wfmt; // Cannot be the same than c_str so we must delete it.
+		if(wfmt) g.FreeWCMem(wfmt);
 		return;
 	}
 #else
@@ -866,8 +891,9 @@ void GreenPadWnd::on_nextwnd()
 {
 	if( HWND next = ::MyFindWindowEx( NULL, hwnd(), className_, NULL ) )
 	{
+		int i=0;;
 		HWND last=next, pos;
-		while( last != NULL )
+		while( last != NULL && i++ < 1024 )
 			last = ::MyFindWindowEx( NULL, pos=last, className_, NULL );
 		if( pos != next )
 			::SetWindowPos( hwnd(), pos,
@@ -879,16 +905,17 @@ void GreenPadWnd::on_nextwnd()
 void GreenPadWnd::on_prevwnd()
 {
 	HWND pos=NULL, next=::MyFindWindowEx( NULL,NULL,className_,NULL );
+	int i=0;
 	if( next==hwnd() )
 	{
-		while( next != NULL )
+		while( next != NULL && i++ < 1024 )
 			next = ::MyFindWindowEx( NULL,pos=next,className_,NULL );
 		if( pos!=hwnd())
 			MyShowWnd( pos );
 	}
 	else
 	{
-		while( next!=hwnd() && next!=NULL )
+		while( next!=hwnd() && next!=NULL && i++ < 1024)
 			next = ::MyFindWindowEx( NULL,pos=next,className_,NULL );
 		if( next!=NULL )
 			MyShowWnd( pos );
@@ -922,7 +949,7 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 	{
 		// ShiftJIS風のByte数カウント
 		const unicode* cu = edit_.getDoc().tl(c.tl);
-		const ulong tab = NZero(cfg_.vConfig().tabstep);
+		const uint tab = NZero(cfg_.vConfig().tabstep);
 		cad = 0;
 		for( ulong i=0; i<c.ad; ++i )
 			if( cu[i] == L'\t' )
@@ -1270,7 +1297,7 @@ bool GreenPadWnd::Save()
 
 	if(csi_ == 0xffffffff)
 		save_Csi = ::GetACP();
-	else if(csi_ >= 0xf0f00000 && csi_ < 0xf1000000)
+	else if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)
 		save_Csi = csi_ & 0xfffff;
 	else
 		save_Csi = charSets_[csi_].ID;
@@ -1302,7 +1329,11 @@ bool GreenPadWnd::Save()
 GreenPadWnd::ClsName GreenPadWnd::className_ = TEXT("GreenPad MainWnd");
 
 GreenPadWnd::GreenPadWnd()
-	: WndImpl  ( className_, WS_OVERLAPPEDWINDOW, WS_EX_ACCEPTFILES )
+	#ifndef FORCE_RTL_LAYOUT
+	: WndImpl  ( className_, WS_OVERLAPPEDWINDOW, WS_EX_ACCEPTFILES)
+	#else
+	: WndImpl  ( className_, WS_OVERLAPPEDWINDOW, WS_EX_ACCEPTFILES|WS_EX_LAYOUTRTL )
+	#endif
 	, search_  ( *this, edit_ )
 	, charSets_( cfg_.GetCharSetList() )
 	, csi_     ( cfg_.GetNewfileCsi() )

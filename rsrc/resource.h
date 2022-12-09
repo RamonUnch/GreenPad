@@ -66,6 +66,7 @@
 #define IDC_NEWDT                       1033
 #define IDC_CPNUMBER                    1034
 
+#define ID_CMD_OPENELEVATED             40001
 #define ID_CMD_REOPENFILE               40002
 #define ID_CMD_PROPERTY                 40003
 #define ID_CMD_NEWFILE                  40004

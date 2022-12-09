@@ -95,6 +95,7 @@ private:
 	void    on_newfile();
 	void    on_openfile();
 	void    on_reopenfile();
+	void    on_openelevated();
 	void    on_refreshfile();
 	void    on_savefile();
 	void    on_savefileas();

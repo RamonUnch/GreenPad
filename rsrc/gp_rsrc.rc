@@ -91,6 +91,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "ŠJ‚­(&O)...\tCtrl+O",          ID_CMD_OPENFILE
         MENUITEM "ŠJ‚«’¼‚·(&R)...\tCtrl+R",        ID_CMD_REOPENFILE
+        MENUITEM "ŠJ elevated (&V)...\tCtrl+T",        ID_CMD_OPENELEVATED
         MENUITEM SEPARATOR
         MENUITEM "•Û‘¶(&S)\tCtrl+S",             ID_CMD_SAVEFILE
         MENUITEM "•Ê–¼‚Å•Û‘¶(&A)...\tCtrl+Shift+S", ID_CMD_SAVEFILEAS
@@ -386,6 +387,7 @@ BEGIN
     "O",            ID_CMD_OPENFILE,        VIRTKEY, CONTROL, NOINVERT
     "P",            ID_CMD_PRINT,           VIRTKEY, CONTROL, NOINVERT
     "R",            ID_CMD_REOPENFILE,      VIRTKEY, CONTROL, NOINVERT
+    "T",            ID_CMD_OPENELEVATED,    VIRTKEY, CONTROL, NOINVERT
     "S",            ID_CMD_SAVEFILE,        VIRTKEY, CONTROL, NOINVERT
     "S",            ID_CMD_SAVEFILEAS,      VIRTKEY, SHIFT, CONTROL, NOINVERT
     "V",            ID_CMD_PASTE,           VIRTKEY, CONTROL, NOINVERT
@@ -444,6 +446,7 @@ BEGIN
         MENUITEM "&Open...\tCtrl+O",            ID_CMD_OPENFILE
         MENUITEM "&ReOpen...\tCtrl+R",          ID_CMD_REOPENFILE
 		MENUITEM "Re&fresh\tF5",                ID_CMD_REFRESHFILE
+        MENUITEM "Open ele&vated...\tCtrl+T",   ID_CMD_OPENELEVATED
         MENUITEM SEPARATOR
         MENUITEM "&Save\tCtrl+S",               ID_CMD_SAVEFILE
         MENUITEM "Save &As...\tCtrl+Shift+S",   ID_CMD_SAVEFILEAS
