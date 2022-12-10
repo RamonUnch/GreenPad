@@ -91,6 +91,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "開く(&O)...\tCtrl+O",          ID_CMD_OPENFILE
         MENUITEM "開き直す(&R)...\tCtrl+R",        ID_CMD_REOPENFILE
+        MENUITEM "開 elevated (&L)...\tCtrl+L",        ID_CMD_OPENELEVATED
         MENUITEM SEPARATOR
         MENUITEM "保存(&S)\tCtrl+S",             ID_CMD_SAVEFILE
         MENUITEM "別名で保存(&A)...\tCtrl+Shift+S", ID_CMD_SAVEFILEAS
@@ -357,6 +358,8 @@ BEGIN
     IDS_NOTFOUNDDOWN        "見つかりませんでした。\nContinue searching from the top?"
     IDS_REPLACEALLDONE      "%d箇所置換しました。"
     IDS_OKTODEL             "を削除してよろしいですか？"
+    IDS_NOWRITEACESS        "\nWrite access denied!\n\nOpen elevated so that the file can be modified?"
+    IDS_ERRORNUM            "\n\nError #"
 END
 
 #endif    // 日本語 resources
@@ -386,6 +389,7 @@ BEGIN
     "O",            ID_CMD_OPENFILE,        VIRTKEY, CONTROL, NOINVERT
     "P",            ID_CMD_PRINT,           VIRTKEY, CONTROL, NOINVERT
     "R",            ID_CMD_REOPENFILE,      VIRTKEY, CONTROL, NOINVERT
+    "L",            ID_CMD_OPENELEVATED,    VIRTKEY, CONTROL, NOINVERT
     "S",            ID_CMD_SAVEFILE,        VIRTKEY, CONTROL, NOINVERT
     "S",            ID_CMD_SAVEFILEAS,      VIRTKEY, SHIFT, CONTROL, NOINVERT
     "V",            ID_CMD_PASTE,           VIRTKEY, CONTROL, NOINVERT
@@ -444,6 +448,7 @@ BEGIN
         MENUITEM "&Open...\tCtrl+O",            ID_CMD_OPENFILE
         MENUITEM "&ReOpen...\tCtrl+R",          ID_CMD_REOPENFILE
 		MENUITEM "Re&fresh\tF5",                ID_CMD_REFRESHFILE
+        MENUITEM "Open e&levated...\tCtrl+L",   ID_CMD_OPENELEVATED
         MENUITEM SEPARATOR
         MENUITEM "&Save\tCtrl+S",               ID_CMD_SAVEFILE
         MENUITEM "Save &As...\tCtrl+Shift+S",   ID_CMD_SAVEFILEAS
@@ -721,6 +726,8 @@ BEGIN
     IDS_NOTFOUNDDOWN        "String Not Found.\nContinue searching from the top?"
     IDS_REPLACEALLDONE      "%d times Replaced."
     IDS_OKTODEL             " will be removed. OK?"
+    IDS_NOWRITEACESS        "\nWrite access denied!\n\nOpen elevated so that the file can be modified?"
+    IDS_ERRORNUM            "\n\nError #"
 END
 
 #endif    // 英語 (米国) resources
