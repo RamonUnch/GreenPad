@@ -45,7 +45,7 @@ public:
 	GreenPadWnd();
 	bool StartUp( const ki::Path& fn, int cs, int ln );
 	void ShowUp2();
-
+	
 private:
 
 	void UpdateWindowName();
@@ -69,6 +69,7 @@ private:
 private:
 
 	bool isUntitled() const { return filename_.len()==0; }
+	int resolvedCSI();
 
 private:
 

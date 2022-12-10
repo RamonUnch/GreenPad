@@ -215,18 +215,18 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 			return WndImpl::on_message( msg, wp, lp );
 		break;
 
-	// 右クリックメニュー
+	// 右クリックメニュー, right-click menu
 	case WM_CONTEXTMENU:
 		if( reinterpret_cast<HWND>(wp) == edit_.hwnd() )
 			::TrackPopupMenu(
-				::GetSubMenu( ::GetMenu(hwnd()), 1 ), // 編集メニュー表示
+				::GetSubMenu( ::GetMenu(hwnd()), 1 ), // 編集メニュー表示, Edit menu display
 				GetSystemMetrics(SM_MENUDROPALIGNMENT)|TPM_TOPALIGN|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
 				static_cast<SHORT>(LOWORD(lp)), static_cast<SHORT>(HIWORD(lp)), 0, hwnd(), NULL );
 		else
 			return WndImpl::on_message( msg, wp, lp );
 		break;
 
-	// メニューのグレーアウト処理
+	// メニューのグレーアウト処理, Menu gray-out processing
 	case WM_INITMENU:
 	case WM_INITMENUPOPUP:
 		on_initmenu( reinterpret_cast<HMENU>(wp), msg==WM_INITMENUPOPUP );
@@ -385,7 +385,11 @@ void GreenPadWnd::on_reopenfile()
 		}
 	}
 }
-
+int GreenPadWnd::resolvedCSI()
+{
+	return ((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)? csi_ & 0xfffff
+	       : (0 < csi_ && csi_ < 100)? charSets_[csi_].ID: 0;
+}
 void GreenPadWnd::on_openelevated(const ki::Path& fn)
 {
 	// Only supported since Windows 2000
@@ -393,9 +397,8 @@ void GreenPadWnd::on_openelevated(const ki::Path& fn)
 		return;
 
 	const view::VPos *cur, *sel;
-	bool selected = edit_.getCursor().getCurPosUnordered(&cur, &sel);
-	int cp = (csi_ >= 0xf0f00000 && csi_ < 0xf1000000)? csi_ & 0xfffff
-	       : (0 < csi_ && csi_ <100)? charSets_[csi_].ID: 0;
+	edit_.getCursor().getCurPosUnordered(&cur, &sel);
+	int cp = resolvedCSI();
 
 	String cmdl = TEXT( "-c") + String().SetInt(cp)
 	            + TEXT(" -l") + String().SetInt(cur->tl+1)
@@ -403,6 +406,7 @@ void GreenPadWnd::on_openelevated(const ki::Path& fn)
 //	MsgBox( cmdl.c_str(), Path(Path::ExeName).c_str() );
 	HINSTANCE ret = ShellExecute(NULL, TEXT("runas"), Path(Path::ExeName).c_str(), cmdl.c_str(), NULL, SW_SHOWNORMAL);
 	if( (LONG_PTR)ret > 32 )
+		//Destroy();
 		::ExitProcess(0); // Dirty quick exit.
 }
 // Keeps cursor position...
@@ -415,8 +419,7 @@ void GreenPadWnd::on_refreshfile()
 		bool selected = edit_.getCursor().getCurPosUnordered(&cur, &sel);
 		unsigned sline = cur->tl, scol = cur->ad;
 		unsigned eline = sel->tl, ecol = sel->ad;
-		int cp = (csi_ >= 0xf0f00000 && csi_ < 0xf1000000)? csi_ & 0xfffff
-		       : (csi_ > 0 && csi_ <100)? charSets_[csi_].ID: 0;
+		int cp = resolvedCSI();
 
 		OpenByMyself(filename_, cp, false);
 		if (selected) edit_.getCursor().MoveCur(DPos(eline, ecol), false);
@@ -1031,12 +1034,12 @@ void GreenPadWnd::UpdateWindowName()
 
 	SetText( name.c_str() );
 	// Try to show CP number in the StBar
-	if(csi_ >= 0xf0f00000 && csi_ < 0xf1000000) {
+	if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000) {
 		TCHAR cpname[10];
 		::wsprintf(cpname,TEXT("CP%d"), csi_ & 0xfffff);
 		stb_.SetCsText( cpname );
 	} else {
-		stb_.SetCsText( csi_==0xffffffff?TEXT("UNKN"):charSets_[csi_].shortName );
+		stb_.SetCsText( (UINT)csi_==0xffffffff?TEXT("UNKN"):charSets_[csi_].shortName );
 	}
 	stb_.SetLbText( lb_ );
 }
@@ -1197,8 +1200,8 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	{
 		// Check for Write access and Prompt the user
 		// if he would like to elevate so the file can be written.
-		TextFileW tf( cs, lb_ );
-		if (!tf.Open( fn.c_str() ) && GetLastError() == ERROR_ACCESS_DENIED )
+		TextFileW tfw( cs, lb_ );
+		if (!tfw.Open( fn.c_str() ) && GetLastError() == ERROR_ACCESS_DENIED )
 		{
 			String fnerror = fn + String(IDS_NOWRITEACESS);
 			if (IDYES == MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str(), MB_YESNO ))
@@ -1210,7 +1213,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	}
 
 
-	// 自分内部の管理情報を更新
+	// 自分内部の管理情報を更新, Update internal management information
 	if( fn[0]==TEXT('\\') || (fn[0]==TEXT('\\')&&fn[1]==TEXT('\\')) || fn[1]==TEXT(':') )
 		// Absolute path: '\file', 'x:\file', '\\share\file', '\\?\...', 'c:\\file' etc.
 		filename_ = fn;
@@ -1219,7 +1222,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	if( tf->size() )
 	{
 		csi_      = charSets_.findCsi( tf->codepage() );
-		if( csi_ == 0xffffffff )
+		if( (UINT)csi_ == 0xffffffff )
 			csi_       = 0xf0f00000 | tf->codepage();
 
 		if( tf->nolb_found() )
@@ -1229,6 +1232,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	}
 	else
 	{ // 空ファイルの場合は新規作成と同じ扱い
+	  // If the file is empty, it is treated as if it were newly created.
 		csi_      = cfg_.GetNewfileCsi();
 		lb_       = cfg_.GetNewfileLB();
 	}
@@ -1236,9 +1240,12 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 
 	// カレントディレクトリを、ファイルのある位置以外にしておく
 	// （こうしないと、開いているファイルのあるディレクトリが削除できない）
+	// Make sure the current directory is somewhere other than where the file is located.
+	// (otherwise the directory with the open file cannot be deleted)
 	::SetCurrentDirectory( Path(filename_).BeDriveOnly().c_str() );
 
 	// 文書タイプに応じて表示を更新
+	// Update display according to document type
 	if( needReConf )
 		ReloadConfig();
 
@@ -1325,13 +1332,12 @@ bool GreenPadWnd::Save()
 {
 	int save_Csi;
 
-	if(csi_ == 0xffffffff)
+	if((UINT)csi_ == 0xffffffff)
 		save_Csi = ::GetACP();
-	else if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)
-		save_Csi = csi_ & 0xfffff;
 	else
-		save_Csi = charSets_[csi_].ID;
+		save_Csi = resolvedCSI();
 
+	if (!save_Csi) save_Csi = ::GetACP(); // in case
 	TextFileW tf( save_Csi, lb_ );
 
 	if( tf.Open( filename_.c_str() ) )
