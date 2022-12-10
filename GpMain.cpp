@@ -269,7 +269,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_NEWFILE:    on_newfile();   break;
 	case ID_CMD_OPENFILE:   on_openfile();  break;
 	case ID_CMD_REOPENFILE: on_reopenfile();break;
-	case ID_CMD_OPENELEVATED: on_openelevated(); break;
+	case ID_CMD_OPENELEVATED: on_openelevated(filename_); break;
 	case ID_CMD_REFRESHFILE:on_refreshfile();break;
 	case ID_CMD_SAVEFILE:   on_savefile();  break;
 	case ID_CMD_SAVEFILEAS: on_savefileas();break;
@@ -386,20 +386,24 @@ void GreenPadWnd::on_reopenfile()
 	}
 }
 
-void GreenPadWnd::on_openelevated()
+void GreenPadWnd::on_openelevated(const ki::Path& fn)
 {
+	// Only supported since Windows 2000
+	if( app().getOSVer() < 500 )
+		return;
+
 	const view::VPos *cur, *sel;
 	bool selected = edit_.getCursor().getCurPosUnordered(&cur, &sel);
 	int cp = (csi_ >= 0xf0f00000 && csi_ < 0xf1000000)? csi_ & 0xfffff
-	       : (csi_ > 0 && csi_ <100)? charSets_[csi_].ID: 0;
+	       : (0 < csi_ && csi_ <100)? charSets_[csi_].ID: 0;
 
 	String cmdl = TEXT( "-c") + String().SetInt(cp)
 	            + TEXT(" -l") + String().SetInt(cur->tl+1)
-	            + TEXT(" \"") + filename_ + TEXT("\"");
-//	MessageBox(NULL, cmdl.c_str(), Path(Path::ExeName).c_str(), 0);
+	            + TEXT(" \"") + fn + TEXT("\"");
+//	MsgBox( cmdl.c_str(), Path(Path::ExeName).c_str() );
 	HINSTANCE ret = ShellExecute(NULL, TEXT("runas"), Path(Path::ExeName).c_str(), cmdl.c_str(), NULL, SW_SHOWNORMAL);
 	if( (LONG_PTR)ret > 32 )
-		on_exit();
+		::ExitProcess(0); // Dirty quick exit.
 }
 // Keeps cursor position...
 // TOTO: also set VPos so that it does not scroll...
@@ -619,7 +623,7 @@ void GreenPadWnd::on_print()
 				rcPrinter.bottom = cHeightPels - (rcMargins.top+rcMargins.bottom);
 			}
 		}
-		// EndPage Does not reste page attributes on NT/9x
+		// EndPage Does not reset page attributes on NT/9x
 		::EndPage(thePrintDlg.hDC);
 	} while(++procCopies < totalCopies);
 
@@ -664,6 +668,7 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 
 	::EnableMenuItem( menu, ID_CMD_SAVEFILE, MF_BYCOMMAND|(isUntitled() || edit_.getDoc().isModified() ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_REOPENFILE, MF_BYCOMMAND|(!isUntitled() ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_OPENELEVATED, MF_BYCOMMAND|( app().getOSVer() >= 500 ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_GREP, MF_BYCOMMAND|(cfg_.grepExe().len()>0 ? MF_ENABLED : MF_GRAYED) );
 
 	::CheckMenuItem( menu, ID_CMD_NOWRAP, MF_BYCOMMAND|(wrap_==-1?MF_CHECKED:MF_UNCHECKED));
@@ -1040,12 +1045,12 @@ void GreenPadWnd::SetupMRUMenu()
 {
 	int nmru=0;
 	HMENU mparent = ::GetSubMenu(::GetMenu(hwnd()),0);
-	if( HMENU m = ::GetSubMenu(mparent, 12) )
+	if( HMENU m = ::GetSubMenu(mparent, 13) )
 	{
 		nmru = cfg_.SetUpMRUMenu( m, ID_CMD_MRU );
 		::DrawMenuBar( hwnd() );
 	}
-	::EnableMenuItem(mparent, 12, MF_BYPOSITION|(nmru?MF_ENABLED:MF_GRAYED));
+	::EnableMenuItem(mparent, 13, MF_BYPOSITION|(nmru?MF_ENABLED:MF_GRAYED));
 }
 
 void GreenPadWnd::on_mru( int no )
@@ -1174,9 +1179,36 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	if( !tf->Open( fn.c_str(), always ) )
 	{
 		// ERROR!
-		MsgBox( fn.c_str(), String(IDS_OPENERROR).c_str() );
-		return false;
+		int err = GetLastError();
+		String fnerror = fn + String(IDS_ERRORNUM) + String().SetInt(err);
+		if( err == ERROR_ACCESS_DENIED )
+		{
+			// cannot open file for READ.
+			// Directly try to open elevated.
+			//fnerror += TEXT(": Access Denied\n\nTry to open elevated?");
+			//if (IDYES == MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str(), MB_YESNO ))
+			on_openelevated(fn);
+			return false;
+		}
+		MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str() );
+		return false; // Failed to open.
 	}
+	else if ( app().getOSVer() >= 500 )
+	{
+		// Check for Write access and Prompt the user
+		// if he would like to elevate so the file can be written.
+		TextFileW tf( cs, lb_ );
+		if (!tf.Open( fn.c_str() ) && GetLastError() == ERROR_ACCESS_DENIED )
+		{
+			String fnerror = fn + String(IDS_NOWRITEACESS);
+			if (IDYES == MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str(), MB_YESNO ))
+			{
+				on_openelevated(fn);
+				return false;
+			}
+		}
+	}
+
 
 	// é©ï™ì‡ïîÇÃä«óùèÓïÒÇçXêV
 	if( fn[0]==TEXT('\\') || (fn[0]==TEXT('\\')&&fn[1]==TEXT('\\')) || fn[1]==TEXT(':') )
@@ -1291,8 +1323,6 @@ bool GreenPadWnd::AskToSave()
 
 bool GreenPadWnd::Save()
 {
-//	TextFileW tf( charSets_[csi_].ID, lb_ );
-
 	int save_Csi;
 
 	if(csi_ == 0xffffffff)
@@ -1316,7 +1346,9 @@ bool GreenPadWnd::Save()
 	}
 
 	// Error!
-	MsgBox( filename_.c_str(), String(IDS_SAVEERROR).c_str() );
+	DWORD err = GetLastError();
+	String fnerror = filename_ + TEXT("\n\nError #") + String().SetInt(err);
+	MsgBox( fnerror.c_str(), String(IDS_SAVEERROR).c_str() );
 	return false;
 }
 

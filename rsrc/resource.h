@@ -18,6 +18,8 @@
 #define IDS_REPLACEALLDONE              9
 #define IDS_OKTODEL                     10
 #define IDS_NOTFOUNDDOWN                11
+#define IDS_NOWRITEACESS                12
+#define IDS_ERRORNUM                    13
 
 #define IDR_MAIN                        103
 #define IDD_OPENFILEHOOK                105
