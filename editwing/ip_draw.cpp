@@ -211,19 +211,20 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 //-------------------------------------------------------------------------
 // 線を引くとか四角く塗るとか、そーいう基本的な処理
 //-------------------------------------------------------------------------
-static int wtable[65536]; // static width table
+static CW_INTTYPE wtable[65536]; // static width table
 static const uchar ctlMap[32] = {
 	'0','1','2','3','4','5','6','7',
 	'8','>','A','B','C','D','E','F',
 	'G','H','I','J','K','L','M','N',
 	'O','P','Q','R','S','T','U','V',
 };
-static const uchar ctl2Map[33] = {
+static const uchar ctl2Map[34] = {
 	'~', // DEL!
 	'W','X','Y','Z','a','b','c','d',
 	'e','f','g','h','i','j','k','l',
 	'm','n','o','p','q','r','s','t',
-	'u','v','w','x','y','z','+','/',
+	'u','v','w','x','y','z','+','\\',
+	'^', // NBSP
 };
 Painter::Painter( HDC hdc, const VConfig& vc )
 	: dc_        ( hdc )
@@ -256,12 +257,27 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 #ifdef WIN32S
 	if (App::isWin32s() )
 	{
+		#ifndef SHORT_TABLEWIDTH
 		::GetCharWidthA( dc_, ' ', '~', widthTable_+' ' );
+		#else
+		int width['~'-' '+1];
+		::GetCharWidthA( dc_, ' ', '~', width );
+		for( int i=0; i <= '~' - ' '; i++)
+			widthTable_[' ' + i] = (CW_INTTYPE)width[i];
+		#endif
 	}
 	else
 #endif
 	{
+		#ifndef SHORT_TABLEWIDTH
 		::GetCharWidthW( dc_, L' ', L'~', widthTable_+L' ' );
+		#else
+		int width['~'-' '+1];
+		::GetCharWidthA( dc_, ' ', '~', width );
+		int i;
+		for( i=0; i <= '~' - ' '; i++)
+			widthTable_[' ' + i] = (CW_INTTYPE)width[i];
+		#endif
 	}
 
 	const unicode zsp=0x3000; // L'　'
@@ -281,11 +297,9 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 
 	// C1 Controls shown as colored W-Z, a-z, +, /,
 	// + DEL (127) shown as colored '~'
-	for (unicode ch=127; ch<=159; ++ch)
-		widthTable_[ch] = widthTable_[ctl2Map[ch-(unicode)127]];
-
 	if( sc(scZSP) )
-		widthTable_[0x00A0]=widthTable_[L'^']; // show NBSP like ^
+		for (unicode ch=127; ch<=160; ++ch)
+			widthTable_[ch] = widthTable_[ctl2Map[ch-(unicode)127]];
 
 	// Set the width of a Tabulation
 	widthTable_[L'\t'] = NZero(W() * Max(1, vc.tabstep));
@@ -293,7 +307,7 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 	// 高さの情報, Height Information
 	TEXTMETRIC met;
 	::GetTextMetrics( dc_, &met );
-	height_ = met.tmHeight;
+	height_ = (CW_INTTYPE) met.tmHeight;
 
 	// LOGFONT
 	::GetObject( font_, sizeof(LOGFONT), &logfont_ );
@@ -706,26 +720,29 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 					if( p.sc(scHSP) )
 						p.DrawHSP( x+v.XBASE, a.top, i2-i );
 					break;
-				case 0x00a0: // NBSP No-Break Space
-					if( p.sc(scZSP) )
-					{
-						p.SetColor( clr=CTL );
-						p.CharOut( L'^', x+v.XBASE, a.top );
-					}
-					break;
+//				case 0x00a0: // NBSP No-Break Space
+//					if( p.sc(scZSP) )
+//					{
+//						p.SetColor( clr=CTL );
+//						p.CharOut( L'^', x+v.XBASE, a.top );
+//					}
+//					break;
 				case 0x3000://L'　':
 					if( p.sc(scZSP) )
 						p.DrawZSP( x+v.XBASE, a.top, i2-i );
 					break;
 				default:
-					const unicode u = str[i] ;
-					if( u <= 31 || (127 <=u && u <= 159) )
-					{ // ASCII C0 and C1 Control caracters
-						p.SetColor( clr=CTL );
-						unicode c = str[i];
-						c = c<32? ctlMap[c]: ctl2Map[c-L'~'];
-						p.CharOut( c, x+v.XBASE, a.top );
-						break;
+					if( p.sc(scZSP) )
+					{
+						const unicode u = str[i] ;
+						if( u <= 31 || (127 <=u && u <= 160) )
+						{ // ASCII C0 and C1 Control caracters + DEL + NBSP
+							p.SetColor( clr=CTL );
+							unicode c = str[i];
+							c = c<32? ctlMap[c]: ctl2Map[c-127];
+							p.CharOut( c, x+v.XBASE, a.top );
+							break;
+						}
 					}
 					if( clr != (flg[i]&3) )
 						p.SetColor( clr=(flg[i]&3) );
