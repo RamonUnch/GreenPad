@@ -60,6 +60,9 @@ public:
 	//@{ •¶Žš”Žw’èŽž‚ÌÜ‚è•Ô‚µ•¶Žš” //@}
 	int wrapWidth() const;
 
+	//@{ Get smart warp flag //@}
+	bool wrapSmart() const;
+
 	//@{ Ü‚è•Ô‚µ•û–@ //@}
 	int wrapType() const;
 
@@ -156,6 +159,7 @@ private:
 		editwing::VConfig vc;
 		int               wrapType;
 		int               wrapWidth;
+		bool              wrapSmart;
 		bool              showLN;
 		uchar             fontCS;
 		uchar             fontQual;
@@ -202,6 +206,9 @@ inline const ki::String& ConfigManager::txtFileFilter() const
 
 inline int ConfigManager::wrapWidth() const
 	{ return curDt_->wrapWidth; }
+
+inline bool ConfigManager::wrapSmart() const
+	{ return curDt_->wrapSmart; }
 
 inline int ConfigManager::wrapType() const
 	{ return curDt_->wrapType>0 ? wrapWidth() : curDt_->wrapType; }

@@ -555,7 +555,7 @@ public:
 						f |= kwd_.isKeyword( str+i, j-i );
 					// fall...
 
-				// タブ・制御文字, Tabs and control characters (0-31, 127)
+				// タブ・制御文字, Tabs
 				case T:
 					// fall...
 

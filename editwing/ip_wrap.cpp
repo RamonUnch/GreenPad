@@ -136,7 +136,7 @@ void ViewImpl::on_text_update
 
 
 //-------------------------------------------------------------------------
-// 折り返し位置計算補助ルーチン
+// 折り返し位置計算補助ルーチン, Wrap-around position calculation assistance routine
 //-------------------------------------------------------------------------
 
 void ViewImpl::UpdateTextCx()
@@ -184,13 +184,32 @@ void ViewImpl::CalcEveryLineWidth()
 		wrap_[i].width() = CalcLineWidth( doc_.tl(i), doc_.len(i) );
 }
 
+bool ViewImpl::isSpaceLike(unicode ch)
+{
+	static const bool spacelike[128] = {
+		1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 0-15
+		1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 16-31
+		1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1, //  !"#$%&'()* 32-47
+		0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,1, // 48-63
+		1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 64-79
+		0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1, // 80-95
+		0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 96-111
+		0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1, // 96-127
+	};
+	// Use Table for ASCII character and also inlcude all C1 control
+	// And also all characters beyond 0x2500 (Box Drawing and above)
+	// This includes all ideographic characters and all extended planes
+	return ch < 128? spacelike[ch]: ch < 0x00a0 || ch >= 0x2500 ;
+}
+
 void ViewImpl::ModifyWrapInfo(
 		const unicode* txt, ulong len, WLine& wl, ulong stt )
 {
 	// 設定幅での折り返しを実行する。
 	// 行の途中からの変更の場合、sttが開始addressを指している
 	const Painter& p = cvs_.getPainter();
-	const ulong   ww = cvs_.wrapWidth();
+	const bool smart = cvs_.wrapSmart();
+	const ulong   ww = smart? cvs_.wrapWidth()-p.W()/2: cvs_.wrapWidth();
 
 	while( stt < len )
 	{
@@ -201,9 +220,25 @@ void ViewImpl::ModifyWrapInfo(
 				w = p.nextTab(w);
 			else
 				w += p.W( &txt[i] );
-
-			if( w>ww )
-				break; // 幅が設定値を超えた所でおしまい
+			if( w > ww )
+			{
+				if( smart )
+				{	// Prefer wrapping on words
+					// Back-track to previous spacelike char.
+					ulong oi = i;
+					ulong ow = w;
+					// If we meet a surrogate we will stop
+					// and because low surrogate have a zero width
+					// they will never be separated from high surrogate.
+					while( !isSpaceLike( txt[i] ) && stt < i )
+						w -= p.W( &txt[i--] );
+					if( stt == i )
+						w = ow, i = oi;
+					w += p.Wc( txt[i] );
+					i++;
+				}
+				break;
+			}
 		}
 		wl.Add( stt = (i==stt?i+1:i) );
 	}
@@ -222,6 +257,8 @@ void ViewImpl::ReWrapAll()
 {
 	// 折り返し幅に変更があった場合に、全ての行の
 	// 折り返し位置情報を変更する。
+	// If there is a change in the wrapping width,
+	// the wrapping position information for all lines is changed.
 	const ulong ww = cvs_.wrapWidth();
 
 	ulong vln=0;
@@ -249,7 +286,7 @@ void ViewImpl::ReWrapAll()
 
 
 //-------------------------------------------------------------------------
-// 折り返し位置計算メインルーチン
+// 折り返し位置計算メインルーチン Folding Position Calculation Main Routine
 //-------------------------------------------------------------------------
 
 int ViewImpl::ReWrapSingle( const DPos& s )
@@ -267,36 +304,38 @@ int ViewImpl::ReWrapSingle( const DPos& s )
 	// むしろその方が効率的であるため廃止した。
 
 
-	// 旧情報保存
+	// 旧情報保存, Save old info
 	WLine& wl            = wrap_[s.tl];
 	const ulong oldVRNum = wl.rln();
 	const ulong oldWidth = wl.width();
 
-	// 横幅更新
+	// 横幅更新, Update width
 	wl.width() = CalcLineWidth( doc_.tl(s.tl), doc_.len(s.tl) );
 
 	if( wl.width() < cvs_.wrapWidth() )
 	{
 		// 設定した折り返し幅より短い場合は一行で済む。
+		// Only one line is needed
 		wl[1] = doc_.len(s.tl);
 		wl.ForceSize( 2 );
 	}
 	else
 	{
-		// 複数行になる場合
+		// 複数行になる場合, There are multiple lines
 		ulong vr=1, stt=0;
 		while( wl[vr] < s.ad ) // while( vr行目は変更箇所より手前 )
-			stt = wl[ vr++ ];  // stt = 次の行の行頭のアドレス
+			stt = wl[ vr++ ];  // stt = 次の行の行頭のアドレス, next line stt
 
-		// 変更箇所以降のみ修正
+		// 変更箇所以降のみ修正, Corrected only after the point of change
 		wl.ForceSize( vr );
 		ModifyWrapInfo( doc_.tl(s.tl), doc_.len(s.tl), wl, stt );
 	}
 
-	// 表示行の総数を修正
+	// 表示行の総数を修正, Fix total number of display rows
 	vlNum_ += ( wl.rln() - oldVRNum );
 
 	// 折り返しなしだと総横幅の更新が必要
+	// Without wrapping, total width needs to be updated
 	if( cvs_.wrapType() == NOWRAP )
 	{
 		if( textCx_ <= wl.width() )
@@ -403,21 +442,24 @@ int ViewImpl::DeleteMulti( ulong ti_s, ulong ti_e )
 
 void ViewImpl::ConvDPosToVPos( DPos dp, VPos* vp, const VPos* base ) const
 {
-	// 補正
+	// 補正, Corrections
 	dp.tl = Min( dp.tl, doc_.tln()-1 );
 	dp.ad = Min( dp.ad, doc_.len(dp.tl) );
 
 	// 変換の基準点が指定されていなければ、原点を基準とする
+	// If no reference point is specified for the conversion,
+	// the origin is used as the reference point
 	VPos topPos(false); // ０クリア
 	if( base == NULL )
 		base = &topPos;
 
 	// とりあえずbase行頭の値を入れておく
+	// Put the value at the beginning of the BASE line for now
 	ulong vl = base->vl - base->rl;
 	ulong rl = 0;
 	int vx;
 
-	// 同じ行内だった場合
+	// 同じ行内だった場合, If they were the same line
 	//if( dp.tl == base->tl )
 	//{
 	//	例えば [→] を押したときなど、右隣の文字の横幅を
@@ -426,27 +468,27 @@ void ViewImpl::ConvDPosToVPos( DPos dp, VPos* vp, const VPos* base ) const
 	//	とりあえず面倒くさいので、今のところ略。
 	//}
 
-	// 違う行だった場合
+	// 違う行だった場合, If they were a different line
 	//else
 	{
-		// vlを合わせる
+		// vlを合わせる, match vl
 		ulong tl = base->tl;
-		if( tl > dp.tl )      // 目的地が基準より上にある場合
+		if( tl > dp.tl )      // 目的地が基準より上にある場合, dest above ref
 			do
 				vl -= rln(--tl);
 			while( tl > dp.tl );
-		else if( tl < dp.tl ) // 目的地が基準より下にある場合
+		else if( tl < dp.tl ) // 目的地が基準より下にある場合, dest below ref
 			do
 				vl += rln(tl++);
 			while( tl < dp.tl );
 
-		// rlを合わせる
+		// rlを合わせる match rl
 		ulong stt=0;
 		while( wrap_[tl][rl+1] < dp.ad )
 			stt = wrap_[tl][++rl];
 		vl += rl;
 
-		// x座標計算
+		// x座標計算, calculate x cordinate
 		vx = CalcLineWidth( doc_.tl(tl)+stt, dp.ad-stt );
 	}
 

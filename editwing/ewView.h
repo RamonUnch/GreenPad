@@ -37,11 +37,16 @@ public:
 	//@{ 折り返し方式切替 //@}
 	void SetWrapType( int wt );
 
+	void SetWrapSmart( bool ws);
+
 	//@{ 行番号表示/非表示切替 //@}
 	void ShowLineNo( bool show );
 
 	//@{ 表示色・フォント切替 //@}
 	void SetFont( const VConfig& vc );
+	
+	//@{ Set all canva stuff at once (faster) //@}
+	void SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc );
 
 	//@{ 内部実装 //@}
 	ViewImpl& impl() { return *impl_; }

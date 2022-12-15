@@ -8,7 +8,11 @@ namespace editwing {
 namespace view {
 #endif
 
-
+#ifdef SHORT_TABLEWIDTH
+#define CW_INTTYPE short
+#else
+#define CW_INTTYPE int
+#endif
 
 using doc::DocImpl;
 
@@ -65,18 +69,18 @@ public:
 public:
 
 	//@{ 高さ, height(pixel) //@}
-	int H() const { return height_; }
+	CW_INTTYPE H() const { return height_; }
 
 	//@{ 数字幅, digit width (pixel) //@}
-	int F() const { return figWidth_; }
+	CW_INTTYPE F() const { return figWidth_; }
 
 	//@{ 文字幅, character width (pixel) //@}
-	int Wc( const unicode ch ) const
+	CW_INTTYPE Wc( const unicode ch ) const
 	{ // Direclty return the character width!
 	  // You must have initialized it before...
 		return widthTable_[ ch ];
 	}
-	int W( const unicode* pch ) const // 1.08 サロゲートペア回避, Avoid Surrogate Pair
+	CW_INTTYPE W( const unicode* pch ) const // 1.08 サロゲートペア回避, Avoid Surrogate Pair
 	{
 		unicode ch = *pch;
 		if( widthTable_[ ch ] == -1 )
@@ -90,45 +94,62 @@ public:
 				SIZE sz;
 				if( isLowSurrogate(pch[1])
 				&&::GetTextExtentPoint32W( dc_, pch, 2, &sz ) )
-					return sz.cx; // Valid surrogate pair.
+					return (CW_INTTYPE)sz.cx; // Valid surrogate pair.
 #endif
 				// Not a proper surrogate pair fallback to 2x (fast)
 				return 2 * widthTable_[ L'x' ];
 			}
 #ifdef WIN32S
-			if(ch > 0x100)
+			if( App::isWin32s() )
 			{
-				SIZE sz;
-				char strch[8]; // Small buffer for a single multi-byte character.
-				DWORD len = WideCharToMultiByte(CP_ACP,0, &ch,1, strch,countof(strch), NULL, NULL);
-				if(len && ::GetTextExtentPointA( dc_, strch, len, &sz ) )
-					widthTable_[ ch ] = sz.cx;
+				if( ch > 0x100 )
+				{
+					SIZE sz;
+					char strch[8]; // Small buffer for a single multi-byte character.
+					DWORD len = WideCharToMultiByte(CP_ACP,0, &ch,1, strch, countof(strch), NULL, NULL);
+					if( len && ::GetTextExtentPointA( dc_, strch, len, &sz ) )
+						widthTable_[ ch ] = (CW_INTTYPE)sz.cx;
+					else
+						widthTable_[ ch ] = 2 * widthTable_[ L'x' ]; // Default 2x width
+				}
 				else
-					widthTable_[ ch ] = 2 * widthTable_[ L'x' ]; // Default 2x width
+				{
+					#ifndef SHORT_TABLEWIDTH
+					::GetCharWidthA( dc_, ch, ch, widthTable_+ch );
+					#else
+					int width=0;
+					::GetCharWidthA( dc_, ch, ch, &width );
+					widthTable_[ch] = (CW_INTTYPE)width;
+					#endif
+				}
 			}
 			else
-			{
-				::GetCharWidthA( dc_, ch, ch, widthTable_+ch );
-			}
-#else
-			if( isInFontRange( ch ) )
-			{
-				::GetCharWidthW( dc_, ch, ch, widthTable_+ch );
-			}
-			else
-			{	// Use GetTextExtentPointW when dc_ defaults to fallback font
-				// TODO: Even beter, get the fallback font and use its char width.
-				SIZE sz;
-				::GetTextExtentPointW( dc_, &ch, 1, &sz );
-				widthTable_[ ch ] = sz.cx;
-			}
 #endif
+			{ // Windows 9x/NT
+				if( isInFontRange( ch ) )
+				{
+					#ifndef SHORT_TABLEWIDTH
+					::GetCharWidthW( dc_, ch, ch, widthTable_+ch );
+					#else
+					int width=0;
+					::GetCharWidthW( dc_, ch, ch, &width );
+					widthTable_[ch] = (CW_INTTYPE)width;
+					#endif
+				}
+				else
+				{	// Use GetTextExtentPointW when dc_ defaults to fallback font
+					// TODO: Even beter, get the fallback font and use its char width.
+					SIZE sz;
+					::GetTextExtentPointW( dc_, &ch, 1, &sz );
+					widthTable_[ ch ] = (CW_INTTYPE)sz.cx;
+				}
+			}
 		}
 		return widthTable_[ ch ];
 	}
 
 	//@{ 標準文字幅, standard character width (pixel) //@}
-	int W() const { return widthTable_[ L'x' ]; }
+	CW_INTTYPE W() const { return widthTable_[ L'x' ]; }
 
 
 	//@{ Is the character is in the selected font? //@}
@@ -150,8 +171,8 @@ public:
 
 	//@{ 次のタブ揃え位置を計算, Calculate next tab alignment position //@}
 	//int nextTab(int x) const { int t=T(); return (x/t+1)*t; }
-	inline int nextTab(int x) const { int t=T(); return ((x+4)/t+1)*t; }
-	private: int T() const { return widthTable_[ L'\t' ]; } public:
+	inline int nextTab(int x) const { int t=(int)T(); return ((x+4)/t+1)*t; }
+	private: CW_INTTYPE T() const { return widthTable_[ L'\t' ]; } public:
 
 	//@{ 現在のフォント情報, Current font information //@}
 	const LOGFONT& LogFont() const { return logfont_; }
@@ -165,9 +186,9 @@ private:
 	const HFONT  font_;
 	const HPEN   pen_;
 	const HBRUSH brush_;
-	int          height_;
-	int*         widthTable_; // [65535] // values => 256KB
-	int          figWidth_;
+	CW_INTTYPE   height_;
+	CW_INTTYPE*  widthTable_; // int or char [65535] values
+	CW_INTTYPE   figWidth_;
 	LOGFONT      logfont_;
 	GLYPHSET     *fontranges_;
 	COLORREF     colorTable_[7];
@@ -211,7 +232,9 @@ public:
 	void on_font_change( const VConfig& vc );
 
 	//@{ 設定変更イベント処理 //@}
-	void on_config_change( int wrap, bool showln );
+	void on_config_change( int wrap, bool showln, bool warpSmart );
+
+	void on_config_change_nocalc( int wrap, bool showln, bool warpSmart );
 
 public:
 
@@ -220,6 +243,8 @@ public:
 
 	//@{ [-1:折り返し無し  0:窓右端  else:指定文字数] //@}
 	int wrapType() const { return wrapType_; }
+	
+	bool wrapSmart() const { return warpSmart_; }
 
 	//@{ 折り返し幅(pixel) //@}
 	ulong wrapWidth() const { return wrapWidth_; }
@@ -233,6 +258,7 @@ public:
 private:
 
 	int  wrapType_;  // [ -1:折り返し無し  0:窓右端  else:指定文字数 ]
+	bool warpSmart_; // [ Enable wrapping at word boundaries ]
 	bool showLN_;    // [ 行番号を表示するか否か ]
 
 	dptr<Painter> font_; // 描画用オブジェクト
@@ -298,15 +324,15 @@ enum ReDrawType
 
 struct VDrawInfo
 {
-	const RECT rc;  // 再描画範囲
-	int XBASE;      // 一番左の文字のx座標
-	int XMIN;       // テキスト再描画範囲左端
-	int XMAX;       // テキスト再描画範囲右端
-	int YMIN;       // テキスト再描画範囲上端
-	int YMAX;       // テキスト再描画範囲下端
-	ulong TLMIN;    // テキスト再描画範囲上端論理行番号
-	int SXB, SXE;   // 選択範囲のx座標
-	int SYB, SYE;   // 選択範囲のy座標
+	const RECT rc;  // 再描画範囲, redraw range
+	int XBASE;      // 一番左の文字のx座標, x-coordinate of the leftmost character
+	int XMIN;       // テキスト再描画範囲左端, left edge of text redraw range
+	int XMAX;       // テキスト再描画範囲右端, Right edge of text redraw range
+	int YMIN;       // テキスト再描画範囲上端, Top edge of text redraw range
+	int YMAX;       // テキスト再描画範囲下端, Bottom edge of text redraw range
+	ulong TLMIN;    // テキスト再描画範囲上端論理行番号, Logical line number at the top of the text redraw range
+	int SXB, SXE;   // 選択範囲のx座標, x-coordinate of selection
+	int SYB, SYE;   // 選択範囲のy座標, y-coordinate of selection
 
 	explicit VDrawInfo( const RECT& r ) : rc(r) {}
 };
@@ -332,11 +358,16 @@ public:
 	//@{ 折り返し方式切替 //@}
 	void SetWrapType( int wt );
 
+	void SetWrapSmart( bool ws );
+
 	//@{ 行番号表示/非表示切替 //@}
 	void ShowLineNo( bool show );
 
 	//@{ 表示色・フォント切替 //@}
 	void SetFont( const VConfig& vc );
+
+	//@{ All of the above in one go //@}
+	void SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc );
 
 		//@{ テキスト領域のサイズ変更イベント //@}
 		void on_view_resize( int cx, int cy );
@@ -415,6 +446,7 @@ private:
 
 	void CalcEveryLineWidth();
 	ulong CalcLineWidth( const unicode* txt, ulong len ) const;
+	bool isSpaceLike(unicode ch);
 	void ModifyWrapInfo( const unicode* txt, ulong len, WLine& wl, ulong stt );
 	void ReWrapAll();
 	int ReWrapSingle( const DPos& s );
@@ -453,15 +485,26 @@ inline void ViewImpl::on_view_resize( int cx, int cy )
 	{ DoResize( cvs_.on_view_resize( cx, cy ) ); }
 
 inline void ViewImpl::SetWrapType( int wt )
-	{ cvs_.on_config_change( wt, cvs_.showLN() );
+	{ cvs_.on_config_change( wt, cvs_.showLN(), cvs_.wrapSmart() );
+	  DoConfigChange(); }
+
+inline void ViewImpl::SetWrapSmart( bool ws )
+	{ cvs_.on_config_change( cvs_.wrapType(), cvs_.showLN(), ws );
 	  DoConfigChange(); }
 
 inline void ViewImpl::ShowLineNo( bool show )
-	{ cvs_.on_config_change( cvs_.wrapType(), show );
+	{ cvs_.on_config_change( cvs_.wrapType(), show, cvs_.wrapSmart() );
 	  DoConfigChange(); }
 
 inline void ViewImpl::SetFont( const VConfig& vc )
 	{ cvs_.on_font_change( vc );
+	  cur_.on_setfocus();
+	  CalcEveryLineWidth(); // 行幅再計算
+	  DoConfigChange(); }
+
+inline void ViewImpl::SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc )
+	{ cvs_.on_config_change_nocalc( wt, showLN, ws );
+	  cvs_.on_font_change( vc );
 	  cur_.on_setfocus();
 	  CalcEveryLineWidth(); // 行幅再計算
 	  DoConfigChange(); }

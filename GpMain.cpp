@@ -1083,17 +1083,8 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 	// Undo回数制限, limit undo
 	edit_.getDoc().SetUndoLimit( cfg_.undoLimit() );
 
-	// 行番号, line numbers
-	bool ln = cfg_.showLN();
-	edit_.getView().ShowLineNo( ln );
-
-	// 折り返し方式, warp method
-	wrap_ = cfg_.wrapType();
-	edit_.getView().SetWrapType( wrap_ );
-
-	// 色・フォント, colors and font
-	VConfig vc = cfg_.vConfig();
-	edit_.getView().SetFont( vc );
+	wrap_ = cfg_.wrapType(); //       wt,    smart wrap,      line number,    Font...
+	edit_.getView().SetWrapLNandFont( wrap_, cfg_.wrapSmart(), cfg_.showLN(), cfg_.vConfig() );
 	LOGGER("GreenPadWnd::ReloadConfig ViewConfigLoaded");
 
 	// キーワードファイル, keyword file

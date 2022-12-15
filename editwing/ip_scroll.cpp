@@ -19,6 +19,16 @@ using namespace editwing::view;
 //=========================================================================
 
 #if defined(TARGET_VER) && TARGET_VER < 351
+#ifdef WIN32S
+// Win32s scroll range is mimited to 32767
+#define MAX_SCROLL 32500
+#define MAX_MULT (32768-MAX_SCROLL)
+#else
+// Windows NT: scrollrange is limited to 65535
+#define MAX_SCROLL 65400
+#define MAX_MULT (65536-MAX_SCROLL)
+#endif
+
 typedef int (WINAPI *ssnfo_funk)(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw);
 static int WINAPI MySetScrollInfo_1st(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw);
 static ssnfo_funk MySetScrollInfo = MySetScrollInfo_1st;
@@ -26,21 +36,19 @@ static ssnfo_funk MySetScrollInfo = MySetScrollInfo_1st;
 static int WINAPI MySetScrollInfo_fb(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw)
 {
 	// Fallback function for NT3.1/3.5 and win32s
-	// We must use SetScrollRange but it is mimited to 65535.
+	// We must use SetScrollRange but it is mimited to 65535 (32767 on Win32s).
 	// So we can avoid oveflow by dividing range and position values
 	// In GreenPad we can assume that only nMax can go beyond range.
 	int MULT=1;
 	int nMax = lpsi->nMax;
-	// If we go beyond 65400 then we use a divider
-	if (nMax > 65400)
-	{   // 65501 - 65535 = 35 values MULT from 2-136
-		// Like this the new range is around 8912896 instead of 65535
-		MULT = Min( nMax / 65536 + 1,  136 );
+	// If we go beyond MAX_SCROLL then we use a divider
+	if (nMax > MAX_SCROLL)
+	{   // 32500 - 32767 = 267 values MULT from 2-268
+		MULT = Min( (nMax / MAX_SCROLL) + 1,  MAX_MULT );
 		// We store the divider in the last 135 values
 		// of the max scroll range.
-		nMax = 65400 + MULT - 1 ; // 65401 => MULT = 2
+		nMax = MAX_SCROLL + MULT - 1 ; // 32501 => MULT = 2
 	}
-
 	if (lpsi->fMask|SIF_RANGE)
 		::SetScrollRange( hwnd, fnBar, lpsi->nMin, nMax, FALSE );
 
@@ -52,9 +60,9 @@ static int WINAPI MySetScrollInfo_1st(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, B
 	// Should be supported since Windows NT 3.51.944
 	ssnfo_funk dyn_SetScrollInfo = (ssnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "SetScrollInfo");
 	if( dyn_SetScrollInfo
-	&& !(  (!App::isNT() && App::getOSVer()>=400 && App::getOSBuild()>=275) // Win95 4.00.275
-		|| ( App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944))// WinNT 3.51.944
-	    )
+	&& !(  App::is9xOSVerLarger(400, 275) // Win95 4.00.275
+		|| App::isNTOSVerLarger(351, 944) // WinNT 3.51.944
+	    ) )
 	{   // Not supported before 95 build 275
 		// Nor NT3.51 before build 944
 		dyn_SetScrollInfo = NULL;
@@ -81,13 +89,14 @@ static int WINAPI MyGetScrollInfo_fb(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 		::GetScrollRange( hwnd, fnBar, &lpsi->nMin, &lpsi->nMax);
 	lpsi->nPos = ::GetScrollPos( hwnd, fnBar );
 	// Scroll range indicates a multiplier was used...
-	if( lpsi->nMax > 65400 )
+	if( lpsi->nMax > MAX_SCROLL )
 	{ // Apply multipler
-		int MULT = lpsi->nMax - 65400 + 1; // 65401 => MULT = 2
+		int MULT = lpsi->nMax - MAX_SCROLL + 1; // 32001 => MULT = 2
 		lpsi->nMax      *= MULT;
 		lpsi->nPos      *= MULT;
 		lpsi->nTrackPos *= MULT; // This has to be set by the user.
 	}
+
 	return 1; // sucess!
 }
 // First time function.
@@ -96,9 +105,9 @@ static int WINAPI MyGetScrollInfo_1st(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 	// Should be supported since Windows NT 3.51...
 	gsnfo_funk dyn_GetScrollInfo = (gsnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "GetScrollInfo");
 	if( dyn_GetScrollInfo
-	&& !(  (!App::isNT() && App::getOSVer()>=400 && App::getOSBuild()>=275) // Win95 4.00.275
-		|| ( App::isNT() && App::getOSVer()>=351 && App::getOSBuild()>=944))// WinNT 3.51.944
-	    )
+	&& !(  App::is9xOSVerLarger(400, 275) // Win95 4.00.275
+		|| App::isNTOSVerLarger(351, 944) // WinNT 3.51.944
+	    ) )
 	{
 		dyn_GetScrollInfo = NULL;
 	}
@@ -144,7 +153,7 @@ bool Canvas::CalcLNAreaWidth()
 	if( showLN_ )
 	{
 		txtZone_.left  = (1 + figNum_) * font_->F();
-		if( txtZone_.left+font_->W() >= txtZone_.right )
+		if( txtZone_.left+4*font_->W() >= txtZone_.right )
 			txtZone_.left = 0; // 行番号ゾーンがデカすぎるときは表示しない
 	}
 	else
@@ -182,18 +191,21 @@ Canvas::Canvas( const View& vw )
 	vw.getClientRect( &txtZone_ );
 }
 
+// Return true if warp width has changed.
 bool Canvas::on_view_resize( int cx, int cy )
 {
-	txtZone_.right  = cx;
-	txtZone_.bottom = cy;
+	txtZone_.bottom = cy; // Update canva height
+	if( txtZone_.right  == cx )
+		return false; // Same canvas width, nothing more to do.
 
-	CalcLNAreaWidth();
+	txtZone_.right  = cx; // Canva width was changed.
+	CalcLNAreaWidth(); // Is width is too small line number diseapear.
 	if( wrapType_ == RIGHTEDGE )
 	{
 		CalcWrapWidth();
 		return true;
 	}
-	return false;
+	return false; // No rewrapping to do
 }
 
 void Canvas::on_font_change( const VConfig& vc )
@@ -207,13 +219,21 @@ void Canvas::on_font_change( const VConfig& vc )
 	CalcWrapWidth();
 }
 
-void Canvas::on_config_change( int wrap, bool showln )
+void Canvas::on_config_change( int wrap, bool showln, bool wrapsmart )
 {
 	showLN_ = showln;
 	wrapType_ = wrap;
+	warpSmart_ = wrapsmart;
 
 	CalcLNAreaWidth();
 	CalcWrapWidth();
+}
+
+void Canvas::on_config_change_nocalc( int wrap, bool showln, bool wrapsmart )
+{
+	showLN_ = showln;
+	wrapType_ = wrap;
+	warpSmart_ = wrapsmart;
 }
 
 bool Canvas::on_tln_change( ulong tln )
