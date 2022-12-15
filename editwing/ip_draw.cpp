@@ -78,11 +78,17 @@ void View::on_destroy()
 void View::SetWrapType( int wt )
 	{ impl_->SetWrapType( wt ); }
 
+void View::SetWrapSmart( bool ws )
+	{ impl_->SetWrapSmart( ws ); }
+
 void View::ShowLineNo( bool show )
 	{ impl_->ShowLineNo( show ); }
 
 void View::SetFont( const VConfig& vc )
 	{ impl_->SetFont( vc ); }
+
+void View::SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc )
+	{ impl_->SetWrapLNandFont( wt, ws, showLN, vc ); }
 
 void View::on_keyword_change()
 	{ ::InvalidateRect( hwnd(), NULL, FALSE ); }
@@ -351,14 +357,16 @@ Painter::~Painter()
 inline void Painter::CharOut( unicode ch, int x, int y )
 {
 #ifdef WIN32S
+	// Actually for now we only use CharOut for ASCII characters that
 	if( App::isWin32s() )
 	{
-		DWORD dwNum;
-		char psText[8]; // Buffer for a SINGLE multibyte character
-		if(dwNum = WideCharToMultiByte(CP_ACP,0, &ch,1, psText,countof(psText), NULL,NULL))
-		{
-			::TextOutA( dc_, x, y, psText, dwNum );
-		}
+//		char psText[8]; // Buffer for a SINGLE multibyte character
+//		DWORD dwNum = 1;
+//		psText[0] = (char)ch;
+//		if( ch > 127 ) // Complex converion.
+//			dwNum = ::WideCharToMultiByte( CP_ACP,0, &ch,1, psText,countof(psText), NULL,NULL );
+//		::TextOutA( dc_, x, y, psText, dwNum );
+		::TextOutA( dc_, x, y, (char*)&ch, 1 ); // Only ASCII!!!
 	}
 	else
 #endif
@@ -378,16 +386,16 @@ inline void Painter::StringOut
 		char *psText = psTXT1K;
 		if(!len) return;
 		// 1st try to convert to ANSI with a small stack buffer...
-		dwNum = WideCharToMultiByte(CP_ACP,0, str,len, psText,countof(psTXT1K), NULL,NULL);
-		if (!dwNum)
+		dwNum = ::WideCharToMultiByte( CP_ACP,0, str,len, psText, countof(psTXT1K), NULL,NULL );
+		if( !dwNum  && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER )
 		{	// If the small buffer failed, then properly allocate buffer.
 			// This happens verty rarely because token length is typically
 			// a single word, hence less than 128chars.
-			dwNum = WideCharToMultiByte(CP_ACP,0, str,len, NULL,0, NULL,NULL);
+			dwNum = ::WideCharToMultiByte(CP_ACP,0, str,len, NULL,0, NULL,NULL);
 			if (dwNum)
 			{
-				psText = new char[dwNum];
-				dwNum = WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
+				psText = new char[dwNum]; if( !psText ) return;
+				dwNum = ::WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
 			}
 			else
 			{
@@ -399,7 +407,7 @@ inline void Painter::StringOut
 		if( !ret ) ::TextOutA( dc_, x, y, psText, dwNum ); // What the fuck?
 		#endif
 		if (psText != psTXT1K)
-			delete []psText;
+			delete [] psText;
 	}
 	else
 #endif // WIN32S
