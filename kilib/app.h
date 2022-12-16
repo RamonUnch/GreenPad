@@ -3,7 +3,7 @@
 #include "types.h"
 #include "log.h"
 
-DWORD MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
+HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
 
 #ifndef __ccdoc__
 namespace ki {
@@ -92,8 +92,11 @@ public:
 
 	//@{ WindowsÇÃÉoÅ[ÉWÉáÉì //@}
 	static const OSVERSIONINFOA& osver();
-	static int  getOSVer();
-	static int  getOSBuild();
+	static DWORD getOSVer();
+	static DWORD getOSBuild();
+	static bool isOSVerLarger(DWORD ver, DWORD build);
+	static bool is9xOSVerLarger(DWORD ver, DWORD build);
+	static bool isNTOSVerLarger(DWORD ver, DWORD build);
 	static bool isWin95();
 	static bool isNT();
 	static bool isWin32s();

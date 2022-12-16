@@ -139,12 +139,26 @@ Path& Path::BeShortStyle()
 
 Path& Path::BeShortLongStyle()
 {
+#ifndef WIN32S
 	WIN32_FIND_DATA fd;
 	HANDLE h = ::FindFirstFile( c_str(), &fd );
-	if( h == INVALID_HANDLE_VALUE )
+	if( h == INVALID_HANDLE_VALUE)
 		return *this;
 	::FindClose( h );
 
+#ifndef _UNICODE
+    // Avoid using the long file name if it contains invalid chars.
+    // ie: the short path name is always ASCII on NT.
+    // Someone migh be using the short file name for a reason!
+	TCHAR fp[MAX_PATH];
+	if( my_lstrchr( fd.cFileName, TEXT('?') )
+	|| !my_lstrcpy( fp, c_str() )
+	|| !my_lstrcpy( (char*)name(fp), fd.cFileName)
+	|| ::GetFileAttributes( fp ) == 0xFFFFFFFF )
+	{ // Unable to find long file name.
+		return *this;
+	}
+#endif
 	TCHAR  t;
 	TCHAR* buf = ReallocMem( MAX_PATH*2 );
 	TCHAR* nam = const_cast<TCHAR*>(name(buf));
@@ -156,13 +170,14 @@ Path& Path::BeShortLongStyle()
 		*(nam-1) = t;
 
 	UnlockMem();
+#endif // not WIN32S
 	return *this;
 }
 
 String Path::CompactIfPossible( unsigned Mx )
 {
 	if(this->len() <= Mx)
-		return *this; // Nothiing to do
+		return *this; // Nothing to do
 
 	TCHAR* buf = new TCHAR[Mx+2];
 	const TCHAR *fn = GetFNinPath(c_str())-1; // includes the '\'

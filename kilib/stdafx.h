@@ -38,7 +38,9 @@
 #ifdef SUPERTINY
   #undef memset
 #endif
-
+#ifndef WS_EX_LAYOUTRTL
+#define WS_EX_LAYOUTRTL 0x00400000
+#endif
 #ifndef WM_MOUSEWHEEL
 #define WM_MOUSEWHEEL 0x020A
 #endif

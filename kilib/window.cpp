@@ -7,9 +7,94 @@
 using namespace ki;
 
 #if defined(TARGET_VER) && TARGET_VER<=350 && !defined(NO_IME)
-#pragma comment(lib, "DelayImp.lib")
-#pragma comment(linker, "/DelayLoad:IMM32.DLL")
+//#pragma comment(lib, "DelayImp.lib")
+//#pragma comment(linker, "/DelayLoad:IMM32.DLL")
+
+// Manually delay import for IMM32.DLL
+static BOOL (WINAPI *dyn_ImmIsIME)(HKL hKl);
+static BOOL (WINAPI *dyn_ImmGetProperty)(HKL hKl, DWORD fdwIndex);
+static BOOL (WINAPI *dyn_ImmReleaseContext)(HWND hWnd, HIMC hIMC);
+static BOOL (WINAPI *dyn_ImmGetOpenStatus)(HIMC hIMC);
+static HIMC (WINAPI *dyn_ImmGetContext)(HWND hWnd);
+static BOOL (WINAPI *dyn_ImmSetOpenStatus)(HIMC hIMC, BOOL fOpen);
+static BOOL (WINAPI *dyn_ImmSetCompositionFontW)(HIMC hIMC, LPLOGFONTW lplf);
+static BOOL (WINAPI *dyn_ImmSetCompositionWindow)(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm);
+static BOOL (WINAPI *dyn_ImmGetCompositionStringW)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen);
+static BOOL (WINAPI *dyn_ImmNotifyIME)(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue);
+static BOOL (WINAPI *dyn_ImmSetCompositionStringW)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen);
+
+#define ImmIsIME dyn_ImmIsIME
+#define ImmGetProperty dyn_ImmGetProperty
+#define ImmReleaseContext dyn_ImmReleaseContext
+#define ImmGetOpenStatus dyn_ImmGetOpenStatus
+#define ImmGetContext dyn_ImmGetContext
+#define ImmSetOpenStatus dyn_ImmSetOpenStatus
+#define ImmSetCompositionFontW dyn_ImmSetCompositionFontW
+#define ImmSetCompositionWindow dyn_ImmSetCompositionWindow
+#define ImmGetCompositionStringW dyn_ImmGetCompositionStringW
+#define ImmNotifyIME dyn_ImmNotifyIME
+#define ImmSetCompositionStringW dyn_ImmSetCompositionStringW
+
+#if !defined(_UNICODE) || defined(UNICOWS)
+static BOOL (WINAPI *dyn_ImmSetCompositionFontA)(HIMC hIMC, LPLOGFONTA lplf);
+static BOOL (WINAPI *dyn_ImmGetCompositionStringA)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen);
+static BOOL (WINAPI *dyn_ImmSetCompositionStringA)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen);
+#define ImmSetCompositionFontA dyn_ImmSetCompositionFontA
+#define ImmGetCompositionStringA dyn_ImmGetCompositionStringA
+#define ImmSetCompositionStringA dyn_ImmSetCompositionStringA
+#endif // !UNICODE || UNICOWS
+
+static bool LoadIMM32DLL()
+{
+	// Don't even try on Win32S because when LoadLibrary()
+	// fails we get an error message
+	if( App::isWin32s() )
+		return false;
+
+	HINSTANCE h = LoadLibrary(TEXT("IMM32.DLL"));
+	if( ! h) return false;
+
+	dyn_ImmIsIME = ( BOOL (WINAPI *)(HKL hKl) ) GetProcAddress(h, "ImmIsIME");
+	if( !dyn_ImmIsIME ) goto fail;
+	dyn_ImmGetProperty = ( BOOL (WINAPI *)(HKL hKl, DWORD fdwIndex) )GetProcAddress(h, "ImmGetProperty");
+	if( !dyn_ImmGetProperty ) goto fail;
+	dyn_ImmReleaseContext = ( BOOL (WINAPI *)(HWND hWnd, HIMC hIMC) )GetProcAddress(h, "ImmReleaseContext");
+	if( !dyn_ImmReleaseContext ) goto fail;
+	dyn_ImmGetOpenStatus = ( BOOL (WINAPI *)(HIMC hIMC) )GetProcAddress(h, "ImmReleaseContext");
+	if( !dyn_ImmGetOpenStatus ) goto fail;
+	dyn_ImmGetContext = ( HIMC (WINAPI *)(HWND hWnd) )GetProcAddress(h, "ImmGetContext");
+	if( !dyn_ImmGetContext ) goto fail;
+	dyn_ImmSetOpenStatus = ( BOOL (WINAPI *)(HIMC hIMC, BOOL fOpen) )GetProcAddress(h, "ImmReleaseContext");
+	if( !dyn_ImmSetOpenStatus ) goto fail;
+	dyn_ImmSetCompositionFontW = ( BOOL (WINAPI *)(HIMC hIMC, LPLOGFONTW lplf) )GetProcAddress(h, "ImmSetCompositionFontW");
+	if( !dyn_ImmSetCompositionFontW ) goto fail;
+	dyn_ImmSetCompositionWindow = ( BOOL (WINAPI *)(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm) )GetProcAddress(h, "ImmSetCompositionWindow");
+	if( !dyn_ImmSetCompositionWindow ) goto fail;
+	dyn_ImmGetCompositionStringW = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen) )GetProcAddress(h, "ImmGetCompositionStringW");
+	if( !dyn_ImmGetCompositionStringW ) goto fail;
+	dyn_ImmNotifyIME = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue) )GetProcAddress(h, "ImmNotifyIME");
+	if( !dyn_ImmNotifyIME ) goto fail;
+	dyn_ImmSetCompositionStringW = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen) )GetProcAddress(h, "ImmSetCompositionStringW");
+	if( !dyn_ImmSetCompositionStringW ) goto fail;
+
+#if !defined(_UNICODE) || defined(UNICOWS)
+	dyn_ImmSetCompositionFontA = ( BOOL (WINAPI *)(HIMC hIMC, LPLOGFONTA lplf) )GetProcAddress(h, "ImmSetCompositionFontA");
+	if( !dyn_ImmSetCompositionFontA ) goto fail;
+	dyn_ImmGetCompositionStringA = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen) )GetProcAddress(h, "ImmGetCompositionStringA");
+	if( !dyn_ImmGetCompositionStringA ) goto fail;
+	dyn_ImmSetCompositionStringA = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen) )GetProcAddress(h, "ImmSetCompositionStringA");
+	if( !dyn_ImmSetCompositionStringA ) goto fail;
 #endif
+
+	return true;
+
+	fail:
+	FreeLibrary(h);
+	return false;
+}
+
+#endif // #if defined(TARGET_VER) && TARGET_VER<=350 && !defined(NO_IME)
+
 
 #if defined(TARGET_VER) && TARGET_VER<=350
 // Dynalmically import GetKeyboardLayout for NT3.1 (NT3.5 has a stub).
@@ -68,8 +153,8 @@ IMEManager::IMEManager()
 		// FX–Ê“|‚È‚Ì‚ÅWin95‚Å‚ÍGlobalIME–³‚µ
 		// No global IME on Win95 because it is buggy...
 		// RamonUnch: I found it is not so buggy so I re-enabled it!
-		if( 1 /* !app().isWin95() */ )
-		{
+		if( app().getOSVer() >= 400 /* !app().isWin95() */ )
+		{ // Not available on Win32s/NT3.X?
 			app().InitModule( App::OLE );
 			if( S_OK == ::MyCoCreateInstance(
 					myCLSID_CActiveIMM, NULL, CLSCTX_INPROC_SERVER,
@@ -85,9 +170,7 @@ IMEManager::IMEManager()
   # ifdef NO_IME
 	hasIMM32_ = 0;
   # elif defined(TARGET_VER) && TARGET_VER<=350
-	HINSTANCE h = LoadLibraryA("IMM32.DLL");
-	hasIMM32_ = !!h;
-	FreeLibrary(h);
+  	hasIMM32_ = LoadIMM32DLL();
   # else
 	hasIMM32_ = 1;
   # endif
@@ -109,6 +192,13 @@ IMEManager::~IMEManager()
 			immApp_->Deactivate();
 			immApp_->Release();
 			immApp_ = NULL;
+		}
+	#endif
+
+	#if !defined(NO_IME) && defined(TARGET_VER) && TARGET_VER<=350
+		if( hasIMM32_ )
+		{ // IMM32.DLL was loaded, we should free it.
+			FreeLibrary( GetModuleHandle(TEXT("IMM32.DLL")) );
 		}
 	#endif
 }

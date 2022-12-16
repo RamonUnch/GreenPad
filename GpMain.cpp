@@ -1388,11 +1388,12 @@ void GreenPadWnd::on_create( CREATESTRUCT* cs )
 	LOGGER("GreenPadWnd::on_create begin");
 
 	accel_ = app().LoadAccel( IDR_MAIN );
-	stb_.Create( hwnd() );
 	edit_.Create( NULL, hwnd(), 0, 0, 100, 100 );
 	LOGGER("GreenPadWnd::on_create edit created");
 	edit_.getDoc().AddHandler( this );
 	edit_.getCursor().AddHandler( this );
+	// Create status bar
+	stb_.SetParent(hwnd()); // Only if it must be shown
 	stb_.SetStatusBarVisible( cfg_.showStatusBar() );
 
 	LOGGER("GreenPadWnd::on_create halfway");

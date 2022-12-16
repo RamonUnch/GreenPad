@@ -3,6 +3,91 @@
 using namespace ki;
 
 
+#ifdef INI_CACHESECTION
+/* Returns 0 if both strings start the same */
+static int my_lstrcmpi_samestart(const TCHAR *a, const TCHAR *b)
+{
+	#define tolower(x) ( x | ('A'<x && x<'Z') << 5 )
+	while(*a && tolower(*a) == tolower(*b)) { a++; b++; }
+	return (*a != *b) && (*b != '\0');
+	#undef tolower
+}
+static TCHAR *my_lstrcpy_s(TCHAR *dest, const size_t N, const TCHAR *src)
+{
+	TCHAR *orig=dest;
+	TCHAR *dmax=dest+N-1; /* keep space for a terminating NULL */
+	for (; dest<dmax && (*dest=*src); ++src,++dest);  /* then append from src */
+	*dest='\0'; /* ensure result is NULL terminated */
+	return orig;
+}
+
+static int my_strtoi(const TCHAR *s)
+{
+	long int v=0;
+	int sign=1;
+	while (*s == ' ') s++; /*  ||  (unsigned int)(*s - 9) < 5u */
+
+	switch (*s) {
+	case '-': sign=-1; /* fall through */
+	case '+': ++s;
+	}
+	while ((unsigned)(*s - '0') < 10u) {
+		v = v * 10 + (*s - '0');
+		++s;
+	}
+	return sign*v;
+}
+
+/* Get the string inside the section returned by GetPrivateProfileSection */
+static DWORD GetSectionOptionStr(const TCHAR *section, const TCHAR * const oname, const TCHAR *def, TCHAR *txt, size_t txtlen)
+{
+	if (section) {
+		TCHAR name[128];
+		my_lstrcpy_s(name, countof(name)-1, oname);
+		my_lstrcat(name, TEXT("=")); /* Add equal at the end of name */
+		const TCHAR *p = section;
+		while (p[0] && p[1]) { /* Double NULL treminated string */
+			if(!my_lstrcmpi_samestart(p, name)) {
+				/* Copy the buffer */
+				my_lstrcpy_s(txt, txtlen, p+lstrlen(name));
+				return (DWORD) my_lstrlen(txt); /* DONE! */
+			} else {
+				/* Go to next string... */
+				p += lstrlen(p); /* p in on the '\0' */
+				p++; /* next string start. */
+				if (!*p) break;
+			}
+		}
+	}
+	/* Default to the provided def string */
+	my_lstrcpy_s(txt, txtlen, def);
+	return (DWORD) my_lstrlen(txt); /* DONE! */
+}
+
+/* Get the int inside the section returned by GetPrivateProfileSection */
+static int GetSectionOptionInt(const TCHAR *section, const TCHAR * const oname, const int def)
+{
+	if (section) {
+		TCHAR name[128];
+		my_lstrcpy_s(name, countof(name)-1, oname);
+		my_lstrcat(name, TEXT("=")); /* Add equal at the end of name */
+		const TCHAR *p = section;
+		while (p[0] && p[1]) { /* Double NULL treminated string */
+			if(!my_lstrcmpi_samestart(p, name)) {
+				/* DONE !*/
+				return my_strtoi(p+lstrlen(name));
+			} else {
+				/* Go to next string... */
+				p += lstrlen(p); /* p in on the '\0' */
+				p++; /* next string start. */
+				if (!*p) break;
+			}
+		}
+	}
+	/* Default to the provided def value */
+	return def;
+}
+#endif // INI_CACHESECTION
 
 //=========================================================================
 
@@ -14,6 +99,15 @@ void IniFile::SetFileName( const TCHAR* ini, bool exepath )
 		iniName_ += ini;
 	else
 		iniName_ += (Path(Path::ExeName).body()+=TEXT(".ini"));
+}
+
+void IniFile::CacheSection()
+{
+#ifdef INI_CACHESECTION
+	// Load the whole section inside the fullsection_ buffer.
+	fullsection_ = m_StrBuf;
+	GetPrivateProfileSection( section_.c_str(), fullsection_, countof(m_StrBuf), iniName_.c_str() );
+#endif
 }
 
 void IniFile::SetSectionAsUserName()
@@ -33,14 +127,18 @@ bool IniFile::HasSectionEnabled( const TCHAR* section ) const
 
 int IniFile::GetInt ( const TCHAR* key, int defval ) const
 {
-	return ::GetPrivateProfileInt(
-		section_.c_str(), key, defval, iniName_.c_str() );
+#ifdef INI_CACHESECTION
+	return fullsection_
+		? GetSectionOptionInt( fullsection_, key, defval )
+		: ::GetPrivateProfileInt( section_.c_str(), key, defval, iniName_.c_str() );
+#else
+	return ::GetPrivateProfileInt( section_.c_str(), key, defval, iniName_.c_str() );
+#endif
 }
 
 bool IniFile::GetBool( const TCHAR* key, bool defval ) const
 {
-	return (0!=::GetPrivateProfileInt(
-		section_.c_str(), key, defval?1:0, iniName_.c_str() ));
+	return !!GetInt( key, !!defval );
 }
 void IniFile::GetRect ( const TCHAR* key, RECT *rc, const RECT *defrc  ) const
 {
@@ -50,10 +148,10 @@ void IniFile::GetRect ( const TCHAR* key, RECT *rc, const RECT *defrc  ) const
 	rc->left  = GetInt(tmp.c_str(), defrc->left);
 
 	tmp = rcCN + (String)TEXT("T");
-	rc->top  = GetInt(tmp.c_str(), defrc->top);	
+	rc->top  = GetInt(tmp.c_str(), defrc->top);
 
 	tmp = rcCN + (String)TEXT("R");
-	rc->right  = GetInt(tmp.c_str(), defrc->right);	
+	rc->right  = GetInt(tmp.c_str(), defrc->right);
 
 	tmp = rcCN + (String)TEXT("B");
 	rc->bottom  = GetInt(tmp.c_str(), defrc->bottom);
@@ -66,8 +164,14 @@ String IniFile::GetStr ( const TCHAR* key, const String& defval ) const
 	for(;;)
 	{
 		TCHAR* x = str.AllocMem(l);
-		s = ::GetPrivateProfileString( section_.c_str(), key,
-			defval.c_str(), x, l, iniName_.c_str() );
+#ifdef INI_CACHESECTION
+		s = fullsection_
+			? GetSectionOptionStr( fullsection_, key, defval.c_str(), x, l )
+			: ::GetPrivateProfileString( section_.c_str(), key, defval.c_str(), x, l, iniName_.c_str() );
+#else
+		s = ::GetPrivateProfileString(
+			section_.c_str(), key, defval.c_str(), x, l, iniName_.c_str() );
+#endif
 		if( s < l-1 )
 			break;
 		l <<= 1;

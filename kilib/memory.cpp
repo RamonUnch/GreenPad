@@ -15,7 +15,7 @@ using namespace ki;
 		void* __cdecl operator new( size_t siz )
 		{
 			TRYLBL:
-			void *ret = ::HeapAlloc( g_heap, HEAP_NO_SERIALIZE, siz );
+			void *ret = ::HeapAlloc( g_heap, 0, siz );
 			//void *ret = ::VirtualAlloc(NULL, siz, MEM_COMMIT, PAGE_READWRITE);
 			if (!ret) {
 				DWORD ans = MessageBox(GetActiveWindow(), TEXT("Unable to allocate memory!"), NULL, MB_ABORTRETRYIGNORE|MB_TASKMODAL);
@@ -31,7 +31,7 @@ using namespace ki;
 		{
 			if (ptr != NULL)
 			{   // It is not Guarenteed that HeapFree can free NULL.
-				::HeapFree( g_heap, HEAP_NO_SERIALIZE, ptr );
+				::HeapFree( g_heap, 0, ptr );
 				//::VirtualFree(ptr, MEM_RELEASE, 0);
 			}
 		}
@@ -456,17 +456,21 @@ MemoryManager* MemoryManager::pUniqueInstance_;
 MemoryManager::MemoryManager()
 {
 #ifdef SUPERTINY
-	// g_heap = ::GetProcessHeap();
+	g_heap = ::GetProcessHeap();
 	// Create our own non-serialized heap
 	// Because we only use single thread (may change later)
-	g_heap = ::HeapCreate( HEAP_NO_SERIALIZE, 1, 0 );
+	// g_heap = ::HeapCreate( HEAP_NO_SERIALIZE, 1, 0 );
 #endif
 
+	#ifndef STACK_MEM_POOLS
 	static FixedSizeMemBlockPool staticpools[SMALL_MAX];
 	pools_ = staticpools;
+	#endif
 	// メモリプールをZEROクリア
 //	pools_ = new FixedSizeMemBlockPool[ SMALL_MAX ];
-//	mem00( pools_, /*sizeof(pools_)*/ sizeof(FixedSizeMemBlockPool) * SMALL_MAX );
+	#ifdef STACK_MEM_POOLS
+	mem00( pools_, /*sizeof(pools_)*/ sizeof(FixedSizeMemBlockPool) * SMALL_MAX );
+	#endif
 
 	// 唯一のインスタンスは私です
 	pUniqueInstance_ = this;
@@ -481,7 +485,7 @@ MemoryManager::~MemoryManager()
 
 //	delete [] pools_;
 #if defined(SUPERTINY)
-	::HeapDestroy( g_heap );
+	// ::HeapDestroy( g_heap );
 #if defined(_DEBUG)
 	// リーク検出用
 	if( allocCounter != 0 )

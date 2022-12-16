@@ -95,7 +95,7 @@ static HANDLE CreateFileUNC(
 		dwFlagsAndAttributes,
 		hTemplateFile
 	);
-#if UNICODE && (!defined(TARGET_VER) || defined(TARGET_VER) && TARGET_VER>300)
+#ifdef UNICODE
 	if(UNCPath && UNCPath != fname) // Was allocated...
 		delete [] UNCPath;
 #endif
@@ -212,18 +212,21 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 	TCHAR *UNCPath = (TCHAR *)fname;
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
-	if(App::isNT())
+	if( App::isNT() )
 		UNCPath = GetUNCPath(fname);
-	if(!UNCPath) // Failed then fallback to non UNC
+	if( !UNCPath ) // Failed then fallback to non UNC
 		UNCPath = (TCHAR *)fname;
 #endif
 
 	// Check for readonly flag
 	DWORD fattr = GetFileAttributes(UNCPath);
-	if(fattr!=0xFFFFFFFF && fattr&FILE_ATTRIBUTE_READONLY) {
-		if(IDOK==MessageBox(NULL, TEXT("Read-Only file!\nRemove attribute and Write?")
-				, NULL, MB_OKCANCEL|MB_TASKMODAL|MB_TOPMOST))
+	if( fattr!=0xFFFFFFFF && fattr&FILE_ATTRIBUTE_READONLY )
+	{
+		if( IDYES==::MessageBox(NULL, TEXT("Read-Only file!\nRemove attribute to allow Writting?")
+				, NULL, MB_YESNO|MB_TASKMODAL|MB_TOPMOST) )
+		{
 			SetFileAttributes(UNCPath, fattr&~FILE_ATTRIBUTE_READONLY);
+		}
 	}
 
 	// ファイルを書き込み専用で開く
