@@ -226,14 +226,18 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 				, NULL, MB_YESNO|MB_TASKMODAL|MB_TOPMOST) )
 		{
 			SetFileAttributes(UNCPath, fattr&~FILE_ATTRIBUTE_READONLY);
+			fattr = GetFileAttributes(UNCPath); // To be sure...
 		}
 	}
+	// If file does not exist, use normal attributes.
+	if( fattr == 0xFFFFFF )
+		fattr = FILE_ATTRIBUTE_NORMAL;
 
 	// ファイルを書き込み専用で開く
 	handle_ = ::CreateFile( UNCPath,
 		GENERIC_WRITE, FILE_SHARE_READ, NULL,
 		creat ? CREATE_ALWAYS : OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL );
+		fattr | FILE_FLAG_SEQUENTIAL_SCAN, NULL );
 
 #ifdef UNICODE
 	if(UNCPath && UNCPath != fname) // Was allocated...
