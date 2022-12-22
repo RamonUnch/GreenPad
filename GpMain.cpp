@@ -1083,17 +1083,8 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 	// Undo回数制限, limit undo
 	edit_.getDoc().SetUndoLimit( cfg_.undoLimit() );
 
-	// 行番号, line numbers
-	bool ln = cfg_.showLN();
-	edit_.getView().ShowLineNo( ln );
-
-	// 折り返し方式, warp method
-	wrap_ = cfg_.wrapType();
-	edit_.getView().SetWrapType( wrap_ );
-
-	// 色・フォント, colors and font
-	VConfig vc = cfg_.vConfig();
-	edit_.getView().SetFont( vc );
+	wrap_ = cfg_.wrapType(); //       wt,    smart wrap,      line number,    Font...
+	edit_.getView().SetWrapLNandFont( wrap_, cfg_.wrapSmart(), cfg_.showLN(), cfg_.vConfig() );
 	LOGGER("GreenPadWnd::ReloadConfig ViewConfigLoaded");
 
 	// キーワードファイル, keyword file
@@ -1175,7 +1166,7 @@ BOOL GreenPadWnd::SendMsgToAllFriends(UINT msg)
 }
 bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, bool always )
 {
-//	MsgBox(fn.c_str(), TEXT("File:"), 0);
+	//MsgBox(fn.c_str(), TEXT("File:"), 0);
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
 
@@ -1186,6 +1177,12 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 		String fnerror = fn + String(IDS_ERRORNUM) + String().SetInt(err);
 		if( err == ERROR_ACCESS_DENIED )
 		{
+			if ( fn.isDirectory() )
+			{ // We cannot open dir yet
+				fnerror += String(IDS_CANTOPENDIR); // Can not open directory!
+				MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str(), MB_OK );
+				return false;
+			}
 			// cannot open file for READ.
 			// Directly try to open elevated.
 			//fnerror += TEXT(": Access Denied\n\nTry to open elevated?");
@@ -1397,11 +1394,12 @@ void GreenPadWnd::on_create( CREATESTRUCT* cs )
 	LOGGER("GreenPadWnd::on_create begin");
 
 	accel_ = app().LoadAccel( IDR_MAIN );
-	stb_.Create( hwnd() );
 	edit_.Create( NULL, hwnd(), 0, 0, 100, 100 );
 	LOGGER("GreenPadWnd::on_create edit created");
 	edit_.getDoc().AddHandler( this );
 	edit_.getCursor().AddHandler( this );
+	// Create status bar
+	stb_.SetParent(hwnd()); // Only if it must be shown
 	stb_.SetStatusBarVisible( cfg_.showStatusBar() );
 
 	LOGGER("GreenPadWnd::on_create halfway");

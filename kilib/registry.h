@@ -8,7 +8,7 @@ namespace ki {
 #endif
 
 
-	
+
 //=========================================================================
 //@{ @pkg ki.WinUtil //@}
 //@{
@@ -29,6 +29,9 @@ public:
 
 	//@{ セクション名を設定 //@}
 	void SetSection( const TCHAR* section );
+
+	//@{ Cache section //@}
+	void CacheSection();
 
 	//@{ セクション名をユーザー名に設定 //@}
 	void SetSectionAsUserName();
@@ -62,7 +65,10 @@ private:
 
 	Path   iniName_;
 	String section_;
-//	char m_StrBuf[256];
+#ifdef INI_CACHESECTION
+	TCHAR *fullsection_;
+	TCHAR m_StrBuf[1700];
+#endif
 };
 
 

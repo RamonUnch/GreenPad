@@ -32,15 +32,23 @@ static void MyOleUninitialize( )
 		func();
 	}
 }
-typedef DWORD (WINAPI * CoCreateInstance_funk)(REFCLSID , LPUNKNOWN , DWORD , REFIID , LPVOID *);
-DWORD MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv)
+typedef HRESULT (WINAPI * CoCreateInstance_funk)(REFCLSID , LPUNKNOWN , DWORD , REFIID , LPVOID *);
+HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv)
 {
 	static CoCreateInstance_funk func = (CoCreateInstance_funk)(-1);
 	if (func == (CoCreateInstance_funk)(-1)) // First time!
 		func = (CoCreateInstance_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "CoCreateInstance");
 
-	if (func) { // We got the function!
-		return func(rclsid, pUnkOuter, dwClsContext, riid, ppv);
+	if (func)
+	{ // We got the function!
+		HRESULT ret = func(rclsid, pUnkOuter, dwClsContext, riid, ppv);
+		#ifdef WIN32S
+		// On Win32s HRESULTS can return S_OK instead of E_NOTIMPL
+		// and only LastError is set to E_NOTIMPL
+		if (ret == S_OK  && GetLastError() == E_NOTIMPL )
+			ret = E_NOTIMPL;
+		#endif
+		return ret;
 	}
 	return 666; // Fail with 666 error
 }
@@ -54,9 +62,9 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 #if TARGET_VER > 300
 	GetVersionEx_funk func = (GetVersionEx_funk)
 		GetProcAddress(GetModuleHandleA("KERNEL32.DLL"), "GetVersionExA");
-	if (func && func( s_osVer )) 
+	if (func && func( s_osVer ))
 	{
-		if (s_osVer->dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) 
+		if (s_osVer->dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
 		{   // fixup broken build number in early 9x builds (roytam1)
 			s_osVer->dwBuildNumber &= 0xffff;
 		}
@@ -69,13 +77,13 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 	s_osVer->dwMajorVersion = (DWORD)(LOBYTE(LOWORD(dwVersion)));
 	s_osVer->dwMinorVersion = (DWORD)(HIBYTE(LOWORD(dwVersion)));
 
-	if (dwVersion < 0x80000000) 
+	if (dwVersion < 0x80000000)
 	{ // WINNT => build number = HIWORD(dwversion)
 		s_osVer->dwBuildNumber = (DWORD)(HIWORD(dwVersion));
 		s_osVer->dwPlatformId = VER_PLATFORM_WIN32_NT;
 	}
 
-	if (s_osVer->dwPlatformId != VER_PLATFORM_WIN32_NT) 
+	if (s_osVer->dwPlatformId != VER_PLATFORM_WIN32_NT)
 	{
 		if (s_osVer->dwMajorVersion == 3) s_osVer->dwPlatformId = VER_PLATFORM_WIN32s;
 		else s_osVer->dwPlatformId = VER_PLATFORM_WIN32_WINDOWS;
@@ -124,24 +132,28 @@ inline void App::SetExitCode( int code )
 
 void App::InitModule( imflag what )
 {
-	if (hOle32_ == (HINSTANCE)(-1) && what&(OLE|COM|OLEDLL)) 
-		hOle32_ = ::LoadLibraryA("OLE32.DLL");
+	if (hOle32_ == (HINSTANCE)(-1) && what&(OLE|COM|OLEDLL))
+		hOle32_ = ::LoadLibrary(TEXT("OLE32.DLL"));
 
 	// ‰Šú‰»Ï‚Ý‚Å‚È‚¯‚ê‚Î‰Šú‰»‚·‚é
 	bool ret = true;
 	if( !(loadedModule_ & what) )
 		switch( what )
 		{
-		case CTL:
+		case CTL: {
 			::InitCommonControls(); break;
+//			void (WINAPI *dyn_InitCommonControls)(void) = ( void (WINAPI *)(void) )
+//				GetProcAddress( LoadLibrary( TEXT("COMCTL32.DLL") ), (char*)17 );
+//			if(dyn_InitCommonControls) dyn_InitCommonControls();
+			} break;
 #if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
-		case COM: 
+		case COM:
 			// Actually we only ever use OLE, that calls COM, so it can
 			// be Ignored safely...
 			//ret = S_OK == ::MyCoInitialize( NULL );
 			//MessageBoxA(NULL, "CoInitialize", ret?"Sucess": "Failed", MB_OK);
 			//break;
-		case OLE: 
+		case OLE:
 			ret = S_OK == ::MyOleInitialize( NULL );
 			// MessageBoxA(NULL, "OleInitialize", ret?"Sucess": "Failed", MB_OK);
 			break;
@@ -178,16 +190,31 @@ const OSVERSIONINFOA& App::osver()
 	return s_osVer;
 }
 
-int App::getOSVer()
+DWORD App::getOSVer()
 {
 	static const OSVERSIONINFOA& v = osver();
 	return v.dwMajorVersion*100+v.dwMinorVersion;
 }
 
-int App::getOSBuild()
+DWORD App::getOSBuild()
 {
 	static const OSVERSIONINFOA& v = osver();
 	return v.dwBuildNumber;
+}
+
+bool App::isOSVerLarger(DWORD ver, DWORD build)
+{
+	return ( getOSVer() > ver || ( getOSVer() == ver && getOSBuild() >= build ) );
+}
+
+bool App::isNTOSVerLarger(DWORD ver, DWORD build)
+{
+	return isNT() && ( getOSVer() > ver || ( getOSVer() == ver && getOSBuild() >= build ) );
+}
+
+bool App::is9xOSVerLarger(DWORD ver, DWORD build)
+{
+	return !isNT() && ( getOSVer() > ver || ( getOSVer() == ver && getOSBuild() >= build ) );
 }
 
 bool App::isNewTypeWindows()
@@ -231,7 +258,7 @@ bool App::isNewShell()
 bool App::is351p()
 {
 	static const OSVERSIONINFOA& v = osver();
-	return v.dwMajorVersion>3 
+	return v.dwMajorVersion>3
 		|| (v.dwMajorVersion==3 && v.dwMinorVersion >= 51);
 }
 

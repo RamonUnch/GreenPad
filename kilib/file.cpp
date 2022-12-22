@@ -79,10 +79,12 @@ static HANDLE CreateFileUNC(
 	TCHAR *UNCPath = (TCHAR *)fname;
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
-	if(App::isNT())
+	if( App::isNT() )
+	{
 		UNCPath = GetUNCPath(fname);
-	if(!UNCPath) // Failed then fallback to non UNC
-		UNCPath = (TCHAR *)fname;
+		if( !UNCPath ) // Failed then fallback to non UNC
+			UNCPath = (TCHAR *)fname;
+	}
 #endif
 
 	// ファイルを読みとり専用で開く
@@ -95,11 +97,33 @@ static HANDLE CreateFileUNC(
 		dwFlagsAndAttributes,
 		hTemplateFile
 	);
-#if UNICODE && (!defined(TARGET_VER) || defined(TARGET_VER) && TARGET_VER>300)
+#ifdef UNICODE
 	if(UNCPath && UNCPath != fname) // Was allocated...
 		delete [] UNCPath;
 #endif
 	return hFile;
+}
+
+DWORD GetFileAttributesUNC(LPCTSTR fname)
+{
+	TCHAR *UNCPath = (TCHAR *)fname;
+#ifdef UNICODE
+	// UNC are supported only un Unicode mode on Windows NT
+	if( App::isNT() )
+	{
+		UNCPath = GetUNCPath(fname);
+		if( !UNCPath ) // Failed then fallback to non UNC
+			UNCPath = (TCHAR *)fname;
+	}
+#endif
+
+	DWORD ret = ::GetFileAttributes(UNCPath);
+
+#ifdef UNICODE
+	if(UNCPath && UNCPath != fname) // Was allocated...
+		delete [] UNCPath;
+#endif
+	return ret;
 }
 
 //=========================================================================
@@ -212,25 +236,34 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 	TCHAR *UNCPath = (TCHAR *)fname;
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
-	if(App::isNT())
+	if( App::isNT() )
 		UNCPath = GetUNCPath(fname);
-	if(!UNCPath) // Failed then fallback to non UNC
+	if( !UNCPath ) // Failed then fallback to non UNC
 		UNCPath = (TCHAR *)fname;
 #endif
 
 	// Check for readonly flag
 	DWORD fattr = GetFileAttributes(UNCPath);
-	if(fattr!=0xFFFFFFFF && fattr&FILE_ATTRIBUTE_READONLY) {
-		if(IDOK==MessageBox(NULL, TEXT("Read-Only file!\nRemove attribute and Write?")
-				, NULL, MB_OKCANCEL|MB_TASKMODAL|MB_TOPMOST))
-			SetFileAttributes(UNCPath, fattr&~FILE_ATTRIBUTE_READONLY);
+	if( fattr == 0xFFFFFFFF )
+	{ // File does not exist!
+		fattr = FILE_ATTRIBUTE_NORMAL;
 	}
+	else if( fattr&FILE_ATTRIBUTE_READONLY )
+	{
+		if( IDYES==::MessageBox(NULL, TEXT("Read-Only file!\nRemove attribute to allow Writting?")
+				, NULL, MB_YESNO|MB_TASKMODAL|MB_TOPMOST) )
+		{
+			SetFileAttributes(UNCPath, fattr&~FILE_ATTRIBUTE_READONLY);
+			fattr = GetFileAttributes(UNCPath); // To be sure...
+		}
+	}
+	// If file does not exist, use normal attributes.
 
 	// ファイルを書き込み専用で開く
 	handle_ = ::CreateFile( UNCPath,
 		GENERIC_WRITE, FILE_SHARE_READ, NULL,
 		creat ? CREATE_ALWAYS : OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL );
+		fattr | FILE_FLAG_SEQUENTIAL_SCAN, NULL );
 
 #ifdef UNICODE
 	if(UNCPath && UNCPath != fname) // Was allocated...
@@ -238,7 +271,10 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 #endif
 
 	if( handle_ == INVALID_HANDLE_VALUE )
+	{
+		// MessageBox(NULL, TEXT("Error opening file for write"), NULL, MB_OK);
 		return false;
+	}
 
 	bPos_ = 0;
 	return true;

@@ -3,6 +3,7 @@
 #include "textfile.h"
 #include "ktlarray.h"
 #include "string.h"
+#include "path.h"
 using namespace ki;
 
 #ifndef NO_CHARDET
@@ -238,6 +239,14 @@ struct rUtf1 : public rBasicUTF
 //-------------------------------------------------------------------------
 // UTF-9 (draft-abela-utf9-00)
 //-------------------------------------------------------------------------
+//    UCS-4 range (hex)     UTF-9 octet sequence (binary)
+//    0000 0000-0000 007F   0xxxxxxx
+//    0000 00A0-0000 00BF   101xxxxx
+//    0000 00C0-0000 00FF   11xxxxxx
+//    0000 0100-0000 07FF   1000xxxx 1xxxxxxx
+//    0000 0800-0000 FFFF   100100xx 1xxxxxxx 1xxxxxxx
+//    0001 0000-007F FFFF   100101xx 1xxxxxxx 1xxxxxxx 1xxxxxxx
+//    0080 0000-7FFF FFFF   10011xxx 1xxxxxxx 1xxxxxxx 1xxxxxxx 1xxxxxxx
 struct rUtf9 : public rBasicUTF
 {
 	rUtf9( const uchar* b, ulong s )
@@ -1535,11 +1544,11 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 	int cs = 0;
 #ifndef NO_CHARDET
 	// function calls
-	int (__cdecl*chardet_create)(chardet_t*) = 0;
-	void (__cdecl*chardet_destroy)(chardet_t) = 0;
-	int (__cdecl*chardet_handle_data)(chardet_t, const char*, unsigned int) = 0;
-	int (__cdecl*chardet_data_end)(chardet_t) = 0;
-	int (__cdecl*chardet_get_charset)(chardet_t, char*, unsigned int) = 0;
+	int (__cdecl*chardet_create)(chardet_t*);
+	void (__cdecl*chardet_destroy)(chardet_t);
+	int (__cdecl*chardet_handle_data)(chardet_t, const char*, unsigned int);
+	int (__cdecl*chardet_data_end)(chardet_t);
+	int (__cdecl*chardet_get_charset)(chardet_t, char*, unsigned int);
 	//int (__cdecl*chardet_reset)(chardet_t) = 0;
 	HINSTANCE hIL;
 
@@ -1559,8 +1568,15 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 #else
 # define CHARDET_DLL "chardet.dll"
 #endif
+	if( App::isWin32s() )
+	{	// On Win32s we must check if CHARDET.DLL exist before trying LoadLibrary()
+		// Otherwise we would get a system  message
+		Path ghardet_in_gp_dir = Path(Path::ExeName).BeDirOnly() + String(TEXT(CHARDET_DLL));
+		if( !ghardet_in_gp_dir.exist() )
+			return 0;
+	}
 
-	if((hIL = ::LoadLibraryA( CHARDET_DLL )))
+	if((hIL = ::LoadLibrary( TEXT(CHARDET_DLL) )))
 	{
 		chardet_create = (int(__cdecl*)(chardet_t*))::GetProcAddress(hIL, "chardet_create");
 		chardet_destroy = (void(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_destroy");
@@ -1578,7 +1594,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 		}
 
 	    if( 0 == chardet_create(&pdet) )
-	    {
+		{
 			if(siz == 16384) siz-=1; // prevert off-by-one error
 			if(0 == chardet_handle_data(pdet, (const char *)ptr, siz))
 			{

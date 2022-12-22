@@ -15,7 +15,11 @@ typedef wchar_t unicode;
 typedef unsigned char  uchar;
 typedef unsigned short ushort;
 typedef unsigned int   uint;
+#ifdef WIN64
+typedef unsigned long long ulong;
+#else
 typedef unsigned long ulong;
+#endif
 
 // ”z—ñ‚Ì—v‘f”
 #define countof(_array) (sizeof(_array)/sizeof(_array[0]))

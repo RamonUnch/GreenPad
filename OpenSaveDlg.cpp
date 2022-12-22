@@ -55,7 +55,6 @@ using namespace ki;
 	CHARSET_VALUE("欧米",				"Latin-1",				"LTN1") \
 	CHARSET_VALUE("中欧(DOS)",			"Latin-2(DOS)",			"LN2DOS") \
 	CHARSET_VALUE("中欧",				"Latin-2",				"LTN2") \
-/*	CHARSET_VALUE("南欧(ISO)",			"Latin-3 (ISO)",		"LTN3")*/ \
 	CHARSET_VALUE("キリル語(IBM)",		"Cyrillic(IBM)",		"CYRIBM") \
 	CHARSET_VALUE("キリル語(MS-DOS)",	"Cyrillic(MS-DOS)",		"CYRDOS") \
 	CHARSET_VALUE("キリル語(Windows)",	"Cyrillic(Windows)",	"CYRL") \
@@ -84,39 +83,48 @@ using namespace ki;
 CharSetList::CharSetList()
 	: list_( 30 )
 {
-	static const TCHAR* const lnmJp[] = {
-#define CHARSET_VALUE(a,b,c) TEXT(a),
-CHARSETS_LIST
-#undef CHARSET_VALUE
-	};
+//	static const TCHAR* const lnmJp[] = {
+//		#define CHARSET_VALUE(a,b,c) TEXT(a),
+//		CHARSETS_LIST
+//		#undef CHARSET_VALUE
+//	};
+//
+//	static const TCHAR* const lnmEn[] = {
+//		#define CHARSET_VALUE(a,b,c) TEXT(b),
+//		CHARSETS_LIST
+//		#undef CHARSET_VALUE
+//	};
+//
+//	static const TCHAR* const snm[] = {
+//		#define CHARSET_VALUE(a,b,c) TEXT(c),
+//		CHARSETS_LIST
+//		#undef CHARSET_VALUE
+//	};
+//
+//	// 日本語環境なら日本語表示を選ぶ
+//	#if !defined(TARGET_VER) || TARGET_VER >= 350
+//	const TCHAR* const * lnm = (::GetACP()==932 ? lnmJp : lnmEn);
+//	#else
+//	// On Windows 3.1 we cannot have the japaneese UI so for
+//	// Consistancy sake we remove also this string table.
+//	const TCHAR* const * lnm = lnmEn;
+//	#endif
+//
+//	// いちいち書くの面倒なので短縮表記(^^;
+//	CsInfo cs;
+//	#define Enroll(_id,_nm)   cs.ID=_id,             \
+//		cs.longName=lnm[_nm], cs.shortName=snm[_nm], \
+//		cs.type=LOAD|SAVE,    list_.Add( cs )
+//	#define EnrollS(_id,_nm)  cs.ID=_id,             \
+//		cs.longName=lnm[_nm], cs.shortName=snm[_nm], \
+//		cs.type=SAVE,         list_.Add( cs )
+//	#define EnrollL(_id,_nm)  cs.ID=_id,             \
+//		cs.longName=lnm[_nm], cs.shortName=snm[_nm], \
+//		cs.type=LOAD,         list_.Add( cs )
 
-	static const TCHAR* const lnmEn[] = {
-#define CHARSET_VALUE(a,b,c) TEXT(b),
-CHARSETS_LIST
-#undef CHARSET_VALUE
-	};
-
-	static const TCHAR* const snm[] = {
-#define CHARSET_VALUE(a,b,c) TEXT(c),
-CHARSETS_LIST
-#undef CHARSET_VALUE
-	};
-
-	// 日本語環境なら日本語表示を選ぶ
-	const TCHAR* const * lnm = (::GetACP()==932 ? lnmJp : lnmEn);
-
-	// いちいち書くの面倒なので短縮表記(^^;
-	CsInfo cs;
-	#define Enroll(_id,_nm)   cs.ID=_id,             \
-		cs.longName=lnm[_nm], cs.shortName=snm[_nm], \
-		cs.type=LOAD|SAVE,    list_.Add( cs )
-	#define EnrollS(_id,_nm)  cs.ID=_id,             \
-		cs.longName=lnm[_nm], cs.shortName=snm[_nm], \
-		cs.type=SAVE,         list_.Add( cs )
-	#define EnrollL(_id,_nm)  cs.ID=_id,             \
-		cs.longName=lnm[_nm], cs.shortName=snm[_nm], \
-		cs.type=LOAD,         list_.Add( cs )
-
+	#define Enroll(_id,_nm)  EnrollCs( _id, _nm|(LOAD|SAVE)<<8 )
+	#define EnrollS(_id,_nm) EnrollCs( _id, _nm|SAVE<<8 )
+	#define EnrollL(_id,_nm) EnrollCs( _id, _nm|LOAD<<8 )
 	// 適宜登録
 	                               EnrollL( AutoDetect,      0 );
 	if( ::IsValidCodePage(932) )   Enroll(  SJIS,            1 )
@@ -157,10 +165,9 @@ CHARSETS_LIST
 	                               EnrollS(  OFSSUTF,       36 );
 	                               Enroll(  OFSSUTFY,       37 );
 	if( ::IsValidCodePage(850) )   Enroll(  WesternDOS,     38 );
-	                               Enroll(  Western,        39 );
+	/* if( always ) */             Enroll(  Western,        39 );
 	if( ::IsValidCodePage(852) )   Enroll(  CentralDOS,     40 );
 	if( ::IsValidCodePage(28592) ) Enroll(  Central,        41 );
-//	if( ::IsValidCodePage(28593) ) Enroll(  EsperantoISO,   42 );
 	if( ::IsValidCodePage(855) )   Enroll(  CyrillicIBM,    42 );
 	if( ::IsValidCodePage(866) )   Enroll(  CyrillicDOS,    43 );
 	if( ::IsValidCodePage(28595) ) Enroll(  Cyrillic,       44 );
@@ -184,12 +191,51 @@ CHARSETS_LIST
 	if( ::IsValidCodePage(861) )   Enroll(  Icelandic,      62 );
 	if( ::IsValidCodePage(863) )   Enroll(  CanadianFrench, 63 );
 	if( ::IsValidCodePage(865) )   Enroll(  Nordic,         64 );
-	                               Enroll(  DOSUS,          65 );
+	/* if( always ) */             Enroll(  DOSUS,          65 );
 
 	// 終了
 	#undef Enroll
 	#undef EnrollS
 	#undef EnrollL
+}
+
+void CharSetList::EnrollCs(int _id, ushort nmtype)
+{
+	static const TCHAR* const lnmJp[] = {
+		#define CHARSET_VALUE(a,b,c) TEXT(a),
+		CHARSETS_LIST
+		#undef CHARSET_VALUE
+	};
+
+	static const TCHAR* const lnmEn[] = {
+		#define CHARSET_VALUE(a,b,c) TEXT(b),
+		CHARSETS_LIST
+		#undef CHARSET_VALUE
+	};
+
+	static const TCHAR* const snm[] = {
+		#define CHARSET_VALUE(a,b,c) TEXT(c),
+		CHARSETS_LIST
+		#undef CHARSET_VALUE
+	};
+
+	// 日本語環境なら日本語表示を選ぶ
+	#if !defined(TARGET_VER) || TARGET_VER >= 350
+	const TCHAR* const * lnm = (::GetACP()==932 ? lnmJp : lnmEn);
+	#else
+	// On Windows 3.1 we cannot have the japaneese UI so for
+	// Consistancy sake we remove also this string table.
+	const TCHAR* const * lnm = lnmEn;
+	#endif
+
+	CsInfo cs;
+	uchar type = nmtype>>8;
+	uchar nm = (uchar)nmtype;
+	cs.ID=_id;
+	cs.longName=lnm[nm];
+	cs.shortName=snm[nm];
+	cs.type=type;
+	list_.Add( cs );
 }
 
 int CharSetList::defaultCs() const
@@ -309,7 +355,7 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 
 	pThis = this;
 	BOOL ret = ::GetOpenFileName(&ofn);
-	if(ret != TRUE) {
+	if( ret != TRUE ) {
 		DWORD ErrCode = ::GetLastError();
 
 		if(!ErrCode || ErrCode == ERROR_NO_MORE_FILES) {

@@ -19,12 +19,12 @@ class StatusBar : public Window
 public:
 
 	StatusBar();
-	bool Create( HWND parent );
 	int  AutoResize( bool maximized );
 	void SetText( const TCHAR* str, int part=0 );
 	void SetTipText( const TCHAR* tip, int part=0 );
 	void SetParts( int n, int* parts );
 	void SetStatusBarVisible(bool b=true);
+	void SetParent(HWND parent);
 
 public:
 
@@ -32,13 +32,14 @@ public:
 	bool isStatusBarVisible() const;
 
 private:
-
+	bool Create();
 	virtual bool PreTranslateMessage( MSG* );
 
 private:
 
 	int width_;
 	bool visible_;
+	HWND parent_;
 };
 
 
@@ -56,8 +57,12 @@ inline void StatusBar::SetParts( int n, int* parts )
 	{ SendMsg( SB_SETPARTS, n, reinterpret_cast<LPARAM>(parts) ); }
 
 inline void StatusBar::SetStatusBarVisible(bool b)
-	{ if(hwnd()) ::ShowWindow( hwnd(), b?SW_SHOW:SW_HIDE ); visible_= b && hwnd(); }
+	{ if (b && !hwnd() && parent_ ) Create();
+	  if(hwnd()) ::ShowWindow( hwnd(), b?SW_SHOW:SW_HIDE ); visible_= b && hwnd();
+	}
 
+inline void StatusBar::SetParent(HWND parent)
+	{ parent_ = parent; }
 
 
 #endif // __ccdoc__

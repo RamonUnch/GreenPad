@@ -32,7 +32,7 @@ public:
 	void SetDocTypeByMenu( int pos, HMENU m );
 
 	//@{ 指定した名前の文書タイプをロード //@}
-	void SetDocTypeByName( const ki::String& nam );
+	bool SetDocTypeByName( const ki::String& nam );
 
 	//@{ メニュー項目作成 //@}
 	void SetDocTypeMenu( HMENU m, UINT idstart );
@@ -59,6 +59,9 @@ public:
 
 	//@{ 文字数指定時の折り返し文字数 //@}
 	int wrapWidth() const;
+
+	//@{ Get smart warp flag //@}
+	bool wrapSmart() const;
 
 	//@{ 折り返し方法 //@}
 	int wrapType() const;
@@ -155,10 +158,12 @@ private:
 		// 設定項目
 		editwing::VConfig vc;
 		int               wrapType;
-		int               wrapWidth;
+		short             wrapWidth;
+		bool              wrapSmart;
 		bool              showLN;
 		uchar             fontCS;
 		uchar             fontQual;
+		bool              loaded;
 	};
 	typedef ki::olist<DocType> DtList;
 
@@ -202,6 +207,9 @@ inline const ki::String& ConfigManager::txtFileFilter() const
 
 inline int ConfigManager::wrapWidth() const
 	{ return curDt_->wrapWidth; }
+
+inline bool ConfigManager::wrapSmart() const
+	{ return curDt_->wrapSmart; }
 
 inline int ConfigManager::wrapType() const
 	{ return curDt_->wrapType>0 ? wrapWidth() : curDt_->wrapType; }

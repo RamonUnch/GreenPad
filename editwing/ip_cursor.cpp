@@ -6,7 +6,69 @@ using doc::Insert;
 using doc::Delete;
 using doc::Replace;
 
+
+static BOOL WINAPI myIsDBCSLeadByteEx_1st(UINT cp, BYTE ch);
+static BOOL WINAPI myIsDBCSLeadByteEx_fb(UINT cp, BYTE ch);
+static BOOL (WINAPI *myIsDBCSLeadByteEx)(UINT cp, BYTE ch) = myIsDBCSLeadByteEx_1st;
+
+static BOOL WINAPI myIsDBCSLeadByteEx_1st(UINT cp, BYTE ch)
+{
+	FARPROC funk = GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "IsDBCSLeadByteEx");
+	if( funk )
+		myIsDBCSLeadByteEx = ( BOOL (WINAPI *)(UINT cp, BYTE ch) )funk;
+	else
+		myIsDBCSLeadByteEx = myIsDBCSLeadByteEx_fb;
+
+	return myIsDBCSLeadByteEx(cp, ch);
+}
+static BOOL WINAPI myIsDBCSLeadByteEx_fb(UINT cp, BYTE ch)
+{
+	return IsDBCSLeadByte(ch);
+}
+
+#if !defined(UNICOWS)
+static int myGetLocaleInfo(LCID Locale, LCTYPE LCType, LPTSTR lpLCData, int cchData)
+{
+	#define FUNK_TYPE ( int (WINAPI *)(LCID Locale, LCTYPE LCType, LPTSTR lpLCData, int cchData) )
+	static int (WINAPI *funk)(LCID Locale, LCTYPE LCType, LPTSTR lpLCData, int cchData) = FUNK_TYPE 1;
+
+	if (funk == FUNK_TYPE 1)
+	{
+	#ifdef UNICODE
+		funk = FUNK_TYPE GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetLocaleInfoW");
+	#else
+		funk = FUNK_TYPE GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetLocaleInfoA");
+	#endif
+	}
+
+	if (funk)
+		return funk( Locale, LCType, lpLCData, cchData );
+
+	/* Fallback */
+	return 0;
+	#undef FUNK_TYPE
+
+}
+#undef GetLocaleInfo
+#define GetLocaleInfo myGetLocaleInfo
+#endif // !defined(UNICOWS)
 HKL MyGetKeyboardLayout(DWORD dwLayout);
+static UINT GetInputCP()
+{
+	UINT kb_cp = CP_ACP;
+#if defined(UNICOWS) || !defined(UNICODE) || defined(_MBCS)
+	LCID lcid = LOWORD(MyGetKeyboardLayout( 0 ));
+	TCHAR cpstr[16];
+	if( lcid && ::GetLocaleInfo(lcid, LOCALE_IDEFAULTANSICODEPAGE, cpstr, countof(cpstr)))
+	{	// This should be the codepage of the local associated with
+		// the current keyboard layout
+		UINT tcp = String::GetInt( cpstr );
+		if( ::IsValidCodePage( tcp ) )
+			kb_cp = tcp;
+	}
+#endif
+	return kb_cp;
+}
 
 
 //=========================================================================
@@ -318,38 +380,35 @@ void Cursor::on_char( TCHAR ch )
 			pEvHan_->on_char( *this, ch );
 		}
 		else
-		{
+		{ // Use _MBCS
 			unicode wc = ch;
-//			if (IsDBCSLeadByte(ch))
-//			{ // store and block DBCSLeadByte
-//				prevchar_ = ch;
-//				return;
-//			}
-//			else if (IsDBCSLeadByte(prevchar_))
-//			{
-//				unsigned x = (prevchar_) | (ch<<8);
-//				prevchar_ = 0;
-//				::MultiByteToWideChar( CP_ACP, MB_COMPOSITE, (char*)&x, 2, &wc, 1 );
-//			}
-//			else
+			UINT kb_cp = GetInputCP();
+#if defined(_MBCS)
+			static char prevchar=0;
+			unicode wcs[8];
+			if( !prevchar && myIsDBCSLeadByteEx( kb_cp, ch ) )
+			{
+				prevchar = ch; // Store Lead byte
+				return;        // And ignore it
+			}
+			else if( prevchar ) // DBSC
+			{
+				// We have a DBCS pair to convert to unicode
+				char x[2] = { (prevchar) , (ch) };
+				int len = ::MultiByteToWideChar( kb_cp, 0, (char*)&x, 2, wcs, 8 );
+				pEvHan_->on_ime( *this, wcs, len );
+				prevchar = 0; // Reset lead byte
+				return;
+			}
+			else
+#endif
 			if( ch & 0x80 ) // 非ASCII文字にはトリビアルでない変換が必要
 			{
 				// Non-ASCII characters require non-trivial conversion.
-				UINT kb_cp = CP_ACP; // default ACP
-
-#if defined(UNICOWS) || !defined(TARGET_VER) || (TARGET_VER >= 350)
-				LCID lcid = LOWORD(MyGetKeyboardLayout(0));
-				TCHAR cpstr[8];
-				if(lcid /*::IsValidLocale(lcid, LCID_INSTALLED)*/
-				&& ::GetLocaleInfo(lcid, LOCALE_IDEFAULTANSICODEPAGE, cpstr, countof(cpstr)))
-				{	// This should be the codepage of the local associated with
-					// the current keyboard layout
-					UINT tcp = String::GetInt(cpstr);
-					if (::IsValidCodePage(tcp))
-						kb_cp = tcp;
-				}
-#endif
-				::MultiByteToWideChar( kb_cp, MB_COMPOSITE, (char*)&ch, 1, &wc, 1 );
+				unicode wcs[8];
+				int len = ::MultiByteToWideChar( kb_cp, /*MB_COMPOSITE*/ 0, (char*)&ch, 1, wcs, 8 );
+				pEvHan_->on_ime( *this, wcs, len );
+				return;
 			}
 			pEvHan_->on_char( *this, wc );
 		}
@@ -1180,4 +1239,3 @@ bool Cursor::on_ime_confirmreconvertstring( RECONVERTSTRING* rs )
 {
 	return false;
 }
-

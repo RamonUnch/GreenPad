@@ -134,7 +134,11 @@ private:
 //-------------------------------------------------------------------------
 
 inline Mutex::Mutex( const TCHAR* name )
-	: mtx_( ::CreateMutex( NULL, TRUE, name ) ) {}
+	: mtx_( ::CreateMutex( NULL, TRUE, name ) ) 
+	{
+//		if (mtx_ && ::GetLastError() == ERROR_ALREADY_EXISTS)
+//			::WaitForSingleObject(mtx_, 1000);
+	}
 
 inline Mutex::~Mutex()
 	{ if( mtx_ != NULL ) ::ReleaseMutex( mtx_ ), ::CloseHandle( mtx_ ); }

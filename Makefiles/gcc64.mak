@@ -72,7 +72,7 @@ CXXFLAGS = -nostdlib -m64 -c -Os -mno-stack-arg-probe -momit-leaf-frame-pointer 
  -fno-access-control -fno-enforce-eh-specs -fno-nonansi-builtins -fnothrow-opt -fno-optional-diags -fno-use-cxa-atexit \
  -fno-exceptions -fno-dwarf2-cfi-asm -fno-asynchronous-unwind-tables -fno-extern-tls-init -fno-rtti \
  -Wno-narrowing -Wno-int-to-pointer-cast -Wstack-usage=4096 \
- -idirafter kilib -D_UNICODE -DUNICODE -UDEBUG -U_DEBUG -DUSEGLOBALIME -DSUPERTINY
+ -idirafter kilib -D_UNICODE -DUNICODE -UDEBUG -U_DEBUG -DUSEGLOBALIME -DSUPERTINY -DUSE_ORIGINAL_MEMMAN
 LOPT     = -m64 -mwindows
 
 ifneq ($(NOCHARSET),1)

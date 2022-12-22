@@ -9,13 +9,14 @@ using namespace ki;
 
 StatusBar::StatusBar()
 {
-	app().InitModule( App::CTL );
+	//app().InitModule( App::CTL );
 }
 
-bool StatusBar::Create( HWND parent )
+bool StatusBar::Create( )
 {
 	HWND h = NULL;
 	WNDCLASS wc;
+	app().InitModule( App::CTL );
 	// Avoid using CreateStatusWindow that is not present on NT3.1.
 	h = ::CreateWindowEx(
 		0, // ExStyle
@@ -26,7 +27,7 @@ bool StatusBar::Create( HWND parent )
 		NULL, // pointer to window name
 		WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP , // window style
 		0, 0, 0, 0, //x, y, w, h
-		parent, // handle to parent or owner window
+		parent_, // handle to parent or owner window
 		(struct HMENU__ *)1787, // handle to menu or child-window identifier
 		app().hinst(), // handle to application instance
 		NULL // pointer to window-creation data
@@ -35,7 +36,7 @@ bool StatusBar::Create( HWND parent )
 	if( h == NULL )
 		return false;
 
-	SetStatusBarVisible();
+//	SetStatusBarVisible();
 	SetHwnd( h );
 	AutoResize( false );
 	return true;
@@ -65,7 +66,7 @@ void StatusBar::SetText( const TCHAR* str, int part )
 {
   # if defined(UNICOWS) && defined(UNICODE)
 	if ( app().isNT()
-	&&!( App::getOSVer() == 310 || (App::getOSVer() == 350 && App::getOSBuild() < 711)))
+	&& !app().isOSVerLarger(350, 711) )
 	{	// Unicode in UNICOWS mode to be used on NT only from 3.5
 		SendMsg( SB_SETTEXTW, part, reinterpret_cast<LPARAM>(str) );
 	}

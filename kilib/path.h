@@ -2,12 +2,15 @@
 #define _KILIB_PATH_H_
 #include "types.h"
 #include "string.h"
+
+DWORD GetFileAttributesUNC(LPCTSTR fname);
+
 #ifndef __ccdoc__
 namespace ki {
 #endif
 
 
-	
+
 //=========================================================================
 //@{ @pkg ki.StdLib //@}
 //@{
@@ -118,17 +121,17 @@ public:
 //-------------------------------------------------------------------------
 
 inline bool Path::isFile() const
-	{ return 0==(::GetFileAttributes(c_str())&FILE_ATTRIBUTE_DIRECTORY); }
+	{ return 0==(GetFileAttributesUNC(c_str())&FILE_ATTRIBUTE_DIRECTORY); }
 
 inline bool Path::isDirectory() const
-	{ DWORD x=::GetFileAttributes(c_str());
+	{ DWORD x=GetFileAttributesUNC(c_str());
 	  return x!=0xffffffff && (x&FILE_ATTRIBUTE_DIRECTORY)!=0; }
 
 inline bool Path::exist() const
-	{ return 0xffffffff != ::GetFileAttributes(c_str()); }
+	{ return 0xffffffff != GetFileAttributesUNC(c_str()); }
 
 inline bool Path::isReadOnly() const
-	{ DWORD x=::GetFileAttributes(c_str());
+	{ DWORD x=GetFileAttributesUNC(c_str());
 	  return x!=0xffffffff && (x&FILE_ATTRIBUTE_READONLY)!=0; }
 
 inline const TCHAR* Path::name() const

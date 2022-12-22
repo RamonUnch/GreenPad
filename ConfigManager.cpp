@@ -22,12 +22,13 @@ void SetFontSize(LOGFONT *font, HDC hDC, int fsiz, int fx)
 
 void VConfig::SetFont( const TCHAR* fnam, int fsiz, uchar fontCS, LONG fw, BYTE ff, int fx, int qual )
 {
+	mem00(&font, sizeof(font));
 	fontsize              = fsiz;
 	fontwidth             = fx;
-	font.lfHeight         = 0;
-	font.lfWidth          = 0;
-	font.lfEscapement     = 0;
-	font.lfOrientation    = 0;
+//	font.lfHeight         = 0;
+//	font.lfWidth          = 0;
+//	font.lfEscapement     = 0;
+//	font.lfOrientation    = 0;
 	font.lfWeight         = fw; // FW_DONTCARE;
 	font.lfItalic         = ff&1; // FALSE
 	font.lfUnderline      = ff&2; // FALSE
@@ -55,6 +56,7 @@ ConfigManager::ConfigManager()
 	DocType d;
 	d.name.Load( IDS_DEFAULT );
 	d.layfile   = TEXT("default.lay");
+	d.loaded = false; // set unloaded flag.
 	LoadLayout( &d );
 	dtList_.Add( d );
 	curDt_ = dtList_.begin();
@@ -70,8 +72,11 @@ ConfigManager::~ConfigManager()
 	SaveIni();
 }
 
-void ConfigManager::SetDocTypeByName( const ki::String& nam )
+bool ConfigManager::SetDocTypeByName( const ki::String& nam )
 {
+	// MessageBox(NULL, curDt_->name.c_str(), nam.c_str(), 0);
+	if( curDt_->name == nam && curDt_->loaded )
+		return 0; // Nothing to do.
 	curDt_             = dtList_.begin();
 	DtList::iterator b = dtList_.begin();
 	DtList::iterator e = dtList_.end();
@@ -82,6 +87,7 @@ void ConfigManager::SetDocTypeByName( const ki::String& nam )
 			break;
 		}
 	LoadLayout( &*curDt_ );
+	return 1;
 }
 
 int ConfigManager::SetDocType( const Path& fname )
@@ -334,14 +340,14 @@ private:
 					SendMsgToItem(IDC_PAT_KWD, CB_GETCURSEL),
 					reinterpret_cast<LPARAM>(buf) );
 				if( buf[0] != TEXT('\0') )
-					BootNewProcess( (TEXT("\"")+Path(Path::Exe)+
+					BootNewProcess( (TEXT("-c0 \"")+Path(Path::Exe)+
 						TEXT("type\\")+buf+TEXT("\"") ).c_str());
 				break;
 			case IDC_EDITLAY:
 				SendMsgToItem(IDC_PAT_LAY, CB_GETLBTEXT,
 					SendMsgToItem(IDC_PAT_LAY, CB_GETCURSEL),
 					reinterpret_cast<LPARAM>(buf) );
-				BootNewProcess( (TEXT("\"")+Path(Path::Exe)+
+				BootNewProcess( (TEXT("-c0 \"")+Path(Path::Exe)+
 					TEXT("type\\")+buf+TEXT("\"") ).c_str());
 				break;
 			case IDC_NEWDOCTYPE:
@@ -398,7 +404,7 @@ private:
 		cfg_.newfileCharset_ = cfg_.GetCharSetList()[1+SendMsgToItem(IDC_NEWCS, CB_GETCURSEL)].ID;
 		cfg_.newfileLB_ = (lbcode) SendMsgToItem(IDC_NEWLB, CB_GETCURSEL);
 		size_t nfd_idx=SendMsgToItem(IDC_NEWDT, CB_GETCURSEL), nfd_cnt=1;
-		cfg_.newfileDoctype_ = String();
+		cfg_.newfileDoctype_ = String( IDS_DEFAULT );
 
 		SaveDt();
 		cfg_.dtList_.DelAfter( ++cfg_.dtList_.begin() );
@@ -470,12 +476,13 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
   // １．省略値として…
 
 	DtList::iterator ref = dtList_.begin();
-	if( ref != dtList_.end() )
+	if( ref != dtList_.end() && ref->loaded )
 	{
 		// default.layがロードされていればそれを使う
 		dt->vc        = ref->vc;
 		dt->wrapWidth = ref->wrapWidth;
 		dt->wrapType  = ref->wrapType;
+		dt->wrapSmart = ref->wrapSmart;
 		dt->showLN    = ref->showLN;
 		dt->fontCS    = ref->fontCS;
 		dt->fontQual  = ref->fontQual;
@@ -485,23 +492,31 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		// 組み込みのデフォルト設定をロード, Load built-in default settings
 		dt->vc.SetTabStep( 4 );
 		dt->vc.color[TXT] =
+		dt->vc.color[LN]  =
 		dt->vc.color[CMT] = ::GetSysColor(COLOR_WINDOWTEXT); // RGB(0,0,0);
 		dt->vc.color[KWD] = RGB(0,90,230);
 		dt->vc.color[BG]  = ::GetSysColor(COLOR_WINDOW); // RGB(255,255,255);
-		dt->vc.color[CTL] = RGB(240,200,240);
-		dt->vc.color[LN]  = RGB(0,0,0);
-		dt->vc.sc[scEOF]  = dt->vc.sc[scEOL]=true;
-		dt->vc.sc[scHSP]  = dt->vc.sc[scZSP]=dt->vc.sc[scTAB]=false;
+		dt->vc.color[CTL] = RGB(230,190,230);
+
+		dt->vc.sc[scEOF] = true;  // Show end of file with [EOF]
+		dt->vc.sc[scEOL] = true;  // Show End of line with '/'
+		dt->vc.sc[scHSP] = false; // ' ' (ASCII space)
+		dt->vc.sc[scZSP] = true;  // '　' (0x3000)
+		dt->vc.sc[scTAB] = true;  // Show tabs with '>'
+
+		dt->vc.SetFont( TEXT("FixedSys"), 11, dt->fontCS );
+
 		dt->wrapWidth  = 80;
 		dt->wrapType   = -1;
-		dt->showLN     = false;
+		dt->wrapSmart  = true;
+		dt->showLN     = true;
 		dt->fontCS     = DEFAULT_CHARSET;
 		dt->fontQual   = DEFAULT_QUALITY;
-		dt->vc.SetFont( TEXT("FixedSys"), 14, dt->fontCS );
 	}
+	dt->loaded     = true;
 
   // ２．*.layファイルからの読み込み
-
+	// MessageBox(NULL, dt->layfile.c_str(), TEXT("Loading"), 0);
 	TextFileR tf( UTF16LE );
 	if( tf.Open( (Path(Path::Exe)+TEXT("type\\")+dt->layfile).c_str() ) )
 	{
@@ -518,53 +533,53 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		while( tf.state() != 0 ) // !EOF
 		{
 			size_t len = tf.ReadLine( buf, countof(buf)-1 );
-			if( len<=3 || buf[2]!=L'=' )
+			if( len<=3 || buf[0] == L';' || buf[2]!=L'=' )
 				continue;
 			buf[len] = L'\0';
 
-			switch( (buf[0]<<16)|buf[1] )
+			switch( (buf[0]<<8)|buf[1] ) // ASCII only
 			{
-			case 0x00630074: // ct: COLOR-TEXT
+			case 0x6374: // ct: COLOR-TEXT
 				dt->vc.color[TXT] = GetColor(ptr);
 				break;
-			case 0x0063006B: // ck: COLOR-KEYWORD
+			case 0x636B: // ck: COLOR-KEYWORD
 				dt->vc.color[KWD] = GetColor(ptr);
 				break;
-			case 0x00630062: // cb: COLOR-BACKGROUND
+			case 0x6362: // cb: COLOR-BACKGROUND
 				dt->vc.color[BG ] = GetColor(ptr);
 				break;
-			case 0x00630063: // cc: COLOR-COMMENT
+			case 0x6363: // cc: COLOR-COMMENT
 				dt->vc.color[CMT] = GetColor(ptr);
 				break;
-			case 0x0063006E: // cn: COLOR-CONTROL
+			case 0x636E: // cn: COLOR-CONTROL
 				dt->vc.color[CTL] = GetColor(ptr);
 				break;
-			case 0x0063006C: // cl: COLOR-LINE
+			case 0x636C: // cl: COLOR-LINE
 				clfound = true;
 				dt->vc.color[LN] = GetColor(ptr);
 				break;
-			case 0x00660066: // ff: FONT FLAGS
+			case 0x6666: // ff: FONT FLAGS
 				fontflags = GetInt(ptr);
 				break;
-			case 0x00660074: // ft: FONT
+			case 0x6674: // ft: FONT
 				fontname = ptr;
 				break;
-			case 0x00660077: // fw: FONT WEIGHT
+			case 0x6677: // fw: FONT WEIGHT
 				fontweight = GetInt(ptr);
 				break;
-			case 0x00660078: // fw: FONT X Width
+			case 0x6678: // fw: FONT X Width
 				fontxwidth = GetInt(ptr);
 				break;
-			case 0x0073007A: // sz: SIZE
+			case 0x737A: // sz: SIZE
 				fontsize = GetInt(ptr);
 				break;
-			case 0x00630073: // cs: FONT-CHAR-SET
+			case 0x6373: // cs: FONT-CHAR-SET
 				dt->fontCS = GetInt(ptr);
 				break;
-			case 0x00740062: // tb: TAB
+			case 0x7462: // tb: TAB
 				dt->vc.SetTabStep( GetInt(ptr) );
 				break;
-			case 0x00730063: // sc: SPECIAL-CHAR
+			case 0x7363: // sc: SPECIAL-CHAR
 				x = GetInt(ptr);
 				dt->vc.sc[scZSP] = (0!=x%10); x/=10;
 				dt->vc.sc[scHSP] = (0!=x%10); x/=10;
@@ -572,16 +587,18 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 				dt->vc.sc[scEOL] = (0!=x%10); x/=10;
 				dt->vc.sc[scEOF] = (0!=x%10);
 				break;
-			case 0x00770070: // wp: WRAP-TYPE
+			case 0x7770: // wp: WRAP-TYPE
 				dt->wrapType = GetInt(ptr);
 				break;
-			case 0x00770077: // ww: WRAP-WIDTH
+			case 0x7777: // ww: WRAP-WIDTH
 				dt->wrapWidth = GetInt(ptr);
 				break;
-			case 0x006C006E: // ln: LINE-NO
+			case 0x7773: // ws WRAP-SMART
+				dt->wrapSmart = (0!=GetInt(ptr));
+			case 0x6C6E: // ln: LINE-NO
 				dt->showLN = (0!=GetInt(ptr));
 				break;
-			case 0x00660071: // fq: Font Quality
+			case 0x6671: // fq: Font Quality
 				dt->fontQual = GetInt(ptr);
 				break;
 			}
@@ -750,6 +767,8 @@ void ConfigManager::LoadIni()
 	else
 		ini_.SetSectionAsUserName();
 
+	ini_.CacheSection();
+
 	// 共通の設定
 	undoLimit_ = ini_.GetInt( TEXT("UndoLimit"), -1 );
 	txtFilter_ = ini_.GetStr( TEXT("TxtFilter"),
@@ -764,54 +783,60 @@ void ConfigManager::LoadIni()
 	// wnd
 	rememberWindowSize_  = ini_.GetBool( TEXT("RememberWindowSize"), false );
 	rememberWindowPlace_ = ini_.GetBool( TEXT("RememberWindowPos"), false );
-	if(rememberWindowPlace_) {
+	if( rememberWindowPlace_ )
+	{
 		wndX_ = ini_.GetInt( TEXT("WndX"), CW_USEDEFAULT );
 		wndY_ = ini_.GetInt( TEXT("WndY"), CW_USEDEFAULT );
 	}
-	if(rememberWindowSize_) {
+	if( rememberWindowSize_ )
+	{
 		wndW_ = ini_.GetInt( TEXT("WndW"), CW_USEDEFAULT );
 		wndH_ = ini_.GetInt( TEXT("WndH"), CW_USEDEFAULT );
 		wndM_ = ini_.GetBool( TEXT("WndM"), false );
 	}
 	// Exit with the ESC key?
-	useQuickExit_ = ini_.GetBool( TEXT("QuickExit"), true );
+	useQuickExit_ = ini_.GetBool( TEXT("QuickExit"), false );
 
 	// Print Margins
 	SetRect(&rcPMargins_, 500, 500, 500, 500);
 	ini_.GetRect( TEXT("PMargin"), &rcPMargins_, &rcPMargins_);
 
 	// TODO: MRU
-	mrus_ = ini_.GetInt( TEXT("MRU"), 4 );
+	mrus_ = ini_.GetInt( TEXT("MRU"), 0 );
 	mrus_ = Min(Max(0, mrus_), 20);
 
 	// 新規ファイル関係
 	newfileCharset_ = ini_.GetInt( TEXT("NewfileCharset"), charSets_.defaultCs() );
 	if(newfileCharset_ == -1) newfileCharset_ = 1252; // 1.07.4 bugfix
 	if(!::IsValidCodePage(newfileCharset_)) newfileCharset_ = ::GetACP();
-	newfileDoctype_ = ini_.GetStr( TEXT("NewfileDoctype"), String() );
+	newfileDoctype_ = ini_.GetStr( TEXT("NewfileDoctype"), String( IDS_DEFAULT ) );
 	newfileLB_      = (lbcode) ini_.GetInt( TEXT("NewfileLB"), CRLF );
 
 	// 文書タイプリストの０番以外のクリア
 	dtList_.DelAfter( ++dtList_.begin() );
 
 	String s, r;
+
+	ini_.SetSection( TEXT("DocType") );
+	ini_.CacheSection();
 	for( int i=1; true; ++i )
 	{
 		// 文書タイプ名を読み込み
-		ini_.SetSection( TEXT("DocType") );
 		s.SetInt(i);
 		r = ini_.GetStr( s.c_str(), String() );
 		if( r.len() == 0 )
 			break;
 
 		// その文書タイプを実際に読み込み
-		ini_.SetSection( r.c_str() );
+		ki::IniFile tmp_ini;
+		tmp_ini.SetSection( r.c_str() );
 		{
+			tmp_ini.CacheSection();
 			DocType d;
 			d.name      = r;
-			d.layfile   = ini_.GetStr( TEXT("Layout"),TEXT("default.lay"));
-			d.kwdfile   = ini_.GetStr( TEXT("Keyword"), String() );
-			d.pattern   = ini_.GetStr( TEXT("Pattern"), String() );
+			d.layfile   = tmp_ini.GetStr( TEXT("Layout"),TEXT("default.lay"));
+			d.kwdfile   = tmp_ini.GetStr( TEXT("Keyword"), String() );
+			d.pattern   = tmp_ini.GetStr( TEXT("Pattern"), String() );
 			dtList_.Add( d );
 		}
 	}
@@ -857,8 +882,8 @@ void ConfigManager::SaveIni()
 		ini_.PutInt( TEXT("WndH"), wndH_ );
 		ini_.PutBool( TEXT("WndM"), wndM_ );
 	}
-	// Exit with the ESC key?
-	ini_.PutBool(TEXT("QuickExit"), useQuickExit_);
+	// Exit with the ESC key? (Cannot Not yet be modified from GUI)
+	// ini_.PutBool(TEXT("QuickExit"), useQuickExit_);
 
 	// 新規ファイル関係
 	ini_.PutInt( TEXT("NewfileCharset"), newfileCharset_ );
