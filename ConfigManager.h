@@ -32,7 +32,7 @@ public:
 	void SetDocTypeByMenu( int pos, HMENU m );
 
 	//@{ 指定した名前の文書タイプをロード //@}
-	void SetDocTypeByName( const ki::String& nam );
+	bool SetDocTypeByName( const ki::String& nam );
 
 	//@{ メニュー項目作成 //@}
 	void SetDocTypeMenu( HMENU m, UINT idstart );
@@ -158,11 +158,12 @@ private:
 		// 設定項目
 		editwing::VConfig vc;
 		int               wrapType;
-		int               wrapWidth;
+		short             wrapWidth;
 		bool              wrapSmart;
 		bool              showLN;
 		uchar             fontCS;
 		uchar             fontQual;
+		bool              loaded;
 	};
 	typedef ki::olist<DocType> DtList;
 

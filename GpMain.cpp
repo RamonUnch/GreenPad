@@ -1166,7 +1166,7 @@ BOOL GreenPadWnd::SendMsgToAllFriends(UINT msg)
 }
 bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, bool always )
 {
-//	MsgBox(fn.c_str(), TEXT("File:"), 0);
+	//MsgBox(fn.c_str(), TEXT("File:"), 0);
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
 
@@ -1177,6 +1177,12 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 		String fnerror = fn + String(IDS_ERRORNUM) + String().SetInt(err);
 		if( err == ERROR_ACCESS_DENIED )
 		{
+			if ( fn.isDirectory() )
+			{ // We cannot open dir yet
+				fnerror += String(IDS_CANTOPENDIR); // Can not open directory!
+				MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str(), MB_OK );
+				return false;
+			}
 			// cannot open file for READ.
 			// Directly try to open elevated.
 			//fnerror += TEXT(": Access Denied\n\nTry to open elevated?");

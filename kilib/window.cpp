@@ -35,14 +35,14 @@ static BOOL (WINAPI *dyn_ImmSetCompositionStringW)(HIMC hIMC, DWORD dwIndex, LPC
 #define ImmNotifyIME dyn_ImmNotifyIME
 #define ImmSetCompositionStringW dyn_ImmSetCompositionStringW
 
-#if !defined(_UNICODE) || defined(UNICOWS)
+//#if !defined(_UNICODE) || defined(UNICOWS)
 static BOOL (WINAPI *dyn_ImmSetCompositionFontA)(HIMC hIMC, LPLOGFONTA lplf);
 static BOOL (WINAPI *dyn_ImmGetCompositionStringA)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen);
 static BOOL (WINAPI *dyn_ImmSetCompositionStringA)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen);
 #define ImmSetCompositionFontA dyn_ImmSetCompositionFontA
 #define ImmGetCompositionStringA dyn_ImmGetCompositionStringA
 #define ImmSetCompositionStringA dyn_ImmSetCompositionStringA
-#endif // !UNICODE || UNICOWS
+//#endif // !UNICODE || UNICOWS
 
 static bool LoadIMM32DLL()
 {
@@ -50,7 +50,10 @@ static bool LoadIMM32DLL()
 	// fails we get an error message
 	if( App::isWin32s() )
 		return false;
+//	if ( !::GetSystemMetrics(SM_DBCSENABLED) && App::getOSVer() >= 500 && !::GetSystemMetrics(/*SM_IMMENABLED*/ 82) )
+//		return false;
 
+	//MessageBox(NULL, TEXT("Going to Load IMM32.DLL"), NULL, 0);
 	HINSTANCE h = LoadLibrary(TEXT("IMM32.DLL"));
 	if( ! h) return false;
 
@@ -149,19 +152,26 @@ IMEManager::IMEManager()
 	, immMsg_( NULL )
 #endif
 {
+	// 唯一のインスタンスは私です
+	pUniqueInstance_ = this;
+	hasIMM32_ = 0;
+
 	#ifdef USEGLOBALIME
 		// 色々面倒なのでWin95ではGlobalIME無し
 		// No global IME on Win95 because it is buggy...
-		// RamonUnch: I found it is not so buggy so I re-enabled it!
-		if( app().getOSVer() >= 400 /* !app().isWin95() */ )
+		// RamonUnch: I found it is not so buggy so
+		// I re-enabled it unless we are on a DBCS enabled system!
+		if( app().getOSVer() >= 400 && !( app().isWin95() && ::GetSystemMetrics(SM_DBCSENABLED) ) )
 		{ // Not available on Win32s/NT3.X?
 			app().InitModule( App::OLE );
 			if( S_OK == ::MyCoCreateInstance(
 					myCLSID_CActiveIMM, NULL, CLSCTX_INPROC_SERVER,
 					myIID_IActiveIMMApp, (void**)&immApp_ ) )
 			{
-				immApp_->QueryInterface(
+				// MessageBox(NULL, TEXT("Global IME Loaded!"), NULL, 0);
+				HRESULT ret = immApp_->QueryInterface(
 					myIID_IActiveIMMMessagePumpOwner, (void**)&immMsg_ );
+				if( ret == S_OK ) return;
 			}
 		}
 	#endif //USEGLOBALIME
@@ -170,13 +180,10 @@ IMEManager::IMEManager()
   # ifdef NO_IME
 	hasIMM32_ = 0;
   # elif defined(TARGET_VER) && TARGET_VER<=350
-  	hasIMM32_ = LoadIMM32DLL();
+	hasIMM32_ = LoadIMM32DLL();
   # else
 	hasIMM32_ = 1;
   # endif
-
-	// 唯一のインスタンスは私です
-	pUniqueInstance_ = this;
 }
 
 IMEManager::~IMEManager()

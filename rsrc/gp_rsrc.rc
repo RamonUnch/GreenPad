@@ -360,6 +360,7 @@ BEGIN
     IDS_OKTODEL             "ÇçÌèúÇµÇƒÇÊÇÎÇµÇ¢Ç≈Ç∑Ç©ÅH"
     IDS_NOWRITEACESS        "\nWrite access denied!\n\nOpen elevated so that the file can be modified?"
     IDS_ERRORNUM            "\n\nError #"
+    IDS_CANTOPENDIR         "\nCan not open directory!"
 END
 
 #endif    // ì˙ñ{åÍ resources
@@ -728,6 +729,7 @@ BEGIN
     IDS_OKTODEL             " will be removed. OK?"
     IDS_NOWRITEACESS        "\nWrite access denied!\n\nOpen elevated so that the file can be modified?"
     IDS_ERRORNUM            "\n\nError #"
+    IDS_CANTOPENDIR         "\nCan not open directory!"
 END
 
 #endif    // âpåÍ (ïƒçë) resources

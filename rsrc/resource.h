@@ -20,6 +20,7 @@
 #define IDS_NOTFOUNDDOWN                11
 #define IDS_NOWRITEACESS                12
 #define IDS_ERRORNUM                    13
+#define IDS_CANTOPENDIR                 14
 
 #define IDR_MAIN                        103
 #define IDD_OPENFILEHOOK                105

@@ -140,8 +140,12 @@ void App::InitModule( imflag what )
 	if( !(loadedModule_ & what) )
 		switch( what )
 		{
-		case CTL:
+		case CTL: {
 			::InitCommonControls(); break;
+//			void (WINAPI *dyn_InitCommonControls)(void) = ( void (WINAPI *)(void) )
+//				GetProcAddress( LoadLibrary( TEXT("COMCTL32.DLL") ), (char*)17 );
+//			if(dyn_InitCommonControls) dyn_InitCommonControls();
+			} break;
 #if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 		case COM:
 			// Actually we only ever use OLE, that calls COM, so it can

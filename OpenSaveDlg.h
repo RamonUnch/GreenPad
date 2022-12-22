@@ -34,6 +34,7 @@ public:
 	int defaultCs() const;
 	ulong defaultCsi() const;
 	ulong findCsi( int cs ) const;
+	void EnrollCs( int _id, ushort _num);
 
 private:
 

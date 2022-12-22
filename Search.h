@@ -115,6 +115,7 @@ private:
 	bool bRegExp_;     // 正規表現？
 	bool bDownSearch_; // 検索方向
 	bool bChanged_;    // 前回のsearcher構築時から変更があったらtrue
+	bool inichanged_;  // Set to true when the ini must be saved
 
 	ki::String findStr_;
 	ki::String replStr_;

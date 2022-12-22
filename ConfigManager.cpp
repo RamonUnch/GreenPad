@@ -22,12 +22,13 @@ void SetFontSize(LOGFONT *font, HDC hDC, int fsiz, int fx)
 
 void VConfig::SetFont( const TCHAR* fnam, int fsiz, uchar fontCS, LONG fw, BYTE ff, int fx, int qual )
 {
+	mem00(&font, sizeof(font));
 	fontsize              = fsiz;
 	fontwidth             = fx;
-	font.lfHeight         = 0;
-	font.lfWidth          = 0;
-	font.lfEscapement     = 0;
-	font.lfOrientation    = 0;
+//	font.lfHeight         = 0;
+//	font.lfWidth          = 0;
+//	font.lfEscapement     = 0;
+//	font.lfOrientation    = 0;
 	font.lfWeight         = fw; // FW_DONTCARE;
 	font.lfItalic         = ff&1; // FALSE
 	font.lfUnderline      = ff&2; // FALSE
@@ -55,6 +56,7 @@ ConfigManager::ConfigManager()
 	DocType d;
 	d.name.Load( IDS_DEFAULT );
 	d.layfile   = TEXT("default.lay");
+	d.loaded = false; // set unloaded flag.
 	LoadLayout( &d );
 	dtList_.Add( d );
 	curDt_ = dtList_.begin();
@@ -70,8 +72,11 @@ ConfigManager::~ConfigManager()
 	SaveIni();
 }
 
-void ConfigManager::SetDocTypeByName( const ki::String& nam )
+bool ConfigManager::SetDocTypeByName( const ki::String& nam )
 {
+	// MessageBox(NULL, curDt_->name.c_str(), nam.c_str(), 0);
+	if( curDt_->name == nam && curDt_->loaded )
+		return 0; // Nothing to do.
 	curDt_             = dtList_.begin();
 	DtList::iterator b = dtList_.begin();
 	DtList::iterator e = dtList_.end();
@@ -82,6 +87,7 @@ void ConfigManager::SetDocTypeByName( const ki::String& nam )
 			break;
 		}
 	LoadLayout( &*curDt_ );
+	return 1;
 }
 
 int ConfigManager::SetDocType( const Path& fname )
@@ -398,7 +404,7 @@ private:
 		cfg_.newfileCharset_ = cfg_.GetCharSetList()[1+SendMsgToItem(IDC_NEWCS, CB_GETCURSEL)].ID;
 		cfg_.newfileLB_ = (lbcode) SendMsgToItem(IDC_NEWLB, CB_GETCURSEL);
 		size_t nfd_idx=SendMsgToItem(IDC_NEWDT, CB_GETCURSEL), nfd_cnt=1;
-		cfg_.newfileDoctype_ = String();
+		cfg_.newfileDoctype_ = String( IDS_DEFAULT );
 
 		SaveDt();
 		cfg_.dtList_.DelAfter( ++cfg_.dtList_.begin() );
@@ -470,7 +476,7 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
   // １．省略値として…
 
 	DtList::iterator ref = dtList_.begin();
-	if( ref != dtList_.end() )
+	if( ref != dtList_.end() && ref->loaded )
 	{
 		// default.layがロードされていればそれを使う
 		dt->vc        = ref->vc;
@@ -490,7 +496,7 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		dt->vc.color[CMT] = ::GetSysColor(COLOR_WINDOWTEXT); // RGB(0,0,0);
 		dt->vc.color[KWD] = RGB(0,90,230);
 		dt->vc.color[BG]  = ::GetSysColor(COLOR_WINDOW); // RGB(255,255,255);
-		dt->vc.color[CTL] = RGB(240,200,240);
+		dt->vc.color[CTL] = RGB(230,190,230);
 
 		dt->vc.sc[scEOF] = true;  // Show end of file with [EOF]
 		dt->vc.sc[scEOL] = true;  // Show End of line with '/'
@@ -498,17 +504,19 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		dt->vc.sc[scZSP] = true;  // '　' (0x3000)
 		dt->vc.sc[scTAB] = true;  // Show tabs with '>'
 
+		dt->vc.SetFont( TEXT("FixedSys"), 11, dt->fontCS );
+
 		dt->wrapWidth  = 80;
 		dt->wrapType   = -1;
 		dt->wrapSmart  = true;
-		dt->showLN     = false;
+		dt->showLN     = true;
 		dt->fontCS     = DEFAULT_CHARSET;
 		dt->fontQual   = DEFAULT_QUALITY;
-		dt->vc.SetFont( TEXT("FixedSys"), 14, dt->fontCS );
 	}
+	dt->loaded     = true;
 
   // ２．*.layファイルからの読み込み
-
+	// MessageBox(NULL, dt->layfile.c_str(), TEXT("Loading"), 0);
 	TextFileR tf( UTF16LE );
 	if( tf.Open( (Path(Path::Exe)+TEXT("type\\")+dt->layfile).c_str() ) )
 	{
@@ -801,7 +809,7 @@ void ConfigManager::LoadIni()
 	newfileCharset_ = ini_.GetInt( TEXT("NewfileCharset"), charSets_.defaultCs() );
 	if(newfileCharset_ == -1) newfileCharset_ = 1252; // 1.07.4 bugfix
 	if(!::IsValidCodePage(newfileCharset_)) newfileCharset_ = ::GetACP();
-	newfileDoctype_ = ini_.GetStr( TEXT("NewfileDoctype"), String() );
+	newfileDoctype_ = ini_.GetStr( TEXT("NewfileDoctype"), String( IDS_DEFAULT ) );
 	newfileLB_      = (lbcode) ini_.GetInt( TEXT("NewfileLB"), CRLF );
 
 	// 文書タイプリストの０番以外のクリア
