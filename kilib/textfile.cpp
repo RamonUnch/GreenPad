@@ -1257,7 +1257,7 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	const ulong  siz = fp_.size();
 
 	// 必要なら自動判定
-	cs_ = AutoDetection( cs_, buf, Min<ulong>(siz,16<<10) ); // 先頭16KB
+	cs_ = AutoDetection( cs_, buf, siz );
 	int needed_cs = neededCodepage(cs_);
 
 	if(needed_cs > 0 && !::IsValidCodePage(needed_cs))
@@ -1311,9 +1311,11 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	return true;
 }
 
-int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
+int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 {
 //-- まず、文字の出現回数の統計を取る
+
+	ulong siz = Min<ulong>( totsiz, 16<<10 ); // 先頭16KB
 
 	ulong  freq[256];
 	bool bit8 = false;
@@ -1392,14 +1394,13 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong siz )
 //-- UTF-16/32 detection
 	if( freq[ 0 ] > siz >> 11) // More than 1/2048 nulls in content?
 	{ // then it may be UTF-16/32 without BOM
-		// Note: even and odd checks will only apply
-		// if the file is smaller than the test buffer.
+		// Note: even and odd checks must be applied on the total file size.
 		// UTF-16 byte count will always be even
-		if(!(siz&1) && CheckUTFConfidence(ptr,siz,sizeof(dbyte),true)) return UTF16LE;
-		if(!(siz&1) && CheckUTFConfidence(ptr,siz,sizeof(dbyte),false)) return UTF16BE;
+		if(!(totsiz&1) && CheckUTFConfidence(ptr,siz,sizeof(dbyte),true)) return UTF16LE;
+		if(!(totsiz&1) && CheckUTFConfidence(ptr,siz,sizeof(dbyte),false)) return UTF16BE;
 		// UTF-32 byte count will always be multiple of 4
-		if(!(siz&3) && CheckUTFConfidence(ptr,siz,sizeof(qbyte),true)) return UTF32LE;
-		if(!(siz&3) && CheckUTFConfidence(ptr,siz,sizeof(qbyte),false)) return UTF32BE;
+		if(!(totsiz&3) && CheckUTFConfidence(ptr,siz,sizeof(qbyte),true)) return UTF32LE;
+		if(!(totsiz&3) && CheckUTFConfidence(ptr,siz,sizeof(qbyte),false)) return UTF32BE;
 	}
 
 //-- chardet and MLang detection
