@@ -478,22 +478,15 @@ void Painter::DrawHSP( int x, int y, int times )
 void Painter::DrawZSP( int x, int y, int times )
 {
 	// 全角スペース記号(平たい四角)を描く
-	// Draw a full-width space symbol (flat square)
+	// Draw a full-width space symbol (flat rectangle)
 	const int w=Wc(0x3000/*L'　'*/), h=H();
-	POINT pt[4] = {
-		{ x    , y+h-4 },
-		{ x    , y+h-2 },
-		{ x+w-3, y+h-2 },
-		{ x+w-3, y+h-4 }
-	};
+	RECT rc = { x, y+h-4, x+w-2, y+h-1 };
 	while( times-- )
 	{
-		if( 0 <= pt[3].x )
-			::Polygon( dc_, pt, countof(pt) );
-		pt[0].x += w;
-		pt[1].x += w;
-		pt[2].x += w;
-		pt[3].x += w;
+		if( 0 <= rc.right ) // Useless check? It was done before so I still do it!
+			::Rectangle( dc_ , rc.left, rc.top, rc.right, rc.bottom );
+		rc.left   += w;
+		rc.right  += w;
 	}
 }
 
