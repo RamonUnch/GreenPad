@@ -272,7 +272,7 @@ inline IMEManager& ime()
 
 class WndImpl : public Window
 {
-	enum { THUNK_SIZE = 22 };
+//	enum { THUNK_SIZE = 22 };
 
 public:
 
@@ -316,13 +316,14 @@ private:
 
 	static LRESULT CALLBACK StartProc( HWND, UINT, WPARAM, LPARAM );
 	static LRESULT CALLBACK MainProc( WndImpl*, UINT, WPARAM, LPARAM );
+	static LRESULT CALLBACK TrunkMainProc( HWND, UINT, WPARAM, LPARAM );
 	void SetUpThunk( HWND wnd );
 
 private:
 
 	LPCTSTR     className_;
 	const DWORD style_, styleEx_;
-	byte*       thunk_;
+//	byte*       thunk_;
 };
 
 

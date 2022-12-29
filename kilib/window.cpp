@@ -592,8 +592,8 @@ WndImpl::WndImpl( LPCTSTR className, DWORD style, DWORD styleEx )
 	: className_( className )
 	, style_    ( style )
 	, styleEx_  ( styleEx )
-	, thunk_    ( static_cast<byte*>(
-	                ::VirtualAlloc( NULL, THUNK_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE )) )
+//	, thunk_    ( static_cast<byte*>(
+//	                ::VirtualAlloc( NULL, THUNK_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE )) )
 {
 }
 
@@ -604,7 +604,7 @@ WndImpl::~WndImpl()
 	// 正しい on_destroy が呼ばれる保証は全くない。あくまで
 	// 緊急脱出用(^^; と考えること。
 	Destroy();
-	::VirtualFree( thunk_, 0, MEM_RELEASE );
+//	::VirtualFree( thunk_, 0, MEM_RELEASE );
 }
 
 void WndImpl::Destroy()
@@ -661,6 +661,7 @@ LRESULT CALLBACK WndImpl::StartProc(
 	ThisAndParam* pz   = static_cast<ThisAndParam*>(cs->lpCreateParams);
 	WndImpl*   pThis   = pz->pThis;
 	cs->lpCreateParams = pz->pParam;
+	::SetWindowLongPtr(wnd, GWL_USERDATA, reinterpret_cast<LONG>(pThis));
 
 	// サンク
 	pThis->SetUpThunk( wnd );
@@ -673,7 +674,8 @@ LRESULT CALLBACK WndImpl::StartProc(
 void WndImpl::SetUpThunk( HWND wnd )
 {
 	SetHwnd( wnd );
-
+	::SetWindowLongPtr( wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(TrunkMainProc) );
+/*
 	// ここで動的にx86の命令列
 	//   | mov dword ptr [esp+4] this
 	//   | jmp MainProc
@@ -705,6 +707,17 @@ void WndImpl::SetUpThunk( HWND wnd )
 
 	::FlushInstructionCache( ::GetCurrentProcess(), thunk_, THUNK_SIZE );
 	::SetWindowLongPtr( wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&thunk_[0]) );
+*/
+}
+
+LRESULT CALLBACK WndImpl::TrunkMainProc( HWND wnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+	WndImpl*   pThis  = reinterpret_cast<WndImpl*>(GetWindowLong(wnd, GWL_USERDATA));
+	if(pThis) {
+		return WndImpl::MainProc(pThis, msg, wp, lp);
+	} else {
+		return DefWindowProc(wnd, msg, wp, lp);
+	}
 }
 
 LRESULT CALLBACK WndImpl::MainProc(
