@@ -141,12 +141,19 @@ void App::InitModule( imflag what )
 		switch( what )
 		{
 		case CTL: {
-			::InitCommonControls(); break;
-//			void (WINAPI *dyn_InitCommonControls)(void) = ( void (WINAPI *)(void) )
-//				GetProcAddress( LoadLibrary( TEXT("COMCTL32.DLL") ), (char*)17 );
-//			if(dyn_InitCommonControls) dyn_InitCommonControls();
+			//::InitCommonControls(); break;
+			// Old Win32s versions do not have COMCTL32.DLL
+			// And someone might have deleted it on newer Windows
+			HINSTANCE h = LoadLibrary( TEXT("COMCTL32.DLL") );
+			if ( h )
+			{
+				// Ordinal 17 import would be faster but less future-proof.
+				void (WINAPI *dyn_InitCommonControls)(void) = ( void (WINAPI *)(void) )
+					GetProcAddress( h, "InitCommonControls" /*(char*)17*/ );
+				if (dyn_InitCommonControls)
+					dyn_InitCommonControls();
+			}
 			} break;
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
 		case COM:
 			// Actually we only ever use OLE, that calls COM, so it can
 			// be Ignored safely...
@@ -157,7 +164,6 @@ void App::InitModule( imflag what )
 			ret = S_OK == ::MyOleInitialize( NULL );
 			// MessageBoxA(NULL, "OleInitialize", ret?"Sucess": "Failed", MB_OK);
 			break;
-#endif
 		default: break;
 		}
 
