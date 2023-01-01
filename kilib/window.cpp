@@ -592,8 +592,10 @@ WndImpl::WndImpl( LPCTSTR className, DWORD style, DWORD styleEx )
 	: className_( className )
 	, style_    ( style )
 	, styleEx_  ( styleEx )
-//	, thunk_    ( static_cast<byte*>(
-//	                ::VirtualAlloc( NULL, THUNK_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE )) )
+#ifndef NO_ASM
+	, thunk_    ( static_cast<byte*>(
+	                ::VirtualAlloc( NULL, THUNK_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE )) )
+#endif
 {
 }
 
@@ -604,7 +606,9 @@ WndImpl::~WndImpl()
 	// 正しい on_destroy が呼ばれる保証は全くない。あくまで
 	// 緊急脱出用(^^; と考えること。
 	Destroy();
-//	::VirtualFree( thunk_, 0, MEM_RELEASE );
+#ifndef NO_ASM
+	::VirtualFree( thunk_, 0, MEM_RELEASE );
+#endif
 }
 
 void WndImpl::Destroy()
@@ -674,8 +678,10 @@ LRESULT CALLBACK WndImpl::StartProc(
 void WndImpl::SetUpThunk( HWND wnd )
 {
 	SetHwnd( wnd );
+#ifdef NO_ASM
+	// Use TrunkMainProc() that does not depends on any asmembly language.
 	::SetWindowLongPtr( wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(TrunkMainProc) );
-/*
+#else // USE ASM
 	// ここで動的にx86の命令列
 	//   | mov dword ptr [esp+4] this
 	//   | jmp MainProc
@@ -691,25 +697,27 @@ void WndImpl::SetUpThunk( HWND wnd )
 	//
 	// 参考資料：ATLのソース
 
-#if defined(_M_AMD64) || defined(WIN64)
+	#if defined(_M_AMD64) || defined(WIN64)
 	*reinterpret_cast<dbyte*>   (thunk_+ 0) = 0xb948;
 	*reinterpret_cast<WndImpl**>(thunk_+ 2) = this;
 	*reinterpret_cast<dbyte*>   (thunk_+10) = 0xb848;
 	*reinterpret_cast<void**>   (thunk_+12) = (LONG_PTR*)MainProc;
 	*reinterpret_cast<dbyte*>   (thunk_+20) = 0xe0ff;
-#else
+	#else
 	*reinterpret_cast<qbyte*>   (thunk_+0) = 0x042444C7;
 	*reinterpret_cast<WndImpl**>(thunk_+4) = this;
 	*reinterpret_cast< byte*>   (thunk_+8) = 0xE9;
 	*reinterpret_cast<qbyte*>   (thunk_+9) =
 		reinterpret_cast<byte*>((void*)MainProc)-(thunk_+13);
-#endif
+	#endif
 
 	::FlushInstructionCache( ::GetCurrentProcess(), thunk_, THUNK_SIZE );
 	::SetWindowLongPtr( wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&thunk_[0]) );
-*/
+#endif // NO_ASM
 }
 
+#ifdef NO_ASM
+// To avoid ASM thunking we can use GWL_USERDATA in the window structure
 LRESULT CALLBACK WndImpl::TrunkMainProc( HWND wnd, UINT msg, WPARAM wp, LPARAM lp )
 {
 	WndImpl*   pThis  = reinterpret_cast<WndImpl*>(GetWindowLong(wnd, GWL_USERDATA));
@@ -719,6 +727,7 @@ LRESULT CALLBACK WndImpl::TrunkMainProc( HWND wnd, UINT msg, WPARAM wp, LPARAM l
 		return DefWindowProc(wnd, msg, wp, lp);
 	}
 }
+#endif // NO_ASM
 
 LRESULT CALLBACK WndImpl::MainProc(
 	WndImpl* ptr, UINT msg, WPARAM wp, LPARAM lp )
