@@ -1315,7 +1315,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 {
 //-- ‚Ü‚¸A•¶š‚ÌoŒ»‰ñ”‚Ì“Œv‚ğæ‚é
 
-	ulong siz = Min<ulong>( totsiz, 16<<10 ); // æ“ª16KB
+	ulong siz = Min( totsiz, (ulong)(16<<10) ); // æ“ª16KB
 
 	ulong  freq[256];
 	bool bit8 = false;
@@ -1566,6 +1566,8 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 # define CHARDET_DLL "chardet_x64.dll"
 #elif defined(_M_ARM64)
 # define CHARDET_DLL "chardet_arm64.dll"
+#elif defined(_MIPS_)
+# define CHARDET_DLL "cdetmips.dll"
 #else
 # define CHARDET_DLL "chardet.dll"
 #endif

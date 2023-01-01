@@ -656,7 +656,7 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 		// ’è”‚Q, Constant 2
 		const unicode* str = doc_.tl(tl);
 		const uchar*   flg = doc_.pl(tl);
-		const int rYMAX = Min<int>( v.YMAX, a.top+rln(tl)*H );
+		const int rYMAX = Min( v.YMAX, (int)(a.top+rln(tl)*H) );
 
 		// ì‹Æ—p•Ï”‚Q, Working variable 2
 		ulong stt=0, end, t, n;
