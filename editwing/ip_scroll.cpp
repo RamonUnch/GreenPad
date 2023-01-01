@@ -277,7 +277,7 @@ bool ViewImpl::ReSetScrollInfo()
 //	rlScr_.nPos  = Min<int>( rlScr_.nPos, rlScr_.nMax-rlScr_.nPage+1 );
 	rlScr_.nPage = cx + 1;
 	rlScr_.nMax  = Max( textCx_+cvs_.getPainter().W()/2+1, cx );
-	rlScr_.nPos  = Min<int>( rlScr_.nPos, rlScr_.nMax-rlScr_.nPage+1 );
+	rlScr_.nPos  = Min( rlScr_.nPos, (int)(rlScr_.nMax-rlScr_.nPage+1) );
 
 	// 縦はnPageとnMaxはとりあえず補正
 	// nPosは場合によって直し方が異なるので別ルーチンにて
@@ -293,7 +293,7 @@ bool ViewImpl::ReSetScrollInfo()
 	if( vln()*cvs_.getPainter().H() < cy )
 		udScr_.nMax  = vln() + udScr_.nPage - 2;
 	else
-		udScr_.nMax  = vln() + udScr_.nPage - Max( 2, Min<int>( udScr_.nPage-1, vln()+1 ) );
+		udScr_.nMax  = vln() + udScr_.nPage - Max( 2, (int)Min( udScr_.nPage-1, (uint)(vln()+1) ) );
 
 	// 横スクロールが起きたらtrue
 	return (prevRlPos != rlScr_.nPos);

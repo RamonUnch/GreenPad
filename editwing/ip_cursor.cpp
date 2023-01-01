@@ -210,7 +210,7 @@ void Cursor::Redraw( const VPos& s, const VPos& e )
 	const long LFT = view_.left();
 	const long RHT = view_.right();
 	const long TOP = 0;
-	const int  BTM = view_.bottom();
+	const long BTM = view_.bottom();
 
 	if( sp.y == ep.y )
 	{
@@ -219,11 +219,11 @@ void Cursor::Redraw( const VPos& s, const VPos& e )
 	}
 	else
 	{
-		RECT rc = { Max(LFT,sp.x), Max(TOP,sp.y), RHT, Min<int>(BTM,sp.y+view_.fnt().H()) };
+		RECT rc = { Max(LFT,sp.x), Max(TOP,sp.y), RHT, Min(BTM, (long)(sp.y+view_.fnt().H())) };
 		::InvalidateRect( caret_->hwnd(), &rc, FALSE );
-		RECT re = { LFT, Max(TOP,ep.y), Min(RHT,ep.x), Min<int>(BTM,ep.y+view_.fnt().H()) };
+		RECT re = { LFT, Max(TOP,ep.y), Min(RHT,ep.x), Min(BTM, (long)(ep.y+view_.fnt().H())) };
 		::InvalidateRect( caret_->hwnd(), &re, FALSE );
-		RECT rd = { LFT, Max(TOP,rc.bottom), RHT, Min<int>((long)BTM,re.top) };
+		RECT rd = { LFT, Max(TOP,rc.bottom), RHT, Min((long)BTM,re.top) };
 		::InvalidateRect( caret_->hwnd(), &rd, FALSE );
 	}
 }

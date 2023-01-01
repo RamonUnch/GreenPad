@@ -665,7 +665,7 @@ LRESULT CALLBACK WndImpl::StartProc(
 	ThisAndParam* pz   = static_cast<ThisAndParam*>(cs->lpCreateParams);
 	WndImpl*   pThis   = pz->pThis;
 	cs->lpCreateParams = pz->pParam;
-	::SetWindowLongPtr(wnd, GWL_USERDATA, reinterpret_cast<LONG>(pThis));
+	::SetWindowLongPtr(wnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
 
 	// ƒTƒ“ƒN
 	pThis->SetUpThunk( wnd );
