@@ -116,6 +116,7 @@ private:
 	int             exitcode_;
 	ulong           loadedModule_;
 	const HINSTANCE hInst_;
+	HINSTANCE       hInstComCtl_;
 	static App*     pUniqueInstance_;
 
 private:

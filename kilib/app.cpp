@@ -104,6 +104,7 @@ inline App::App()
 	, exitcode_    (-1)
 	, loadedModule_(0)
 	, hInst_       (::GetModuleHandle(NULL))
+	, hInstComCtl_ (NULL)
 {
 	// 唯一のインスタンスは私です。
 	pUniqueInstance_ = this;
@@ -141,15 +142,13 @@ void App::InitModule( imflag what )
 		switch( what )
 		{
 		case CTL: {
-			//::InitCommonControls(); break;
-			// Old Win32s versions do not have COMCTL32.DLL
-			// And someone might have deleted it on newer Windows
-			HINSTANCE h = LoadLibrary( TEXT("COMCTL32.DLL") );
-			if ( h )
+			// ::InitCommonControls();
+			if( !hInstComCtl_ )
+				hInstComCtl_ = ::LoadLibrary(TEXT("COMCTL32.DLL"));
+			if( hInstComCtl_ )
 			{
-				// Ordinal 17 import would be faster but less future-proof.
 				void (WINAPI *dyn_InitCommonControls)(void) = ( void (WINAPI *)(void) )
-					GetProcAddress( h, "InitCommonControls" /*(char*)17*/ );
+					GetProcAddress( hInstComCtl_, "InitCommonControls" );
 				if (dyn_InitCommonControls)
 					dyn_InitCommonControls();
 			}
@@ -175,6 +174,9 @@ void App::Exit( int code )
 {
 	// 終了コードを設定して
 	SetExitCode( code );
+
+	// only free library when program quits
+	if( hInstComCtl_ ) ::FreeLibrary( hInstComCtl_ );
 
 	// 自殺
 	this->~App();
