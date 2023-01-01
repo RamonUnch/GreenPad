@@ -665,8 +665,10 @@ LRESULT CALLBACK WndImpl::StartProc(
 	ThisAndParam* pz   = static_cast<ThisAndParam*>(cs->lpCreateParams);
 	WndImpl*   pThis   = pz->pThis;
 	cs->lpCreateParams = pz->pParam;
+	#ifdef NO_ASM
+	// Store the this pointer in GWLP_USERDATA when not using ASM thunking
 	::SetWindowLongPtr(wnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
-
+	#endif
 	// ƒTƒ“ƒN
 	pThis->SetUpThunk( wnd );
 
@@ -717,10 +719,10 @@ void WndImpl::SetUpThunk( HWND wnd )
 }
 
 #ifdef NO_ASM
-// To avoid ASM thunking we can use GWL_USERDATA in the window structure
+// To avoid ASM thunking we can use GWLP_USERDATA in the window structure
 LRESULT CALLBACK WndImpl::TrunkMainProc( HWND wnd, UINT msg, WPARAM wp, LPARAM lp )
 {
-	WndImpl*   pThis  = reinterpret_cast<WndImpl*>(GetWindowLong(wnd, GWL_USERDATA));
+	WndImpl*   pThis  = reinterpret_cast<WndImpl*>(GetWindowLong(wnd, GWLP_USERDATA));
 	if(pThis) {
 		return WndImpl::MainProc(pThis, msg, wp, lp);
 	} else {
