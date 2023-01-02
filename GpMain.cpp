@@ -1197,14 +1197,57 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	{
 		// Check for Write access and Prompt the user
 		// if he would like to elevate so the file can be written.
-		TextFileW tfw( cs, lb_ );
-		if (!tfw.Open( fn.c_str() ) && GetLastError() == ERROR_ACCESS_DENIED )
+		// Detect netwrk path \\... \\?\UNC
+		int drivestart=0;
+		bool networkpath = false;;
+		if( fn[0] == TEXT('\\') && fn[1] == TEXT('\\') )
 		{
-			String fnerror = fn + String(IDS_NOWRITEACESS);
-			if (IDYES == MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str(), MB_YESNO ))
+			if( fn[3] != '?' && fn[3] != '.' )
 			{
-				on_openelevated(fn);
-				return false;
+				networkpath = true;
+			}
+			else if( fn[3] == '?' && fn[4] == '\\') // \\?\ style
+			{
+				if( fn[5] == ':') // \\?\X:
+				{
+					drivestart = 4;
+					networkpath = false;
+				}
+				else if(
+				    fn[7] == '\\'  // \\?\UNC\server style
+				&& (fn[4] == 'U' || fn[4] == 'u')
+				&& (fn[5] == 'N' || fn[5] == 'n')
+				&& (fn[6] == 'C' || fn[6] == 'c') )
+				{
+					networkpath = true;
+				}
+			}
+		}
+		// Do not try to open the file for reading if it is a network
+		// path, a netword drive or a CDROM.
+		bool notry = networkpath;
+		if (!notry)
+		{ // Not a network path check if it is a network drive or cd
+			TCHAR drive[4];
+			drive[0] = fn[drivestart+0];
+			drive[1] = fn[drivestart+1];
+			drive[2] = fn[drivestart+2];
+			drive[3] = TEXT('\0');
+			UINT DT = GetDriveType(drive);
+			notry = !(DT&DRIVE_REMOTE) || !(DT&DRIVE_CDROM);
+		}
+
+		TextFileW tfw( cs, lb_ );
+		if (!notry && !tfw.Open( fn.c_str() ) && GetLastError() == ERROR_ACCESS_DENIED )
+		{
+			if( !networkpath )
+			{
+				String fnerror = fn + String(IDS_NOWRITEACESS);
+				if ( IDYES == MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str(), MB_YESNO ) )
+				{
+					on_openelevated(fn);
+					return false;
+				}
 			}
 		}
 	}
