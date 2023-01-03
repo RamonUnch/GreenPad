@@ -316,7 +316,7 @@ private:
 
 	static LRESULT CALLBACK StartProc( HWND, UINT, WPARAM, LPARAM );
 	static LRESULT CALLBACK MainProc( WndImpl*, UINT, WPARAM, LPARAM );
-	#ifdef NO_ASM
+	#ifdef NO_ASMTHUNK
 	static LRESULT CALLBACK TrunkMainProc( HWND, UINT, WPARAM, LPARAM );
 	#endif
 	void SetUpThunk( HWND wnd );
@@ -325,7 +325,7 @@ private:
 
 	LPCTSTR     className_;
 	const DWORD style_, styleEx_;
-#ifndef NO_ASM
+#ifndef NO_ASMTHUNK
 	byte*       thunk_;
 #endif
 };

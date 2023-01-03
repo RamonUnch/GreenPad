@@ -592,7 +592,7 @@ WndImpl::WndImpl( LPCTSTR className, DWORD style, DWORD styleEx )
 	: className_( className )
 	, style_    ( style )
 	, styleEx_  ( styleEx )
-#ifndef NO_ASM
+#ifndef NO_ASMTHUNK
 	, thunk_    ( static_cast<byte*>(
 	                ::VirtualAlloc( NULL, THUNK_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE )) )
 #endif
@@ -606,7 +606,7 @@ WndImpl::~WndImpl()
 	// 正しい on_destroy が呼ばれる保証は全くない。あくまで
 	// 緊急脱出用(^^; と考えること。
 	Destroy();
-#ifndef NO_ASM
+#ifndef NO_ASMTHUNK
 	::VirtualFree( thunk_, 0, MEM_RELEASE );
 #endif
 }
@@ -665,7 +665,7 @@ LRESULT CALLBACK WndImpl::StartProc(
 	ThisAndParam* pz   = static_cast<ThisAndParam*>(cs->lpCreateParams);
 	WndImpl*   pThis   = pz->pThis;
 	cs->lpCreateParams = pz->pParam;
-	#ifdef NO_ASM
+	#ifdef NO_ASMTHUNK
 	// Store the this pointer in GWLP_USERDATA when not using ASM thunking
 	::SetWindowLongPtr(wnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
 	#endif
@@ -680,7 +680,7 @@ LRESULT CALLBACK WndImpl::StartProc(
 void WndImpl::SetUpThunk( HWND wnd )
 {
 	SetHwnd( wnd );
-#ifdef NO_ASM
+#ifdef NO_ASMTHUNK
 	// Use TrunkMainProc() that does not depends on any asmembly language.
 	::SetWindowLongPtr( wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(TrunkMainProc) );
 #else // USE ASM
@@ -705,20 +705,22 @@ void WndImpl::SetUpThunk( HWND wnd )
 	*reinterpret_cast<dbyte*>   (thunk_+10) = 0xb848;
 	*reinterpret_cast<void**>   (thunk_+12) = (LONG_PTR*)MainProc;
 	*reinterpret_cast<dbyte*>   (thunk_+20) = 0xe0ff;
-	#else
+	#elif defined(_M_IX86)
 	*reinterpret_cast<qbyte*>   (thunk_+0) = 0x042444C7;
 	*reinterpret_cast<WndImpl**>(thunk_+4) = this;
 	*reinterpret_cast< byte*>   (thunk_+8) = 0xE9;
 	*reinterpret_cast<qbyte*>   (thunk_+9) =
 		reinterpret_cast<byte*>((void*)MainProc)-(thunk_+13);
+	#else
+	#error Unsupported processor type, please implement assembly code or consider defining NO_ASMTHUNK
 	#endif
 
 	::FlushInstructionCache( ::GetCurrentProcess(), thunk_, THUNK_SIZE );
 	::SetWindowLongPtr( wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&thunk_[0]) );
-#endif // NO_ASM
+#endif // NO_ASMTHUNK
 }
 
-#ifdef NO_ASM
+#ifdef NO_ASMTHUNK
 // To avoid ASM thunking we can use GWLP_USERDATA in the window structure
 LRESULT CALLBACK WndImpl::TrunkMainProc( HWND wnd, UINT msg, WPARAM wp, LPARAM lp )
 {
@@ -729,7 +731,7 @@ LRESULT CALLBACK WndImpl::TrunkMainProc( HWND wnd, UINT msg, WPARAM wp, LPARAM l
 		return DefWindowProc(wnd, msg, wp, lp);
 	}
 }
-#endif // NO_ASM
+#endif // NO_ASMTHUNK
 
 LRESULT CALLBACK WndImpl::MainProc(
 	WndImpl* ptr, UINT msg, WPARAM wp, LPARAM lp )
