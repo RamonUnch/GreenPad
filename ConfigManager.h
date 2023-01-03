@@ -221,7 +221,12 @@ inline const editwing::VConfig& ConfigManager::vConfig() const
 	{ return curDt_->vc; }
 
 inline ki::Path ConfigManager::kwdFile() const
-	{ return ki::Path(ki::Path::Exe)+TEXT("type\\")+curDt_->kwdfile; }
+	{ 
+	ki::Path p = ki::Path(ki::Path::Exe);
+	p += TEXT("type\\");
+	p += curDt_->kwdfile;
+	return p;
+	}
 
 inline const ki::Path& ConfigManager::grepExe() const
 	{ return grepExe_; }
