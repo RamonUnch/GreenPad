@@ -83,45 +83,6 @@ using namespace ki;
 CharSetList::CharSetList()
 	: list_( 30 )
 {
-//	static const TCHAR* const lnmJp[] = {
-//		#define CHARSET_VALUE(a,b,c) TEXT(a),
-//		CHARSETS_LIST
-//		#undef CHARSET_VALUE
-//	};
-//
-//	static const TCHAR* const lnmEn[] = {
-//		#define CHARSET_VALUE(a,b,c) TEXT(b),
-//		CHARSETS_LIST
-//		#undef CHARSET_VALUE
-//	};
-//
-//	static const TCHAR* const snm[] = {
-//		#define CHARSET_VALUE(a,b,c) TEXT(c),
-//		CHARSETS_LIST
-//		#undef CHARSET_VALUE
-//	};
-//
-//	// 日本語環境なら日本語表示を選ぶ
-//	#if !defined(TARGET_VER) || TARGET_VER >= 350
-//	const TCHAR* const * lnm = (::GetACP()==932 ? lnmJp : lnmEn);
-//	#else
-//	// On Windows 3.1 we cannot have the japaneese UI so for
-//	// Consistancy sake we remove also this string table.
-//	const TCHAR* const * lnm = lnmEn;
-//	#endif
-//
-//	// いちいち書くの面倒なので短縮表記(^^;
-//	CsInfo cs;
-//	#define Enroll(_id,_nm)   cs.ID=_id,             \
-//		cs.longName=lnm[_nm], cs.shortName=snm[_nm], \
-//		cs.type=LOAD|SAVE,    list_.Add( cs )
-//	#define EnrollS(_id,_nm)  cs.ID=_id,             \
-//		cs.longName=lnm[_nm], cs.shortName=snm[_nm], \
-//		cs.type=SAVE,         list_.Add( cs )
-//	#define EnrollL(_id,_nm)  cs.ID=_id,             \
-//		cs.longName=lnm[_nm], cs.shortName=snm[_nm], \
-//		cs.type=LOAD,         list_.Add( cs )
-
 	#define Enroll(_id,_nm)  EnrollCs( _id, _nm|(LOAD|SAVE)<<8 )
 	#define EnrollS(_id,_nm) EnrollCs( _id, _nm|SAVE<<8 )
 	#define EnrollL(_id,_nm) EnrollCs( _id, _nm|LOAD<<8 )
@@ -271,6 +232,63 @@ ulong CharSetList::findCsi( int cs ) const
 //------------------------------------------------------------------------
 // 「開く」ダイアログ
 //------------------------------------------------------------------------
+#if defined(__MINGW32__) && !defined(_WIN64)
+// Mingw has bad headers!
+typedef struct mytagOFNA {
+   DWORD        lStructSize;
+   HWND         hwndOwner;
+   HINSTANCE    hInstance;
+   LPCSTR       lpstrFilter;
+   LPSTR        lpstrCustomFilter;
+   DWORD        nMaxCustFilter;
+   DWORD        nFilterIndex;
+   LPSTR        lpstrFile;
+   DWORD        nMaxFile;
+   LPSTR        lpstrFileTitle;
+   DWORD        nMaxFileTitle;
+   LPCSTR       lpstrInitialDir;
+   LPCSTR       lpstrTitle;
+   DWORD        Flags;
+   WORD         nFileOffset;
+   WORD         nFileExtension;
+   LPCSTR       lpstrDefExt;
+   LPARAM       lCustData;
+   LPOFNHOOKPROC lpfnHook;
+   LPCSTR       lpTemplateName;
+} myOPENFILENAMEA, *myLPOPENFILENAMEA;
+
+typedef struct mytagOFNW {
+   DWORD        lStructSize;
+   HWND         hwndOwner;
+   HINSTANCE    hInstance;
+   LPCWSTR      lpstrFilter;
+   LPWSTR       lpstrCustomFilter;
+   DWORD        nMaxCustFilter;
+   DWORD        nFilterIndex;
+   LPWSTR       lpstrFile;
+   DWORD        nMaxFile;
+   LPWSTR       lpstrFileTitle;
+   DWORD        nMaxFileTitle;
+   LPCWSTR      lpstrInitialDir;
+   LPCWSTR      lpstrTitle;
+   DWORD        Flags;
+   WORD         nFileOffset;
+   WORD         nFileExtension;
+   LPCWSTR      lpstrDefExt;
+   LPARAM       lCustData;
+   LPOFNHOOKPROC lpfnHook;
+   LPCWSTR      lpTemplateName;
+} myOPENFILENAMEW, *myLPOPENFILENAMEW;
+#ifdef UNICODE
+typedef myOPENFILENAMEW myOPENFILENAME;
+typedef myLPOPENFILENAMEW myLPOPENFILENAME;
+#else
+typedef myOPENFILENAMEA myOPENFILENAME;
+typedef myLPOPENFILENAMEA myLPOPENFILENAME;
+#endif // UNICODE
+#else
+#define myOPENFILENAME OPENFILENAME
+#endif // __MINGW32__
 
 namespace
 {
@@ -324,7 +342,7 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 		filepath_[j+1] = TEXT('\0');
 	}
 
-	OPENFILENAME ofn = {sizeof(ofn)};
+	myOPENFILENAME ofn = {sizeof(ofn)};
 	ofn.hwndOwner      = wnd;
 	ofn.hInstance      = app().hinst();
 	ofn.lpstrFilter    = fltr;
@@ -354,7 +372,7 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	}
 
 	pThis = this;
-	BOOL ret = ::GetOpenFileName(&ofn);
+	BOOL ret = ::GetOpenFileName((LPOPENFILENAME)&ofn);
 	if( ret != TRUE ) {
 		DWORD ErrCode = ::GetLastError();
 
@@ -366,7 +384,7 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
 
 			// try again!
-			ret = ::GetOpenFileName(&ofn);
+			ret = ::GetOpenFileName((LPOPENFILENAME)&ofn);
 		} else {
 			TCHAR tmp[128];
 			::wsprintf(tmp,TEXT("GetOpenFileName Error #%d."),ErrCode);
@@ -455,7 +473,7 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 		filepath_[j+1] = TEXT('\0');
 	}
 
-	OPENFILENAME ofn = {sizeof(ofn)};
+	myOPENFILENAME ofn = {sizeof(ofn)};
     ofn.hwndOwner      = wnd;
     ofn.hInstance      = app().hinst();
     ofn.lpstrFilter    = fltr;
@@ -486,7 +504,7 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	}
 
 	pThis = this;
-	BOOL ret = ::GetSaveFileName(&ofn);
+	BOOL ret = ::GetSaveFileName((LPOPENFILENAME)&ofn);
 	if(ret != TRUE) {
 		DWORD ErrCode = ::GetLastError();
 
@@ -499,7 +517,7 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
 
 			// try again!
-			ret = ::GetSaveFileName(&ofn);
+			ret = ::GetSaveFileName((LPOPENFILENAME)&ofn);
 		} else {
 			TCHAR tmp[128];
 			::wsprintf(tmp,TEXT("GetSaveFileName Error #%d."),ErrCode);
