@@ -151,7 +151,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 			cfg_.RememberWnd(this);
 		}
 		break;
-
+	#if 0
 	case WM_NCCALCSIZE: {
 		#ifdef FORCE_RTL_LAYOUT
 		if ( WS_EX_LAYOUTRTL & GetWindowLongPtr(hwnd(), GWL_EXSTYLE) )
@@ -196,6 +196,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		}
 		return ret;
 		}break;
+	#endif
 
 //	case WM_ERASEBKGND:{
 //		// Uncomment to see in black the area that will be repainted
