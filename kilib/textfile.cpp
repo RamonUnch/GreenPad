@@ -814,14 +814,16 @@ namespace
 	{
 		// Only for Windows >= 4 (NT4/95+) because
 		// CharNextExA is not here on NT3.1 and is a stub on NT3.5
+		// According to the MSDN DOC CharNextExA is available since NT4/95
+		// But it seems we need Win95 build 1381+ or NT3.51 build 1057+
 		uNextFunc Window_CharNextExA = (uNextFunc)NULL ;
-		if (app().isNewShell())
+		if( App::isNTOSVerLarger(351, 1057) || App::is9xOSVerLarger(400, 1381) )
 		{
 			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandleA("USER32.DLL"), "CharNextExA");
 			if (Window_CharNextExA) // We got the function!
 				return Window_CharNextExA;
 		}
-		// Fallback for WinNT3.x / Win32s.
+		// Fallback for WinNT3.x / Win32s / Win95 betas.
 		return IncCharNextExA;
 	}
 
