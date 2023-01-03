@@ -197,15 +197,15 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		return ret;
 		}break;
 
-	case WM_ERASEBKGND:{
-		// Uncomment to see in black the area that will be repainted
+//	case WM_ERASEBKGND:{
+//		// Uncomment to see in black the area that will be repainted
 //		Sleep(200);
 //		RECT rc;
 //		GetClientRect(hwnd(), &rc);
 //		FillRect((HDC)wp, &rc,  (HBRUSH)GetStockObject(BLACK_BRUSH));
 //		Sleep(200);
-		return 1;
-		}break;
+//		return 1;
+//		}break;
 
 	// システムコマンド。終了ボタンとか。
 	case WM_SYSCOMMAND:
@@ -1035,7 +1035,7 @@ void GreenPadWnd::UpdateWindowName()
 	SetText( name.c_str() );
 	// Try to show CP number in the StBar
 	if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000) {
-		TCHAR cpname[10];
+		static TCHAR cpname[10];
 		::wsprintf(cpname,TEXT("CP%d"), csi_ & 0xfffff);
 		stb_.SetCsText( cpname );
 	} else {
