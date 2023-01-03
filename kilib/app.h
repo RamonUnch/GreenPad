@@ -97,6 +97,9 @@ public:
 	static bool isOSVerLarger(DWORD ver, DWORD build);
 	static bool is9xOSVerLarger(DWORD ver, DWORD build);
 	static bool isNTOSVerLarger(DWORD ver, DWORD build);
+	static bool isOSVerEqual(DWORD ver, DWORD build);
+	static bool is9xOSVerEqual(DWORD ver, DWORD build);
+	static bool isNTOSVerEqual(DWORD ver, DWORD build);
 	static bool isWin95();
 	static bool isNT();
 	static bool isWin32s();

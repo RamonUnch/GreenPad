@@ -818,8 +818,12 @@ namespace
 		// CharNextExA is not here on NT3.1 and is a stub on NT3.5
 		// According to the MSDN DOC CharNextExA is available since NT4/95
 		// It seems that it works fine on NT3.51 build 1057
+		// It seems CharNextExA can crash
+		// so we exclude NT versions between 3.51.1057 and  and 4.00.1381
 		uNextFunc Window_CharNextExA = (uNextFunc)NULL ;
-		if( !App::isNT() || App::isNTOSVerLarger(351, 1057) )
+		if(!App::isNT()
+		||  App::isNTOSVerEqual( 351, 1057 )
+		||  App::isNTOSVerLarger( 400, 1381 ) )
 		{
 			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandleA("USER32.DLL"), "CharNextExA");
 			if (Window_CharNextExA)

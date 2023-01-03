@@ -210,6 +210,20 @@ DWORD App::getOSBuild()
 	return v.dwBuildNumber;
 }
 
+bool App::isOSVerEqual(DWORD ver, DWORD build)
+{
+	return getOSVer() == ver && getOSBuild() == build;
+}
+
+bool App::isNTOSVerEqual(DWORD ver, DWORD build)
+{
+	return isNT() && getOSVer() == ver && getOSBuild() == build;
+}
+bool App::is9xOSVerEqual(DWORD ver, DWORD build)
+{
+	return !isNT() && getOSVer() == ver && getOSBuild() == build;
+}
+
 bool App::isOSVerLarger(DWORD ver, DWORD build)
 {
 	return ( getOSVer() > ver || ( getOSVer() == ver && getOSBuild() >= build ) );
