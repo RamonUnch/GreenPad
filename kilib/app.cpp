@@ -53,13 +53,12 @@ HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsCont
 	return 666; // Fail with 666 error
 }
 
-#if defined(TARGET_VER)
+#if defined(TARGET_VER) && TARGET_VER <= 350
 typedef BOOL (WINAPI *GetVersionEx_funk)(LPOSVERSIONINFOA s_osVer);
 static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 {
 	// Try first to get the real GetVersionEx function
 	// We use the ANSI version because it does not matter.
-#if TARGET_VER > 300
 	GetVersionEx_funk func = (GetVersionEx_funk)
 		GetProcAddress(GetModuleHandleA("KERNEL32.DLL"), "GetVersionExA");
 	if (func && func( s_osVer ))
@@ -70,9 +69,12 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 		}
 		return TRUE;
 	}
-#endif
+
 	// Fallback in case the above failed (WinNT 3.1 / Win32s)
 	DWORD dwVersion = ::GetVersion();
+//	TCHAR buf[12];
+//	::wsprintf(buf, "%x", dwVersion);
+//	MessageBox(NULL, buf, TEXT("Windows Version"), 0);
 
 	s_osVer->dwMajorVersion = (DWORD)(LOBYTE(LOWORD(dwVersion)));
 	s_osVer->dwMinorVersion = (DWORD)(HIBYTE(LOWORD(dwVersion)));
@@ -85,13 +87,24 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 
 	if (s_osVer->dwPlatformId != VER_PLATFORM_WIN32_NT)
 	{
-		if (s_osVer->dwMajorVersion == 3) s_osVer->dwPlatformId = VER_PLATFORM_WIN32s;
-		else s_osVer->dwPlatformId = VER_PLATFORM_WIN32_WINDOWS;
+		s_osVer->dwPlatformId = VER_PLATFORM_WIN32_WINDOWS;
+		#ifdef WIN32S
+		if (dwVersion == 0x80000a3f)
+		{ // Win32s beta build 61 (Makes no sense!)
+		  // It identifies as Windows 63.10...
+			s_osVer->dwMajorVersion = 3;
+			s_osVer->dwPlatformId = VER_PLATFORM_WIN32s;
+			s_osVer->dwBuildNumber = 61;
+			return TRUE;
+		}
+		if (s_osVer->dwMajorVersion == 3)
+			s_osVer->dwPlatformId = VER_PLATFORM_WIN32s;
+		#endif // WIN32S
 	}
 
 	return TRUE;
 }
-#else
+#else // TARGET_VER > 3.50
 	#define MyGetVersionEx GetVersionExA
 #endif
 
