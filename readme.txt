@@ -1,5 +1,5 @@
-=<> GreenPad ver 1.11
-=<> RamonUnch builds 2021/12/21
+=<> GreenPad ver 1.16
+=<> RamonUnch builds 2023/01/01
 
 <<What's This?>>
 
@@ -8,30 +8,191 @@
   It aims to be a handy Notepad replacement with minimal but
   complete features, not to be a rich, bloated monsterous
   editor. GreenPad supports:
-    * Unicode 2.0
+    * Unicode 14.0
     * Proportional Fonts
     * Syntax Highlighting
     * Searching with Regular Expressions
   while keeping the size of .exe very small (around 130KB!).
 
   Freeware, distributed under the NYSL licence.
-  The original source code is available at: http://www.kmonos.net/lib/gp.en.html
+  Original source code is available at: http://www.kmonos.net/lib/gp.en.html
   New source here: https://github.com/RamonUnch/GreenPad
-  Supported windows versions: NT3.x/NT4/9x/ME/2000/XP/Vista/7/8.x/10/11
+  Supported windows versions: Win32s/NT3x/NT4/9x/ME/2000/XP/Vista/7/8.x/10/11
+
+<<System Requirements>>
+ < HARDWARE >
+   i386 cpu or compatible and at least a couple of MB of free RAM.
+   Tested with Win3.11fw + Win32s-1.30c with 3MB of ram. Performances
+   are not great on an i386 even clocked at 33MHz and an i486 or faster
+   is recomended. GreenPad will not benefit from a x87 FPU.
+ < OS >
+   You can run Green pad on Win32s from version 1.1. If you want the
+   statusbar on Win32s 1.25 you can try to copy COMCTL32.DLL version
+   3.50.807.1 from Win32s 1.25.127 Also GreenPad Should run on
+   Windows NT3.1.404 at least.
+
+<<To Do List>>
+  * Build for all possible CPUs: MIPS, PowerPC, Alpha, ARM, ARM64.
+    roytam1 already made a MIPS compatible build.
+  * Handle WS_EX_LAYOUTRTL for left to right scripts such as Hebrew.
+  * Handle more complete regular expression and especially capture groups
+    for proper find replace.
+  * Handle binary files properly: We will need to flag each line with the
+    carriage return type CRLF, LF or CR.
+  * Handle per-monitor dpi awareness. This will require to reload the
+    Painter each time we receive the WM_DPICHANGED message this will also
+    forbid the use of the CS_OWNDC class style and we will have to select
+    the font every time we receive a WM_PAINT message.
+  * Improve syntactic coloration (highlight matching braces/parenthesis)
+  * Add the ability to go to matching brace with Ctrl+B or something.
+  * Handle Dark mode in the non-client area for Windows 10 1607 and later.
+  * Allow a Square selection mode for ASCII-Art or column handling.
+  * Improve printer configuration.
+  * Fix more bugs, handle low memory situations better.
+  * Optimize memory usage so that larger files can be loaded.
+
+<<What's New in 1.17 (by RamonUnch, 2023/XX/XX)>>
+ < FIXED >
+  * Now window can be resized on Win32s 1.15a
+  * Now GreenPad run on Win32s 1.1 (1993) there are still some drawing issues
+    when scrolling less than a fullpage.
+  * Fixed Visual glitches with Windows 95 beta (chicago) thanks to roytam1
+  * Elevation dialog for write permission will not pop up on network drives
+    nor CD-ROM drives (Windows 2000 + only)
+
+<<What's New in 1.16 (by RamonUnch, 2023/01/01)>>
+ < NEW >
+  * Wrapping now occurs at word boundaries this helps readability.
+    set ws=1/0 in the layout file to enable/disable. Character that can
+    split include all control characters and all characters beyond U+2500
+  * Now control characters will be displayed as colored ASCII characters
+    if the display for ideographic spaces is enabled (U+3000).
+    This is helpful when looking up at binary files.
+  * Win32s build now will display full Unicode if it runs on Win9x/NT.
+  * Win32s build now support different key-maps on Win9x/NT
+  * Add support for UAC, now if a file cannot be opened by the current user
+    GreenPad will prompt the user with the UAC pannel.
+    Also the Open elevated (Ctrl+L) option was added to the file menu.
+    Note: Elevating a process requires a new instance.
+
+ < FIXED >
+  * Fixed crash on Ctrl+N on Win9x using unicows build.
+  * Fixed 64bit build.
+  * more 64bit index are now used on 64 bit builds.
+  * Fixed Win32s build not starting on real Win32s.
+  * Fixed: scroll range on Win32s is limited to 32k not 65k like NT.
+    Now you will be able to scroll up to 8.3 million lines on Win32s.
+  * Removed unused functions decreasing exe size slightly.
+  * Now when copying a selection, nul chars will be converted to spaces
+    so that the selection ca be fully pasted.
+  * Fixed: if CP1252 is not installed, ISO8859-1 will be used instead.
+  * IMM32.DLL and Global IME are now enabled even on Win32s build.
+  * Fixed: hidden/system files will now be editable.
+  * Fixed: Status bar window will only be created if it is enabled.
+  * Fixed: Now COMCTL32.DLL will be dynamically loaded so that GreenPad
+    can work on old versions of Win32s. Status bar will not work if you
+    do not have COMCTL32.DLL.
+
+<<What's New in 1.15 (by RamonUnch, 2022/10/21)>>
+ < NEW >
+  * Now Non-Break Space will be shown with ^ (NBSP character U+00A0 ' ')
+    only if you enable the option to show U+3000 (ideographic space).
+  * Now the original memory manager is used, this reduces RAM usages and
+    improves performances, adds 2KB to the exe though...
+  * Now Ctrl+Backspace and Ctrl+Del will delete up to the beginning/end of
+    the word like with the standard edit control.
+  * Ctrl+U/Ctrl+K will delete all characters until the beginning/end of a line.
+  * Now the horizontal wheel is supported to scroll horizontally.
+
+ < FIXED >
+  * The Manifest file no longer claims per-monitor DPI-awareness.
+  * Now the selection will remain active when user presses the Replace &All
+    option in the Find/Replace dialog.
+  * Now Latin words will no longer be split when using extended alphabet
+    ie: the word éléphant can be selected as a single word instead of 3.
+  * Avoid synchronous painting when scrolling.
+  * Scroll wheel with small steps are now properly supported.
+  * The number of lines to scroll per wheel step now takes into in account
+    the system settings instead of being always 3 lines.
+  * Now on newer windows versions the a more accurate width will be
+    calculated whenever a character is outside the Unicode ranges of the
+    selected font thanks to the GetFontUnicodeRanges() function.
+  * Scroll bar will no longer be limited to 65K lines on NT3.1/3.5/Win32s.
+    The same API is still used but scrolling precision is lost instead
+    or the range. The new limit is about 8.9 million lines.
+  * Case-insensitive Search will no longer be limited to ASCII.
+  * Upper/Lower/Invert case functions will now work on Win32s.
+
+<<What's New in 1.14 (by RamonUnch, 2022/04/28)>>
+
+ < NEW >
+  * Now a Win32s build is available. It does not support Unicode display
+    but internally everything is stored in UTF-16. So if you open, edit
+    and close an Unicode file, you will not "loose" data. Also it handles
+    Unicode copy/paste on NT but display is still limited to ANSI.
+    I recommend the Win32s version Only if you are still using Win32s.
+  * Some error messages boxes will no longer become invisible if you set
+    the main GreenPad window topmost ie: Using AltSnap.
+  * Now if some files were copied in the clipboard with explorer, the full
+    file paths will be pasted in GreenPad on Ctrl+V.
+
+ < CHANGED >
+  * Changed Unquote option to Alt+N instead of Alt+Shift+Q that tends to
+    change keyboard layout when you miss the Q.
+  * Now the Global IME is no longer disabled on Windows 95, it was supposedly
+    buggy, but it seems to work just fine... You need to First Install
+    Internet Explorer 5.1+ for global IME to be installable.
+
+< FIXED >
+  * LTN1 (code page 1252) will no longer be treated internally, this removes
+    redundant code and allows proper display of special chars such as 'œ'.
+    because the internal handling was not correct.
+  * Fixed: Use GetClassInfo() function to determine how to enable status bar
+    instead of relying on windows versions.
+  * Fixed: When a file contains long lines, GreenPad will no longer freeze.
+    Loading can still be slow if you get lines that are more than 1MB.
+  * Fixed: Character width is calculated using GetTextExtentPointA function
+    on Win32s for character beyond 256, so that the width of all printable
+    characters is correctly set.
+  * Fixed: Win32s Out of bound array access in the drawing code.
+  * Fixed: Now when typing with Greek or Russian keyboards the characters
+    will display properly on Win9x
+  * Fixed: Now Copy/Paste will handle full Unicode on Win9x.
+
+<<What's New in 1.13 (by RamonUnch, 2022/02/15)>>
+
+  * Replace All is now limited to the current selection (if multi-line).
+  * Added Strip First Cahracters (Alt+Z) option, that removes the first
+    characted of each line in the selection (inspired from Metapad).
+  * Added Quote/Unquote options to add/remove the line commenting
+    character(s) to all selected lines. The default commenting char is
+    set to '>' for files that have no .kwd associated (ie: *.txt).
+    It will be atomatically '//' for C++, ';' for asm etc.
+  * You can now select codepage by number directly in the ReOpen dialog.
+    It uses the same special codes than from the command line.
+
+<<What's New in 1.12 (by RamonUnch, 2022/01/05)>>
+
+  * Fixed huge crash, regression in 1.11 when disabling word wrapping.
+  * Fixed crash caused by MRU on some saved paths (1.10 regression).
+  * Improved unicode support (thanks to @rotyam1)
+  * Added a bunch of codepage to the list (rotyam1)
+  * Include latest revision of chardet.dll (rotyam1)
+  * Statusbar should work on build 711 of NT3.5 (rotyam1)
 
 <<What's New in 1.11 (by RamonUnch, 2021/12/21)>>
 
-Christmast release!
+Christmas release!
 
 Well now it is much better, you even got the statusbar on NT3.1, you no longer
 need to upgrade your comctl32 on Win95 and now IMM32 is dynamically imported
 at runtime. This means that the NT3.1 build is now the ULTIMATE BUILD.
 It runs on all windows version and does not sacrifice any features on newer
-windows. The only reason there are two builds is for aestetic reasons and
-for the partial japaneese support possible on NT3.50+
+windows. The only reason there are two builds is for aesthetic reasons and
+for the partial Japanese support possible on NT3.50+
 
   * If available the IMM32.DLL will be loaded (advanced text services/IME).
-  * Thanks to @roytam1, it is now possible to have the statusbar on 
+  * Thanks to @roytam1, it is now possible to have the statusbar on
     Windows NT3.1, also the "no text display bug" on windows 95 is fixed.
   * Added the /LARGEADDRESSAWARE linker flag to permit up to 4GB ram usage
     when running GreenPad under 64bit edition of Windows.
@@ -39,14 +200,14 @@ for the partial japaneese support possible on NT3.50+
   * Smart indentation supported: keeps indentation level on Return.
   * Added Tab/Shift+Tab to indent/un-indent a multi-line selection.
   * Fix mingw64 builds and provide x64 builds of GreenPad.
-  * Fix IID_IMultiLanguage2 definition for encoding autodetection.
+  * Fix IID_IMultiLanguage2 definition for encoding auto-detection.
     You no longer need chardet.dll on newer Windows versions.
 
 TODO:
   * Add UAC support for Windows Vista/7/8.X/10/11
   * Find/Replace only in the selection (if any).
   * Improve printer configuration.
-  * Fix more bugs, handle low memorry situations beter
+  * Fix more bugs, handle low memory situations better
   * Ensure size_t is used over uint where applicable for x64 builds.
   * Optimize memory usage so that larger files can be loaded.
 
@@ -212,6 +373,7 @@ TODO:
       sc=11000  (Show special chars 0|1 for: [EOF],\n,\t,space,fw-space)
       wp=WraP type (-1: no wrap 0: right edge 1: ww chars )
       ww=Wrap Width
+      ws=Wrap Smart (1: wrap at word boundaries, 0: character)
       ln=show LineNo.
       =========================================================
     Year, editing manually, is very inconvinient.
