@@ -104,9 +104,6 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 {
 	switch( msg )
 	{
-	case WM_ERASEBKGND: {
-		return 1;
-		}break;
 
 	case WM_PAINT:{
 		PAINTSTRUCT ps;
@@ -387,20 +384,24 @@ inline void Painter::StringOut
 		if(!len) return;
 		// 1st try to convert to ANSI with a small stack buffer...
 		dwNum = ::WideCharToMultiByte( CP_ACP,0, str,len, psText, countof(psTXT1K), NULL,NULL );
-		if( !dwNum  && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER )
-		{	// If the small buffer failed, then properly allocate buffer.
-			// This happens verty rarely because token length is typically
-			// a single word, hence less than 128chars.
-			dwNum = ::WideCharToMultiByte(CP_ACP,0, str,len, NULL,0, NULL,NULL);
-			if (dwNum)
-			{
-				psText = new char[dwNum]; if( !psText ) return;
-				dwNum = ::WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
+		if( !dwNum )
+		{
+			if (::GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+			{	// If the small buffer failed, then properly allocate buffer.
+				// This happens verty rarely because token length is typically
+				// a single word, hence less than 128chars.
+				dwNum = ::WideCharToMultiByte(CP_ACP,0, str,len, NULL,0, NULL,NULL);
+				if (dwNum)
+				{
+					psText = new char[dwNum]; if( !psText ) return;
+					dwNum = ::WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
+				}
 			}
-			else
-			{
-				return;
-			}
+			// Last fallback: truncate each widechar to a byte.
+			// Needed for Win32s beta 61.
+			dwNum = Min( len, (int)countof(psTXT1K) );
+			for( DWORD i=0; i<dwNum; i++)
+				psText[i] = (char)str[i];
 		}
 		BOOL ret = ::TextOutA( dc_, x, y, psText, dwNum );
 		#ifdef USE_ORIGINAL_MEMMAN
