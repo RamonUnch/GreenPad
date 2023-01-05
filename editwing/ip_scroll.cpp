@@ -500,8 +500,14 @@ void ViewImpl::ScrollView( int dx, int dy, bool update )
 		{
 			// 再描画の不要な領域をスクロール
 			// Scroll through areas that do not need redrawing
+			#ifdef WIN32S
+			// On Win32s 1.1 ScrollWindowEx does not work!
+			// In our case ScrollWindow() is perfectly fine.
+			::ScrollWindow( hwnd_, dx, dy, NULL, clip);
+			#else
 			::ScrollWindowEx( hwnd_, dx, dy, NULL,
 					clip, NULL, NULL, SW_INVALIDATE );
+			#endif
 
 			// 即時再描画？, Immediate redraw?
 			if( update )
