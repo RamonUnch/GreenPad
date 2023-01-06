@@ -52,7 +52,7 @@ public:
 			: str_(t.str_), mem_(t.mem_) { t.str_=NULL; }
 		~Text()
 			{
-				if( str_ != NULL ) 
+				if( str_ != NULL )
 				{
 					if( mem_==NEW ) delete [] str_;
 					else      GlobalUnlock( str_ );
@@ -134,10 +134,11 @@ private:
 //-------------------------------------------------------------------------
 
 inline Mutex::Mutex( const TCHAR* name )
-	: mtx_( ::CreateMutex( NULL, TRUE, name ) ) 
+	: mtx_( ::CreateMutex( NULL, TRUE, name ) )
 	{
-//		if (mtx_ && ::GetLastError() == ERROR_ALREADY_EXISTS)
-//			::WaitForSingleObject(mtx_, 1000);
+		// Wait for Mutex ownership, in case it was already created.
+		if( mtx_ && ::GetLastError() == ERROR_ALREADY_EXISTS )
+			::WaitForSingleObject(mtx_, 10000); // 10 sec max.
 	}
 
 inline Mutex::~Mutex()
