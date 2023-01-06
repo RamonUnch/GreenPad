@@ -330,7 +330,7 @@ class KeywordMap
 	Keyword*          backet_[HTABLE_SIZE];
 	storage<Keyword*> dustbox_;
 	bool (*compare_)(const unicode*,const unicode*,ulong);
-	int  (*hash)( const unicode* a, ulong al );
+	uint  (*hash)( const unicode* a, ulong al );
 public:
 
 	KeywordMap( bool bCaseSensitive )
@@ -373,24 +373,25 @@ public:
 		dustbox_.Add(x);
 	}
 
-	ulong isKeyword( const unicode* str, ulong len )
+	uchar inline isKeyword( const unicode* str, ulong len )
 	{
 		// 登録されているキーワードと一致するか？
-		for( Keyword* p=backet_[hash(str,len)]; p!=NULL; p=p->next )
-			if( p->len==len && compare_( p->str, str, len ) )
-				return 2;
+		if( dustbox_.size() ) // Nothing to do for empty keyword list.
+			for( Keyword* p=backet_[hash(str,len)]; p!=NULL; p=p->next )
+				if( p->len==len && compare_( p->str, str, len ) )
+					return 2; // We must set the c bit of aaabbbcd
 		return 0;
 	}
 
 private:
 
-	static int hash_i( const unicode* a, ulong al )
+	static uint hash_i( const unicode* a, ulong al )
 	{
 		// 12bitに潰すめっちゃ雑なハッシュ関数
 		// ルーチン分けるの面倒なので、大文字小文字は常に区別されない。(^^;
 		// Very messy hash function that collapses to 12 bits.
 		// case-insensitive.
-		int h=0,i=0;
+		uint h=0,i=0;
 		while( al-- )
 		{
 			h ^= ((*(a++)&0xdf)<<i);
@@ -399,13 +400,13 @@ private:
 		return h&(HTABLE_SIZE-1);
 	}
 
-	static int hash_s( const unicode* a, ulong al )
+	static uint hash_s( const unicode* a, ulong al )
 	{
 		// case-sensitive
-		int h=0,i=0;
+		uint h=0,i=0;
 		while( al-- )
 		{
-			h ^= ((*(a++)&0x7f)<<i);
+			h ^= (*a++)<<i;
 			i = (i+5)&7;
 		}
 		return h&(HTABLE_SIZE-1);
