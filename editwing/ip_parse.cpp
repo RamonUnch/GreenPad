@@ -362,7 +362,7 @@ public:
 		else
 		{
 			// ƒ`ƒFƒCƒ“––”ö‚ÉŒq‚®ê‡, chain to the existing element
-			MessageBoxW(NULL, backet_[h]->str, x->str , MB_OK);
+			//MessageBoxW(NULL, backet_[h]->str, x->str , MB_OK);
 			Keyword *q=backet_[h],*p=backet_[h]->next;
 			while( p!=NULL )
 				q=p, p=p->next;
