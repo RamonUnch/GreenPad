@@ -777,7 +777,8 @@ void GreenPadWnd::on_datetime()
 		if( MyGetDateFormatA )
 			MyGetDateFormatA( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
 
-		edit_.getCursor().Input( tmp, my_lstrlenA(tmp) );
+		if( tmp[0] ) // Not empty sucess!
+			edit_.getCursor().Input( tmp, my_lstrlenA(tmp) );
 		if( sfmt ) g.FreeCMem(sfmt);
 		return;
 	}
@@ -795,7 +796,8 @@ void GreenPadWnd::on_datetime()
 		if( MyGetDateFormatW )
 			MyGetDateFormatW( LOCALE_USER_DEFAULT, 0, NULL, buf, tmp,countof(tmp));
 
-		edit_.getCursor().Input( tmp, my_lstrlenW(tmp) );
+		if( tmp[0] ) // Not empty sucess!
+			edit_.getCursor().Input( tmp, my_lstrlenW(tmp) );
 		if(wfmt) g.FreeWCMem(wfmt);
 		return;
 	}
@@ -1091,7 +1093,10 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 	// キーワードファイル, keyword file
 	Path kwd = cfg_.kwdFile();
 	FileR fp;
-	if( kwd.len()!=0 && fp.Open(kwd.c_str()) )
+	bool validkwdfile =  kwd.len() > 0 // positive len and not a dir
+	                  && kwd.c_str()[kwd.len()-1] != TEXT('\\')
+	                  && kwd.c_str()[kwd.len()-1] != TEXT('/');
+	if( validkwdfile && fp.Open(kwd.c_str()) )
 		edit_.getDoc().SetKeyword((const unicode*)fp.base(),fp.size()/2);
 	else
 		edit_.getDoc().SetKeyword(NULL,0);
