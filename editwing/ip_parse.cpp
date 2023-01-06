@@ -170,18 +170,17 @@ const int CommentDFA::tr_table[5][5] = {
 // 単純な、キーワード格納構造体。
 // ChainHashの要素にするためnextポインタがつけてあります。
 //-------------------------------------------------------------------------
-
 struct Keyword : public Object
 {
-	unicode*    str;
+	unicode     *str;
 	const ulong len;
-	Keyword*   next;
+	Keyword*    next;
 
 	Keyword( const unicode* s, ulong l )
 		: str( new unicode[l+1] )
 		, len( l )
 		, next( NULL )
-		{ memmove( str, s, l*sizeof(unicode) ); }
+		{ memmove( str, s, l*sizeof(unicode) ); str[l] = L'\0'; }
 
 	~Keyword()
 		{ delete [] str; }
@@ -193,9 +192,9 @@ struct Keyword : public Object
 // サポート関数。Unicodeテキスト同士の比較
 //-------------------------------------------------------------------------
 
-static bool compare_s(const unicode* a,const unicode* b,ulong l)
+static bool compare_s(const unicode* a,const unicode* b, ulong l)
 {
-	// 大文字小文字を区別
+	// 大文字小文字を区別, Case sensitive
 	while( l-- )
 		if( *a++ != *b++ )
 			return false;
@@ -204,7 +203,7 @@ static bool compare_s(const unicode* a,const unicode* b,ulong l)
 
 static bool compare_i(const unicode* a,const unicode* b,ulong l)
 {
-	// 大文字小文字を区別しない（雑）
+	// 大文字小文字を区別しない（雑）, Case insensitive (misc)
 	while( l-- )
 		if( ((*a++) ^ (*b++)) & 0xdf )
 			return false;
@@ -324,17 +323,19 @@ public:
 // 与えられた文字列がキーワードかどうか高速判定するためのハッシュ表
 // Hash table for fast determination of whether a given string is a keyword
 //-------------------------------------------------------------------------
-
+// Should be a power of two!
+#define HTABLE_SIZE 4096
 class KeywordMap
 {
-	Keyword*          backet_[4096];
+	Keyword*          backet_[HTABLE_SIZE];
 	storage<Keyword*> dustbox_;
 	bool (*compare_)(const unicode*,const unicode*,ulong);
-
+	int  (*hash)( const unicode* a, ulong al );
 public:
 
 	KeywordMap( bool bCaseSensitive )
 		: compare_( bCaseSensitive ? compare_s : compare_i )
+		, hash    ( bCaseSensitive ? hash_s : hash_i )
 	{
 		// ハッシュ表初期化
 		mem00( backet_, sizeof(backet_) );
@@ -355,12 +356,13 @@ public:
 
 		if( backet_[h] == NULL )
 		{
-			// ハッシュテーブルが空の場合
+			// ハッシュテーブルが空の場合, Hash tambe slot is free.
 			backet_[h] = x;
 		}
 		else
 		{
-			// チェイン末尾に繋ぐ場合
+			// チェイン末尾に繋ぐ場合, chain to the existing element
+			MessageBoxW(NULL, backet_[h]->str, x->str , MB_OK);
 			Keyword *q=backet_[h],*p=backet_[h]->next;
 			while( p!=NULL )
 				q=p, p=p->next;
@@ -382,17 +384,31 @@ public:
 
 private:
 
-	static int hash( const unicode* a, ulong al )
+	static int hash_i( const unicode* a, ulong al )
 	{
 		// 12bitに潰すめっちゃ雑なハッシュ関数
 		// ルーチン分けるの面倒なので、大文字小文字は常に区別されない。(^^;
+		// Very messy hash function that collapses to 12 bits.
+		// case-insensitive.
 		int h=0,i=0;
 		while( al-- )
 		{
 			h ^= ((*(a++)&0xdf)<<i);
 			i = (i+5)&7;
 		}
-		return h&4095;
+		return h&(HTABLE_SIZE-1);
+	}
+
+	static int hash_s( const unicode* a, ulong al )
+	{
+		// case-sensitive
+		int h=0,i=0;
+		while( al-- )
+		{
+			h ^= ((*(a++)&0x7f)<<i);
+			i = (i+5)&7;
+		}
+		return h&(HTABLE_SIZE-1);
 	}
 };
 
