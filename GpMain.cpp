@@ -1093,10 +1093,7 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 	// キーワードファイル, keyword file
 	Path kwd = cfg_.kwdFile();
 	FileR fp;
-	bool validkwdfile =  kwd.len() > 0 // positive len and not a dir
-	                  && kwd.c_str()[kwd.len()-1] != TEXT('\\')
-	                  && kwd.c_str()[kwd.len()-1] != TEXT('/');
-	if( validkwdfile && fp.Open(kwd.c_str()) )
+	if( kwd.len()!=0 && kwd.isFile() && fp.Open(kwd.c_str()) )
 		edit_.getDoc().SetKeyword((const unicode*)fp.base(),fp.size()/2);
 	else
 		edit_.getDoc().SetKeyword(NULL,0);
@@ -1155,7 +1152,7 @@ bool GreenPadWnd::Open( const ki::Path& fn, int cs, bool always )
 		return true;
 	}
 }
-BOOL CALLBACK GreenPadWnd::SendMsgToFriendsProc(HWND hwnd, LPARAM lPmsg)
+BOOL CALLBACK GreenPadWnd::PostMsgToFriendsProc(HWND hwnd, LPARAM lPmsg)
 {
 	TCHAR classn[256];
 	if(::IsWindow(hwnd))
@@ -1166,9 +1163,9 @@ BOOL CALLBACK GreenPadWnd::SendMsgToFriendsProc(HWND hwnd, LPARAM lPmsg)
 	}
 	return TRUE; // Next hwnd
 }
-BOOL GreenPadWnd::SendMsgToAllFriends(UINT msg)
+BOOL GreenPadWnd::PostMsgToAllFriends(UINT msg)
 {
-	return EnumWindows(SendMsgToFriendsProc, (LPARAM)msg);
+	return EnumWindows(PostMsgToFriendsProc, (LPARAM)msg);
 }
 bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, bool always )
 {
@@ -1305,7 +1302,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 
 	// [最近使ったファイル]へ追加
 	if( cfg_.AddMRU( filename_ ) )
-		SendMsgToAllFriends(GPM_MRUCHANGED);
+		PostMsgToAllFriends(GPM_MRUCHANGED);
 
 	return true;
 }
@@ -1393,7 +1390,7 @@ bool GreenPadWnd::Save()
 		UpdateWindowName();
 		// [最近使ったファイル]更新
 		if( cfg_.AddMRU( filename_ ) )
-			SendMsgToAllFriends(GPM_MRUCHANGED);
+			PostMsgToAllFriends(GPM_MRUCHANGED);
 		return true;
 	}
 
