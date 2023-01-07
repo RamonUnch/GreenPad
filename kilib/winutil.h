@@ -121,9 +121,11 @@ class Mutex : public Object
 public:
 	Mutex( const TCHAR* name );
 	~Mutex();
+	bool isLocked() const;
 
 private:
 	const HANDLE mtx_;
+	bool locked_;
 
 private:
 	NOCOPY(Mutex);
@@ -135,14 +137,30 @@ private:
 
 inline Mutex::Mutex( const TCHAR* name )
 	: mtx_( ::CreateMutex( NULL, TRUE, name ) )
+	, locked_ (false)
 	{
-		// Wait for Mutex ownership, in case it was already created.
-		if( mtx_ && ::GetLastError() == ERROR_ALREADY_EXISTS )
-			::WaitForSingleObject(mtx_, 10000); // 10 sec max.
+		if( mtx_ )
+		{
+			// Wait for Mutex ownership, in case it was already created.
+			if( ::GetLastError() == ERROR_ALREADY_EXISTS )
+				// Wait 10 second for ownership of fail.
+				locked_ = WAIT_OBJECT_0 == ::WaitForSingleObject(mtx_, 1000);
+			else
+				locked_ = true; // The mutex is ours.
+		}	
 	}
 
+inline bool Mutex::isLocked() const
+	{ return locked_; }
+
 inline Mutex::~Mutex()
-	{ if( mtx_ != NULL ) ::ReleaseMutex( mtx_ ), ::CloseHandle( mtx_ ); }
+	{
+		if( mtx_ != NULL )
+		{
+			if( locked_ ) ::ReleaseMutex( mtx_ );
+			::CloseHandle( mtx_ );
+		}
+	}
 
 
 
