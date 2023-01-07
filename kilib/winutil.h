@@ -139,18 +139,21 @@ inline Mutex::Mutex( const TCHAR* name )
 	: mtx_( ::CreateMutex( NULL, TRUE, name ) )
 	, locked_ (false)
 	{
+		DWORD err = ::GetLastError();
 		if( mtx_ )
 		{
 			// Wait for Mutex ownership, in case it was already created.
-			if( ::GetLastError() == ERROR_ALREADY_EXISTS )
+			if( err == ERROR_ALREADY_EXISTS )
 				// Wait 10 second for ownership of fail.
-				locked_ = WAIT_OBJECT_0 == ::WaitForSingleObject(mtx_, 1000);
+				locked_ = WAIT_OBJECT_0 == ::WaitForSingleObject(mtx_, 10000);
 			else
 				locked_ = true; // The mutex is ours.
 		}
-		else
-		{	// In case mutex creation failed, we prented everithing went file
-			// This is required for Win32s 1.1 (at least)
+		else if (err == ERROR_CALL_NOT_IMPLEMENTED)
+		{	// In case Mutex are not implemented
+			// This is required for Win32s 1.1.
+			// On Win32s 1.15a CreateMutexA is smartly implemented as
+			// mov eax, 1; retn Ch;
 			locked_ = true;
 		}
 	}
