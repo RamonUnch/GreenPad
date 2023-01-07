@@ -147,7 +147,12 @@ inline Mutex::Mutex( const TCHAR* name )
 				locked_ = WAIT_OBJECT_0 == ::WaitForSingleObject(mtx_, 1000);
 			else
 				locked_ = true; // The mutex is ours.
-		}	
+		}
+		else
+		{	// In case mutex creation failed, we prented everithing went file
+			// This is required for Win32s 1.1 (at least)
+			locked_ = true;
+		}
 	}
 
 inline bool Mutex::isLocked() const
