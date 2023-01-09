@@ -180,9 +180,7 @@ String Path::CompactIfPossible( unsigned Mx )
 		my_lstrcpy(buf+remaining, fn); // copy fn to the end of buf
 	else // remaining < 4
 		my_lstrcpyn( buf+6, fn-remaining+6, Mx-6 ); // copy end fn to the end of buf
-	String s;
-	s.SetInt(my_lstrlen(buf));
-	LOGGER( s.c_str() );
+
 	buf[Mx] = '\0'; // In case
 	String ans = buf;
 
