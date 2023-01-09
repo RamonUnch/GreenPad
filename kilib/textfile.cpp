@@ -1680,7 +1680,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 
 // functions for detecting BOM-less UTF-16/32
 bool TextFileR::IsNonUnicodeRange(qbyte u)
-{ // Unicode 14.0 based
+{ // Unicode 14.0 based, Updated to Unicode 15.0
 	return
 		//	U+0000..U+007F	Basic Latin
 		//	U+0080..U+00FF	Latin-1 Supplement
@@ -1901,7 +1901,8 @@ bool TextFileR::IsNonUnicodeRange(qbyte u)
 		(0x010D40 <= u && u < 0x010E60) ||
 		//	U+10E60..U+10E7F	Rumi Numeral Symbols
 		//	U+10E80..U+10EBF	Yezidi
-		(0x010EC0 <= u && u < 0x010F00) ||
+		//	U+10EC0..U+10EFF	Arabic Extended-C (Uni 15.0)
+		(0x010F00 <= u && u < 0x010F00) ||
 		//	U+10F00..U+10F2F	Old Sogdian
 		//	U+10F30..U+10F6F	Sogdian
 		//	U+10F70..U+10FAF	Old Uyghur
@@ -1940,7 +1941,8 @@ bool TextFileR::IsNonUnicodeRange(qbyte u)
 		//	U+11A50..U+11AAF	Soyombo
 		//	U+11AB0..U+11ABF	Unified Canadian Aboriginal Syllabics Extended-A
 		//	U+11AC0..U+11AFF	Pau Cin Hau
-		(0x011B00 <= u && u < 0x011C00) ||
+		//	U+11B00..U+11B5F	Devanagari Extended-A (Uni 15.0)
+		(0x011B60 <= u && u < 0x011C00) ||
 		//	U+11C00..U+11C6F	Bhaiksuki
 		//	U+11C70..U+11CBF	Marchen
 		(0x011CC0 <= u && u < 0x011D00) ||
@@ -1948,7 +1950,8 @@ bool TextFileR::IsNonUnicodeRange(qbyte u)
 		//	U+11D60..U+11DAF	Gunjala Gondi
 		(0x011DB0 <= u && u < 0x011EE0) ||
 		//	U+11EE0..U+11EFF	Makasar
-		(0x011F00 <= u && u < 0x011FB0) ||
+		//	U+11F00..U+11F5F	Kawi (Uni 15.0)
+		(0x011F60 <= u && u < 0x011FB0) ||
 		//	U+11FB0..U+11FBF	Lisu Supplement
 		//	U+11FC0..U+11FFF	Tamil Supplement
 		//	U+12000..U+123FF	Cuneiform
@@ -1991,7 +1994,8 @@ bool TextFileR::IsNonUnicodeRange(qbyte u)
 		//	U+1D000..U+1D0FF	Byzantine Musical Symbols
 		//	U+1D100..U+1D1FF	Musical Symbols
 		//	U+1D200..U+1D24F	Ancient Greek Musical Notation
-		(0x01D250 <= u && u < 0x01D2E0) ||
+		(0x01D250 <= u && u < 0x01D2C0) ||
+		//	U+1D2C0..U+1D2DF	Kaktovik Numerals (Uni 15.0)
 		//	U+1D2E0..U+1D2FF	Mayan Numerals
 		//	U+1D300..U+1D35F	Tai Xuan Jing Symbols
 		//	U+1D360..U+1D37F	Counting Rod Numerals
@@ -2001,12 +2005,15 @@ bool TextFileR::IsNonUnicodeRange(qbyte u)
 		(0x01DAB0 <= u && u < 0x01DF00) ||
 		//	U+1DF00..U+1DFFF	Latin Extended-G
 		//	U+1E000..U+1E02F	Glagolitic Supplement
-		(0x01E030 <= u && u < 0x01E100) ||
+		//	U+1E030..U+1E08F	Cyrillic Extended-D (Uni 15.0)
+		(0x01E090 <= u && u < 0x01E100) ||
 		//	U+1E100..U+1E14F	Nyiakeng Puachue Hmong
 		(0x01E150 <= u && u < 0x01E290) ||
 		//	U+1E290..U+1E2BF	Toto
 		//	U+1E2C0..U+1E2FF	Wancho
-		(0x01E300 <= u && u < 0x01E7E0) ||
+		(0x01E300 <= u && u < 0x01E4D0) ||
+		//	U+1E4D0..U+1E4FF	Nag Mundari (Uni 15.0)
+		(0x01E500 <= u && u < 0x01E7E0) ||
 		//	U+1E7E0..U+1E7FF	Ethiopic Extended-B
 		//	U+1E800..U+1E8DF	Mende Kikakui
 		(0x01E8E0 <= u && u < 0x01E900) ||
@@ -2044,7 +2051,8 @@ bool TextFileR::IsNonUnicodeRange(qbyte u)
 		//	U+2F800..U+2FA1F	CJK Compatibility Ideographs Supplement
 		(0x02FA20 <= u && u < 0x030000) ||
 		//	U+30000..U+3134F	CJK Unified Ideographs Extension G
-		(0x031350 <= u && u < 0x0E0000) ||
+		//	U+31350..U+323AF	CJK Unified Ideographs Extension H (Uni 15.0)
+		(0x0323B0 <= u && u < 0x0E0000) ||
 		//	U+E0000..U+E007F	Tags
 		(0x0E0080 <= u && u < 0x0E0100) ||
 		//	U+E0100..U+E01EF	Variation Selectors Supplement
