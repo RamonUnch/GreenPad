@@ -23,16 +23,6 @@ HRESULT MySHGetSpecialFolderLocation(HWND h, int i, LPITEMIDLIST *idl)
 	return 666;
 }
 #endif
-static const TCHAR *GetFNinPath(const TCHAR *p)
-{
-    int i=0;
-
-    while(p[++i] != '\0');
-    while(i >= 0 && p[i] != '\\' && p[i] != '/') i--;
-    i++;
-    i += (p[i] == '\\' || p[i] == '/');
-    return &p[i]; // first char of the filename
-}
 
 //=========================================================================
 
@@ -179,21 +169,23 @@ String Path::CompactIfPossible( unsigned Mx )
 	if(this->len() <= Mx)
 		return *this; // Nothing to do
 
-	TCHAR* buf = new TCHAR[Mx+2];
-	const TCHAR *fn = GetFNinPath(c_str())-1; // includes the '\'
+	TCHAR buf[256];
+	const TCHAR *fn = name();
 	int fnlen = my_lstrlen(fn);
 	int remaining = Mx - fnlen; // what remains
 	int premaining = Max(remaining-3, 3); // what w will use for the path.
 	my_lstrcpyn(buf, c_str(), premaining);
-	my_lstrcpyn(&buf[premaining], TEXT("..."), 3); // Add ... after the truncated path
-	if (remaining >= 3) {
-		my_lstrcpy(&buf[remaining], fn); // copy fn to the end of buf
-	} else { // remaining < 3
-		my_lstrcpyn(&buf[6], &fn[-remaining+6], Mx-6); // copy fn to the end of buf
-		buf[Mx] = '\0'; // In case
-	}
+	my_lstrcpyn( buf+premaining, TEXT("...\\"), 4); // Add ... after the truncated path
+	if (remaining >= 3)
+		my_lstrcpy(buf+remaining, fn); // copy fn to the end of buf
+	else // remaining < 4
+		my_lstrcpyn( buf+6, fn-remaining+6, Mx-6 ); // copy end fn to the end of buf
+	String s;
+	s.SetInt(my_lstrlen(buf));
+	LOGGER( s.c_str() );
+	buf[Mx] = '\0'; // In case
 	String ans = buf;
-	delete [] buf;
+
 	return ans;
 }
 
