@@ -1424,12 +1424,19 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 	// chardet works better when size > 64
 	if( siz <= 80 )
 	{
-		cs = app().isNewShell()? MLangAutoDetection( ptr, siz ): 0;
+		cs = MLangAutoDetection( ptr, siz );
 		if( cs ) return cs;
 	}
-	// chardet is the only auto detection method
+	// Chardet may be the only auto detection method
 	cs = chardetAutoDetection( ptr, siz );
 	if( cs ) return cs;
+
+	// Try Mlang for larger sizes if chardet failed.
+	if( siz > 80 )
+	{
+		cs = MLangAutoDetection( ptr, siz );
+		if( cs ) return cs;
+	}
 
 // last resort
 //-- 暫定版 UTF-8 / 日本語EUC チェック
@@ -1484,6 +1491,8 @@ const IID myIID_IMultiLanguage2 = {0xDCCFC164, 0x2B38, 0x11d2, {0xB7, 0xEC, 0x00
 int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 {
 	int cs = 0;
+	if ( !app().isNewShell() )
+		return 0;
 #ifndef NO_MLANG
 	app().InitModule( App::OLE );
 	IMultiLanguage2 *lang = NULL;
