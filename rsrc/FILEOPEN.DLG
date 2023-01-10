@@ -34,7 +34,11 @@ Revision History:
 #endif
 
 #ifdef _WIN32
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+	#if defined(TARGET_VER) && TARGET_VER <= 310
+	LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+	#else
+	LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+	#endif
 #pragma code_page(1252)
 #endif //_WIN32
 
