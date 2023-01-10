@@ -123,14 +123,16 @@ public:
 private:
 
 	ki::IniFile ini_;
-	bool        sharedConfigMode_;
 	CharSetList charSets_;
-	bool        inichanged_; // keep track of save to ini.
 
 	// ‘S‘Ì“I‚Èİ’è
 	int        undoLimit_;
 	ki::String txtFilter_;
 	ki::Path   grepExe_;
+
+	bool        sharedConfigMode_;
+	bool        inichanged_; // keep track of save to ini.
+
 	bool       openSame_;
 	bool       countbyunicode_;
 	bool       showStatusBar_;

@@ -145,19 +145,15 @@ private:
 		for( ulong ct=0; p!=e && ct!=curSel_; ++ct,++p );
 		if( p==e ) return;
 
-		TCHAR buf[256];
+		TCHAR buf[MAX_PATH];
 		SendMsgToItem(IDC_DT_PAT, WM_GETTEXT,
 			countof(buf),reinterpret_cast<LPARAM>(buf));
 		p->pattern = buf;
 
-		SendMsgToItem(IDC_PAT_KWD, CB_GETLBTEXT,
-			SendMsgToItem(IDC_PAT_KWD, CB_GETCURSEL),
-			reinterpret_cast<LPARAM>(buf) );
+		getComboBoxText(IDC_PAT_KWD, buf);
 		p->kwdfile = buf;
 
-		SendMsgToItem(IDC_PAT_LAY, CB_GETLBTEXT,
-			SendMsgToItem(IDC_PAT_LAY, CB_GETCURSEL),
-			reinterpret_cast<LPARAM>(buf) );
+		getComboBoxText(IDC_PAT_LAY, buf);
 		p->layfile = buf;
 	}
 	void SelDt(ulong i)
@@ -217,15 +213,13 @@ private:
 		if( IDOK == dlg.endcode() )
 		{
 			ConfigManager::DocType ndt;
-			TCHAR buf[200];
-			SendMsgToItem(IDC_PAT_KWD, CB_GETLBTEXT,
-				SendMsgToItem(IDC_PAT_KWD, CB_GETCURSEL),
-				reinterpret_cast<LPARAM>(buf) );
+			TCHAR buf[MAX_PATH];
+			getComboBoxText( IDC_PAT_KWD, buf );
 			ndt.kwdfile = buf;
-			SendMsgToItem(IDC_PAT_LAY, CB_GETLBTEXT,
-				SendMsgToItem(IDC_PAT_LAY, CB_GETCURSEL),
-				reinterpret_cast<LPARAM>(buf) );
+
+			getComboBoxText( IDC_PAT_LAY, buf );
 			ndt.layfile = buf;
+
 			ndt.name = dlg.name;
 			ndt.pattern = TEXT(".*\\.")+dlg.ext+TEXT("$");
 			myDtl_.Add(ndt);
@@ -326,19 +320,24 @@ private:
 
 	// Gets the string from the currently selected item
 	// of the specified combobox idc and open it as a file
-	// inside .\type\ in a new GreenPad window.
-	void NewProcessFromDropList( UINT idc )
+	// buf MUST of length MAX_PATH
+	bool getComboBoxText( UINT idc, TCHAR buf[MAX_PATH] )
 	{
+		buf[0]=TEXT('\0');
 		int idx = SendMsgToItem(idc, CB_GETCURSEL);
 		int len = SendMsgToItem(idc, CB_GETLBTEXTLEN, idx);
 		if( 0 < len && len < MAX_PATH )
 		{
-			TCHAR buf[MAX_PATH];
-			buf[0]=TEXT('\0');
-			SendMsgToItem( idc, CB_GETLBTEXT, idx, reinterpret_cast<LPARAM>(buf) );
+			return 0 > SendMsgToItem( idc, CB_GETLBTEXT, idx, reinterpret_cast<LPARAM>(buf) );
+		}
+		return false;
+	}
+	void NewProcessFromDropList( UINT idc )
+	{
+		TCHAR buf[MAX_PATH];
+		if( getComboBoxText( idc, buf ) )
 			BootNewProcess( (TEXT("-c0 \"")+Path(Path::Exe)+
 				TEXT("type\\")+buf+TEXT("\"") ).c_str() );
-		}
 	}
 
 	bool on_command( UINT cmd, UINT id, HWND ctrl )
@@ -876,7 +875,8 @@ void ConfigManager::SaveIni()
 	ini_.PutBool( TEXT("CountUni"), countbyunicode_ );
 	ini_.PutBool( TEXT("StatusBar"), showStatusBar_ );
 
-	ini_.PutStr( TEXT("DateFormat"), dateFormat_.c_str() );
+	// Cannot be modified from the GUI
+	// ini_.PutStr( TEXT("DateFormat"), dateFormat_.c_str() );
 
 	// Wnd
 	ini_.PutBool( TEXT("RememberWindowSize"), rememberWindowSize_ );
