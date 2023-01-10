@@ -558,11 +558,17 @@ void Window::SetCenter( HWND hwnd, HWND rel )
 	else
 		::SystemParametersInfo( SPI_GETWORKAREA, 0, &pr, 0 );
 
+	long Xdiff = (pr.right-pr.left)-(rc.right-rc.left);
+	long Ydiff = (pr.bottom-pr.top)-(rc.bottom-rc.top);
 	// 中央を計算
-	::SetWindowPos( hwnd, 0,
-		pr.left + ( (pr.right-pr.left)-(rc.right-rc.left) )/2,
-		pr.top  + ( (pr.bottom-pr.top)-(rc.bottom-rc.top) )/2,
-		0, 0, SWP_NOSIZE|SWP_NOZORDER );
+	if( Xdiff >= 0 && Xdiff >= 0 )
+	{	// Only center if rc is smaller than pr
+		// Otherwise the window can move out of reach.
+		::SetWindowPos( hwnd, 0,
+			pr.left + Xdiff/2,
+			pr.top  + Ydiff/2,
+			0, 0, SWP_NOSIZE|SWP_NOZORDER );
+	}
 }
 
 void Window::SetFront( HWND hwnd )
@@ -671,6 +677,7 @@ LRESULT CALLBACK WndImpl::StartProc(
 	#endif
 	// サンク
 	pThis->SetUpThunk( wnd );
+	LOGGER("WndImpl::StartProc SetUpThunk( wnd ) OK");
 
 	// WM_CREATE用メッセージを呼ぶ
 	pThis->on_create( cs );
