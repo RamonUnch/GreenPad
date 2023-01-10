@@ -7,7 +7,7 @@
 #include "string.h"
 using namespace ki;
 
-
+#ifndef NO_OLE32
 typedef DWORD (WINAPI * Initialize_funk)(LPVOID r);
 static DWORD MyOleInitialize(LPVOID r)
 {
@@ -52,6 +52,7 @@ HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsCont
 	}
 	return 666; // Fail with 666 error
 }
+#endif // NO_OLE32
 
 #if defined(TARGET_VER) && TARGET_VER <= 350
 typedef BOOL (WINAPI *GetVersionEx_funk)(LPOSVERSIONINFOA s_osVer);
@@ -127,7 +128,7 @@ inline App::App()
 App::~App()
 {
 	// ロード済みモジュールがあれば閉じておく
-#if !defined(TARGET_VER) || (defined(TARGET_VER) && TARGET_VER>300)
+#ifndef NO_OLE32
 //	if( loadedModule_ & COM )
 //		::MyCoUninitialize();
 	if( loadedModule_ & OLE )
@@ -146,9 +147,10 @@ inline void App::SetExitCode( int code )
 
 void App::InitModule( imflag what )
 {
+#ifndef NO_OLE32
 	if (hOle32_ == (HINSTANCE)(-1) && what&(OLE|COM|OLEDLL))
 		hOle32_ = ::LoadLibrary(TEXT("OLE32.DLL"));
-
+#endif
 	// 初期化済みでなければ初期化する
 	bool ret = true;
 	if( !(loadedModule_ & what) )
@@ -173,7 +175,9 @@ void App::InitModule( imflag what )
 			//MessageBoxA(NULL, "CoInitialize", ret?"Sucess": "Failed", MB_OK);
 			//break;
 		case OLE:
+			#ifndef NO_OLE32
 			ret = S_OK == ::MyOleInitialize( NULL );
+			#endif
 			// MessageBoxA(NULL, "OleInitialize", ret?"Sucess": "Failed", MB_OK);
 			break;
 		default: break;
@@ -335,6 +339,7 @@ namespace ki
 						LOGGER( "StartUp ime ok" );
 						String::LibInit();
 						{
+							LOGGER( "StartUp strings ok" );
 							const int r = kmain();
 							myApp.SetExitCode( r );
 						}
