@@ -1491,9 +1491,9 @@ const IID myIID_IMultiLanguage2 = {0xDCCFC164, 0x2B38, 0x11d2, {0xB7, 0xEC, 0x00
 int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 {
 	int cs = 0;
+#ifndef NO_MLANG
 	if ( !app().isNewShell() )
 		return 0;
-#ifndef NO_MLANG
 	app().InitModule( App::OLE );
 	IMultiLanguage2 *lang = NULL;
 	HRESULT ret = ::MyCoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, myIID_IMultiLanguage2, (LPVOID*)&lang );
@@ -1597,15 +1597,14 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 #else
 # define CHARDET_DLL "chardet.dll"
 #endif
-	if( App::isWin32s() )
-	{	// On Win32s we must check if CHARDET.DLL exist before trying LoadLibrary()
-		// Otherwise we would get a system  message
-		Path ghardet_in_gp_dir = Path(Path::ExeName).BeDirOnly() + String(TEXT(CHARDET_DLL));
-		if( !ghardet_in_gp_dir.exist() )
-			return 0;
-	}
+	// On Win32s we must check if CHARDET.DLL exist before trying LoadLibrary()
+	// Otherwise we would get a system  message
+	Path chardet_in_gp_dir = Path(Path::ExeName).BeDirOnly() + String(TEXT(CHARDET_DLL));
+	if( !chardet_in_gp_dir.exist() )
+		return 0;
 
-	if((hIL = ::LoadLibrary( TEXT(CHARDET_DLL) )))
+	// Use LoadLibrary with full pathname (safer)
+	if((hIL = ::LoadLibrary( chardet_in_gp_dir.c_str() )))
 	{
 		chardet_create = (int(__cdecl*)(chardet_t*))::GetProcAddress(hIL, "chardet_create");
 		chardet_destroy = (void(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_destroy");
@@ -1624,8 +1623,8 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 
 	    if( 0 == chardet_create(&pdet) )
 		{
-			if(siz == 16384) siz-=1; // prevert off-by-one error
-			if(0 == chardet_handle_data(pdet, (const char *)ptr, siz))
+			if( siz == 16384 ) siz-=1; // prevert off-by-one error
+			if( 0 == chardet_handle_data(pdet, (const char *)ptr, siz) )
 			{
 				chardet_data_end(pdet);
 				chardet_get_charset(pdet, charset, 128);
