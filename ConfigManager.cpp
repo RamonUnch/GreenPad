@@ -324,6 +324,23 @@ private:
 		SetCenter( hwnd(), ::GetParent(hwnd()) );
 	}
 
+	// Gets the string from the currently selected item
+	// of the specified combobox idc and open it as a file
+	// inside .\type\ in a new GreenPad window.
+	void NewProcessFromDropList( UINT idc )
+	{
+		int idx = SendMsgToItem(idc, CB_GETCURSEL);
+		int len = SendMsgToItem(idc, CB_GETLBTEXTLEN, idx);
+		if( 0 < len && len < MAX_PATH )
+		{
+			TCHAR buf[MAX_PATH];
+			buf[0]=TEXT('\0');
+			SendMsgToItem( idc, CB_GETLBTEXT, idx, reinterpret_cast<LPARAM>(buf) );
+			BootNewProcess( (TEXT("-c0 \"")+Path(Path::Exe)+
+				TEXT("type\\")+buf+TEXT("\"") ).c_str() );
+		}
+	}
+
 	bool on_command( UINT cmd, UINT id, HWND ctrl )
 	{
 		switch( cmd )
@@ -333,23 +350,13 @@ private:
 			SelDt( (ulong)SendMsgToItem( IDC_DOCTYPELIST, LB_GETCURSEL ) );
 			break;
 		default:
-			TCHAR buf[256];
 			switch( id )
 			{
 			case IDC_EDITKWD:
-				SendMsgToItem(IDC_PAT_KWD, CB_GETLBTEXT,
-					SendMsgToItem(IDC_PAT_KWD, CB_GETCURSEL),
-					reinterpret_cast<LPARAM>(buf) );
-				if( buf[0] != TEXT('\0') )
-					BootNewProcess( (TEXT("-c0 \"")+Path(Path::Exe)+
-						TEXT("type\\")+buf+TEXT("\"") ).c_str());
+				NewProcessFromDropList(IDC_PAT_KWD);
 				break;
 			case IDC_EDITLAY:
-				SendMsgToItem(IDC_PAT_LAY, CB_GETLBTEXT,
-					SendMsgToItem(IDC_PAT_LAY, CB_GETCURSEL),
-					reinterpret_cast<LPARAM>(buf) );
-				BootNewProcess( (TEXT("-c0 \"")+Path(Path::Exe)+
-					TEXT("type\\")+buf+TEXT("\"") ).c_str());
+				NewProcessFromDropList(IDC_PAT_LAY);
 				break;
 			case IDC_NEWDOCTYPE:
 				on_newdoctype();
