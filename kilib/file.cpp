@@ -79,7 +79,7 @@ static HANDLE CreateFileUNC(
 	TCHAR *UNCPath = (TCHAR *)fname;
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
-	if( App::isNT() )
+	if( app().isNT() )
 	{
 		UNCPath = GetUNCPath(fname);
 		if( !UNCPath ) // Failed then fallback to non UNC
@@ -109,7 +109,7 @@ DWORD GetFileAttributesUNC(LPCTSTR fname)
 	TCHAR *UNCPath = (TCHAR *)fname;
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
-	if( App::isNT() )
+	if( app().isNT() )
 	{
 		UNCPath = GetUNCPath(fname);
 		if( !UNCPath ) // Failed then fallback to non UNC
@@ -152,7 +152,14 @@ bool FileR::Open( const TCHAR* fname, bool always)
 		FILE_ATTRIBUTE_NORMAL|FILE_FLAG_SEQUENTIAL_SCAN, NULL
 	);
 	if( handle_ == INVALID_HANDLE_VALUE )
+	{
+		#ifdef _DEBUG
+		TCHAR msg[300];
+		::wsprintf( msg, TEXT("CreateFile(%s) failed #%d"), fname, ::GetLastError() );
+		::MessageBox( NULL,msg,TEXT("Debug"),0 );
+		#endif
 		return false;
+	}
 
 	// ƒTƒCƒY‚ðŽæ“¾
 	size_ = ::GetFileSize( handle_, NULL );
@@ -169,6 +176,11 @@ bool FileR::Open( const TCHAR* fname, bool always)
 			handle_, NULL, PAGE_READONLY, 0, 0, NULL );
 		if( fmo_ == NULL )
 		{
+			#ifdef _DEBUG
+			TCHAR msg[300];
+			::wsprintf( msg, TEXT("CreateFileMapping(%s) failed #%d"), fname, ::GetLastError() );
+			::MessageBox( NULL,msg,TEXT("Debug"),0 );
+			#endif
 			::CloseHandle( handle_ );
 			handle_ = INVALID_HANDLE_VALUE;
 			return false;
@@ -178,7 +190,13 @@ bool FileR::Open( const TCHAR* fname, bool always)
 		basePtr_ = ::MapViewOfFile( fmo_, FILE_MAP_READ, 0, 0, 0 );
 		if( basePtr_ == NULL )
 		{
+			#ifdef _DEBUG
+			TCHAR msg[300];
+			::wsprintf( msg, TEXT("MapViewOfFile(%s) failed #%d"), fname, ::GetLastError() );
+			::MessageBox( NULL,msg,TEXT("Debug"),0 );
+			#endif
 			::CloseHandle( fmo_ );
+			fmo_ = NULL;
 			::CloseHandle( handle_ );
 			handle_ = INVALID_HANDLE_VALUE;
 			return false;
@@ -236,7 +254,7 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 	TCHAR *UNCPath = (TCHAR *)fname;
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
-	if( App::isNT() )
+	if( app().isNT() )
 		UNCPath = GetUNCPath(fname);
 	if( !UNCPath ) // Failed then fallback to non UNC
 		UNCPath = (TCHAR *)fname;

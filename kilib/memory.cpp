@@ -8,15 +8,20 @@ using namespace ki;
 
 #ifdef SUPERTINY
 
+	#ifndef USE_LOCALALLOC
 	static HANDLE g_heap;
+	#endif
 
 	#ifndef _DEBUG
 
 		void* __cdecl operator new( size_t siz )
 		{
 			TRYLBL:
+			#ifdef USE_LOCALALLOC
+			void *ret = ::LocalAlloc( LPTR, siz );
+			#else
 			void *ret = ::HeapAlloc( g_heap, 0, siz );
-			//void *ret = ::VirtualAlloc(NULL, siz, MEM_COMMIT, PAGE_READWRITE);
+			#endif
 			if (!ret) {
 				DWORD ans = MessageBox(GetActiveWindow(), TEXT("Unable to allocate memory!"), NULL, MB_ABORTRETRYIGNORE|MB_TASKMODAL);
 				switch(ans) {
@@ -31,8 +36,11 @@ using namespace ki;
 		{
 			if (ptr != NULL)
 			{   // It is not Guarenteed that HeapFree can free NULL.
+				#ifdef USE_LOCALALLOC
+				void *ret = ::LocalFree( ptr );
+				#else
 				::HeapFree( g_heap, 0, ptr );
-				//::VirtualFree(ptr, MEM_RELEASE, 0);
+				#endif
 			}
 		}
 
@@ -43,13 +51,21 @@ using namespace ki;
 		void* __cdecl operator new( size_t siz )
 		{
 			++allocCounter;
+			#ifdef USE_LOCALALLOC
+			return ::LocalAlloc( LPTR, siz );
+			#else
 			return ::HeapAlloc( g_heap, HEAP_GENERATE_EXCEPTIONS, siz );
+			#endif
 		}
 		void __cdecl operator delete( void* ptr )
 		{
 			if( ptr != NULL )
 			{
+				#ifdef USE_LOCALALLOC
+				::LocalFree( ptr );
+				#else
 				::HeapFree( g_heap, 0, ptr );
+				#endif
 				--allocCounter;
 			}
 		}
@@ -455,7 +471,7 @@ MemoryManager* MemoryManager::pUniqueInstance_;
 
 MemoryManager::MemoryManager()
 {
-#ifdef SUPERTINY
+#if defined(SUPERTINY) && !defined(USE_LOCALALLOC)
 	g_heap = ::GetProcessHeap();
 	// Create our own non-serialized heap
 	// Because we only use single thread (may change later)
@@ -549,7 +565,7 @@ MemoryManager* MemoryManager::pUniqueInstance_;
 
 MemoryManager::MemoryManager()
 {
-#ifdef SUPERTINY
+#if defined(SUPERTINY) && !defined(USE_LOCALALLOC)
 	g_heap = ::GetProcessHeap();
 #endif
 	// 唯一のインスタンスは私です
@@ -572,14 +588,6 @@ void* MemoryManager::Alloc( size_t siz )
 void MemoryManager::DeAlloc( void* ptr, size_t siz )
 {
 	::operator delete(ptr);
-}
-void* MemoryManager::ReAlloc( void* ptr, size_t siz )
-{
-#ifndef _DEBUG
-	return HeapReAlloc(g_heap, 0, ptr, siz);
-#else
-	return HeapReAlloc(g_heap, HEAP_GENERATE_EXCEPTIONS, ptr, siz);
-#endif
 }
 
 #endif

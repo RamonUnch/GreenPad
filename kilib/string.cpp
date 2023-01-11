@@ -64,7 +64,7 @@ wchar_t * WINAPI my_CharLowerWW(wchar_t *s)
 wchar_t my_CharUpperSingleW(wchar_t c)
 {
 #if defined(UNICOWS) || !defined(_UNICODE)
-	if( App::isNT() )
+	if( app().isNT() )
 		return (wchar_t)(LONG_PTR)::CharUpperW( (wchar_t *)(LONG_PTR)c );
 	else
 		return SingleCharUpperW_nonNT(c);
@@ -75,7 +75,7 @@ wchar_t my_CharUpperSingleW(wchar_t c)
 wchar_t my_CharLowerSingleW(wchar_t c)
 {
 #if defined(UNICOWS) || !defined(_UNICODE)
-	if( App::isNT() )
+	if( app().isNT() )
 		return (wchar_t)(LONG_PTR)::CharLowerW( (wchar_t *)(LONG_PTR)c );
 	else
 		return SingleCharLowerW_nonNT(c);
@@ -95,7 +95,7 @@ static BOOL my_IsCharLowerW_nonNT(wchar_t c)
 BOOL my_IsCharLowerW(wchar_t c)
 {
 #if defined(UNICOWS) || !defined(_UNICODE)
-	if( App::isNT() )
+	if( app().isNT() )
 		return ::IsCharLowerW( c );
 	else
 		return my_IsCharLowerW_nonNT(c);
@@ -105,6 +105,53 @@ BOOL my_IsCharLowerW(wchar_t c)
 
 }
 
+#ifdef OLDWIN32S
+int SimpleWC2MB(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef)
+{
+	if( d == NULL || dl == 0 ) // return required length.
+		return sl==-1? my_lstrlenW(s): sl;
+
+	int i;
+	if( sl == -1 )
+	{ // Copy until NULL
+		for( i=0; i < dl && s[i]; i++)
+			d[i] = (char)s[i];
+		d[i] = '\0';
+		return i == dl? 0: i;
+	}
+
+	if( dl <= sl )
+		return 0;
+
+	for( i=0; i < sl; i++)
+		d[i] = (char)s[i];
+
+	d[i] = '\0';
+	return i;
+}
+int WINAPI SimpleMB2WC(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl)
+{
+	if( d == NULL || dl == 0 )
+		return sl==-1? my_lstrlenA(s): sl;
+
+	int i;
+	if( sl == -1 )
+	{ // Copy until NULL
+		for( i=0; i < dl && s[i]; i++)
+			d[i] = (wchar_t)s[i];
+		d[i] = L'\0';
+		return i == dl? 0: i;
+	}
+
+	if( dl <= sl )
+		return 0;
+
+	for( i=0; i < sl; i++)
+		d[i] = (char)s[i];
+	d[i] = L'\0';
+	return i;
+}
+#endif// OLDWIN32S
 
 //=========================================================================
 String::StringData* String::nullData_;

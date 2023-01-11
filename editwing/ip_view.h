@@ -100,7 +100,7 @@ public:
 				return 2 * widthTable_[ L'x' ];
 			}
 #ifdef WIN32S
-			if( App::isWin32s() )
+			if( app().isWin32s() )
 			{
 				if( ch > 0x100 )
 				{
@@ -187,7 +187,7 @@ private:
 	const HPEN   pen_;
 	const HBRUSH brush_;
 	CW_INTTYPE   height_;
-	CW_INTTYPE*  widthTable_; // int or char [65535] values
+	CW_INTTYPE*  widthTable_; // int or short [65535] values
 	CW_INTTYPE   figWidth_;
 	LOGFONT      logfont_;
 	GLYPHSET     *fontranges_;

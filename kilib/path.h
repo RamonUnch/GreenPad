@@ -121,7 +121,8 @@ public:
 //-------------------------------------------------------------------------
 
 inline bool Path::isFile() const
-	{ return 0==(GetFileAttributesUNC(c_str())&FILE_ATTRIBUTE_DIRECTORY); }
+	{ return c_str()[len()-1] != TEXT('\\') && c_str()[len()-1] != TEXT('/')
+	      && 0==(GetFileAttributesUNC(c_str())&FILE_ATTRIBUTE_DIRECTORY); }
 
 inline bool Path::isDirectory() const
 	{ DWORD x=GetFileAttributesUNC(c_str());

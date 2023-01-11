@@ -821,9 +821,9 @@ namespace
 		// It seems CharNextExA can crash
 		// so we exclude NT versions between 3.51.1057 and  and 4.00.1381
 		uNextFunc Window_CharNextExA = (uNextFunc)NULL ;
-		if(!App::isNT()
-		||  App::isNTOSVerEqual( 351, 1057 )
-		||  App::isNTOSVerLarger( 400, 1381 ) )
+		if(!app().isNT()
+		||  app().isNTOSVerEqual( MKVER(3,51,1057) )
+		||  app().isNTOSVerLarger( MKVER(4,00,1381) ) )
 		{
 			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandleA("USER32.DLL"), "CharNextExA");
 			if (Window_CharNextExA)

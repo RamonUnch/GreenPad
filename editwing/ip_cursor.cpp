@@ -15,7 +15,7 @@ static BOOL WINAPI myIsDBCSLeadByteEx_1st(UINT cp, BYTE ch)
 {
 	myIsDBCSLeadByteEx = myIsDBCSLeadByteEx_fb;
 
-	if( App::isNT() || App::is9xOSVerLarger(400, 950) )
+	if( app().isNT() || app().is9xOSVerLarger( MKVER(4,00,950)) )
 	{
 		// On Chicago build 116 We get a crash when using IsDBCSLeadByteEx
 		// TODO: find exactly which build is required...
@@ -381,7 +381,7 @@ void Cursor::on_char( TCHAR ch )
 	if( !bRO_ && ch!=0x7f
 	&& ((unsigned)ch>=0x20 || ch==TEXT('\r') || ch==TEXT('\t')) )
 	{
-		if( UNICODEBOOL && App::isNT() )
+		if( UNICODEBOOL && app().isNT() )
 		{ // In unicode mode we have Wide Chars ON NT
 			pEvHan_->on_char( *this, ch );
 		}
@@ -693,7 +693,7 @@ void Cursor::Copy()
 	HGLOBAL  h;
 	ulong len = doc_.getRangeLength( dm, dM );
 
-	if( UNICODEBOOL || App::isNT() )
+	if( UNICODEBOOL || app().isNT() )
 	{
 		// NT系ならそのままダイレクトに, Direct copy
 		// Also on Win9x we can use CF_UNICODETEXT with UNICOWS
@@ -717,7 +717,7 @@ void Cursor::Copy()
 	}
 
 #if !defined(_UNICODE) || defined(UNICOWS)
-	if( !App::isNT() )
+	if( !app().isNT() )
 	{
 		// On 9x With UNICOWS We need to also write to the clipboard in ANSI
 		// So that other programs can access the clipboard.
@@ -858,7 +858,7 @@ void Cursor::ModSelection(ModProc mfunk)
 void Cursor::UpperCaseSel()
 {
 #if defined(UNICOWS) || !defined(_UNICODE)
-	ModSelection(App::isNT()? CharUpperW: my_CharUpperW);
+	ModSelection(app().isNT()? CharUpperW: my_CharUpperW);
 #else
 	ModSelection(CharUpperW);
 #endif
@@ -866,7 +866,7 @@ void Cursor::UpperCaseSel()
 void Cursor::LowerCaseSel()
 {
 #if defined(UNICOWS) || !defined(_UNICODE)
-	ModSelection(App::isNT()? CharLowerW: my_CharLowerW);
+	ModSelection(app().isNT()? CharLowerW: my_CharLowerW);
 #else
 	ModSelection(CharLowerW);
 #endif

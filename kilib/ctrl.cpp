@@ -65,7 +65,7 @@ bool StatusBar::PreTranslateMessage( MSG* )
 void StatusBar::SetText( const TCHAR* str, int part )
 {
 #if defined(UNICOWS) && defined(UNICODE)
-	if ( app().isNTOSVerLarger(350, 711) )
+	if ( app().isNTOSVerLarger(MKVER(3,50,711)) )
 	{	// Unicode in UNICOWS mode to be used on NT only from 3.5 build 711
 		SendMsg( SB_SETTEXTW, part, reinterpret_cast<LPARAM>(str) );
 	}
