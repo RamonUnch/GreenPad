@@ -56,6 +56,7 @@ private:
 	bool OpenByMyself( const ki::Path& fn, int cs, bool needReConf=true, bool always=false );
 	static BOOL CALLBACK PostMsgToFriendsProc(HWND hwnd, LPARAM lPmsg);
 	BOOL PostMsgToAllFriends(UINT msg);
+	BOOL myPageSetupDlg(LPPAGESETUPDLG lppsd);
 
 	bool AskToSave();
 	bool Save_showDlgIfNeeded();

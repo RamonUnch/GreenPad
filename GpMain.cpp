@@ -441,26 +441,60 @@ void GreenPadWnd::on_savefileas()
 		ReloadConfig(); // 文書タイプに応じて表示を更新
 	}
 }
-void GreenPadWnd::on_pagesetup()
+BOOL GreenPadWnd::myPageSetupDlg(LPPAGESETUPDLG lppsd)
 {
-#if defined(UNICOWS) || !defined(TARGET_VER) ||  defined(TARGET_VER) && TARGET_VER>=351
-	if (app().is351p())
+#if !defined(TARGET_VER) || TARGET_VER>=351
+	return PageSetupDlg(lppsd);
+
+#elif defined(UNICOWS)
+	// In unicows mode the PageSetupDlg is already
+	// dynamically loaded, so we just check for OSVer.
+	if( App::isNTOSVerLarger( 351, 1057 )
+	||  App::is9xOSVerLarger( 400, 950 ) )
 	{
-		PAGESETUPDLG psd;
-		mem00(&psd, sizeof(psd));
-		psd.lStructSize = sizeof(psd);
-		// FIXME: use local units...
-		psd.Flags = PSD_INTHOUSANDTHSOFINCHES|PSD_DISABLEORIENTATION|PSD_DISABLEPAPER|PSD_DISABLEPRINTER|PSD_MARGINS;
-		psd.hwndOwner = hwnd();
-		CopyRect(&psd.rtMargin, cfg_.PMargins());
-		PageSetupDlg(&psd);
-		cfg_.SetPrintMargins(&psd.rtMargin);
+		return PageSetupDlg(lppsd); // NT3.51/95+
 	}
 	else
 	{
-		MsgBox(TEXT("You need at least Windows NT 3.51!\n"), NULL, MB_OK);
+		MsgBox( TEXT("Unable to use PageSetupDlg() function") );
+		return FALSE;
 	}
+
+#else
+	// Dynamically load ourself the ANSI or Unicode version
+	// for pure ANIS or pure Unicode mode.
+	// We can Load/Free the dll every time because performances
+	// are not important.
+	BOOL ret = FALSE;
+	HINSTANCE h = LoadLibrary( TEXT("COMDLG32.DLL") );
+	if( h )
+	{
+		#define FTYPE ( BOOL (WINAPI *)(LPPAGESETUPDLG lppsd) )
+		BOOL (WINAPI *dyn_PageSetupDlg)(LPPAGESETUPDLG lppsd);
+		#ifdef _UNICODE
+		dyn_PageSetupDlg = FTYPE GetProcAddress(h, "PageSetupDlgW");
+		#else
+		dyn_PageSetupDlg = FTYPE GetProcAddress(h, "PageSetupDlgA");
+		#endif
+		if( dyn_PageSetupDlg )
+			ret = dyn_PageSetupDlg(lppsd);
+		FreeLibrary( h );
+		#undef FTYPE
+	}
+	return ret;
 #endif
+}
+void GreenPadWnd::on_pagesetup()
+{
+	PAGESETUPDLG psd;
+	mem00(&psd, sizeof(psd));
+	psd.lStructSize = sizeof(psd);
+	// FIXME: use local units...
+	psd.Flags = PSD_INTHOUSANDTHSOFINCHES|PSD_DISABLEORIENTATION|PSD_DISABLEPAPER|PSD_DISABLEPRINTER|PSD_MARGINS;
+	psd.hwndOwner = hwnd();
+	CopyRect(&psd.rtMargin, cfg_.PMargins());
+	if( myPageSetupDlg(&psd) )
+		cfg_.SetPrintMargins(&psd.rtMargin);
 }
 void GreenPadWnd::on_print()
 {
@@ -1094,7 +1128,7 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 	Path kwd = cfg_.kwdFile();
 	FileR fp;
 	if( kwd.len()!=0 && kwd.isFile() && fp.Open(kwd.c_str()) )
-		edit_.getDoc().SetKeyword((const unicode*)fp.base(),fp.size()/2);
+		edit_.getDoc().SetKeyword((const unicode*)fp.base(),fp.size()/sizeof(unicode));
 	else
 		edit_.getDoc().SetKeyword(NULL,0);
 	LOGGER("GreenPadWnd::ReloadConfig KeywordLoaded");
