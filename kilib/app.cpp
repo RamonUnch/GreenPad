@@ -89,6 +89,8 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 	if (s_osVer->dwPlatformId != VER_PLATFORM_WIN32_NT)
 	{
 		s_osVer->dwPlatformId = VER_PLATFORM_WIN32_WINDOWS;
+		// Get real build bumber removing the most significant bit.
+		s_osVer->dwBuildNumber = HIWORD(dwVersion)&(~0x8000);
 		#ifdef WIN32S
 		if (dwVersion == 0x80000a3f)
 		{ // Win32s beta build 61 (Makes no sense!)
@@ -131,8 +133,12 @@ App::~App()
 #ifndef NO_OLE32
 //	if( loadedModule_ & COM )
 //		::MyCoUninitialize();
-	if( loadedModule_ & OLE )
+	if( loadedModule_ & OLE && hOle32_ )
+	{	// Unitialize OLE and free OLE32.DLL
 		::MyOleUninitialize();
+		::FreeLibrary( hOle32_ );
+	}
+
 #endif
 
 	// I`—¹`
@@ -193,8 +199,8 @@ void App::Exit( int code )
 	SetExitCode( code );
 
 	// only free library when program quits
-	if( hInstComCtl_ ) ::FreeLibrary( hInstComCtl_ );
-
+	if( hInstComCtl_ )
+		::FreeLibrary( hInstComCtl_ );
 	// Ž©ŽE
 	this->~App();
 }
@@ -211,6 +217,18 @@ const OSVERSIONINFOA& App::osver()
 		// ‰‰ñ‚¾‚¯‚Íî•ñŽæ“¾
 		s_osVer.dwOSVersionInfoSize = sizeof( s_osVer );
 		MyGetVersionEx( &s_osVer );
+//		#ifdef _DEBUG
+//		TCHAR buf[256];
+//		::wsprintf(buf,
+//			TEXT("%s %lu.%lu build %lu\n%hs")
+//			, s_osVer.dwPlatformId==VER_PLATFORM_WIN32_NT? TEXT("Windows NT")
+//			: s_osVer.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS? TEXT("Windows")
+//			: s_osVer.dwPlatformId==VER_PLATFORM_WIN32s? TEXT("Win32s"): TEXT("UNKNOWN")
+//			, s_osVer.dwMajorVersion, s_osVer.dwMinorVersion, s_osVer.dwBuildNumber
+//			, s_osVer.szCSDVersion
+//		);
+//		MessageBox(NULL, buf, TEXT("Windows Version"), 0);
+//		#endif
 	}
 	return s_osVer;
 }
@@ -299,12 +317,6 @@ bool App::is351p()
 	static const OSVERSIONINFOA& v = osver();
 	return v.dwMajorVersion>3
 		|| (v.dwMajorVersion==3 && v.dwMinorVersion >= 51);
-}
-
-bool App::isNT31()
-{
-	static const OSVERSIONINFOA& v = osver();
-	return v.dwMajorVersion==3 && v.dwMinorVersion < 50;
 }
 
 //=========================================================================
