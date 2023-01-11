@@ -124,6 +124,7 @@ inline App::App()
 {
 	// 唯一のインスタンスは私です。
 	pUniqueInstance_ = this;
+	init_osver();
 }
 
 #pragma warning( disable : 4722 ) // 警告：デストラクタに値が戻りません
@@ -209,114 +210,104 @@ void App::Exit( int code )
 
 //-------------------------------------------------------------------------
 
-const OSVERSIONINFOA& App::osver()
+void App::init_osver()
 {
-	static OSVERSIONINFOA s_osVer;
-	if( s_osVer.dwOSVersionInfoSize == 0 )
-	{
-		// 初回だけは情報取得
-		s_osVer.dwOSVersionInfoSize = sizeof( s_osVer );
-		MyGetVersionEx( &s_osVer );
-//		#ifdef _DEBUG
-//		TCHAR buf[256];
-//		::wsprintf(buf,
-//			TEXT("%s %lu.%lu build %lu\n%hs")
-//			, s_osVer.dwPlatformId==VER_PLATFORM_WIN32_NT? TEXT("Windows NT")
-//			: s_osVer.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS? TEXT("Windows")
-//			: s_osVer.dwPlatformId==VER_PLATFORM_WIN32s? TEXT("Win32s"): TEXT("UNKNOWN")
-//			, s_osVer.dwMajorVersion, s_osVer.dwMinorVersion, s_osVer.dwBuildNumber
-//			, s_osVer.szCSDVersion
-//		);
-//		MessageBox(NULL, buf, TEXT("Windows Version"), 0);
-//		#endif
-	}
-	return s_osVer;
+	// 初回だけは情報取得
+	osver_.dwOSVersionInfoSize = sizeof( osver_ );
+	MyGetVersionEx( &osver_ );
+	// oosver_ is in the logical order: MMmmBBBB
+	// Fot NT/9X/32s we use the dwPlatformId field independentely
+	oosver_ = MKVER(osver_.dwMajorVersion, osver_.dwMinorVersion, osver_.dwBuildNumber);
+
+	#ifdef _DEBUG
+	TCHAR buf[256];
+	::wsprintf(buf,
+		TEXT("%s %lu.%lu build %lu (%hs) /%x/")
+		, osver_.dwPlatformId==VER_PLATFORM_WIN32_NT? TEXT("Windows NT")
+		: osver_.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS? TEXT("Windows")
+		: osver_.dwPlatformId==VER_PLATFORM_WIN32s? TEXT("Win32s"): TEXT("UNKNOWN")
+		, osver_.dwMajorVersion, osver_.dwMinorVersion, osver_.dwBuildNumber
+		, osver_.szCSDVersion, oosver_
+	);
+	//MessageBox(NULL, buf, TEXT("Windows Version"), 0);
+	LOGGER( buf );
+	#endif
 }
 
-DWORD App::getOSVer()
+DWORD App::getOSVer() const
 {
-	static const OSVERSIONINFOA& v = osver();
-	return v.dwMajorVersion*100+v.dwMinorVersion;
+	return osver_.dwMajorVersion*100+osver_.dwMinorVersion;
 }
 
-DWORD App::getOSBuild()
+DWORD App::getOOSVer() const
 {
-	static const OSVERSIONINFOA& v = osver();
-	return v.dwBuildNumber;
+	return oosver_;
 }
 
-bool App::isOSVerEqual(DWORD ver, DWORD build)
+DWORD App::getOSBuild() const
 {
-	return getOSVer() == ver && getOSBuild() == build;
+	return osver_.dwBuildNumber;
 }
 
-bool App::isNTOSVerEqual(DWORD ver, DWORD build)
+bool App::isOSVerEqual(DWORD ver) const
 {
-	return isNT() && getOSVer() == ver && getOSBuild() == build;
-}
-bool App::is9xOSVerEqual(DWORD ver, DWORD build)
-{
-	return !isNT() && getOSVer() == ver && getOSBuild() == build;
+	return oosver_ == ver;
 }
 
-bool App::isOSVerLarger(DWORD ver, DWORD build)
+bool App::isNTOSVerEqual(DWORD ver) const
 {
-	return ( getOSVer() > ver || ( getOSVer() == ver && getOSBuild() >= build ) );
+	return isNT() && oosver_ == ver;
+}
+bool App::is9xOSVerEqual(DWORD ver) const
+{
+	return !isNT() && oosver_ == ver;
 }
 
-bool App::isNTOSVerLarger(DWORD ver, DWORD build)
+bool App::isOSVerLarger(DWORD ver) const
 {
-	return isNT() && ( getOSVer() > ver || ( getOSVer() == ver && getOSBuild() >= build ) );
+	return ver <= oosver_;
 }
 
-bool App::is9xOSVerLarger(DWORD ver, DWORD build)
+bool App::isNTOSVerLarger(DWORD ver) const
 {
-	return !isNT() && ( getOSVer() > ver || ( getOSVer() == ver && getOSBuild() >= build ) );
+	return isNT() && ver <= oosver_;
 }
 
-bool App::isNewTypeWindows()
+bool App::is9xOSVerLarger(DWORD ver) const
 {
-	static const OSVERSIONINFOA& v = osver();
+	return !isNT() &&  ver <= oosver_;
+}
+
+bool App::isNewTypeWindows() const
+{
 	return (
-		( v.dwPlatformId==VER_PLATFORM_WIN32_NT && v.dwMajorVersion>=5 )
-	 || ( v.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS &&
-	          v.dwMajorVersion*100+v.dwMinorVersion>=410 )
+		( osver_.dwPlatformId==VER_PLATFORM_WIN32_NT      && oosver_ >= 0x05000000 ) // 5.0
+	 || ( osver_.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS && oosver_ >= 0x040A0000 ) // 4.10
 	);
 }
 
-bool App::isWin95()
+bool App::isWin95() const
 {
-	static const OSVERSIONINFOA& v = osver();
 	return (
-		v.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS &&
-		v.dwMajorVersion==4 &&
-		v.dwMinorVersion==0
+		osver_.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS &&
+		osver_.dwMajorVersion==4 &&
+		osver_.dwMinorVersion==0
 	);
 }
 
-bool App::isNT()
+bool App::isNT() const
 {
-	static const OSVERSIONINFOA& v = osver();
-	return v.dwPlatformId==VER_PLATFORM_WIN32_NT;
+	return osver_.dwPlatformId==VER_PLATFORM_WIN32_NT;
 }
 
-bool App::isWin32s()
+bool App::isWin32s() const
 {
-	static const OSVERSIONINFOA& v = osver();
-	return v.dwPlatformId==VER_PLATFORM_WIN32s;
+	return osver_.dwPlatformId==VER_PLATFORM_WIN32s;
 }
 
-bool App::isNewShell()
+bool App::isNewShell() const
 {
-	static const OSVERSIONINFOA& v = osver();
-	return v.dwMajorVersion>3;
-}
-
-bool App::is351p()
-{
-	static const OSVERSIONINFOA& v = osver();
-	return v.dwMajorVersion>3
-		|| (v.dwMajorVersion==3 && v.dwMinorVersion >= 51);
+	return osver_.dwMajorVersion>3;
 }
 
 //=========================================================================

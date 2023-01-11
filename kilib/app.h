@@ -5,6 +5,9 @@
 
 HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
 
+// Use to make a ordered window version ie: MKVER(3,10,511) = 0x030A01FF
+#define MKVER(M, m, b) ( (DWORD)( (BYTE)(M)<<24 | (BYTE)(m)<<16 | (WORD)(b) ) )
+
 #ifndef __ccdoc__
 namespace ki {
 #endif
@@ -91,22 +94,21 @@ public:
 	HINSTANCE       hOle32_;
 
 	//@{ Windows‚Ìƒo[ƒWƒ‡ƒ“ //@}
-	static const OSVERSIONINFOA& osver();
-	static DWORD getOSVer();
-	static DWORD getOSBuild();
-	static bool isOSVerLarger(DWORD ver, DWORD build);
-	static bool is9xOSVerLarger(DWORD ver, DWORD build);
-	static bool isNTOSVerLarger(DWORD ver, DWORD build);
-	static bool isOSVerEqual(DWORD ver, DWORD build);
-	static bool is9xOSVerEqual(DWORD ver, DWORD build);
-	static bool isNTOSVerEqual(DWORD ver, DWORD build);
-	static bool isWin95();
-	static bool isNT();
-	static bool isWin32s();
-	static bool is351p();
-	static bool isNT31();
-	static bool isNewShell();
-	static bool isNewTypeWindows();
+	void init_osver();
+	DWORD getOSVer() const;
+	DWORD getOSBuild() const;
+	DWORD getOOSVer() const;
+	bool isOSVerLarger(DWORD ver) const;
+	bool is9xOSVerLarger(DWORD ver) const;
+	bool isNTOSVerLarger(DWORD ver) const;
+	bool isOSVerEqual(DWORD ver) const;
+	bool is9xOSVerEqual(DWORD ver) const;
+	bool isNTOSVerEqual(DWORD ver) const;
+	bool isWin95() const;
+	bool isNT() const;
+	bool isWin32s() const;
+	bool isNewShell() const;
+	bool isNewTypeWindows() const;
 
 private:
 
@@ -115,7 +117,8 @@ private:
 	void SetExitCode( int code );
 
 private:
-
+	OSVERSIONINFOA  osver_;
+	DWORD           oosver_;
 	int             exitcode_;
 	ulong           loadedModule_;
 	const HINSTANCE hInst_;
