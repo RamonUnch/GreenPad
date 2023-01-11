@@ -6,18 +6,23 @@ using doc::Insert;
 using doc::Delete;
 using doc::Replace;
 
-
+#if defined(_MBCS)
 static BOOL WINAPI myIsDBCSLeadByteEx_1st(UINT cp, BYTE ch);
 static BOOL WINAPI myIsDBCSLeadByteEx_fb(UINT cp, BYTE ch);
 static BOOL (WINAPI *myIsDBCSLeadByteEx)(UINT cp, BYTE ch) = myIsDBCSLeadByteEx_1st;
 
 static BOOL WINAPI myIsDBCSLeadByteEx_1st(UINT cp, BYTE ch)
 {
-	FARPROC funk = GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "IsDBCSLeadByteEx");
-	if( funk )
-		myIsDBCSLeadByteEx = ( BOOL (WINAPI *)(UINT cp, BYTE ch) )funk;
-	else
-		myIsDBCSLeadByteEx = myIsDBCSLeadByteEx_fb;
+	myIsDBCSLeadByteEx = myIsDBCSLeadByteEx_fb;
+
+	if( App::isNT() || App::is9xOSVerLarger(400, 950) )
+	{
+		// On Chicago build 116 We get a crash when using IsDBCSLeadByteEx
+		// TODO: find exactly which build is required...
+		FARPROC funk = GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "IsDBCSLeadByteEx");
+		if( funk )
+			myIsDBCSLeadByteEx = ( BOOL (WINAPI *)(UINT cp, BYTE ch) )funk;
+	}
 
 	return myIsDBCSLeadByteEx(cp, ch);
 }
@@ -25,6 +30,7 @@ static BOOL WINAPI myIsDBCSLeadByteEx_fb(UINT cp, BYTE ch)
 {
 	return IsDBCSLeadByte(ch);
 }
+#endif // defined(_MBCS)
 
 #if !defined(UNICOWS)
 static int myGetLocaleInfo(LCID Locale, LCTYPE LCType, LPTSTR lpLCData, int cchData)
@@ -58,12 +64,12 @@ static UINT GetInputCP()
 	UINT kb_cp = CP_ACP;
 #if defined(UNICOWS) || !defined(UNICODE) || defined(_MBCS)
 	LCID lcid = LOWORD(MyGetKeyboardLayout( 0 ));
-	TCHAR cpstr[16];
+	TCHAR cpstr[16]; cpstr[0] = TEXT('\0');
 	if( lcid && ::GetLocaleInfo(lcid, LOCALE_IDEFAULTANSICODEPAGE, cpstr, countof(cpstr)))
 	{	// This should be the codepage of the local associated with
 		// the current keyboard layout
 		UINT tcp = String::GetInt( cpstr );
-		if( ::IsValidCodePage( tcp ) )
+		if( tcp && ::IsValidCodePage( tcp ) )
 			kb_cp = tcp;
 	}
 #endif
@@ -375,7 +381,7 @@ void Cursor::on_char( TCHAR ch )
 	if( !bRO_ && ch!=0x7f
 	&& ((unsigned)ch>=0x20 || ch==TEXT('\r') || ch==TEXT('\t')) )
 	{
-		if( UNICODEBOOL && app().isNT() )
+		if( UNICODEBOOL && App::isNT() )
 		{ // In unicode mode we have Wide Chars ON NT
 			pEvHan_->on_char( *this, ch );
 		}
@@ -687,7 +693,7 @@ void Cursor::Copy()
 	HGLOBAL  h;
 	ulong len = doc_.getRangeLength( dm, dM );
 
-	if( UNICODEBOOL || app().isNT() )
+	if( UNICODEBOOL || App::isNT() )
 	{
 		// NT系ならそのままダイレクトに, Direct copy
 		// Also on Win9x we can use CF_UNICODETEXT with UNICOWS
@@ -711,7 +717,7 @@ void Cursor::Copy()
 	}
 
 #if !defined(_UNICODE) || defined(UNICOWS)
-	if( !app().isNT() )
+	if( !App::isNT() )
 	{
 		// On 9x With UNICOWS We need to also write to the clipboard in ANSI
 		// So that other programs can access the clipboard.
