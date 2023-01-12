@@ -230,7 +230,7 @@ OSVERSIONINFOA App::init_osver()
 		, v.szCSDVersion
 	);
 	//MessageBox(NULL, buf, TEXT("Windows Version"), 0);
-	LOGGER( buf );
+	LOGGERS( buf );
 	#endif
 
 	return v;
