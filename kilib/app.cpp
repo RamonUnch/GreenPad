@@ -303,15 +303,18 @@ bool App::isNewTypeWindows() const
 
 bool App::isWin95() const
 {
-//	return (
-//		osver_.wPlatform==VER_PLATFORM_WIN32_WINDOWS &&
-//		osver_.v.vb.ver.wVer == 0x0400
-//	);
+#if defined(_M_IX86) || defined(_M_AMD64)
+	// Not sure for which CPU this stupid optimization is safe...
 	struct midosver{ WORD a; WORD dwPlatVer; WORD b; WORD c; };
 	// Ugly cast to take the middle part of the version info (PLAT|wVER)
 	DWORD platver = *(DWORD*)&((const struct midosver*)&osver_)->dwPlatVer;
-
 	return platver == 0x00010400;
+#else
+	return (
+		osver_.wPlatform==VER_PLATFORM_WIN32_WINDOWS &&
+		osver_.v.vb.ver.wVer == 0x0400
+	);
+#endif
 }
 
 bool App::isNT() const
