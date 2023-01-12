@@ -28,8 +28,11 @@ void Logger::WriteLine( const TCHAR* str, int siz )
 
 	// ファイル名
 	TCHAR fname[MAX_PATH];
+	// GetModuleFileName() fails with NULL hInstance on Win32s before 1.25
 	::GetModuleFileName( ::GetModuleHandle(NULL), fname, countof(fname) );
-	::lstrcat( fname, TEXT("_log") );
+	dummy = my_lstrlen(fname);
+	fname[dummy-4] = 0;
+	my_lstrcpy( &fname[dummy-4], TEXT(".log") );
 
 	// ファイルを書き込み専用で開く
 	HANDLE h = ::CreateFile( fname,

@@ -60,8 +60,8 @@ static int WINAPI MySetScrollInfo_1st(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, B
 	// Should be supported since Windows NT 3.51.944
 	ssnfo_funk dyn_SetScrollInfo = (ssnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "SetScrollInfo");
 	if( dyn_SetScrollInfo
-	&& !(  App::is9xOSVerLarger(400, 275) // Win95 4.00.275
-		|| App::isNTOSVerLarger(351, 944) // WinNT 3.51.944
+	&& !(  app().is9xOSVerLarger( MKVER(4,00,275) ) // Win95 4.00.275
+		|| app().isNTOSVerLarger( MKVER(3,51,944) ) // WinNT 3.51.944
 	    ) )
 	{   // Not supported before 95 build 275
 		// Nor NT3.51 before build 944
@@ -105,8 +105,8 @@ static int WINAPI MyGetScrollInfo_1st(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 	// Should be supported since Windows NT 3.51...
 	gsnfo_funk dyn_GetScrollInfo = (gsnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "GetScrollInfo");
 	if( dyn_GetScrollInfo
-	&& !(  App::is9xOSVerLarger(400, 275) // Win95 4.00.275
-		|| App::isNTOSVerLarger(351, 944) // WinNT 3.51.944
+	&& !(  app().is9xOSVerLarger(MKVER(4,00,275)) // Win95 4.00.275
+		|| app().isNTOSVerLarger(MKVER(3,51,944)) // WinNT 3.51.944
 	    ) )
 	{
 		dyn_GetScrollInfo = NULL;
@@ -603,7 +603,7 @@ void ViewImpl::on_vscroll( int code, int pos )
 int ViewImpl::getNumScrollLines( void )
 {
 	uint scrolllines = 3; // Number of lines to scroll (default 3).
-	if( App::getOSVer() >= 400 )
+	if( app().getOOSVer() >= 0x04000000 )
 	{   // Read the system value for the wheel scroll lines.
 		UINT numlines;
 		if( ::SystemParametersInfo( SPI_GETWHEELSCROLLLINES, 0, &numlines, 0 ) )
@@ -645,13 +645,13 @@ int ViewImpl::getNumScrollRaws( void )
 {
 	uint scrollnum = 3; // Number of lines to scroll (default 3).
 	// TODO: Get more accurate version numbers for scroll wheel support?
-	if ( App::getOSVer() >= 600 )
+	if ( app().getOOSVer() >= 0x06000000 )
 	{ // Introduced in window Vista
 		UINT num;
 		if( ::SystemParametersInfo( SPI_GETWHEELSCROLLCHARS, 0, &num, 0 ) )
 			scrollnum = num; // Sucess!
 	}
-	else if( App::getOSVer() >= 400 )
+	else if( app().getOOSVer() >= 0x04000000 )
 	{   // Read the system value for the wheel scroll lines.
 		UINT num;
 		if( ::SystemParametersInfo( SPI_GETWHEELSCROLLLINES, 0, &num, 0 ) )

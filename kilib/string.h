@@ -22,6 +22,13 @@
 	#define my_lstrcat my_lstrcatA
 #endif
 
+#ifdef OLDWIN32S
+int WINAPI SimpleMB2WC(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl);
+int SimpleWC2MB(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef);
+#define WideCharToMultiByte SimpleWC2MB
+#define MultiByteToWideChar SimpleMB2WC
+#endif
+
 wchar_t * WINAPI my_CharUpperWW(wchar_t *s);
 wchar_t * WINAPI my_CharLowerWW(wchar_t *s);
 #define my_CharUpperW my_CharUpperWW

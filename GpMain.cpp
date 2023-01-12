@@ -15,7 +15,7 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 	// On NT5 it seems ok to use "exe name.exe" "file name"
 	// Otherwise we try SHORT/NAME.EXE "file name"
 	// I do not know why the heck it is like this.
-	bool quotedexe = app().getOSVer() >= 500 && app().isNT();
+	bool quotedexe = app().getOOSVer() >= 0x05000000 && app().isNT();
 	String fcmd;
 	if( quotedexe ) fcmd = TEXT("\"");
 	fcmd += quotedexe? Path(Path::ExeName): Path(Path::ExeName).BeShortStyle();
@@ -394,7 +394,7 @@ int GreenPadWnd::resolvedCSI()
 void GreenPadWnd::on_openelevated(const ki::Path& fn)
 {
 	// Only supported since Windows 2000
-	if( app().getOSVer() < 500 )
+	if( app().getOOSVer() < 0x05000000 )
 		return;
 
 	const view::VPos *cur, *sel;
@@ -449,8 +449,8 @@ BOOL GreenPadWnd::myPageSetupDlg(LPPAGESETUPDLG lppsd)
 #elif defined(UNICOWS)
 	// In unicows mode the PageSetupDlg is already
 	// dynamically loaded, so we just check for OSVer.
-	if( App::isNTOSVerLarger( 351, 1057 )
-	||  App::is9xOSVerLarger( 400, 950 ) )
+	if( app().isNTOSVerLarger(MKVER(3,51,1057))
+	||  app().is9xOSVerLarger(MKVER(4,00,950)) )
 	{
 		return PageSetupDlg(lppsd); // NT3.51/95+
 	}
@@ -706,7 +706,7 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 
 	::EnableMenuItem( menu, ID_CMD_SAVEFILE, MF_BYCOMMAND|(isUntitled() || edit_.getDoc().isModified() ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_REOPENFILE, MF_BYCOMMAND|(!isUntitled() ? MF_ENABLED : MF_GRAYED) );
-	::EnableMenuItem( menu, ID_CMD_OPENELEVATED, MF_BYCOMMAND|( app().getOSVer() >= 500 ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_OPENELEVATED, MF_BYCOMMAND|( app().getOOSVer() >= 0x05000000 ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_GREP, MF_BYCOMMAND|(cfg_.grepExe().len()>0 ? MF_ENABLED : MF_GRAYED) );
 
 	::CheckMenuItem( menu, ID_CMD_NOWRAP, MF_BYCOMMAND|(wrap_==-1?MF_CHECKED:MF_UNCHECKED));
@@ -911,7 +911,8 @@ static BOOL CALLBACK MyFindWindowExProc(HWND hwnd, LPARAM lParam)
 static HWND MyFindWindowEx(HWND parent, HWND after, LPCTSTR lpszClass, LPCTSTR lpszWindow)
 {
   # if !defined (TARGET_VER) || defined(UNICODE) && defined(UNICOWS)
-	if (app().isNewShell()) {
+	if( app().isNewShell() )
+	{
 		// In UNICOWS mode FindWindowEx is dynamically
 		// imported and is implemented for 95/NT4+
 		return FindWindowEx(parent, after, lpszClass, lpszWindow);
@@ -1230,7 +1231,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 		MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str() );
 		return false; // Failed to open.
 	}
-	else if ( app().getOSVer() >= 500 )
+	else if ( app().getOOSVer() >= 0x05000000 )
 	{
 		// Check for Write access and Prompt the user
 		// if he would like to elevate so the file can be written.

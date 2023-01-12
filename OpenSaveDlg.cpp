@@ -162,11 +162,13 @@ CharSetList::CharSetList()
 
 void CharSetList::EnrollCs(int _id, ushort nmtype)
 {
+	#if !defined(TARGET_VER) || TARGET_VER >= 350
 	static const TCHAR* const lnmJp[] = {
 		#define CHARSET_VALUE(a,b,c) TEXT(a),
 		CHARSETS_LIST
 		#undef CHARSET_VALUE
 	};
+	#endif
 
 	static const TCHAR* const lnmEn[] = {
 		#define CHARSET_VALUE(a,b,c) TEXT(b),
@@ -358,7 +360,7 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 				OFN_LONGNAMES     |
 				OFN_CREATEPROMPT;
 
-	if (app().isNewShell())
+	if( app().isNewShell() )
 	{
 		// Include the OFN_EXPLORER flag to get the new look.
 		ofn.Flags |= OFN_EXPLORER;
@@ -489,7 +491,7 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 				OFN_OVERWRITEPROMPT |
 				OFN_LONGNAMES;
 
-	if (app().isNewShell())
+	if( app().isNewShell() )
 	{
 		// Include the OFN_EXPLORER flag to get the new look.
 		ofn.Flags |= OFN_EXPLORER;

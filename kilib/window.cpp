@@ -48,9 +48,9 @@ static bool LoadIMM32DLL()
 {
 	// Don't even try on Win32S because when LoadLibrary()
 	// fails we get an error message
-	if( App::isWin32s() )
+	if( app().isWin32s() )
 		return false;
-//	if ( !::GetSystemMetrics(SM_DBCSENABLED) && App::getOSVer() >= 500 && !::GetSystemMetrics(/*SM_IMMENABLED*/ 82) )
+//	if ( !::GetSystemMetrics(SM_DBCSENABLED) && app().getOOSVer() >= 0x05000000 && !::GetSystemMetrics(/*SM_IMMENABLED*/ 82) )
 //		return false;
 
 	//MessageBox(NULL, TEXT("Going to Load IMM32.DLL"), NULL, 0);
@@ -161,7 +161,7 @@ IMEManager::IMEManager()
 		// No global IME on Win95 because it is buggy...
 		// RamonUnch: I found it is not so buggy so
 		// I re-enabled it unless we are on a DBCS enabled system!
-		if( app().getOSVer() >= 400 && !( app().isWin95() && ::GetSystemMetrics(SM_DBCSENABLED) ) )
+		if( app().getOOSVer() >= 0x04000000 && !( app().isWin95() && ::GetSystemMetrics(SM_DBCSENABLED) ) )
 		{ // Not available on Win32s/NT3.X?
 			app().InitModule( App::OLE );
 			if( S_OK == ::MyCoCreateInstance(

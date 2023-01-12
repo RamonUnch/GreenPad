@@ -58,8 +58,6 @@ public:
 	//@{ ƒƒ‚ƒŠ‰ğ•ú //@}
 	void DeAlloc( void* ptr, size_t siz );
 
-	void* ReAlloc( void* ptr, size_t siz );
-
 #ifdef USE_ORIGINAL_MEMMAN
 private:
 	struct FixedSizeMemBlockPool

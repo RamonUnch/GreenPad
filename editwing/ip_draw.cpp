@@ -258,7 +258,7 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 	// 文字幅テーブル初期化（ASCII範囲の文字以外は遅延処理）
 	memFF( widthTable_, 65536*sizeof(*widthTable_) );
 #ifdef WIN32S
-	if (App::isWin32s() )
+	if ( app().isWin32s() )
 	{
 		#ifndef SHORT_TABLEWIDTH
 		::GetCharWidthA( dc_, ' ', '~', widthTable_+' ' );
@@ -354,29 +354,19 @@ Painter::~Painter()
 inline void Painter::CharOut( unicode ch, int x, int y )
 {
 #ifdef WIN32S
-	// Actually for now we only use CharOut for ASCII characters that
-	if( App::isWin32s() )
-	{
-//		char psText[8]; // Buffer for a SINGLE multibyte character
-//		DWORD dwNum = 1;
-//		psText[0] = (char)ch;
-//		if( ch > 127 ) // Complex converion.
-//			dwNum = ::WideCharToMultiByte( CP_ACP,0, &ch,1, psText,countof(psText), NULL,NULL );
-//		::TextOutA( dc_, x, y, psText, dwNum );
-		::TextOutA( dc_, x, y, (char*)&ch, 1 ); // Only ASCII!!!
-	}
-	else
+	// Actually for now we only use CharOut for ASCII characters
+	::TextOutA( dc_, x, y, (char*)&ch, 1 ); // Only ASCII!!!
+#else
+	// Windows 9x/NT
+	::TextOutW( dc_, x, y, &ch, 1 );
 #endif
-	{ // Windows 9x/NT
-		::TextOutW( dc_, x, y, &ch, 1 );
-	}
 }
 
 inline void Painter::StringOut
 	( const unicode* str, int len, int x, int y )
 {
 #ifdef WIN32S
-	if( App::isWin32s() )
+	if( app().isWin32s() )
 	{
 		DWORD dwNum;
 		char psTXT1K[1024];
@@ -722,13 +712,6 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 					if( p.sc(scHSP) )
 						p.DrawHSP( x+v.XBASE, a.top, i2-i );
 					break;
-//				case 0x00a0: // NBSP No-Break Space
-//					if( p.sc(scZSP) )
-//					{
-//						p.SetColor( clr=CTL );
-//						p.CharOut( L'^', x+v.XBASE, a.top );
-//					}
-//					break;
 				case 0x3000://L'　':
 					if( p.sc(scZSP) )
 						p.DrawZSP( x+v.XBASE, a.top, i2-i );
