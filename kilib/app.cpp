@@ -73,6 +73,7 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 
 	// Fallback in case the above failed (WinNT 3.1 / Win32s)
 	DWORD dwVersion = ::GetVersion();
+	s_osVer->dwOSVersionInfoSize = 0; // Indicate the fallback.
 //	TCHAR buf[12];
 //	::wsprintf(buf, "%x", dwVersion);
 //	MessageBox(NULL, buf, TEXT("Windows Version"), 0);
@@ -117,7 +118,6 @@ App* App::pUniqueInstance_;
 
 inline App::App()
 	: osver_       (init_osver())
-	, oosver_      (MKVER(osver_.dwMajorVersion, osver_.dwMinorVersion, osver_.dwBuildNumber))
 	, hOle32_      ((HINSTANCE)(-1))
 	, exitcode_    (-1)
 	, loadedModule_(0)
@@ -211,7 +211,7 @@ void App::Exit( int code )
 
 //-------------------------------------------------------------------------
 
-OSVERSIONINFOA App::init_osver()
+MYVERINFO App::init_osver()
 {
 	// èââÒÇæÇØÇÕèÓïÒéÊìæ
 	OSVERSIONINFOA v;
@@ -233,82 +233,100 @@ OSVERSIONINFOA App::init_osver()
 	LOGGERS( buf );
 	#endif
 
-	return v;
-}
+	MYVERINFO mv;
+	mv.wFromWhichAPI = (WORD)v.dwOSVersionInfoSize != 0;
+	mv.wPlatform =     (WORD)v.dwPlatformId;
+	mv.v.dwVer = MKVER(v.dwMajorVersion, v.dwMinorVersion, v.dwBuildNumber);
+//	TCHAR buf[64];
+//	::wsprintf( buf, TEXT("sz=%lx\n\n=%lx\n%x %x %x\n=%x")
+//		, sizeof( mv )
+//		, mv.v.dwVer
+//		, mv.v.vb.ver.u.cMajor, mv.v.vb.ver.u.cMinor, mv.v.vb.wBuild
+//		, mv.wPlatform
+//	);
+//	MessageBox(NULL, buf, NULL, 0);
 
-DWORD App::getOSVer() const
-{
-	return osver_.dwMajorVersion*100+osver_.dwMinorVersion;
+	return mv;
 }
 
 DWORD App::getOOSVer() const
 {
-	return oosver_;
+	return osver_.v.dwVer;
 }
 
-DWORD App::getOSBuild() const
+WORD App::getOSVer() const
 {
-	return osver_.dwBuildNumber;
+	return osver_.v.vb.ver.wVer;
+}
+
+WORD App::getOSBuild() const
+{
+	return osver_.v.vb.wBuild;
 }
 
 bool App::isOSVerEqual(DWORD ver) const
 {
-	return oosver_ == ver;
+	return osver_.v.dwVer == ver;
 }
 
 bool App::isNTOSVerEqual(DWORD ver) const
 {
-	return isNT() && oosver_ == ver;
+	return isNT() && osver_.v.dwVer == ver;
 }
 bool App::is9xOSVerEqual(DWORD ver) const
 {
-	return !isNT() && oosver_ == ver;
+	return !isNT() && osver_.v.dwVer == ver;
 }
 
 bool App::isOSVerLarger(DWORD ver) const
 {
-	return ver <= oosver_;
+	return ver <= osver_.v.dwVer;
 }
 
 bool App::isNTOSVerLarger(DWORD ver) const
 {
-	return isNT() && ver <= oosver_;
+	return isNT() && ver <= osver_.v.dwVer;
 }
 
 bool App::is9xOSVerLarger(DWORD ver) const
 {
-	return !isNT() &&  ver <= oosver_;
+	return !isNT() &&  ver <= osver_.v.dwVer;
 }
 
 bool App::isNewTypeWindows() const
 {
 	return (
-		( osver_.dwPlatformId==VER_PLATFORM_WIN32_NT      && oosver_ >= 0x05000000 ) // 5.0
-	 || ( osver_.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS && oosver_ >= 0x040A0000 ) // 4.10
+		( osver_.wPlatform==VER_PLATFORM_WIN32_NT      && osver_.v.vb.ver.wVer >= 0x0500 ) // 5.0
+	 || ( osver_.wPlatform==VER_PLATFORM_WIN32_WINDOWS && osver_.v.vb.ver.wVer >= 0x040A ) // 4.10
 	);
 }
 
 bool App::isWin95() const
 {
-	return (
-		osver_.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS &&
-		LOWORD(oosver_) == 0x0400
-	);
+//	return (
+//		osver_.wPlatform==VER_PLATFORM_WIN32_WINDOWS &&
+//		osver_.v.vb.ver.wVer == 0x0400
+//	);
+	struct midosver{ WORD a; WORD dwPlatVer; WORD b; WORD c; };
+	// Ugly cast to take the middle part of the version info (PLAT|wVER)
+	DWORD platver = *(DWORD*)&((const struct midosver*)&osver_)->dwPlatVer;
+
+	return platver == 0x00010400;
 }
 
 bool App::isNT() const
 {
-	return osver_.dwPlatformId==VER_PLATFORM_WIN32_NT;
+	return osver_.wPlatform==(WORD)VER_PLATFORM_WIN32_NT;
 }
 
 bool App::isWin32s() const
 {
-	return osver_.dwPlatformId==VER_PLATFORM_WIN32s;
+	return osver_.wPlatform==(WORD)VER_PLATFORM_WIN32s;
 }
 
 bool App::isNewShell() const
 {
-	return osver_.dwMajorVersion>3;
+	return osver_.v.vb.ver.u.cMajor > (BYTE)3;
 }
 
 //=========================================================================

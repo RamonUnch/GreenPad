@@ -8,6 +8,25 @@ HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsCont
 // Use to make a ordered window version ie: MKVER(3,10,511) = 0x030A01FF
 #define MKVER(M, m, b) ( (DWORD)( (BYTE)(M)<<24 | (BYTE)(m)<<16 | (WORD)(b) ) )
 
+// roytam1's versioninfo style
+typedef struct _MYVERINFO {
+	union {
+		DWORD dwVer;
+		struct {
+			WORD wBuild;
+			union {
+				WORD wVer;
+				struct {
+					BYTE cMinor;
+					BYTE cMajor;
+				} u;
+			} ver;
+		} vb;
+	} v;
+	WORD wPlatform;
+	WORD wFromWhichAPI;
+} MYVERINFO;
+
 #ifndef __ccdoc__
 namespace ki {
 #endif
@@ -94,9 +113,9 @@ public:
 	HINSTANCE       hOle32_;
 
 	//@{ Windows‚Ìƒo[ƒWƒ‡ƒ“ //@}
-	DWORD getOSVer() const;
-	DWORD getOSBuild() const;
 	DWORD getOOSVer() const;
+	WORD getOSVer() const;
+	WORD getOSBuild() const;
 	bool isOSVerLarger(DWORD ver) const;
 	bool is9xOSVerLarger(DWORD ver) const;
 	bool isNTOSVerLarger(DWORD ver) const;
@@ -114,11 +133,10 @@ private:
 	App();
 	~App();
 	void SetExitCode( int code );
-	OSVERSIONINFOA init_osver();
+	MYVERINFO init_osver();
 
 private:
-	const OSVERSIONINFOA  osver_;
-	const DWORD     oosver_;
+	const MYVERINFO osver_;
 	int             exitcode_;
 	ulong           loadedModule_;
 	const HINSTANCE hInst_;
