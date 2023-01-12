@@ -116,7 +116,9 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 App* App::pUniqueInstance_;
 
 inline App::App()
-	: hOle32_      ((HINSTANCE)(-1))
+	: osver_       (init_osver())
+	, oosver_      (MKVER(osver_.dwMajorVersion, osver_.dwMinorVersion, osver_.dwBuildNumber))
+	, hOle32_      ((HINSTANCE)(-1))
 	, exitcode_    (-1)
 	, loadedModule_(0)
 	, hInst_       (::GetModuleHandle(NULL))
@@ -124,7 +126,6 @@ inline App::App()
 {
 	// 唯一のインスタンスは私です。
 	pUniqueInstance_ = this;
-	init_osver();
 }
 
 #pragma warning( disable : 4722 ) // 警告：デストラクタに値が戻りません
@@ -210,28 +211,28 @@ void App::Exit( int code )
 
 //-------------------------------------------------------------------------
 
-void App::init_osver()
+OSVERSIONINFOA App::init_osver()
 {
 	// 初回だけは情報取得
-	osver_.dwOSVersionInfoSize = sizeof( osver_ );
-	MyGetVersionEx( &osver_ );
-	// oosver_ is in the logical order: MMmmBBBB
-	// Fot NT/9X/32s we use the dwPlatformId field independentely
-	oosver_ = MKVER(osver_.dwMajorVersion, osver_.dwMinorVersion, osver_.dwBuildNumber);
+	OSVERSIONINFOA v;
+	v.dwOSVersionInfoSize = sizeof( v );
+	MyGetVersionEx( &v );
 
 	#ifdef _DEBUG
 	TCHAR buf[256];
 	::wsprintf(buf,
-		TEXT("%s %lu.%lu build %lu (%hs) /%x/")
-		, osver_.dwPlatformId==VER_PLATFORM_WIN32_NT? TEXT("Windows NT")
-		: osver_.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS? TEXT("Windows")
-		: osver_.dwPlatformId==VER_PLATFORM_WIN32s? TEXT("Win32s"): TEXT("UNKNOWN")
-		, osver_.dwMajorVersion, osver_.dwMinorVersion, osver_.dwBuildNumber
-		, osver_.szCSDVersion, oosver_
+		TEXT("%s %lu.%lu build %lu (%hs)")
+		, v.dwPlatformId==VER_PLATFORM_WIN32_NT? TEXT("Windows NT")
+		: v.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS? TEXT("Windows")
+		: v.dwPlatformId==VER_PLATFORM_WIN32s? TEXT("Win32s"): TEXT("UNKNOWN")
+		, v.dwMajorVersion, osver_.dwMinorVersion, osver_.dwBuildNumber
+		, v.szCSDVersion
 	);
 	//MessageBox(NULL, buf, TEXT("Windows Version"), 0);
 	LOGGER( buf );
 	#endif
+
+	return v;
 }
 
 DWORD App::getOSVer() const
@@ -290,8 +291,7 @@ bool App::isWin95() const
 {
 	return (
 		osver_.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS &&
-		osver_.dwMajorVersion==4 &&
-		osver_.dwMinorVersion==0
+		LOWORD(oosver_) == 0x0400
 	);
 }
 

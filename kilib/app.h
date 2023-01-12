@@ -94,7 +94,6 @@ public:
 	HINSTANCE       hOle32_;
 
 	//@{ WindowsÇÃÉoÅ[ÉWÉáÉì //@}
-	void init_osver();
 	DWORD getOSVer() const;
 	DWORD getOSBuild() const;
 	DWORD getOOSVer() const;
@@ -115,10 +114,11 @@ private:
 	App();
 	~App();
 	void SetExitCode( int code );
+	OSVERSIONINFOA init_osver();
 
 private:
-	OSVERSIONINFOA  osver_;
-	DWORD           oosver_;
+	const OSVERSIONINFOA  osver_;
+	const DWORD     oosver_;
 	int             exitcode_;
 	ulong           loadedModule_;
 	const HINSTANCE hInst_;
