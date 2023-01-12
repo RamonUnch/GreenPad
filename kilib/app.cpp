@@ -215,17 +215,18 @@ OSVERSIONINFOA App::init_osver()
 {
 	// èââÒÇæÇØÇÕèÓïÒéÊìæ
 	OSVERSIONINFOA v;
-	v.dwOSVersionInfoSize = sizeof( v );
+	v.dwOSVersionInfoSize = sizeof( OSVERSIONINFOA );
+	v.szCSDVersion[0] = '\0';
 	MyGetVersionEx( &v );
 
 	#ifdef _DEBUG
 	TCHAR buf[256];
 	::wsprintf(buf,
-		TEXT("%s %lu.%lu build %lu (%hs)")
+		TEXT("%s %u.%u build %u (%hs)")
 		, v.dwPlatformId==VER_PLATFORM_WIN32_NT? TEXT("Windows NT")
 		: v.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS? TEXT("Windows")
 		: v.dwPlatformId==VER_PLATFORM_WIN32s? TEXT("Win32s"): TEXT("UNKNOWN")
-		, v.dwMajorVersion, osver_.dwMinorVersion, osver_.dwBuildNumber
+		, v.dwMajorVersion, v.dwMinorVersion, v.dwBuildNumber
 		, v.szCSDVersion
 	);
 	//MessageBox(NULL, buf, TEXT("Windows Version"), 0);
