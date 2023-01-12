@@ -102,8 +102,9 @@ public:
 #ifdef WIN32S
 			if( app().isWin32s() )
 			{
-				if( ch > 0x100 )
-				{
+				if( ch > 0x007f )
+				{	// For non ascii characters we use GetTextExtentPoint
+					// so that even on MBCS systems we get the correct answer.
 					SIZE sz;
 					char strch[8]; // Small buffer for a single multi-byte character.
 					DWORD len = WideCharToMultiByte(CP_ACP,0, &ch,1, strch, countof(strch), NULL, NULL);
