@@ -36,10 +36,19 @@ bool StatusBar::Create( )
 	if( h == NULL )
 		return false;
 
-//	SetStatusBarVisible();
 	SetHwnd( h );
-	AutoResize( false );
 	return true;
+}
+
+void StatusBar::SetStatusBarVisible(bool b)
+{
+	if (b && !hwnd() && parent_ )
+		Create(); // Create if needed
+	if( hwnd() )
+		::ShowWindow( hwnd(), b? SW_SHOW: SW_HIDE );
+	visible_= b && hwnd();
+	if( visible_ )
+		AutoResize( false );
 }
 
 int StatusBar::AutoResize( bool maximized )

@@ -56,12 +56,6 @@ inline bool StatusBar::isStatusBarVisible() const
 inline void StatusBar::SetParts( int n, int* parts )
 	{ SendMsg( SB_SETPARTS, n, reinterpret_cast<LPARAM>(parts) ); }
 
-inline void StatusBar::SetStatusBarVisible(bool b)
-	{ if (b && !hwnd() && parent_ ) Create();
-	  if(hwnd()) ::ShowWindow( hwnd(), b?SW_SHOW:SW_HIDE );
-	  visible_= b && hwnd();
-	}
-
 inline void StatusBar::SetParent(HWND parent)
 	{ parent_ = parent; }
 
