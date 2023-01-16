@@ -15,7 +15,7 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 	// On NT5 it seems ok to use "exe name.exe" "file name"
 	// Otherwise we try SHORT/NAME.EXE "file name"
 	// I do not know why the heck it is like this.
-	bool quotedexe = app().getOOSVer() >= 0x05000000 && app().isNT();
+	bool quotedexe = app().getOSVer() >= 0x0500 && app().isNT();
 	String fcmd;
 	if( quotedexe ) fcmd = TEXT("\"");
 	fcmd += quotedexe? Path(Path::ExeName): Path(Path::ExeName).BeShortStyle();
@@ -380,26 +380,28 @@ void GreenPadWnd::on_reopenfile()
 		if( dlg.endcode()==IDOK && AskToSave() )
 		{
 			// if csi > F0000 it means it is equal to the desired CP+0x100000
-			int csi = dlg.csi();
-			int cp = (csi > 0xF0000)? csi-0x100000: charSets_[csi].ID;
-			OpenByMyself( filename_, cp, false );
+			csi_ = dlg.csi();
+			int cs = resolveCSI(csi_); //(csi > 0xf0f00000)? csi&0xfffff: charSets_[csi].ID;
+			OpenByMyself( filename_, cs, false );
 		}
 	}
 }
-int GreenPadWnd::resolvedCSI()
+// resolves a csi into a usable cs
+int GreenPadWnd::resolveCSI(int csi) const
 {
-	return ((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)? csi_ & 0xfffff
-	       : (0 < csi_ && csi_ < 100)? charSets_[csi_].ID: 0;
+	return ((UINT)csi >= 0xf0f00000 && (UINT)csi < 0xf1000000)? csi & 0xfffff
+	       : (0 < csi && csi < (int)charSets_.size())? charSets_[csi].ID: 0;
 }
 void GreenPadWnd::on_openelevated(const ki::Path& fn)
 {
+#if !defined(TARGET_VER) || TARGET_VER > 303
 	// Only supported since Windows 2000
-	if( app().getOOSVer() < 0x05000000 )
+	if( app().getOSVer() < 0x0500 )
 		return;
 
 	const view::VPos *cur, *sel;
 	edit_.getCursor().getCurPosUnordered(&cur, &sel);
-	int cp = resolvedCSI();
+	int cp = resolveCSI(csi_);
 
 	String cmdl = TEXT( "-c") + String().SetInt(cp)
 	            + TEXT(" -l") + String().SetInt(cur->tl+1)
@@ -409,6 +411,7 @@ void GreenPadWnd::on_openelevated(const ki::Path& fn)
 	if( (LONG_PTR)ret > 32 )
 		//Destroy();
 		::ExitProcess(0); // Dirty quick exit.
+#endif
 }
 // Keeps cursor position...
 // TOTO: also set VPos so that it does not scroll...
@@ -420,7 +423,7 @@ void GreenPadWnd::on_refreshfile()
 		bool selected = edit_.getCursor().getCurPosUnordered(&cur, &sel);
 		unsigned sline = cur->tl, scol = cur->ad;
 		unsigned eline = sel->tl, ecol = sel->ad;
-		int cp = resolvedCSI();
+		int cp = resolveCSI(csi_);
 
 		OpenByMyself(filename_, cp, false);
 		if (selected) edit_.getCursor().MoveCur(DPos(eline, ecol), false);
@@ -706,7 +709,7 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 
 	::EnableMenuItem( menu, ID_CMD_SAVEFILE, MF_BYCOMMAND|(isUntitled() || edit_.getDoc().isModified() ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_REOPENFILE, MF_BYCOMMAND|(!isUntitled() ? MF_ENABLED : MF_GRAYED) );
-	::EnableMenuItem( menu, ID_CMD_OPENELEVATED, MF_BYCOMMAND|( app().getOOSVer() >= 0x05000000 ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_OPENELEVATED, MF_BYCOMMAND|( app().getOSVer() >= 0x0500 ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_GREP, MF_BYCOMMAND|(cfg_.grepExe().len()>0 ? MF_ENABLED : MF_GRAYED) );
 
 	::CheckMenuItem( menu, ID_CMD_NOWRAP, MF_BYCOMMAND|(wrap_==-1?MF_CHECKED:MF_UNCHECKED));
@@ -877,6 +880,7 @@ struct MyFindWindowExstruct {
 static BOOL CALLBACK MyFindWindowExProc(HWND hwnd, LPARAM lParam)
 {
 	struct MyFindWindowExstruct *param=(MyFindWindowExstruct *)lParam;
+	param->ret = NULL;
 	// Skip windows before we reach the after HWND.
 	if (param->after) {
 		if (param->after == hwnd)
@@ -1109,6 +1113,7 @@ void GreenPadWnd::on_mru( int no )
 
 void GreenPadWnd::ReloadConfig( bool noSetDocType )
 {
+	LOGGER("GreenPadWnd::ReloadConfig begin");
 	// 文書タイプロード, document type
 	if( !noSetDocType )
 	{
@@ -1132,7 +1137,7 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 		edit_.getDoc().SetKeyword((const unicode*)fp.base(),fp.size()/sizeof(unicode));
 	else
 		edit_.getDoc().SetKeyword(NULL,0);
-	LOGGER("GreenPadWnd::ReloadConfig KeywordLoaded");
+	LOGGER("GreenPadWnd::ReloadConfig KeywordLoaded, end");
 }
 
 
@@ -1156,10 +1161,14 @@ bool GreenPadWnd::ShowOpenDlg( Path* fn, int* cs )
 	bool ok = ofd.DoModal( hwnd(), filt.get(), filename_.c_str() );
 	if( ok )
 	{
+		LOGGER( "GreenPadWnd::ShowOpenDlg ok" );
 		*fn = ofd.filename();
-		*cs = charSets_[ofd.csi()].ID;
+		int i = ofd.csi();
+		i = 0 <= i && i < (int)charSets_.size()? i: 0;
+		*cs = charSets_[i].ID;
 	}
 
+	LOGGER( "GreenPadWnd::ShowOpenDlg end" );
 	return ok;
 }
 
@@ -1205,6 +1214,7 @@ BOOL GreenPadWnd::PostMsgToAllFriends(UINT msg)
 bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, bool always )
 {
 	//MsgBox(fn.c_str(), TEXT("File:"), 0);
+	LOGGERS( fn );
 	// ファイルを開けなかったらそこでおしまい。
 	aptr<TextFileR> tf( new TextFileR(cs) );
 
@@ -1231,7 +1241,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 		MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str() );
 		return false; // Failed to open.
 	}
-	else if ( app().getOOSVer() >= 0x05000000 )
+	else if ( app().getOSVer() >= 0x0500 )
 	{
 		// Check for Write access and Prompt the user
 		// if he would like to elevate so the file can be written.
@@ -1413,7 +1423,7 @@ bool GreenPadWnd::Save()
 	if((UINT)csi_ == 0xffffffff)
 		save_Csi = ::GetACP();
 	else
-		save_Csi = resolvedCSI();
+		save_Csi = resolveCSI(csi_);
 
 	if (!save_Csi) save_Csi = ::GetACP(); // in case
 	TextFileW tf( save_Csi, lb_ );

@@ -308,12 +308,12 @@ OpenFileDlg* OpenFileDlg::pThis;
 
 bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 {
+	LOGGER( "OpenFileDlg::DoModal begin" );
 	CurrentDirRecovery cdr;
 	TCHAR filepath_[MAX_PATH];
 
 	if( fnm == NULL )
 	{
-		filename_[0] = TEXT('\0');
 		filepath_[0] = TEXT('\0');
 	}
 	else
@@ -321,7 +321,7 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 		// Limit to MAX_PATH because fnm can be longer
 		// And SHELL API does not handle UNC anyway!
 		my_lstrcpyn(filepath_, fnm, MAX_PATH);
-		my_lstrcpyn(filename_, fnm, MAX_PATH);
+		filepath_[MAX_PATH-1] = TEXT('\0'); // in case
 
 		int i = 0;
 		int j = -1;
@@ -334,16 +334,10 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			}
 			i++;
 		}
-
-		int x = 0;
-		for (i = j+1; filepath_[i] != TEXT('\0'); i++)
-		{
-			filename_[x++] = filepath_[i];
-		}
-		filename_[x++] = TEXT('\0');
 		filepath_[j+1] = TEXT('\0');
 	}
 
+	filename_[0] = TEXT('\0');
 	myOPENFILENAME ofn = {sizeof(ofn)};
 	ofn.hwndOwner      = wnd;
 	ofn.hInstance      = app().hinst();
@@ -357,10 +351,11 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 				OFN_ENABLEHOOK    |
 				OFN_ENABLESIZING  |
 				OFN_ENABLETEMPLATE|
-				OFN_LONGNAMES     |
 				OFN_CREATEPROMPT;
 
-	if( app().isNewShell() )
+	// On Windows 95 4.00.116 we cannot add the cs droplist.
+	// Only use the New style dialog on Win95.NT4 RTM.
+	if( app().isNewShellRTM() )
 	{
 		// Include the OFN_EXPLORER flag to get the new look.
 		ofn.Flags |= OFN_EXPLORER;
@@ -369,30 +364,60 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	}
 	else
 	{
-		// Running under Windows NT, use the old look template.
+		// Running under Windows NT3.x, use the old look template.
 		ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
 	}
 
+	// clear last error
+	::SetLastError(0);
 	pThis = this;
 	BOOL ret = ::GetOpenFileName((LPOPENFILENAME)&ofn);
-	if( ret != TRUE ) {
+	if( !ret )
+	{
 		DWORD ErrCode = ::GetLastError();
 
-		if(!ErrCode || ErrCode == ERROR_NO_MORE_FILES) {
-			// user pressed Cancel button
-		} else if((ErrCode == ERROR_INVALID_PARAMETER || ErrCode == ERROR_CALL_NOT_IMPLEMENTED || ErrCode == ERROR_INVALID_ACCEL_HANDLE) && ((ofn.Flags & OFN_EXPLORER) == OFN_EXPLORER)) {
+		if( ( ErrCode == ERROR_INVALID_PARAMETER || ErrCode == ERROR_CALL_NOT_IMPLEMENTED || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
+		&&  ( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
+		{
 			// maybe Common Dialog DLL doesn't like OFN_EXPLORER, try again without it
 			ofn.Flags &= ~OFN_EXPLORER;
 			ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
 
 			// try again!
+			::SetLastError(0);
 			ret = ::GetOpenFileName((LPOPENFILENAME)&ofn);
-		} else {
-			TCHAR tmp[128];
-			::wsprintf(tmp,TEXT("GetOpenFileName Error #%d."),ErrCode);
-			MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+		}
+		// Check again if we got a file.
+		if( !ret )
+		{
+			ErrCode = ::GetLastError();
+			if( !ErrCode
+			|| ErrCode == ERROR_NO_MORE_FILES
+			|| ErrCode == ERROR_INVALID_PARAMETER
+			|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST  // On XP I sometime get this!!!!
+			){
+				// user pressed Cancel button
+				LOGGER( "OpenFileDlg::DoModal CANCEL end" );
+			}
+			else
+			{	// Failed, display LastError.
+				TCHAR tmp[64]; tmp[0] = TEXT('\0');
+				::wsprintf(tmp,TEXT("GetOpenFileName LastError #%d"), ErrCode);
+				::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+				LOGGER( "OpenFileDlg::DoModal FAILED end" );
+			}
+		}
+		else
+		{
+			LOGGER( "OpenFileDlg::DoModal FALLBACK OK end" );
 		}
 	}
+	else
+	{
+		LOGGER( "OpenFileDlg::DoModal SUCESS end with file" );
+		LOGGERS( filename_ );
+	}
+
 	return ( ret != 0 );
 }
 
@@ -426,7 +451,7 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		}
 	}
 
-	return FALSE;
+	return 0;
 }
 
 
@@ -488,10 +513,10 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 				OFN_ENABLESIZING    |
 				OFN_ENABLEHOOK      |
 				OFN_ENABLETEMPLATE  |
-				OFN_OVERWRITEPROMPT |
-				OFN_LONGNAMES;
+				OFN_OVERWRITEPROMPT;
 
-	if( app().isNewShell() )
+
+	if( app().isNewShellRTM() )
 	{
 		// Include the OFN_EXPLORER flag to get the new look.
 		ofn.Flags |= OFN_EXPLORER;
@@ -506,24 +531,43 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	}
 
 	pThis = this;
+	::SetLastError(0);
 	BOOL ret = ::GetSaveFileName((LPOPENFILENAME)&ofn);
-	if(ret != TRUE) {
+	if( !ret )
+	{
 		DWORD ErrCode = ::GetLastError();
 
-		if(!ErrCode || ErrCode == ERROR_NO_MORE_FILES) {
-			// user pressed Cancel button
-		} else if((ErrCode == ERROR_INVALID_PARAMETER || ErrCode == ERROR_CALL_NOT_IMPLEMENTED) && ((ofn.Flags & OFN_EXPLORER) == OFN_EXPLORER)) {
+		if( (  ErrCode == ERROR_INVALID_PARAMETER
+		    || ErrCode == ERROR_CALL_NOT_IMPLEMENTED
+		    || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
+		&&  ( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
+		{
 			// maybe Common Dialog DLL doesn't like OFN_EXPLORER, try again without it
 			ofn.Flags &= ~OFN_EXPLORER;
-		    ofn.lpstrTitle     = TEXT("Save File As");
+			ofn.lpstrTitle     = TEXT("Save File As");
 			ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
 
 			// try again!
-			ret = ::GetSaveFileName((LPOPENFILENAME)&ofn);
-		} else {
-			TCHAR tmp[128];
-			::wsprintf(tmp,TEXT("GetSaveFileName Error #%d."),ErrCode);
-			::MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+			::SetLastError(0);
+			ret = ::GetOpenFileName((LPOPENFILENAME)&ofn);
+		}
+		// Check again if we got a file.
+		if( !ret )
+		{
+			ErrCode = ::GetLastError();
+			if( !ErrCode
+			|| ErrCode == ERROR_NO_MORE_FILES
+			|| ErrCode == ERROR_INVALID_PARAMETER
+			|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST // On XP I sometime get this!!!!
+			){
+				// user pressed Cancel button
+			}
+			else
+			{	// Failed, display LastError.
+				TCHAR tmp[64]; tmp[0] = TEXT('\0');
+				::wsprintf(tmp,TEXT("GetSaveFileName LastError #%d"), ErrCode);
+				::MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+			}
 		}
 	}
 	return ( ret != 0 );
@@ -621,9 +665,21 @@ void ReopenDlg::on_init()
 	for( ulong i=0; i<csl_.size(); ++i )
 		if( csl_[i].type & 1 ) // 2:=SAVE
 			cb.Add( csl_[i].longName );
-	if(csIndex_ < 0 || csIndex_ > (int)csl_.size())
-		csIndex_ = 0;
-	cb.Select( csl_[csIndex_].longName );
+
+	int csi = csIndex_;
+	if( csi < 0 || csi > (int)csl_.size() )
+		csi = 0; // index is outside of range.
+
+	// Select combobox item
+	cb.Select( csl_[csi].longName );
+
+	if( csi == 0 )
+	{	// Show CP number in the reopen dialog
+		// If selection failed.
+		String s;
+		s.SetInt( csIndex_&0xfffff );
+		SendMsgToItem(IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)s.c_str());
+	}
 }
 
 bool ReopenDlg::on_ok()
@@ -632,21 +688,29 @@ bool ReopenDlg::on_ok()
 	SendMsgToItem(IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
 	// Typed CP has precedence over droplist
 	if ( buf[0] )
-	{ // Offset of ~1million to avoid covering the index range
-		int cp = Clamp(-65535, String::GetInt(buf), +65535); // Clamp cp
-		csIndex_ = cp + 0x100000;
+	{
+		// Clamp cs
+		int cs = Clamp(-65535, String::GetInt(buf), +65535);
+		// Try to find value in the charset list
+		csIndex_ = csl_.findCsi( cs );
+		if( (UINT)csIndex_ == 0xffffffff )
+			csIndex_ = 0xf0f00000 | cs;
+
 		return true;
 	}
 
 	// OKが押されたら、文字コードの選択状況を記録
 	ulong j=0, i=ComboBox(hwnd(),IDC_CODELIST).GetCurSel();
-	for(;;++j,--i)
-	{
-		while( !(csl_[j].type & 1) ) // !SAVE
-			++j;
-		if( i==0 )
-			break;
+	if( 0 < i && i < (int)csl_.size() )
+	{ // Only if i is in correct range.
+		for(;;++j,--i)
+		{
+			while( !(csl_[j].type & 1) ) // !SAVE
+				++j;
+			if( i==0 )
+				break;
+		}
+		csIndex_ = j;
 	}
-	csIndex_ = j;
 	return true;
 }
