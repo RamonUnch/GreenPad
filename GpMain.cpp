@@ -373,20 +373,27 @@ void GreenPadWnd::on_openfile()
 
 void GreenPadWnd::on_reopenfile()
 {
-	if( !isUntitled() )
-	{
-		ReopenDlg dlg( charSets_, csi_ );
-		dlg.GoModal( hwnd() );
-		if( dlg.endcode()==IDOK && AskToSave() )
-		{
-			// if csi > F0000 it means it is equal to the desired CP+0x100000
-			csi_ = dlg.csi();
-			int cs = resolveCSI(csi_); //(csi > 0xf0f00000)? csi&0xfffff: charSets_[csi].ID;
-			OpenByMyself( filename_, cs, false );
+	ReopenDlg dlg( charSets_, csi_ );
+	dlg.GoModal( hwnd() );
+	if( dlg.endcode() == IDOK )
+	{	// User pressed OK
+		csi_ = dlg.csi(); // Change current csi_
+		if( !isUntitled() )
+		{	// We have a file to reopen
+			if( AskToSave() )
+			{
+				int cs = resolveCSI(csi_); //(csi > 0xf0f00000)? csi&0xfffff: charSets_[csi].ID;
+				OpenByMyself( filename_, cs, false );
+			}
+		}
+		else
+		{	// Simply update statusbar
+			UpdateWindowName();
 		}
 	}
 }
-// resolves a csi into a usable cs
+
+// Resolves a csi into a usable cs
 int GreenPadWnd::resolveCSI(int csi) const
 {
 	return ((UINT)csi >= 0xf0f00000 && (UINT)csi < 0xf1000000)? csi & 0xfffff
@@ -708,7 +715,7 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 	}
 
 	::EnableMenuItem( menu, ID_CMD_SAVEFILE, MF_BYCOMMAND|(isUntitled() || edit_.getDoc().isModified() ? MF_ENABLED : MF_GRAYED) );
-	::EnableMenuItem( menu, ID_CMD_REOPENFILE, MF_BYCOMMAND|(!isUntitled() ? MF_ENABLED : MF_GRAYED) );
+	// ::EnableMenuItem( menu, ID_CMD_REOPENFILE, MF_BYCOMMAND|(!isUntitled() ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_OPENELEVATED, MF_BYCOMMAND|( app().getOSVer() >= 0x0500 ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_GREP, MF_BYCOMMAND|(cfg_.grepExe().len()>0 ? MF_ENABLED : MF_GRAYED) );
 
