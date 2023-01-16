@@ -354,8 +354,8 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 				OFN_CREATEPROMPT;
 
 	// On Windows 95 4.00.116 we cannot add the cs droplist.
-	// Only use the New style dialog on Win95.NT4 RTM.
-	if( app().isNewShellRTM() )
+	// Only use the New style dialog on Win95 347+/NT4 RTM.
+	if( app().isNewOpenSaveDlg() )
 	{
 		// Include the OFN_EXPLORER flag to get the new look.
 		ofn.Flags |= OFN_EXPLORER;
@@ -376,8 +376,10 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	{
 		DWORD ErrCode = ::GetLastError();
 
-		if( ( ErrCode == ERROR_INVALID_PARAMETER || ErrCode == ERROR_CALL_NOT_IMPLEMENTED || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
-		&&  ( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
+		if( ( ErrCode == ERROR_INVALID_PARAMETER
+		   || ErrCode == ERROR_CALL_NOT_IMPLEMENTED
+		   || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
+		&&( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
 		{
 			// maybe Common Dialog DLL doesn't like OFN_EXPLORER, try again without it
 			ofn.Flags &= ~OFN_EXPLORER;
@@ -401,9 +403,9 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			}
 			else
 			{	// Failed, display LastError.
-				TCHAR tmp[64]; tmp[0] = TEXT('\0');
-				::wsprintf(tmp,TEXT("GetOpenFileName LastError #%d"), ErrCode);
-				::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+				//TCHAR tmp[64]; tmp[0] = TEXT('\0');
+				//::wsprintf(tmp,TEXT("GetOpenFileName LastError #%d"), ErrCode);
+				//::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK );
 				LOGGER( "OpenFileDlg::DoModal FAILED end" );
 			}
 		}
@@ -433,6 +435,14 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			if( csl[i].type & 2 ) // 2:=LOAD
 				cb.Add( csl[i].longName );
 		cb.Select( csl[0].longName );
+
+		HWND hCRLFCombo = ::GetDlgItem( dlg, IDC_CRLFLIST );
+		if( hCRLFCombo )
+		{
+			::ShowWindow( hCRLFCombo, SW_HIDE );
+			HWND hCRLFlbl = ::GetDlgItem( dlg, IDC_CRLFLBL );
+			if(hCRLFlbl) ::ShowWindow( hCRLFlbl, SW_HIDE );
+		}
 	}
 	else if( msg==WM_NOTIFY ||( msg==WM_COMMAND && LOWORD(wp)==1 ))
 	{
@@ -516,15 +526,27 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 				OFN_OVERWRITEPROMPT;
 
 
-	if( app().isNewShellRTM() )
+	if( app().isNewOpenSaveDlg() )
 	{
 		// Include the OFN_EXPLORER flag to get the new look.
 		ofn.Flags |= OFN_EXPLORER;
 		// Use the new template sans the Open File controls.
 		ofn.lpTemplateName = MAKEINTRESOURCE(IDD_SAVEFILEHOOK);
 	}
+	else if( !app().isNTOSVerLarger(MKVER(3,10,404)) )
+	{	// On Very old NT builds we cannot use Hook nor template
+		// for the save dialog only..
+		ofn.lpfnHook = NULL;
+		ofn.lpTemplateName = NULL;
+		ofn.Flags = OFN_HIDEREADONLY    |
+					OFN_PATHMUSTEXIST   |
+					OFN_ENABLESIZING    |
+					OFN_OVERWRITEPROMPT;
+	}
 	else
-	{
+	{	// Windows NT3.10.404 - NT4 pre-RTM
+		// Win32s all versions.
+		// Windows 95 pre-RTM
 	    ofn.lpstrTitle     = TEXT("Save File As");
 		// Running under Windows NT, use the old look template.
 		ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
@@ -564,9 +586,9 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			}
 			else
 			{	// Failed, display LastError.
-				TCHAR tmp[64]; tmp[0] = TEXT('\0');
-				::wsprintf(tmp,TEXT("GetSaveFileName LastError #%d"), ErrCode);
-				::MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+				//TCHAR tmp[64]; tmp[0] = TEXT('\0');
+				//::wsprintf(tmp,TEXT("GetSaveFileName LastError #%d"), ErrCode);
+				//::MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
 			}
 		}
 	}
@@ -693,6 +715,8 @@ bool ReopenDlg::on_ok()
 		int cs = Clamp(-65535, String::GetInt(buf), +65535);
 		// Try to find value in the charset list
 		csIndex_ = csl_.findCsi( cs );
+
+		// If we could not the index, then store the cp with a mask
 		if( (UINT)csIndex_ == 0xffffffff )
 			csIndex_ = 0xf0f00000 | cs;
 
