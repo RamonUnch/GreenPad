@@ -70,7 +70,7 @@ private:
 private:
 
 	bool isUntitled() const { return filename_.len()==0; }
-	int resolvedCSI();
+	int resolveCSI(int csi) const ;
 
 private:
 
