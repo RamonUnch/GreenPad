@@ -328,11 +328,11 @@ private:
 		int len = SendMsgToItem(idc, CB_GETLBTEXTLEN, idx);
 		if( 0 < len && len < MAX_PATH )
 		{
-			return 0 > SendMsgToItem( idc, CB_GETLBTEXT, idx, reinterpret_cast<LPARAM>(buf) );
+			return 0 < SendMsgToItem( idc, CB_GETLBTEXT, idx, reinterpret_cast<LPARAM>(buf) );
 		}
 		return false;
 	}
-	void NewProcessFromDropList( UINT idc )
+	void NewProcessFromComboBox( UINT idc )
 	{
 		TCHAR buf[MAX_PATH];
 		if( getComboBoxText( idc, buf ) )
@@ -352,10 +352,10 @@ private:
 			switch( id )
 			{
 			case IDC_EDITKWD:
-				NewProcessFromDropList(IDC_PAT_KWD);
+				NewProcessFromComboBox(IDC_PAT_KWD);
 				break;
 			case IDC_EDITLAY:
-				NewProcessFromDropList(IDC_PAT_LAY);
+				NewProcessFromComboBox(IDC_PAT_LAY);
 				break;
 			case IDC_NEWDOCTYPE:
 				on_newdoctype();
@@ -779,7 +779,7 @@ void ConfigManager::LoadIni()
 	// ã§í ÇÃê›íË
 	undoLimit_ = ini_.GetInt( TEXT("UndoLimit"), -1 );
 	txtFilter_ = ini_.GetStr( TEXT("TxtFilter"),
-		TEXT("*.txt;*.htm;*.html;*.css;*.js;*.d;*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.php;*.php3;*.ini") );
+		TEXT("*.txt;*.htm;*.html;*.css;*.js;*.d;*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.php;*.php3;*.ini;*.log;*.inf") );
 	grepExe_   = ini_.GetStr( TEXT("GrepExe"), TEXT("") );
 	openSame_  = ini_.GetBool( TEXT("OpenSame"), false );
 	countbyunicode_ = ini_.GetBool( TEXT("CountUni"), false );
