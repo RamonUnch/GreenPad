@@ -50,7 +50,7 @@ static bool LoadIMM32DLL()
 	// fails we get an error message
 	if( app().isWin32s() )
 		return false;
-//	if ( !::GetSystemMetrics(SM_DBCSENABLED) && app().getOOSVer() >= 0x05000000 && !::GetSystemMetrics(/*SM_IMMENABLED*/ 82) )
+//	if ( !::GetSystemMetrics(SM_DBCSENABLED) && app().getOSVer() >= 0x0500 && !::GetSystemMetrics(/*SM_IMMENABLED*/ 82) )
 //		return false;
 
 	//MessageBox(NULL, TEXT("Going to Load IMM32.DLL"), NULL, 0);
@@ -161,7 +161,7 @@ IMEManager::IMEManager()
 		// No global IME on Win95 because it is buggy...
 		// RamonUnch: I found it is not so buggy so
 		// I re-enabled it unless we are on a DBCS enabled system!
-		if( app().getOOSVer() >= 0x04000000 && !( app().isWin95() && ::GetSystemMetrics(SM_DBCSENABLED) ) )
+		if( app().getOSVer() >= 0x0400 && !( app().isWin95() && ::GetSystemMetrics(SM_DBCSENABLED) ) )
 		{ // Not available on Win32s/NT3.X?
 			app().InitModule( App::OLE );
 			if( S_OK == ::MyCoCreateInstance(
@@ -561,7 +561,7 @@ void Window::SetCenter( HWND hwnd, HWND rel )
 	long Xdiff = (pr.right-pr.left)-(rc.right-rc.left);
 	long Ydiff = (pr.bottom-pr.top)-(rc.bottom-rc.top);
 	// ’†‰›‚ðŒvŽZ
-	if( Xdiff >= 0 && Xdiff >= 0 )
+	if( Xdiff >= 0 && Ydiff >= 0 )
 	{	// Only center if rc is smaller than pr
 		// Otherwise the window can move out of reach.
 		::SetWindowPos( hwnd, 0,
