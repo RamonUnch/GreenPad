@@ -126,6 +126,7 @@ public:
 	bool isNT() const;
 	bool isWin32s() const;
 	bool isNewShell() const;
+	bool isNewOpenSaveDlg() const;
 	bool isNewTypeWindows() const;
 
 private:

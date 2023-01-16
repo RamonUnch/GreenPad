@@ -55,11 +55,11 @@ HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsCont
 #endif // NO_OLE32
 
 #if defined(TARGET_VER) && TARGET_VER <= 350
-typedef BOOL (WINAPI *GetVersionEx_funk)(LPOSVERSIONINFOA s_osVer);
 static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 {
 	// Try first to get the real GetVersionEx function
 	// We use the ANSI version because it does not matter.
+	typedef BOOL (WINAPI *GetVersionEx_funk)(LPOSVERSIONINFOA s_osVer);
 	GetVersionEx_funk func = (GetVersionEx_funk)
 		GetProcAddress(GetModuleHandleA("KERNEL32.DLL"), "GetVersionExA");
 	if (func && func( s_osVer ))
@@ -68,7 +68,9 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 		{   // fixup broken build number in early 9x builds (roytam1)
 			s_osVer->dwBuildNumber &= 0xffff;
 		}
-		return TRUE;
+		// Only return if we got a Major version (in case)
+		if (s_osVer->dwMajorVersion)
+			return TRUE;
 	}
 
 	// Fallback in case the above failed (WinNT 3.1 / Win32s)
@@ -215,19 +217,20 @@ MYVERINFO App::init_osver()
 {
 	// èââÒÇæÇØÇÕèÓïÒéÊìæ
 	OSVERSIONINFOA v;
+	mem00( &v, sizeof(v) );
 	v.dwOSVersionInfoSize = sizeof( OSVERSIONINFOA );
-	v.szCSDVersion[0] = '\0';
 	MyGetVersionEx( &v );
 
 	#ifdef _DEBUG
 	TCHAR buf[256];
 	::wsprintf(buf,
-		TEXT("%s %u.%u build %u (%hs)")
+		TEXT("%s %u.%u build %u (%hs) - %s")
 		, v.dwPlatformId==VER_PLATFORM_WIN32_NT? TEXT("Windows NT")
 		: v.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS? TEXT("Windows")
 		: v.dwPlatformId==VER_PLATFORM_WIN32s? TEXT("Win32s"): TEXT("UNKNOWN")
 		, v.dwMajorVersion, v.dwMinorVersion, v.dwBuildNumber
 		, v.szCSDVersion
+		, v.dwOSVersionInfoSize? TEXT("GetVersionEx()"): TEXT("GetVersion()")
 	);
 	//MessageBox(NULL, buf, TEXT("Windows Version"), 0);
 	LOGGERS( buf );
@@ -275,7 +278,11 @@ bool App::isNTOSVerEqual(DWORD ver) const
 }
 bool App::is9xOSVerEqual(DWORD ver) const
 {
+#if defined(WIN64)
+	return false;
+#else
 	return !isNT() && osver_.v.dwVer == ver;
+#endif
 }
 
 bool App::isOSVerLarger(DWORD ver) const
@@ -290,19 +297,30 @@ bool App::isNTOSVerLarger(DWORD ver) const
 
 bool App::is9xOSVerLarger(DWORD ver) const
 {
+#if defined(WIN64)
+	return false;
+#else
 	return !isNT() &&  ver <= osver_.v.dwVer;
+#endif
 }
 
 bool App::isNewTypeWindows() const
 {
+#if defined(WIN64)
+	return true;
+#else
 	return (
 		( osver_.wPlatform==VER_PLATFORM_WIN32_NT      && osver_.v.vb.ver.wVer >= 0x0500 ) // 5.0
 	 || ( osver_.wPlatform==VER_PLATFORM_WIN32_WINDOWS && osver_.v.vb.ver.wVer >= 0x040A ) // 4.10
 	);
+#endif
 }
 
 bool App::isWin95() const
 {
+#if defined(WIN64)
+	return false;
+#else
 #if defined(_M_IX86) || defined(_M_AMD64)
 	// Not sure for which CPU this stupid optimization is safe...
 	struct midosver{ WORD a; WORD dwPlatVer; WORD b; WORD c; };
@@ -315,23 +333,47 @@ bool App::isWin95() const
 		osver_.v.vb.ver.wVer == 0x0400
 	);
 #endif
+
+#endif // WIN64
 }
 
 bool App::isNT() const
 {
+#if defined(WIN64)
+	return true;
+#else
 	return osver_.wPlatform==(WORD)VER_PLATFORM_WIN32_NT;
+#endif
 }
 
 bool App::isWin32s() const
 {
+#ifndef WIN32S
+	return false;
+#else
 	return osver_.wPlatform==(WORD)VER_PLATFORM_WIN32s;
+#endif
 }
 
 bool App::isNewShell() const
 {
+#if defined(WIN64)
+	return true;
+#else
 	return osver_.v.vb.ver.u.cMajor > (BYTE)3;
+#endif
 }
 
+// Windows 95 4.0.347 and NT4.0 RTM or later
+bool App::isNewOpenSaveDlg() const
+{
+#if defined(WIN64)
+	return true;
+#else
+	return app().is9xOSVerLarger(MKVER(4,0,347))
+	    || app().isNTOSVerLarger(MKVER(4,0,1381)) ;
+#endif
+}
 //=========================================================================
 
 extern int kmain();
@@ -376,6 +418,15 @@ namespace ki
 		}
 	}
 }
+
+#if defined(TARGET_VER) && TARGET_VER <= 303
+	// On Windows NT 3.10.340 MessageBox does not exists!
+	extern "C" int WINAPI _imp__MessageBoxA(HWND a, LPCSTR b, LPCSTR c, UINT d)
+		{ return MessageBoxExA(a, b, c, d, 0); }
+
+	extern "C" int WINAPI _imp__MessageBoxW(HWND a, LPCWSTR b, LPCWSTR c, UINT d)
+		{ return MessageBoxExW(a, b, c, d, 0); }
+#endif
 
 #ifdef __GNUC__
   #ifdef SUPERTINY
