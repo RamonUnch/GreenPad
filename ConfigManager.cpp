@@ -783,7 +783,12 @@ void ConfigManager::LoadIni()
 	grepExe_   = ini_.GetStr( TEXT("GrepExe"), TEXT("") );
 	openSame_  = ini_.GetBool( TEXT("OpenSame"), false );
 	countbyunicode_ = ini_.GetBool( TEXT("CountUni"), false );
-	showStatusBar_ = ini_.GetBool( TEXT("StatusBar"), true );
+	// By default we have stb on NT3.10.404 Win32s 1.30.159
+	// And chicago builds that are not too early.
+	bool havestb =  app().isNTOSVerLarger( MKVER(3,10,404) )
+	            ||( app().is9xOSVerLarger( MKVER(4,00, 99) ) )
+	            ||( app().isWin32s() && app().getOSBuild() >= 159 );
+	showStatusBar_ = ini_.GetBool( TEXT("StatusBar"), havestb );
 
 	dateFormat_   = ini_.GetStr( TEXT("DateFormat"), TEXT("HH:mm yyyy/MM/dd") );
 
