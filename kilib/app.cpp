@@ -374,15 +374,14 @@ bool App::isNewShell() const
 #endif
 }
 
-// Windows 95 4.0.180 and NT4.0 RTM or later
-// Need to test on Hydra/Cairo
+// Windows 95 4.0.180 and NT4.0
 bool App::isNewOpenSaveDlg() const
 {
 #if defined(WIN64)
 	return true;
 #else
 	return app().is9xOSVerLarger( MKVER(4,0,180) )
-	    || app().isNTOSVerLarger( MKVER(4,0,1381) ) ;
+	    || app().isNTOSVerLarger( MKVER(4,0,0) ) ;
 #endif
 }
 //=========================================================================
