@@ -194,6 +194,9 @@ private:
 	GLYPHSET     *fontranges_;
 	COLORREF     colorTable_[7];
 	bool         scDraw_[5];
+#ifdef WIN32S
+	const bool   useOutA_;
+#endif
 
 private:
 
@@ -233,9 +236,9 @@ public:
 	void on_font_change( const VConfig& vc );
 
 	//@{ 設定変更イベント処理 //@}
-	void on_config_change( int wrap, bool showln, bool warpSmart );
+	void on_config_change( short wrap, bool showln, bool warpSmart );
 
-	void on_config_change_nocalc( int wrap, bool showln, bool warpSmart );
+	void on_config_change_nocalc( short wrap, bool showln, bool warpSmart );
 
 public:
 
@@ -258,9 +261,9 @@ public:
 
 private:
 
-	int  wrapType_;  // [ -1:折り返し無し  0:窓右端  else:指定文字数 ]
-	bool warpSmart_; // [ Enable wrapping at word boundaries ]
-	bool showLN_;    // [ 行番号を表示するか否か ]
+	short wrapType_;  // [ -1:折り返し無し  0:窓右端  else:指定文字数 ]
+	bool  warpSmart_; // [ Enable wrapping at word boundaries ]
+	bool  showLN_;    // [ 行番号を表示するか否か ]
 
 	dptr<Painter> font_; // 描画用オブジェクト
 	ulong    wrapWidth_; // 折り返し幅(pixel)

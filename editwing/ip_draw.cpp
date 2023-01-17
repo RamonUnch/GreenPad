@@ -237,6 +237,9 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 //	, widthTable_( new int[65536] )
 	, widthTable_( wtable )
 	, fontranges_( NULL )
+#ifdef WIN32S
+	, useOutA_   ( app().isWin32s() || (!app().isNT() && app().getOOSVer() <= MKVER(4,00,99)) )
+#endif
 {
 	// 制御文字を描画するか否か？のフラグを記憶,
 	// Whether to draw control characters or not? flag is stored.
@@ -366,7 +369,7 @@ inline void Painter::StringOut
 	( const unicode* str, int len, int x, int y )
 {
 #ifdef WIN32S
-	if( app().isWin32s() )
+	if( useOutA_ )
 	{
 		DWORD dwNum;
 		char psTXT1K[1024];
