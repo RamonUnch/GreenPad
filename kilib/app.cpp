@@ -97,10 +97,8 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 	if (s_osVer->dwPlatformId != VER_PLATFORM_WIN32_NT)
 	{
 		s_osVer->dwPlatformId = VER_PLATFORM_WIN32_WINDOWS;
-		// Get real build bumber removing the most significant bit.
-		// We must remove the two most significant bits otherwise early
-		// chicago builds would be 16384!!!
-		s_osVer->dwBuildNumber = HIWORD(dwVersion)&(~0xC000);
+		s_osVer->dwBuildNumber = 0; // No available Build number on 9x...
+
 		#ifdef WIN32S
 		if (dwVersion == 0x80000a3f)
 		{ // Win32s beta build 61 (Makes no sense!)
@@ -111,7 +109,12 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 			return TRUE;
 		}
 		if (s_osVer->dwMajorVersion == 3)
+		{
+			// Windows 3 => we are using Win32s...
 			s_osVer->dwPlatformId = VER_PLATFORM_WIN32s;
+			// Get real build bumber removing the most significant bit.
+			s_osVer->dwBuildNumber = HIWORD(dwVersion)&(~0x8000);
+		}
 		#endif // WIN32S
 	}
 
@@ -371,14 +374,15 @@ bool App::isNewShell() const
 #endif
 }
 
-// Windows 95 4.0.347 and NT4.0 RTM or later
+// Windows 95 4.0.180 and NT4.0 RTM or later
+// Need to test on Hydra/Cairo
 bool App::isNewOpenSaveDlg() const
 {
 #if defined(WIN64)
 	return true;
 #else
-	return app().is9xOSVerLarger(MKVER(4,0,347))
-	    || app().isNTOSVerLarger(MKVER(4,0,1381)) ;
+	return app().is9xOSVerLarger( MKVER(4,0,180) )
+	    || app().isNTOSVerLarger( MKVER(4,0,1381) ) ;
 #endif
 }
 //=========================================================================
