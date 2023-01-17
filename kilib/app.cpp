@@ -67,6 +67,14 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 		if (s_osVer->dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
 		{   // fixup broken build number in early 9x builds (roytam1)
 			s_osVer->dwBuildNumber &= 0xffff;
+
+			if( s_osVer->dwMajorVersion == 4
+			&&  s_osVer->dwMinorVersion == 0
+			&&  s_osVer->dwBuildNumber  == 0 )
+			{	// RAMON: Windows 4.00.0 with GetVersionEx
+				// This means we have at least build 99 of chicago
+				s_osVer->dwBuildNumber = 99;
+			}
 		}
 		// Only return if we got a Major version (in case)
 		if (s_osVer->dwMajorVersion)
@@ -76,9 +84,6 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 	// Fallback in case the above failed (WinNT 3.1 / Win32s)
 	DWORD dwVersion = ::GetVersion();
 	s_osVer->dwOSVersionInfoSize = 0; // Indicate the fallback.
-//	TCHAR buf[12];
-//	::wsprintf(buf, "%x", dwVersion);
-//	MessageBox(NULL, buf, TEXT("Windows Version"), 0);
 
 	s_osVer->dwMajorVersion = (DWORD)(LOBYTE(LOWORD(dwVersion)));
 	s_osVer->dwMinorVersion = (DWORD)(HIBYTE(LOWORD(dwVersion)));
@@ -93,7 +98,9 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 	{
 		s_osVer->dwPlatformId = VER_PLATFORM_WIN32_WINDOWS;
 		// Get real build bumber removing the most significant bit.
-		s_osVer->dwBuildNumber = HIWORD(dwVersion)&(~0x8000);
+		// We must remove the two most significant bits otherwise early
+		// chicago builds would be 16384!!!
+		s_osVer->dwBuildNumber = HIWORD(dwVersion)&(~0xC000);
 		#ifdef WIN32S
 		if (dwVersion == 0x80000a3f)
 		{ // Win32s beta build 61 (Makes no sense!)
@@ -339,7 +346,7 @@ bool App::isWin95() const
 
 bool App::isNT() const
 {
-#if defined(WIN64)
+#if defined(WIN64) || defined(UNICODE) && !defined(UNICOWS)
 	return true;
 #else
 	return osver_.wPlatform==(WORD)VER_PLATFORM_WIN32_NT;
