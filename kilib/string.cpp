@@ -106,7 +106,19 @@ BOOL my_IsCharLowerW(wchar_t c)
 }
 
 #ifdef OLDWIN32S
-int SimpleWC2MB(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef)
+int WINAPI SimpleWC2MB_1st(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef);
+int (WINAPI *SimpleWC2MB)(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef) = SimpleWC2MB_1st;
+int WINAPI SimpleWC2MB_fb(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef);
+int WINAPI SimpleWC2MB_1st(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef)
+{
+	SimpleWC2MB = (int (WINAPI *)(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef))
+		GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "WideCharToMultiByte");
+	if( !SimpleWC2MB )
+		SimpleWC2MB = SimpleWC2MB_fb;
+
+	return SimpleWC2MB(cp, flg, s, sl, d, dl, defc, useddef);
+}
+int WINAPI SimpleWC2MB_fb(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef)
 {
 	if( d == NULL || dl == 0 ) // return required length.
 		return sl==-1? my_lstrlenW(s): sl;
@@ -129,7 +141,19 @@ int SimpleWC2MB(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR d
 	d[i] = '\0';
 	return i;
 }
-int WINAPI SimpleMB2WC(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl)
+int WINAPI SimpleMB2WC_1st(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl);
+int(WINAPI*SimpleMB2WC)   (UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl) = SimpleMB2WC_1st;
+int WINAPI SimpleMB2WC_fb (UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl);
+int WINAPI SimpleMB2WC_1st(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl)
+{
+	SimpleMB2WC = (int (WINAPI *)(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl))
+		GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "MultiByteToWideChar");
+	if( !SimpleMB2WC )
+		SimpleMB2WC = SimpleMB2WC_fb;
+
+	return SimpleMB2WC(cp, flg, s, sl, d, dl);
+}
+int WINAPI SimpleMB2WC_fb(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl)
 {
 	if( d == NULL || dl == 0 )
 		return sl==-1? my_lstrlenA(s): sl;
@@ -396,5 +420,3 @@ const char* String::ConvToChar() const
 	return c_str();
 #endif
 }
-
-

@@ -23,8 +23,8 @@
 #endif
 
 #ifdef OLDWIN32S
-int WINAPI SimpleMB2WC(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl);
-int SimpleWC2MB(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef);
+extern int (WINAPI *SimpleMB2WC)(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl);
+extern int (WINAPI *SimpleWC2MB)(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef);
 #define WideCharToMultiByte SimpleWC2MB
 #define MultiByteToWideChar SimpleMB2WC
 #endif
