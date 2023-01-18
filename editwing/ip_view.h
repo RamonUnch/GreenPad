@@ -100,7 +100,7 @@ public:
 				return 2 * widthTable_[ L'x' ];
 			}
 #ifdef WIN32S
-			if( app().isWin32s() )
+			if( useOutA_ )
 			{
 				if( ch > 0x007f )
 				{	// For non ascii characters we use GetTextExtentPoint

@@ -261,8 +261,7 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 	// 文字幅テーブル初期化（ASCII範囲の文字以外は遅延処理）
 	memFF( widthTable_, 65536*sizeof(*widthTable_) );
 #ifdef WIN32S
-	if ( app().isWin32s() )
-	{
+	{ // Ascii only characters, so the ansi version should always be fine.
 		#ifndef SHORT_TABLEWIDTH
 		::GetCharWidthA( dc_, ' ', '~', widthTable_+' ' );
 		#else
@@ -272,19 +271,19 @@ Painter::Painter( HDC hdc, const VConfig& vc )
 			widthTable_[' ' + i] = (CW_INTTYPE)width[i];
 		#endif
 	}
-	else
-#endif
+#else // NT/9x
 	{
 		#ifndef SHORT_TABLEWIDTH
 		::GetCharWidthW( dc_, L' ', L'~', widthTable_+L' ' );
 		#else
 		int width['~'-' '+1];
-		::GetCharWidthA( dc_, ' ', '~', width );
+		::GetCharWidthW( dc_, ' ', '~', width );
 		int i;
 		for( i=0; i <= '~' - ' '; i++)
 			widthTable_[' ' + i] = (CW_INTTYPE)width[i];
 		#endif
 	}
+#endif // WIN32S
 
 	const unicode zsp=0x3000; // L'　'
 	W(&zsp); // Initialize width of L'　'
