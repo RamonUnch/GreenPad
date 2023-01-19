@@ -65,8 +65,8 @@ static bool LoadIMM32DLL()
 	LOADPROC( dyn_ImmGetProperty,    "ImmGetProperty" );
 	LOADPROC( dyn_ImmReleaseContext, "ImmReleaseContext" );
 	LOADPROC( dyn_ImmGetOpenStatus,  "ImmGetOpenStatus" );
+	LOADPROC( dyn_ImmSetOpenStatus,  "ImmSetOpenStatus" );
 	LOADPROC( dyn_ImmGetContext,     "ImmGetContext" );
-	LOADPROC( dyn_ImmSetOpenStatus,  "ImmReleaseContext" );
 	LOADPROC( dyn_ImmNotifyIME,      "ImmNotifyIME");
 	LOADPROC( dyn_ImmSetCompositionWindow, "ImmSetCompositionWindow");
 
