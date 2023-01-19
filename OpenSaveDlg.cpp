@@ -364,59 +364,53 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	}
 	else
 	{
-		// Running under Windows NT3.x, use the old look template.
+		// WinNT 3.x
+		// Win32s all versions.
+		// Win95 pre-4.00.180
+		// Use the old look template.
 		ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
 	}
 
 	// clear last error
-	::SetLastError(0);
 	pThis = this;
+	TryAgain:
+	::SetLastError(0);
 	BOOL ret = ::GetOpenFileName((LPOPENFILENAME)&ofn);
 	if( !ret )
 	{
 		DWORD ErrCode = ::GetLastError();
 
-		if( ( ErrCode == ERROR_INVALID_PARAMETER
-		   || ErrCode == ERROR_CALL_NOT_IMPLEMENTED
-		   || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
-		&&( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
+		if( !ErrCode
+		|| ErrCode == ERROR_NO_MORE_FILES
+		|| ErrCode == ERROR_INVALID_PARAMETER
+		|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST ) // On XP I sometime get this!!!!
+		{
+			// user pressed Cancel button
+			LOGGER( "OpenFileDlg::DoModal CANCEL end" );
+		}
+		else if(( ErrCode == ERROR_INVALID_PARAMETER
+		       || ErrCode == ERROR_CALL_NOT_IMPLEMENTED
+		       || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
+		&&   ( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
 		{
 			// maybe Common Dialog DLL doesn't like OFN_EXPLORER, try again without it
 			ofn.Flags &= ~OFN_EXPLORER;
 			ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
 
 			// try again!
-			::SetLastError(0);
-			ret = ::GetOpenFileName((LPOPENFILENAME)&ofn);
-		}
-		// Check again if we got a file.
-		if( !ret )
-		{
-			ErrCode = ::GetLastError();
-			if( !ErrCode
-			|| ErrCode == ERROR_NO_MORE_FILES
-			|| ErrCode == ERROR_INVALID_PARAMETER
-			|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST  // On XP I sometime get this!!!!
-			){
-				// user pressed Cancel button
-				LOGGER( "OpenFileDlg::DoModal CANCEL end" );
-			}
-			else
-			{	// Failed, display LastError.
-				//TCHAR tmp[64]; tmp[0] = TEXT('\0');
-				//::wsprintf(tmp,TEXT("GetOpenFileName LastError #%d"), ErrCode);
-				//::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK );
-				LOGGER( "OpenFileDlg::DoModal FAILED end" );
-			}
+			goto TryAgain;
 		}
 		else
-		{
-			LOGGER( "OpenFileDlg::DoModal FALLBACK OK end" );
+		{	// Failed, display LastError.
+			//TCHAR tmp[64]; tmp[0] = TEXT('\0');
+			//::wsprintf(tmp,TEXT("GetOpenFileName LastError #%d"), ErrCode);
+			//::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+			LOGGER( "OpenFileDlg::DoModal FAILED end" );
 		}
 	}
 	else
 	{
-		LOGGER( "OpenFileDlg::DoModal SUCESS end with file" );
+		LOGGER( "OpenFileDlg::DoModal SUCCESS end with file" );
 		LOGGERS( filename_ );
 	}
 
@@ -443,6 +437,8 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			HWND hCRLFlbl = ::GetDlgItem( dlg, IDC_CRLFLBL );
 			if(hCRLFlbl) ::ShowWindow( hCRLFlbl, SW_HIDE );
 		}
+		// older NT wants OfnHook returning TRUE in WM_INITDIALOG
+		return TRUE;
 	}
 	else if( msg==WM_NOTIFY ||( msg==WM_COMMAND && LOWORD(wp)==1 ))
 	{
@@ -533,36 +529,34 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 		// Use the new template sans the Open File controls.
 		ofn.lpTemplateName = MAKEINTRESOURCE(IDD_SAVEFILEHOOK);
 	}
-	else if( !app().isNTOSVerLarger(MKVER(3,10,404)) )
-	{	// On Very old NT builds we cannot use Hook nor template
-		// for the save dialog only..
-		ofn.lpfnHook = NULL;
-		ofn.lpTemplateName = NULL;
-		ofn.Flags = OFN_HIDEREADONLY    |
-					OFN_PATHMUSTEXIST   |
-					OFN_ENABLESIZING    |
-					OFN_OVERWRITEPROMPT;
-	}
 	else
-	{	// Windows NT3.10.404 - NT4 pre-RTM
+	{	// WinNT 3.x
 		// Win32s all versions.
-		// Windows 95 pre-RTM
+		// Win95 pre-4.00.180
 	    ofn.lpstrTitle     = TEXT("Save File As");
-		// Running under Windows NT, use the old look template.
+		// Use the old look template.
 		ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
 	}
 
 	pThis = this;
+	TryAgain:
 	::SetLastError(0);
 	BOOL ret = ::GetSaveFileName((LPOPENFILENAME)&ofn);
 	if( !ret )
 	{
 		DWORD ErrCode = ::GetLastError();
 
-		if( (  ErrCode == ERROR_INVALID_PARAMETER
-		    || ErrCode == ERROR_CALL_NOT_IMPLEMENTED
-		    || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
-		&&  ( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
+		if( !ErrCode
+		|| ErrCode == ERROR_NO_MORE_FILES
+		|| ErrCode == ERROR_INVALID_PARAMETER
+		|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST ) // On XP I sometime get this!!!!
+		{
+			// user pressed Cancel button
+		}
+		else if(( ErrCode == ERROR_INVALID_PARAMETER
+		       || ErrCode == ERROR_CALL_NOT_IMPLEMENTED
+		       || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
+		&&   ( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
 		{
 			// maybe Common Dialog DLL doesn't like OFN_EXPLORER, try again without it
 			ofn.Flags &= ~OFN_EXPLORER;
@@ -570,26 +564,13 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			ofn.lpTemplateName = (LPTSTR)MAKEINTRESOURCE(FILEOPENORD);
 
 			// try again!
-			::SetLastError(0);
-			ret = ::GetOpenFileName((LPOPENFILENAME)&ofn);
+			goto TryAgain;
 		}
-		// Check again if we got a file.
-		if( !ret )
-		{
-			ErrCode = ::GetLastError();
-			if( !ErrCode
-			|| ErrCode == ERROR_NO_MORE_FILES
-			|| ErrCode == ERROR_INVALID_PARAMETER
-			|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST // On XP I sometime get this!!!!
-			){
-				// user pressed Cancel button
-			}
-			else
-			{	// Failed, display LastError.
-				//TCHAR tmp[64]; tmp[0] = TEXT('\0');
-				//::wsprintf(tmp,TEXT("GetSaveFileName LastError #%d"), ErrCode);
-				//::MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
-			}
+		else
+		{	// Failed, display LastError.
+			TCHAR tmp[64]; tmp[0] = TEXT('\0');
+			::wsprintf(tmp,TEXT("GetSaveFileName LastError #%d"), ErrCode);
+			::MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
 		}
 	}
 	return ( ret != 0 );
@@ -621,6 +602,8 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 				cb.Add( lbList[i] );
 			cb.Select( lbList[pThis->lb_] );
 		}
+		// Older NT wants OfnHook returning TRUE in WM_INITDIALOG
+		return TRUE;
 	}
 	else if( msg==WM_NOTIFY ||( msg==WM_COMMAND && LOWORD(wp)==1 ))
 	{
@@ -725,7 +708,7 @@ bool ReopenDlg::on_ok()
 
 	// OKが押されたら、文字コードの選択状況を記録
 	ulong j=0, i=ComboBox(hwnd(),IDC_CODELIST).GetCurSel();
-	if( 0 < i && i < (int)csl_.size() )
+	if( 0 <= i && i < (int)csl_.size() )
 	{ // Only if i is in correct range.
 		for(;;++j,--i)
 		{
