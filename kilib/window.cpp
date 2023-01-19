@@ -6,43 +6,45 @@
 #endif
 using namespace ki;
 
-#if defined(TARGET_VER) && TARGET_VER<=350 && !defined(NO_IME)
-//#pragma comment(lib, "DelayImp.lib")
-//#pragma comment(linker, "/DelayLoad:IMM32.DLL")
+#if !defined(NO_IME) && defined(TARGET_VER) && TARGET_VER<=350
+// Manually delay import for IMM32.DLL for
+// because DelayImp.lib can not be used on Old windows
 
-// Manually delay import for IMM32.DLL
 static BOOL (WINAPI *dyn_ImmIsIME)(HKL hKl);
 static BOOL (WINAPI *dyn_ImmGetProperty)(HKL hKl, DWORD fdwIndex);
 static BOOL (WINAPI *dyn_ImmReleaseContext)(HWND hWnd, HIMC hIMC);
 static BOOL (WINAPI *dyn_ImmGetOpenStatus)(HIMC hIMC);
 static HIMC (WINAPI *dyn_ImmGetContext)(HWND hWnd);
 static BOOL (WINAPI *dyn_ImmSetOpenStatus)(HIMC hIMC, BOOL fOpen);
-static BOOL (WINAPI *dyn_ImmSetCompositionFontW)(HIMC hIMC, LPLOGFONTW lplf);
-static BOOL (WINAPI *dyn_ImmSetCompositionWindow)(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm);
-static BOOL (WINAPI *dyn_ImmGetCompositionStringW)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen);
 static BOOL (WINAPI *dyn_ImmNotifyIME)(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue);
-static BOOL (WINAPI *dyn_ImmSetCompositionStringW)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen);
-
+static BOOL (WINAPI *dyn_ImmSetCompositionWindow)(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm);
 #define ImmIsIME dyn_ImmIsIME
 #define ImmGetProperty dyn_ImmGetProperty
 #define ImmReleaseContext dyn_ImmReleaseContext
 #define ImmGetOpenStatus dyn_ImmGetOpenStatus
 #define ImmGetContext dyn_ImmGetContext
 #define ImmSetOpenStatus dyn_ImmSetOpenStatus
-#define ImmSetCompositionFontW dyn_ImmSetCompositionFontW
 #define ImmSetCompositionWindow dyn_ImmSetCompositionWindow
+
+// Unicode functions must also be there on ANSI build
+static BOOL (WINAPI *dyn_ImmSetCompositionFontW)(HIMC hIMC, LPLOGFONTW lplf);
+static BOOL (WINAPI *dyn_ImmGetCompositionStringW)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen);
+static BOOL (WINAPI *dyn_ImmSetCompositionStringW)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen);
+#define ImmSetCompositionFontW dyn_ImmSetCompositionFontW
 #define ImmGetCompositionStringW dyn_ImmGetCompositionStringW
 #define ImmNotifyIME dyn_ImmNotifyIME
 #define ImmSetCompositionStringW dyn_ImmSetCompositionStringW
 
-//#if !defined(_UNICODE) || defined(UNICOWS)
+#if !defined(_UNICODE) || defined(UNICOWS)
+// To be loaded only if ANSI/UNICOWS mode.
 static BOOL (WINAPI *dyn_ImmSetCompositionFontA)(HIMC hIMC, LPLOGFONTA lplf);
 static BOOL (WINAPI *dyn_ImmGetCompositionStringA)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen);
 static BOOL (WINAPI *dyn_ImmSetCompositionStringA)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen);
 #define ImmSetCompositionFontA dyn_ImmSetCompositionFontA
 #define ImmGetCompositionStringA dyn_ImmGetCompositionStringA
 #define ImmSetCompositionStringA dyn_ImmSetCompositionStringA
-//#endif // !UNICODE || UNICOWS
+#endif // !UNICODE || UNICOWS
+
 
 static bool LoadIMM32DLL()
 {
@@ -50,45 +52,38 @@ static bool LoadIMM32DLL()
 	// fails we get an error message
 	if( app().isWin32s() )
 		return false;
-//	if ( !::GetSystemMetrics(SM_DBCSENABLED) && app().getOSVer() >= 0x0500 && !::GetSystemMetrics(/*SM_IMMENABLED*/ 82) )
+//	if ( !::GetSystemMetrics(SM_DBCSENABLED)
+//	&& app().getOSVer() >= 0x0500 && !::GetSystemMetrics(/*SM_IMMENABLED*/ 82) )
 //		return false;
 
-	//MessageBox(NULL, TEXT("Going to Load IMM32.DLL"), NULL, 0);
 	HINSTANCE h = LoadLibrary(TEXT("IMM32.DLL"));
 	if( ! h) return false;
+	// Helper with crazy cast to avoid further casts.
+	#define LOADPROC(proc, procname) if(!(*reinterpret_cast<FARPROC*>(&proc)=GetProcAddress(h,procname)))goto fail;
 
-	dyn_ImmIsIME = ( BOOL (WINAPI *)(HKL hKl) ) GetProcAddress(h, "ImmIsIME");
-	if( !dyn_ImmIsIME ) goto fail;
-	dyn_ImmGetProperty = ( BOOL (WINAPI *)(HKL hKl, DWORD fdwIndex) )GetProcAddress(h, "ImmGetProperty");
-	if( !dyn_ImmGetProperty ) goto fail;
-	dyn_ImmReleaseContext = ( BOOL (WINAPI *)(HWND hWnd, HIMC hIMC) )GetProcAddress(h, "ImmReleaseContext");
-	if( !dyn_ImmReleaseContext ) goto fail;
-	dyn_ImmGetOpenStatus = ( BOOL (WINAPI *)(HIMC hIMC) )GetProcAddress(h, "ImmReleaseContext");
-	if( !dyn_ImmGetOpenStatus ) goto fail;
-	dyn_ImmGetContext = ( HIMC (WINAPI *)(HWND hWnd) )GetProcAddress(h, "ImmGetContext");
-	if( !dyn_ImmGetContext ) goto fail;
-	dyn_ImmSetOpenStatus = ( BOOL (WINAPI *)(HIMC hIMC, BOOL fOpen) )GetProcAddress(h, "ImmReleaseContext");
-	if( !dyn_ImmSetOpenStatus ) goto fail;
-	dyn_ImmSetCompositionFontW = ( BOOL (WINAPI *)(HIMC hIMC, LPLOGFONTW lplf) )GetProcAddress(h, "ImmSetCompositionFontW");
-	if( !dyn_ImmSetCompositionFontW ) goto fail;
-	dyn_ImmSetCompositionWindow = ( BOOL (WINAPI *)(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm) )GetProcAddress(h, "ImmSetCompositionWindow");
-	if( !dyn_ImmSetCompositionWindow ) goto fail;
-	dyn_ImmGetCompositionStringW = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen) )GetProcAddress(h, "ImmGetCompositionStringW");
-	if( !dyn_ImmGetCompositionStringW ) goto fail;
-	dyn_ImmNotifyIME = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue) )GetProcAddress(h, "ImmNotifyIME");
-	if( !dyn_ImmNotifyIME ) goto fail;
-	dyn_ImmSetCompositionStringW = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen) )GetProcAddress(h, "ImmSetCompositionStringW");
-	if( !dyn_ImmSetCompositionStringW ) goto fail;
+	LOADPROC( dyn_ImmIsIME,          "ImmIsIME" );
+	LOADPROC( dyn_ImmGetProperty,    "ImmGetProperty" );
+	LOADPROC( dyn_ImmReleaseContext, "ImmReleaseContext" );
+	LOADPROC( dyn_ImmGetOpenStatus,  "ImmGetOpenStatus" );
+	LOADPROC( dyn_ImmSetOpenStatus,  "ImmSetOpenStatus" );
+	LOADPROC( dyn_ImmGetContext,     "ImmGetContext" );
+	LOADPROC( dyn_ImmNotifyIME,      "ImmNotifyIME");
+	LOADPROC( dyn_ImmSetCompositionWindow, "ImmSetCompositionWindow");
+
+	if( app().isNT() )
+	{	// Load Unicode functions on NT only
+		LOADPROC( dyn_ImmSetCompositionFontW,   "ImmSetCompositionFontW");
+		LOADPROC( dyn_ImmGetCompositionStringW, "ImmGetCompositionStringW");
+		LOADPROC( dyn_ImmSetCompositionStringW, "ImmSetCompositionStringW");
+	}
 
 #if !defined(_UNICODE) || defined(UNICOWS)
-	dyn_ImmSetCompositionFontA = ( BOOL (WINAPI *)(HIMC hIMC, LPLOGFONTA lplf) )GetProcAddress(h, "ImmSetCompositionFontA");
-	if( !dyn_ImmSetCompositionFontA ) goto fail;
-	dyn_ImmGetCompositionStringA = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen) )GetProcAddress(h, "ImmGetCompositionStringA");
-	if( !dyn_ImmGetCompositionStringA ) goto fail;
-	dyn_ImmSetCompositionStringA = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen) )GetProcAddress(h, "ImmSetCompositionStringA");
-	if( !dyn_ImmSetCompositionStringA ) goto fail;
-#endif
+	LOADPROC( dyn_ImmSetCompositionFontA,   "ImmSetCompositionFontA");
+	LOADPROC( dyn_ImmGetCompositionStringA, "ImmGetCompositionStringA");
+	LOADPROC( dyn_ImmSetCompositionStringA, "ImmSetCompositionStringA");
+#endif // !UNICODE || UNICOWS
 
+	LOGGER( "IMM32.DLL Loaded !" );
 	return true;
 
 	fail:
@@ -113,19 +108,16 @@ HKL MyGetKeyboardLayout(DWORD dwLayout)
 	return NULL;
 }
 #else
-	HKL MyGetKeyboardLayout(DWORD dwLayout)
-	{ // Use native version NT 3.51+
-		return ::GetKeyboardLayout(dwLayout);
-  	}
+// Use native version NT 3.51+
+HKL MyGetKeyboardLayout(DWORD dwLayout){ return GetKeyboardLayout(dwLayout); }
 #endif // Target_VER
 
 #ifdef UNICOWS //Use A or W version at runtime...
-static BOOL MyImmSetCompositionFont(HIMC hIMC, LPLOGFONTW plf)
+static BOOL myImmSetCompositionFont(HIMC hIMC, LPLOGFONTW plf)
 {
 	// Unicode support on Windows NT...
-	BOOL s = ImmSetCompositionFontW(hIMC, plf);
-	if( s )
-		return s;
+	if( app().isNT() )
+		return ImmSetCompositionFontW(hIMC, plf);
 
 	// Convert LPLOGFONTW --> LPLOGFONTA
 	LOGFONTA lfa;
@@ -137,7 +129,7 @@ static BOOL MyImmSetCompositionFont(HIMC hIMC, LPLOGFONTW plf)
 	return ImmSetCompositionFontA(hIMC, &lfa);
 }
 #else
-#define MyImmSetCompositionFont ImmSetCompositionFont
+#define myImmSetCompositionFont ImmSetCompositionFont
 #endif
 //=========================================================================
 // IMEに関するあれこれ
@@ -150,11 +142,13 @@ IMEManager::IMEManager()
 #ifdef USEGLOBALIME
 	: immApp_( NULL )
 	, immMsg_( NULL )
+#if !defined(NO_IME) && defined(TARGET_VER) && TARGET_VER<=350
+	, hasIMM32_ ( LoadIMM32DLL() )
+#endif
 #endif
 {
 	// 唯一のインスタンスは私です
 	pUniqueInstance_ = this;
-	hasIMM32_ = 0;
 
 	#ifdef USEGLOBALIME
 		// 色々面倒なのでWin95ではGlobalIME無し
@@ -175,15 +169,6 @@ IMEManager::IMEManager()
 			}
 		}
 	#endif //USEGLOBALIME
-
-	// check if IMM32.DLL can be loaded...
-  # ifdef NO_IME
-	hasIMM32_ = 0;
-  # elif defined(TARGET_VER) && TARGET_VER<=350
-	hasIMM32_ = LoadIMM32DLL();
-  # else
-	hasIMM32_ = 1;
-  # endif
 }
 
 IMEManager::~IMEManager()
@@ -230,7 +215,7 @@ BOOL IMEManager::IsIME()
 		}
 		else
 	#endif // USEGLOBALIME
-		if (hasIMM32_)
+		if( hasIMM32_ )
 		{
 			return ::ImmIsIME( hKL );
 		}
@@ -250,7 +235,7 @@ BOOL IMEManager::CanReconv()
 		}
 		else
 	#endif
-		if (hasIMM32_)
+		if( hasIMM32_ )
 		{
 			nImeProps = ::ImmGetProperty( hKL, IGP_SETCOMPSTR );
 		}
@@ -264,21 +249,24 @@ BOOL IMEManager::GetState( HWND wnd )
 {
 	BOOL imeStatus = FALSE;
 #ifndef NO_IME
-	HIMC ime;
 	#ifdef USEGLOBALIME
 		if( immApp_ )
 		{
+			HIMC ime = NULL;
 			immApp_->GetContext( wnd, &ime );
 			imeStatus = immApp_->GetOpenStatus( ime );
 			immApp_->ReleaseContext( wnd, ime );
 		}
 		else
 	#endif
-		if (hasIMM32_)
+		if( hasIMM32_ )
 		{
-			ime = ::ImmGetContext( wnd );
-			imeStatus = ::ImmGetOpenStatus(ime );
-			::ImmReleaseContext( wnd, ime );
+			HIMC ime = ::ImmGetContext( wnd );
+			if( ime )
+			{
+				imeStatus = ::ImmGetOpenStatus(ime );
+				::ImmReleaseContext( wnd, ime );
+			}
 		}
 #endif // NO_IME
 	return imeStatus;
@@ -287,19 +275,19 @@ BOOL IMEManager::GetState( HWND wnd )
 void IMEManager::SetState( HWND wnd, bool enable )
 {
 #ifndef NO_IME
-	HIMC ime;
 	#ifdef USEGLOBALIME
 		if( immApp_ )
 		{
+			HIMC ime = NULL;
 			immApp_->GetContext( wnd, &ime );
 			immApp_->SetOpenStatus( ime, (enable ? TRUE : FALSE) );
 			immApp_->ReleaseContext( wnd, ime );
 		}
 		else
 	#endif // USEGLOBALIME
-		if (hasIMM32_)
+		if( hasIMM32_ )
 		{
-			ime = ::ImmGetContext( wnd );
+			HIMC ime = ::ImmGetContext( wnd );
 			::ImmSetOpenStatus(ime, (enable ? TRUE : FALSE) );
 			::ImmReleaseContext( wnd, ime );
 		}
@@ -356,12 +344,12 @@ inline void IMEManager::MsgLoopEnd()
 void IMEManager::SetFont( HWND wnd, const LOGFONT& lf )
 {
 #ifndef NO_IME
-	HIMC ime;
 	LOGFONT* plf = const_cast<LOGFONT*>(&lf);
 
 	#ifdef USEGLOBALIME
 	if( immApp_ )
 	{
+		HIMC ime = NULL;
 		immApp_->GetContext( wnd, &ime );
 		#ifdef _UNICODE
 			immApp_->SetCompositionFontW( ime, plf );
@@ -372,12 +360,17 @@ void IMEManager::SetFont( HWND wnd, const LOGFONT& lf )
 	}
 	else
 	#endif //USEGLOBALIME
-	if (hasIMM32_)
+	if( hasIMM32_ )
 	{
-		ime = ::ImmGetContext( wnd );
-		MyImmSetCompositionFont( ime, plf ); // A/W
-
-		::ImmReleaseContext( wnd, ime );
+		HIMC ime = ::ImmGetContext( wnd );
+		if( ime )
+		{
+			// We must use Ansi version on ANSI build and
+			// Unicode version on pure UNICODE build
+			// But on UNICOWS build, we must be smart...
+			myImmSetCompositionFont( ime, plf ); // A/W
+			::ImmReleaseContext( wnd, ime );
+		}
 	}
 #endif // NO_IME
 }
@@ -385,7 +378,6 @@ void IMEManager::SetFont( HWND wnd, const LOGFONT& lf )
 void IMEManager::SetPos( HWND wnd, int x, int y )
 {
 #ifndef NO_IME
-	HIMC ime;
 	COMPOSITIONFORM cf;
 	cf.dwStyle = CFS_POINT;
 	cf.ptCurrentPos.x  = x;
@@ -394,17 +386,21 @@ void IMEManager::SetPos( HWND wnd, int x, int y )
 	#ifdef USEGLOBALIME
 	if( immApp_ )
 	{
+		HIMC ime = NULL;
 		immApp_->GetContext( wnd, &ime );
 		immApp_->SetCompositionWindow( ime, &cf );
 		immApp_->ReleaseContext( wnd, ime );
 	}
 	else
 	#endif // USEGLOBALIME
-	if (hasIMM32_)
+	if( hasIMM32_ )
 	{
-		ime = ::ImmGetContext( wnd );
-		::ImmSetCompositionWindow( ime, &cf );
-		::ImmReleaseContext( wnd, ime );
+		HIMC ime = ::ImmGetContext( wnd );
+		if( ime )
+		{
+			::ImmSetCompositionWindow( ime, &cf );
+			::ImmReleaseContext( wnd, ime );
+		}
 	}
 #endif // NO_IME
 }
@@ -412,11 +408,11 @@ void IMEManager::SetPos( HWND wnd, int x, int y )
 void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 {
 #ifndef NO_IME
-	HIMC ime;
 	#ifdef USEGLOBALIME
 	if( immApp_ )
 	{
 		long s=0;
+		HIMC ime = NULL;
 		immApp_->GetContext( wnd, &ime );
 		immApp_->GetCompositionStringW( ime, GCS_RESULTSTR, 0, &s, NULL );
 		*str = new unicode[ (*len=s/2)+1 ];
@@ -425,20 +421,14 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 	}
 	else
 	#endif //USEGLOBALIME
-	if (hasIMM32_)
+	if( hasIMM32_ )
 	{
-		ime = ::ImmGetContext( wnd );
-		long s = ::ImmGetCompositionStringW( ime,GCS_RESULTSTR,NULL,0 );
-
-		if( s > 0 )
-		{
-			*str = new unicode[ (*len=s/2)+1 ];
-			::ImmGetCompositionStringW( ime, GCS_RESULTSTR, *str, s );
-		}
-	#if  !defined(_UNICODE) || defined(UNICOWS)
-		else
-		{ // Try to get the ansi string if W version failed
-			s = ::ImmGetCompositionStringA(ime,GCS_RESULTSTR,NULL,0);
+		HIMC ime = ::ImmGetContext( wnd );
+		if( !ime ) return;
+	#if !defined(UNICODE) || defined(UNICOWS)
+		if( !app().isNT() )
+		{	// Use ANSI functions on Win9x
+			long s = ::ImmGetCompositionStringA(ime,GCS_RESULTSTR,NULL,0);
 			if( s > 0 )
 			{
 				char* tmp = new char[s];
@@ -449,22 +439,31 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 				delete [] tmp;
 			}
 		}
-	#endif
+		else
+	#endif // !UNICODE || UNICOWS
+		{
+			// On NT we always use the Unicode function, even in ANSI mode.
+			long s = ::ImmGetCompositionStringW( ime,GCS_RESULTSTR,NULL,0 );
+			if( s > 0 )
+			{
+				*str = new unicode[ (*len=s/2)+1 ];
+				::ImmGetCompositionStringW( ime, GCS_RESULTSTR, *str, s );
+			}
+		}
 
 		::ImmReleaseContext( wnd, ime );
-	} // end if (hasIMM32_)
+	} // end if( hasIMM32_ )
 #endif //NO_IME
 }
 
 void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 {
 #ifndef NO_IME
-	HIMC ime;
 
 	#ifdef USEGLOBALIME
 	if( immApp_ )
 	{
-		long s=0;
+		HIMC ime=NULL;
 		immApp_->GetContext( wnd, &ime );
 		immApp_->SetCompositionStringW( ime, SCS_SETSTR, str, len*sizeof(unicode), NULL, 0 );
 		immApp_->NotifyIME( ime, NI_COMPOSITIONSTR, CPS_CONVERT, 0 );
@@ -473,27 +472,31 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 	}
 	else
 	#endif //USEGLOBALIME
-	if (hasIMM32_)
+	if( hasIMM32_ )
 	{
-		ime = ::ImmGetContext( wnd );
-		BOOL s = ::ImmSetCompositionStringW( ime,SCS_SETSTR,str,len*sizeof(unicode),NULL,0 );
+		HIMC ime = ::ImmGetContext( wnd );
+		if( !ime ) return;
+	#if !defined(UNICODE) || defined(UNICOWS)
+		if( !app().isNT() )
+		{	// Use ANSI functions on Win9x
+			len = ::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1, NULL,0 ,NULL,NULL );
+			char* tmp = new char[len];
 
-		#if  !defined(_UNICODE) || defined(UNICOWS)
-			if( s == 0 )
-			{
-				len = ::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1, NULL,0 ,NULL,NULL );
-				char* tmp = new char[len];
-
-				::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1,tmp,len,NULL,NULL );
-				s = ::ImmSetCompositionStringA(ime,SCS_SETSTR,tmp,len,NULL,0);
-				delete [] tmp;
-			}
-		#endif
+			::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1,tmp,len,NULL,NULL );
+			::ImmSetCompositionStringA(ime,SCS_SETSTR,tmp,len,NULL,0);
+			delete [] tmp;
+		}
+		else
+	#endif // !UNICODE || UNICOWS
+		{
+			// On NT we always use the Unicode function, even in ANSI mode.
+			::ImmSetCompositionStringW( ime,SCS_SETSTR,str,len*sizeof(unicode),NULL,0 );
+		}
 
 		::ImmNotifyIME( ime, NI_COMPOSITIONSTR, CPS_CONVERT, 0); // 変換実行
 		::ImmNotifyIME( ime, NI_OPENCANDIDATE, 0, 0 ); // 変換候補リスト表示
 		::ImmReleaseContext( wnd, ime );
-	}// endif (hasIMM32_)
+	}// end if( hasIMM32_ )
 #endif //NO_IME
 }
 
