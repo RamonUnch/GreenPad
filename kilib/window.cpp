@@ -45,52 +45,42 @@ static BOOL (WINAPI *dyn_ImmSetCompositionStringA)(HIMC hIMC, DWORD dwIndex, LPC
 #define ImmSetCompositionStringA dyn_ImmSetCompositionStringA
 #endif // !UNICODE || UNICOWS
 
+
 static bool LoadIMM32DLL()
 {
 	// Don't even try on Win32S because when LoadLibrary()
 	// fails we get an error message
 	if( app().isWin32s() )
 		return false;
-//	if ( !::GetSystemMetrics(SM_DBCSENABLED) && app().getOSVer() >= 0x0500 && !::GetSystemMetrics(/*SM_IMMENABLED*/ 82) )
+//	if ( !::GetSystemMetrics(SM_DBCSENABLED)
+//	&& app().getOSVer() >= 0x0500 && !::GetSystemMetrics(/*SM_IMMENABLED*/ 82) )
 //		return false;
 
 	HINSTANCE h = LoadLibrary(TEXT("IMM32.DLL"));
 	if( ! h) return false;
+	// Helper with crazy cast to avoid further casts.
+	#define LOADPROC(proc, procname) if(!(*reinterpret_cast<FARPROC*>(&proc)=GetProcAddress(h,procname)))goto fail;
 
-	dyn_ImmIsIME = ( BOOL (WINAPI *)(HKL hKl) ) GetProcAddress(h, "ImmIsIME");
-	if( !dyn_ImmIsIME ) goto fail;
-	dyn_ImmGetProperty = ( BOOL (WINAPI *)(HKL hKl, DWORD fdwIndex) )GetProcAddress(h, "ImmGetProperty");
-	if( !dyn_ImmGetProperty ) goto fail;
-	dyn_ImmReleaseContext = ( BOOL (WINAPI *)(HWND hWnd, HIMC hIMC) )GetProcAddress(h, "ImmReleaseContext");
-	if( !dyn_ImmReleaseContext ) goto fail;
-	dyn_ImmGetOpenStatus = ( BOOL (WINAPI *)(HIMC hIMC) )GetProcAddress(h, "ImmReleaseContext");
-	if( !dyn_ImmGetOpenStatus ) goto fail;
-	dyn_ImmGetContext = ( HIMC (WINAPI *)(HWND hWnd) )GetProcAddress(h, "ImmGetContext");
-	if( !dyn_ImmGetContext ) goto fail;
-	dyn_ImmSetOpenStatus = ( BOOL (WINAPI *)(HIMC hIMC, BOOL fOpen) )GetProcAddress(h, "ImmReleaseContext");
-	if( !dyn_ImmSetOpenStatus ) goto fail;
-	dyn_ImmSetCompositionWindow = ( BOOL (WINAPI *)(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm) )GetProcAddress(h, "ImmSetCompositionWindow");
-	if( !dyn_ImmSetCompositionWindow ) goto fail;
+	LOADPROC( dyn_ImmIsIME,          "ImmIsIME" );
+	LOADPROC( dyn_ImmGetProperty,    "ImmGetProperty" );
+	LOADPROC( dyn_ImmReleaseContext, "ImmReleaseContext" );
+	LOADPROC( dyn_ImmGetOpenStatus,  "ImmReleaseContext" );
+	LOADPROC( dyn_ImmGetContext,     "ImmGetContext" );
+	LOADPROC( dyn_ImmSetOpenStatus,  "ImmReleaseContext" );
+	LOADPROC( dyn_ImmNotifyIME,      "ImmNotifyIME");
+	LOADPROC( dyn_ImmSetCompositionWindow, "ImmSetCompositionWindow");
 
 	if( app().isNT() )
-	{	// Only load Unicode functions on NT
-		dyn_ImmSetCompositionFontW = ( BOOL (WINAPI *)(HIMC hIMC, LPLOGFONTW lplf) )GetProcAddress(h, "ImmSetCompositionFontW");
-		if( !dyn_ImmSetCompositionFontW ) goto fail;
-		dyn_ImmGetCompositionStringW = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen) )GetProcAddress(h, "ImmGetCompositionStringW");
-		if( !dyn_ImmGetCompositionStringW ) goto fail;
-		dyn_ImmNotifyIME = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue) )GetProcAddress(h, "ImmNotifyIME");
-		if( !dyn_ImmNotifyIME ) goto fail;
-		dyn_ImmSetCompositionStringW = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen) )GetProcAddress(h, "ImmSetCompositionStringW");
-		if( !dyn_ImmSetCompositionStringW ) goto fail;
+	{	// Load Unicode functions on NT only
+		LOADPROC( dyn_ImmSetCompositionFontW,   "ImmSetCompositionFontW");
+		LOADPROC( dyn_ImmGetCompositionStringW, "ImmGetCompositionStringW");
+		LOADPROC( dyn_ImmSetCompositionStringW, "ImmSetCompositionStringW");
 	}
 
 #if !defined(_UNICODE) || defined(UNICOWS)
-	dyn_ImmSetCompositionFontA = ( BOOL (WINAPI *)(HIMC hIMC, LPLOGFONTA lplf) )GetProcAddress(h, "ImmSetCompositionFontA");
-	if( !dyn_ImmSetCompositionFontA ) goto fail;
-	dyn_ImmGetCompositionStringA = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen) )GetProcAddress(h, "ImmGetCompositionStringA");
-	if( !dyn_ImmGetCompositionStringA ) goto fail;
-	dyn_ImmSetCompositionStringA = ( BOOL (WINAPI *)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen) )GetProcAddress(h, "ImmSetCompositionStringA");
-	if( !dyn_ImmSetCompositionStringA ) goto fail;
+	LOADPROC( dyn_ImmSetCompositionFontA,   "ImmSetCompositionFontA");
+	LOADPROC( dyn_ImmGetCompositionStringA, "ImmGetCompositionStringA");
+	LOADPROC( dyn_ImmSetCompositionStringA, "ImmSetCompositionStringA");
 #endif // !UNICODE || UNICOWS
 
 	LOGGER( "IMM32.DLL Loaded !" );
@@ -152,13 +142,13 @@ IMEManager::IMEManager()
 #ifdef USEGLOBALIME
 	: immApp_( NULL )
 	, immMsg_( NULL )
+#if !defined(NO_IME) && defined(TARGET_VER) && TARGET_VER<=350
+	, hasIMM32_ ( LoadIMM32DLL() )
+#endif
 #endif
 {
 	// 唯一のインスタンスは私です
 	pUniqueInstance_ = this;
-	#if !defined(NO_IME) && defined(TARGET_VER) && TARGET_VER <= 350
-	hasIMM32_ = 0;
-	#endif
 
 	#ifdef USEGLOBALIME
 		// 色々面倒なのでWin95ではGlobalIME無し
@@ -179,15 +169,6 @@ IMEManager::IMEManager()
 			}
 		}
 	#endif //USEGLOBALIME
-
-	// check if IMM32.DLL can be loaded...
-  # ifdef NO_IME
-	#define hasIMM32_ = 0;
-  # elif defined(TARGET_VER) && TARGET_VER<=350
-	hasIMM32_ = LoadIMM32DLL();
-  # else
-	#define hasIMM32_ 1
-  # endif
 }
 
 IMEManager::~IMEManager()
