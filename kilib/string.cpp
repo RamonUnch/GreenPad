@@ -106,14 +106,19 @@ BOOL my_IsCharLowerW(wchar_t c)
 }
 
 #ifdef OLDWIN32S
+#undef WideCharToMultiByte
+#undef MultiByteToWideChar
 int WINAPI SimpleWC2MB_1st(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef);
 int (WINAPI *SimpleWC2MB)(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef) = SimpleWC2MB_1st;
 int WINAPI SimpleWC2MB_fb(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef);
 int WINAPI SimpleWC2MB_1st(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef)
 {
-	SimpleWC2MB = (int (WINAPI *)(UINT cp, DWORD flg, LPCWSTR s, int sl, LPSTR d, int dl, LPCSTR defc, LPBOOL useddef))
-		GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "WideCharToMultiByte");
-	if( !SimpleWC2MB )
+	// Try with a simple test buffer to see if the native function works.
+	char mb[2]; mb[0] = '\0';
+	int ret = ::WideCharToMultiByte(CP_ACP, 0, L"ts",2 , mb, countof(mb), NULL, NULL);
+	if( ret && mb[0] == 't' && mb[1] == 's' )
+		SimpleWC2MB = ::WideCharToMultiByte;
+	else
 		SimpleWC2MB = SimpleWC2MB_fb;
 
 	return SimpleWC2MB(cp, flg, s, sl, d, dl, defc, useddef);
@@ -146,9 +151,12 @@ int(WINAPI*SimpleMB2WC)   (UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int d
 int WINAPI SimpleMB2WC_fb (UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl);
 int WINAPI SimpleMB2WC_1st(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl)
 {
-	SimpleMB2WC = (int (WINAPI *)(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl))
-		GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "MultiByteToWideChar");
-	if( !SimpleMB2WC )
+	// Try with a simple test buffer to see if the native function works.
+	wchar_t wc[2]; wc[0] = '\0';
+	int ret = ::MultiByteToWideChar(CP_ACP, 0, "ts",2 , wc,countof(wc));
+	if( ret && wc[0] == L't' && wc[1] == L's' )
+		SimpleMB2WC = ::MultiByteToWideChar;
+	else
 		SimpleMB2WC = SimpleMB2WC_fb;
 
 	return SimpleMB2WC(cp, flg, s, sl, d, dl);
@@ -175,6 +183,8 @@ int WINAPI SimpleMB2WC_fb(UINT cp, DWORD flg, LPCSTR s, int sl, LPWSTR d, int dl
 	d[i] = L'\0';
 	return i;
 }
+#define WideCharToMultiByte SimpleWC2MB
+#define MultiByteToWideChar SimpleMB2WC
 #endif// OLDWIN32S
 
 //=========================================================================
