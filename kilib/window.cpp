@@ -16,6 +16,7 @@ static BOOL (WINAPI *dyn_ImmReleaseContext)(HWND hWnd, HIMC hIMC);
 static BOOL (WINAPI *dyn_ImmGetOpenStatus)(HIMC hIMC);
 static HIMC (WINAPI *dyn_ImmGetContext)(HWND hWnd);
 static BOOL (WINAPI *dyn_ImmSetOpenStatus)(HIMC hIMC, BOOL fOpen);
+static BOOL (WINAPI *dyn_ImmNotifyIME)(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue);
 static BOOL (WINAPI *dyn_ImmSetCompositionWindow)(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm);
 #define ImmIsIME dyn_ImmIsIME
 #define ImmGetProperty dyn_ImmGetProperty
@@ -28,7 +29,6 @@ static BOOL (WINAPI *dyn_ImmSetCompositionWindow)(HIMC hIMC, LPCOMPOSITIONFORM l
 // Unicode functions must also be there on ANSI build
 static BOOL (WINAPI *dyn_ImmSetCompositionFontW)(HIMC hIMC, LPLOGFONTW lplf);
 static BOOL (WINAPI *dyn_ImmGetCompositionStringW)(HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen);
-static BOOL (WINAPI *dyn_ImmNotifyIME)(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue);
 static BOOL (WINAPI *dyn_ImmSetCompositionStringW)(HIMC hIMC, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen);
 #define ImmSetCompositionFontW dyn_ImmSetCompositionFontW
 #define ImmGetCompositionStringW dyn_ImmGetCompositionStringW
@@ -64,7 +64,7 @@ static bool LoadIMM32DLL()
 	LOADPROC( dyn_ImmIsIME,          "ImmIsIME" );
 	LOADPROC( dyn_ImmGetProperty,    "ImmGetProperty" );
 	LOADPROC( dyn_ImmReleaseContext, "ImmReleaseContext" );
-	LOADPROC( dyn_ImmGetOpenStatus,  "ImmReleaseContext" );
+	LOADPROC( dyn_ImmGetOpenStatus,  "ImmGetOpenStatus" );
 	LOADPROC( dyn_ImmGetContext,     "ImmGetContext" );
 	LOADPROC( dyn_ImmSetOpenStatus,  "ImmReleaseContext" );
 	LOADPROC( dyn_ImmNotifyIME,      "ImmNotifyIME");
