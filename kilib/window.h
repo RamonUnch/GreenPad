@@ -233,7 +233,9 @@ private:
 		IActiveIMMApp*              immApp_;
 		IActiveIMMMessagePumpOwner* immMsg_;
 	#endif
-	bool hasIMM32_;
+	#if !defined(NO_IME) && defined(TARGET_VER) && TARGET_VER <= 350
+		bool hasIMM32_;
+	#endif
 	static IMEManager* pUniqueInstance_;
 
 private:
