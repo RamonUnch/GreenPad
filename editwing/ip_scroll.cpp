@@ -183,7 +183,7 @@ void Canvas::CalcWrapWidth()
 Canvas::Canvas( const View& vw )
 	: wrapType_ ( -1 )
 	, showLN_   ( false )
-	, font_     ( new Painter( ::GetDC(vw.hwnd()),
+	, font_     ( new Painter( vw.hwnd(),
 	              VConfig(TEXT("FixedSys"),14) ) )
 	, wrapWidth_( 0xffffffff )
 	, figNum_   ( 3 )
@@ -210,16 +210,16 @@ bool Canvas::on_view_resize( int cx, int cy )
 
 void Canvas::on_font_change( const VConfig& vc )
 {
-	HDC dc = font_->getDC();
+	HWND hwnd = font_->getWHND();
 	font_ = NULL; // 先にデストラクタを呼ばねばならない…
 	              // ってうわー格好悪ぃーーー(T_T)
-	font_ = new Painter( dc, vc );
+	font_ = new Painter( hwnd, vc );
 
 	CalcLNAreaWidth();
 	CalcWrapWidth();
 }
 
-void Canvas::on_config_change( int wrap, bool showln, bool wrapsmart )
+void Canvas::on_config_change( short wrap, bool showln, bool wrapsmart )
 {
 	showLN_ = showln;
 	wrapType_ = wrap;
@@ -229,7 +229,7 @@ void Canvas::on_config_change( int wrap, bool showln, bool wrapsmart )
 	CalcWrapWidth();
 }
 
-void Canvas::on_config_change_nocalc( int wrap, bool showln, bool wrapsmart )
+void Canvas::on_config_change_nocalc( short wrap, bool showln, bool wrapsmart )
 {
 	showLN_ = showln;
 	wrapType_ = wrap;
@@ -603,7 +603,7 @@ void ViewImpl::on_vscroll( int code, int pos )
 int ViewImpl::getNumScrollLines( void )
 {
 	uint scrolllines = 3; // Number of lines to scroll (default 3).
-	if( app().getOOSVer() >= 0x04000000 )
+	if( app().getOSVer() >= 0x0400 )
 	{   // Read the system value for the wheel scroll lines.
 		UINT numlines;
 		if( ::SystemParametersInfo( SPI_GETWHEELSCROLLLINES, 0, &numlines, 0 ) )
@@ -645,13 +645,13 @@ int ViewImpl::getNumScrollRaws( void )
 {
 	uint scrollnum = 3; // Number of lines to scroll (default 3).
 	// TODO: Get more accurate version numbers for scroll wheel support?
-	if ( app().getOOSVer() >= 0x06000000 )
+	if ( app().getOSVer() >= 0x0600 )
 	{ // Introduced in window Vista
 		UINT num;
 		if( ::SystemParametersInfo( SPI_GETWHEELSCROLLCHARS, 0, &num, 0 ) )
 			scrollnum = num; // Sucess!
 	}
-	else if( app().getOOSVer() >= 0x04000000 )
+	else if( app().getOSVer() >= 0x0400 )
 	{   // Read the system value for the wheel scroll lines.
 		UINT num;
 		if( ::SystemParametersInfo( SPI_GETWHEELSCROLLLINES, 0, &num, 0 ) )

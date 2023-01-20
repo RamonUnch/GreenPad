@@ -66,6 +66,9 @@ public:
 	//@{ 全角スペース用記号描画, Symbol drawing for full-width spaces //@}
 	void DrawZSP( int x, int y, int times );
 
+	void SetupDC(HDC hdc);
+	void RestoreDC();
+
 public:
 
 	//@{ 高さ, height(pixel) //@}
@@ -93,8 +96,14 @@ public:
 #ifndef WIN32S
 				SIZE sz;
 				if( isLowSurrogate(pch[1])
-				&&::GetTextExtentPoint32W( dc_, pch, 2, &sz ) )
+				#if !defined(TARGET_VER) || TARGET_VER >= 310
+				&&::GetTextExtentPoint32W( cdc_, pch, 2, &sz )
+				#else
+				&&::GetTextExtentPointW( cdc_, pch, 2, &sz )
+				#endif
+				){
 					return (CW_INTTYPE)sz.cx; // Valid surrogate pair.
+				}
 #endif
 				// Not a proper surrogate pair fallback to 2x (fast)
 				return 2 * widthTable_[ L'x' ];
@@ -108,7 +117,7 @@ public:
 					SIZE sz;
 					char strch[8]; // Small buffer for a single multi-byte character.
 					DWORD len = WideCharToMultiByte(CP_ACP,0, &ch,1, strch, countof(strch), NULL, NULL);
-					if( len && ::GetTextExtentPointA( dc_, strch, len, &sz ) )
+					if( len && ::GetTextExtentPointA( cdc_, strch, len, &sz ) )
 						widthTable_[ ch ] = (CW_INTTYPE)sz.cx;
 					else
 						widthTable_[ ch ] = 2 * widthTable_[ L'x' ]; // Default 2x width
@@ -116,10 +125,10 @@ public:
 				else
 				{
 					#ifndef SHORT_TABLEWIDTH
-					::GetCharWidthA( dc_, ch, ch, widthTable_+ch );
+					::GetCharWidthA( cdc_, ch, ch, widthTable_+ch );
 					#else
 					int width=0;
-					::GetCharWidthA( dc_, ch, ch, &width );
+					::GetCharWidthA( cdc_, ch, ch, &width );
 					widthTable_[ch] = (CW_INTTYPE)width;
 					#endif
 				}
@@ -130,18 +139,18 @@ public:
 				if( isInFontRange( ch ) )
 				{
 					#ifndef SHORT_TABLEWIDTH
-					::GetCharWidthW( dc_, ch, ch, widthTable_+ch );
+					::GetCharWidthW( cdc_, ch, ch, widthTable_+ch );
 					#else
 					int width=0;
-					::GetCharWidthW( dc_, ch, ch, &width );
+					::GetCharWidthW( cdc_, ch, ch, &width );
 					widthTable_[ch] = (CW_INTTYPE)width;
 					#endif
 				}
 				else
-				{	// Use GetTextExtentPointW when dc_ defaults to fallback font
+				{	// Use GetTextExtentPointW when cdc_ defaults to fallback font
 					// TODO: Even beter, get the fallback font and use its char width.
 					SIZE sz;
-					::GetTextExtentPointW( dc_, &ch, 1, &sz );
+					::GetTextExtentPointW( cdc_, &ch, 1, &sz );
 					widthTable_[ ch ] = (CW_INTTYPE)sz.cx;
 				}
 			}
@@ -183,10 +192,15 @@ public:
 
 private:
 
-	const HDC    dc_;
+	const HWND   hwnd_;// Window in which we paint
+	HDC          dc_;  // Device context used for Painting (non const)
+	const HDC    cdc_; // Compatible DC used for W() (const)
 	const HFONT  font_;
 	const HPEN   pen_;
 	const HBRUSH brush_;
+	HFONT  oldfont_;   // Old objects to be released before
+	HPEN   oldpen_;    // the EndPaint() call.
+	HBRUSH oldbrush_;  //
 	CW_INTTYPE   height_;
 	CW_INTTYPE*  widthTable_; // int or short [65535] values
 	CW_INTTYPE   figWidth_;
@@ -200,8 +214,8 @@ private:
 
 private:
 
-	Painter( HDC hdc, const VConfig& vc );
-	HDC getDC() { return dc_; }
+	Painter( HWND hwnd, const VConfig& vc );
+	HWND getWHND() { return hwnd_; }
 	friend class Canvas;
 	NOCOPY(Painter);
 };
@@ -247,7 +261,7 @@ public:
 
 	//@{ [-1:折り返し無し  0:窓右端  else:指定文字数] //@}
 	int wrapType() const { return wrapType_; }
-	
+
 	bool wrapSmart() const { return warpSmart_; }
 
 	//@{ 折り返し幅(pixel) //@}
