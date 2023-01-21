@@ -68,13 +68,13 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 		if( h != NULL )
 		{
 			h = (HDROP)::GlobalLock( h );
-			UINT nf = DragQueryFile(h, 0xFFFFFFFF, NULL, 0);
+			UINT nf = myDragQueryFile(h, 0xFFFFFFFF, NULL, 0);
 			size_t totstrlen=0;
 			UINT *lenmap = new UINT[nf];
 			for (uint i=0; i < nf; i++)
 			{	// On Windows NT3.1 DragQueryFile() does not return
 				// The required buffer length hence the Min()...
-				lenmap[i] = Min((UINT)MAX_PATH, DragQueryFile(h, i, NULL, 0));
+				lenmap[i] = Min((UINT)MAX_PATH, myDragQueryFile(h, i, NULL, 0));
 				totstrlen += lenmap[i];
 			}
 			unicode* ustr = new unicode[totstrlen+2*nf+1];
@@ -83,7 +83,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 			{
 				// Return the length without NULL and requires length with NULL
 				#ifdef UNICODE
-				ptr += DragQueryFileW(h, i, ptr, Min(lenmap[i]+1, (UINT)MAX_PATH));
+				ptr += myDragQueryFileW(h, i, ptr, Min(lenmap[i]+1, (UINT)MAX_PATH));
 				#else
 				{
 					char buf[MAX_PATH]; // MAX_PATH is the maximum in ANSI mode

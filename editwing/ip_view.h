@@ -215,6 +215,7 @@ private:
 private:
 
 	Painter( HWND hwnd, const VConfig& vc );
+	HFONT init_font( const VConfig& vc );
 	HWND getWHND() { return hwnd_; }
 	friend class Canvas;
 	NOCOPY(Painter);

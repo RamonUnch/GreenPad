@@ -19,7 +19,7 @@ namespace ki {
 	#define BLOCK_SIZ 8192
 #else
 	#ifdef STACK_MEM_POOLS
-	#define SMALL_MAX 128
+	#define SMALL_MAX 64
 	#define BLOCK_SIZ 4096
 	#else
 	#define SMALL_MAX 255

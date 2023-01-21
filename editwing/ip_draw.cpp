@@ -3,7 +3,44 @@
 using namespace editwing;
 using namespace editwing::view;
 
-
+//=========================================================================
+// Gives the actual DPI for the hwnd, fallback to DC for older windows
+// LOWORD is dpix, HIWORD is dpiy
+static DWORD myGetDpiForWindow(HWND hwnd, HDC hdc)
+{
+	if( app().getOSVer() >= 0x0A00 ) // Win10.00
+	{	// Supported wince Windows 10, version 1607 [desktop apps only]
+		#define FUNK_TYPE ( UINT (WINAPI *)(const HWND hwnd) )
+		static UINT (WINAPI *funk)(const HWND hwnd) = FUNK_TYPE (-1);
+		if (funk == FUNK_TYPE (-1)) /* First time */
+			funk = FUNK_TYPE GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "GetDpiForWindow");
+		#undef FUNK_TYPE
+	
+		if (funk)
+		{	// We know we have the function
+			WORD dpixy = (WORD)funk( hwnd );
+			// Same dpi along X and Y is guarenteed
+			// for a Window DC on Win10
+			return ( dpixy | (dpixy<<16) );
+		}
+	}
+	// Fallback to the DPI found for the DC
+	// this value is unfortunately incorect when using per-monitor DPI (Win8)
+	// It always return the DPI from main monitor. This is why we MUST use
+	// the above GetDpiForWindow() function available on Win10 1607.
+	//
+	// We could use also GetDpiForMonitor available on Win8 but on
+	// Win8 per-monitor dpi awareness does not scale non-client area nor
+	// standart dialog, so we only use PerMonitorV2 awareness.
+	WORD dpix, dpiy;
+	dpix = dpiy = 96;
+	if( hdc )
+	{
+		dpix = (WORD)GetDeviceCaps( hdc, LOGPIXELSX );
+		dpiy = (WORD)GetDeviceCaps( hdc, LOGPIXELSY );
+	}
+	return ( dpix | (dpiy<<16) );
+}
 
 //=========================================================================
 //---- ip_draw.cpp   •`‰æE‘¼
@@ -233,7 +270,7 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	: hwnd_      ( hwnd )
 	, dc_        ( ::GetDC(hwnd) )
 	, cdc_       ( ::CreateCompatibleDC( dc_ ) )
-	, font_      ( ::CreateFontIndirect( &vc.font ) )
+	, font_      ( init_font( vc ) )
 	, pen_       ( ::CreatePen( PS_SOLID, 0, vc.color[CTL] ) )
 	, brush_     ( ::CreateSolidBrush( vc.color[BG] ) )
 //	, widthTable_( new int[65536] )
@@ -341,6 +378,19 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 			}
 		}
 	}
+}
+HFONT Painter::init_font( const VConfig& vc )
+{
+	// Create a font that has the correct size with regards to the
+	// DPI of the current hwnd.
+	LOGFONT lf;
+	memmove( &lf, &vc.font, sizeof(lf) );
+
+	DWORD dpixy = ::myGetDpiForWindow( hwnd_, dc_ );
+	lf.lfHeight = -MulDiv(vc.fontsize,  LOWORD(dpixy), 72);
+	if( vc.fontwidth )
+		lf.lfWidth  = -MulDiv(vc.fontwidth, HIWORD(dpixy), 72);
+	return ::CreateFontIndirect( &lf );
 }
 void Painter::SetupDC(HDC hdc)
 {

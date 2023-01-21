@@ -27,7 +27,7 @@
 
 #ifdef _UNICODE
   #define UNICODEBOOL true
-#else 
+#else
   #define UNICODEBOOL false
 #endif
 
@@ -79,5 +79,30 @@ typedef struct tagRECONVERTSTRING {
 	#define GWLP_WNDPROC     GWL_WNDPROC
 	#define GWLP_USERDATA    GWL_USERDATA
 #endif
+
+#if defined(TARGET_VER) && TARGET_VER <= 303
+	// On Windows NT 3.10.340 MessageBox does not exists!
+  #undef MessageBox
+
+  #ifdef _UNICODE
+	#define MessageBox(a, b, c, d) MessageBoxExW(a, b, c, d, 0)
+
+    UINT myDragQueryFileW(HDROP hd, UINT i, LPWSTR wpath, UINT l);
+    #define myDragQueryFile myDragQueryFileW
+  #else
+	#define MessageBox(a, b, c, d) MessageBoxExA(a, b, c, d, 0)
+	#define myDragQueryFile DragQueryFileA
+  #endif
+
+#else // TARGET_VER >= 303
+	// Default implementation
+	#define myDragQueryFileW DragQueryFileW
+	#define myDragQueryFileA DragQueryFileA
+	#ifdef _UNICODE
+		#define myDragQueryFile myDragQueryFileW
+	#else
+		#define myDragQueryFile myDragQueryFileA
+	#endif
+#endif // TARGET_VER
 
 #endif // _KILIB_STDAFX_H_

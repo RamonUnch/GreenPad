@@ -130,9 +130,11 @@ BEGIN
         MENUITEM "‘S‚Ä‚ð‘I‘ð(&A)\tCtrl+A",      ID_CMD_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "“úŽž‚Ì‘}“ü(&T)\tF5",          ID_CMD_DATETIME
+      # ifndef NO_IME
         MENUITEM SEPARATOR
         MENUITEM "Ä•ÏŠ·(&V)",              ID_CMD_RECONV
         MENUITEM "IME On/Off(&I)",          ID_CMD_TOGGLEIME
+       # endif
     END
     POPUP "ŒŸõ(&S)"
     BEGIN

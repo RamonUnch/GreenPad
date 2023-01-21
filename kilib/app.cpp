@@ -429,15 +429,6 @@ namespace ki
 	}
 }
 
-#if defined(TARGET_VER) && TARGET_VER <= 303
-	// On Windows NT 3.10.340 MessageBox does not exists!
-	extern "C" int WINAPI _imp__MessageBoxA(HWND a, LPCSTR b, LPCSTR c, UINT d)
-		{ return MessageBoxExA(a, b, c, d, 0); }
-
-	extern "C" int WINAPI _imp__MessageBoxW(HWND a, LPCWSTR b, LPCWSTR c, UINT d)
-		{ return MessageBoxExW(a, b, c, d, 0); }
-#endif
-
 #ifdef __GNUC__
   #ifdef SUPERTINY
 	extern "C" void WINAPI entryp() { ki::Startup(); }

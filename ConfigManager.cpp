@@ -10,40 +10,6 @@ using namespace editwing;
 
 void BootNewProcess( const TCHAR* cmd ); // in GpMain.cpp
 
-void SetFontSize(LOGFONT *font, HDC hDC, int fsiz, int fx)
-{
-	font->lfWidth          = 0;
-	HDC h;
-	h = hDC? hDC: ::GetDC( NULL ); // fallback to current screen DC
-	font->lfHeight = -MulDiv(fsiz, ::GetDeviceCaps(h, LOGPIXELSY), 72);
-	if(fx) font->lfWidth = -MulDiv(fx, ::GetDeviceCaps(h, LOGPIXELSX), 72);
-	if(!hDC) ::ReleaseDC( NULL, h ); // release if captured!
-}
-
-void VConfig::SetFont( const TCHAR* fnam, int fsiz, uchar fontCS, LONG fw, BYTE ff, int fx, int qual )
-{
-	mem00(&font, sizeof(font));
-	fontsize              = fsiz;
-	fontwidth             = fx;
-//	font.lfHeight         = 0;
-//	font.lfWidth          = 0;
-//	font.lfEscapement     = 0;
-//	font.lfOrientation    = 0;
-	font.lfWeight         = fw; // FW_DONTCARE;
-	font.lfItalic         = ff&1; // FALSE
-	font.lfUnderline      = ff&2; // FALSE
-	font.lfStrikeOut      = ff&4; // FALSE
-	font.lfOutPrecision   = OUT_DEFAULT_PRECIS;
-	font.lfClipPrecision  = CLIP_DEFAULT_PRECIS;
-	font.lfQuality        = qual;
-	font.lfPitchAndFamily = VARIABLE_PITCH|FF_DONTCARE;
-	font.lfCharSet        = fontCS;
-
-	my_lstrcpyn( font.lfFaceName, fnam, LF_FACESIZE );
-
-	SetFontSize( &font, NULL, fsiz, fx);
-}
-
 //-------------------------------------------------------------------------
 // 設定項目管理。
 // SetDocTypeで切り替えると、文書タイプ依存の項目を自動で
@@ -795,6 +761,7 @@ void ConfigManager::LoadIni()
 	// wnd
 	rememberWindowSize_  = ini_.GetBool( TEXT("RememberWindowSize"), false );
 	rememberWindowPlace_ = ini_.GetBool( TEXT("RememberWindowPos"), false );
+	wndX_ = wndY_ = wndW_ = wndH_ = CW_USEDEFAULT;
 	if( rememberWindowPlace_ )
 	{
 		wndX_ = ini_.GetInt( TEXT("WndX"), CW_USEDEFAULT );
@@ -814,7 +781,7 @@ void ConfigManager::LoadIni()
 	ini_.GetRect( TEXT("PMargin"), &rcPMargins_, &rcPMargins_);
 
 	// TODO: MRU
-	mrus_ = ini_.GetInt( TEXT("MRU"), 0 );
+	mrus_ = ini_.GetInt( TEXT("MRU"), 8 );
 	mrus_ = Min(Max(0, mrus_), 20);
 
 	// 新規ファイル関係

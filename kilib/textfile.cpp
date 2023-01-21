@@ -1275,13 +1275,13 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 
 	// •K—v‚È‚çŽ©“®”»’è
 	cs_ = AutoDetection( cs_, buf, siz );
-	int needed_cs = neededCodepage(cs_);
+	int needed_cs = neededCodepage( cs_ );
 
-	if(needed_cs > 0 && !::IsValidCodePage(needed_cs))
+	if( needed_cs > 0 && !::IsValidCodePage(needed_cs) )
 	{
 		TCHAR str[128];
 		::wsprintf(str, TEXT("Codepage cp%d Is not installed!\nDefaulting to current ACP"), needed_cs);
-		::MessageBox(NULL, str, TEXT("Encoding"), MB_OK|MB_TASKMODAL|MB_TOPMOST);
+		::MessageBox(::GetActiveWindow(), str, TEXT("Encoding"), MB_OK|MB_TASKMODAL);
 		if( cs_ == Western )
 		{	// Codepage 1252 is not installed,
 			// default to ISO-8859-1 (CP28591)
