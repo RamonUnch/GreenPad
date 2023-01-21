@@ -15,7 +15,7 @@ static DWORD myGetDpiForWindow(HWND hwnd, HDC hdc)
 		if (funk == FUNK_TYPE (-1)) /* First time */
 			funk = FUNK_TYPE GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "GetDpiForWindow");
 		#undef FUNK_TYPE
-	
+
 		if (funk)
 		{	// We know we have the function
 			WORD dpixy = (WORD)funk( hwnd );
@@ -275,6 +275,8 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	, brush_     ( ::CreateSolidBrush( vc.color[BG] ) )
 //	, widthTable_( new int[65536] )
 	, widthTable_( wtable )
+	, height_    ( 16 )
+	, figWidth_  ( 8  )
 	, fontranges_( NULL )
 #ifdef WIN32S
 	, useOutA_   ( app().isWin32s() || (!app().isNT() && app().getOOSVer() <= MKVER(4,00,99)) )
@@ -293,6 +295,8 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 		colorTable_[i] = vc.color[i];
 	colorTable_[3] = vc.color[CMT];
 
+	if( !font_ ) // Dummy font, no CDC/Tablewidth to setup.
+		return;
 	// DC‚ÉƒZƒbƒg, Setup a Compatible Device Context (CDC)
 	::SelectObject( cdc_, font_  );
 	::SelectObject( cdc_, pen_   );
@@ -383,6 +387,8 @@ HFONT Painter::init_font( const VConfig& vc )
 {
 	// Create a font that has the correct size with regards to the
 	// DPI of the current hwnd.
+	if( !vc.fontsize && !vc.font.lfFaceName[0]  )
+		return NULL; // Dummy font for first init
 	LOGFONT lf;
 	memmove( &lf, &vc.font, sizeof(lf) );
 
@@ -555,7 +561,7 @@ void Painter::DrawZSP( int x, int y, int times )
 	RECT rc = { x, y+h-4, x+w-2, y+h-1 };
 	while( times-- )
 	{
-		if( 0 <= rc.right ) // Useless check? It was done before so I still do it!
+		if( 0 <= rc.right )
 			::Rectangle( dc_ , rc.left, rc.top, rc.right, rc.bottom );
 		rc.left   += w;
 		rc.right  += w;
