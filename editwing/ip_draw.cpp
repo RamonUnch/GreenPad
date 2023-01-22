@@ -271,7 +271,7 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	, dc_        ( ::GetDC(hwnd) )
 	, cdc_       ( ::CreateCompatibleDC( dc_ ) )
 	, font_      ( init_font( vc ) )
-	, pen_       ( ::CreatePen( PS_SOLID, 0, vc.color[CTL] ) )
+	, pen_       ( NULL )
 	, brush_     ( ::CreateSolidBrush( vc.color[BG] ) )
 //	, widthTable_( new int[65536] )
 	, widthTable_( wtable )
@@ -297,12 +297,22 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 
 	if( !font_ ) // Dummy font, no CDC/Tablewidth to setup.
 		return;
-	// DCにセット, Setup a Compatible Device Context (CDC)
+
+	// DCにセット, Setup the Compatible Device Context (CDC)
 	::SelectObject( cdc_, font_  );
-	::SelectObject( cdc_, pen_   );
 	::SelectObject( cdc_, brush_ );
 	::SetBkMode(    cdc_, TRANSPARENT );
 	::SetMapMode(   cdc_, MM_TEXT );
+
+	// 高さの情報, Height Information
+	TEXTMETRIC met;
+	::GetTextMetrics( cdc_, &met );
+	height_ = (CW_INTTYPE) met.tmHeight;
+
+	// Create a pen that is a 16th of font height. (min is 1px)
+	pen_ = ::CreatePen( PS_SOLID, height_/16, vc.color[CTL] );
+	::SelectObject( cdc_, pen_   );
+
 
 	// 文字幅テーブル初期化（ASCII範囲の文字以外は遅延処理）
 	memFF( widthTable_, 65536*sizeof(*widthTable_) );
@@ -354,11 +364,6 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 
 	// Set the width of a Tabulation
 	widthTable_[L'\t'] = NZero(W() * Max(1, vc.tabstep));
-
-	// 高さの情報, Height Information
-	TEXTMETRIC met;
-	::GetTextMetrics( cdc_, &met );
-	height_ = (CW_INTTYPE) met.tmHeight;
 
 	// LOGFONT
 	::GetObject( font_, sizeof(LOGFONT), &logfont_ );
@@ -536,11 +541,14 @@ void Painter::DrawHSP( int x, int y, int times )
 	// 半角スペース記号(ホチキスの芯型)を描く
 	// Draw a half-width space symbol (staple core type)
 	const int w=Wc(L' '), h=H();
+	const int rh = Max(h/4, 4);
+	const int pw = Max(h/16, 1);
+
 	POINT pt[4] = {
-		{ x    , y+h-4 },
-		{ x    , y+h-2 },
-		{ x+w-3, y+h-2 },
-		{ x+w-3, y+h-5 }
+		{ x+pw  , y+h-rh },
+		{ x+pw  , y+h-pw },
+		{ x+w-2*pw, y+h-pw },
+		{ x+w-2*pw, y+h-rh-1 }
 	};
 	while( times-- )
 	{
@@ -558,7 +566,9 @@ void Painter::DrawZSP( int x, int y, int times )
 	// 全角スペース記号(平たい四角)を描く
 	// Draw a full-width space symbol (flat rectangle)
 	const int w=Wc(0x3000/*L'　'*/), h=H();
-	RECT rc = { x, y+h-4, x+w-2, y+h-1 };
+	const int rh = Max(h/4, 4);
+	const int pw = Max(h/16, 1);
+	RECT rc = { x+pw, y+h-rh, x+w-pw, y+h-pw };
 	while( times-- )
 	{
 		if( 0 <= rc.right )
