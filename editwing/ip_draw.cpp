@@ -398,9 +398,9 @@ HFONT Painter::init_font( const VConfig& vc )
 	memmove( &lf, &vc.font, sizeof(lf) );
 
 	DWORD dpixy = ::myGetDpiForWindow( hwnd_, dc_ );
-	lf.lfHeight = -MulDiv(vc.fontsize,  LOWORD(dpixy), 72);
+	lf.lfHeight = -MulDiv(vc.fontsize,  HIWORD(dpixy), 72);
 	if( vc.fontwidth )
-		lf.lfWidth  = -MulDiv(vc.fontwidth, HIWORD(dpixy), 72);
+		lf.lfWidth  = -MulDiv(vc.fontwidth, LOWORD(dpixy), 72);
 	return ::CreateFontIndirect( &lf );
 }
 void Painter::SetupDC(HDC hdc)
