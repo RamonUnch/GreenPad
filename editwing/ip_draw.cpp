@@ -545,9 +545,9 @@ void Painter::DrawHSP( int x, int y, int times )
 	const int pw = Max(h/16, 1);
 
 	POINT pt[4] = {
-		{ x+pw  , y+h-rh },
-		{ x+pw  , y+h-pw },
-		{ x+w-2*pw, y+h-pw },
+		{ x+pw    , y+h-rh },
+		{ x+pw    , y+h-2*pw },
+		{ x+w-2*pw, y+h-2*pw },
 		{ x+w-2*pw, y+h-rh-1 }
 	};
 	while( times-- )
