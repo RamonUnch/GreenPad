@@ -181,9 +181,23 @@ bool FileR::Open( const TCHAR* fname, bool always)
 			::wsprintf( msg, TEXT("CreateFileMapping(%s) failed #%d"), fname, ::GetLastError() );
 			::MessageBox( NULL,msg,TEXT("Debug"),0 );
 			#endif
+
+		#ifdef OLDWIN32S
+			// We cannot use CreateFileMapping() on old Win32s beta
+			// So we allocate a buffer for the whole file and use ReadFile().
+			basePtr_ = new BYTE[size_];
+			DWORD nBytesRead=0;
+			BOOL ret = ReadFile( handle_, (void*)basePtr_, size_, &nBytesRead,  NULL);
+			::CloseHandle( handle_ ); // We can already close the handle
+			handle_ = INVALID_HANDLE_VALUE;
+			size_ = nBytesRead; // Update size with what was actually read.
+			return nBytesRead && ret;
+		#else
+			// Just close the file handle and exit with error.
 			::CloseHandle( handle_ );
 			handle_ = INVALID_HANDLE_VALUE;
 			return false;
+		#endif
 		}
 
 		// ÉrÉÖÅ[
@@ -221,6 +235,17 @@ void FileR::Close()
 		::CloseHandle( handle_ );
 		handle_ = INVALID_HANDLE_VALUE;
 	}
+#ifdef OLDWIN32S
+	else
+	{
+		// If basePtr_ is non-NULL it means we allocated file
+		// Via ReadFile (Win32s beta), so we must free the memory.
+		// File handle is already closed.
+		if( basePtr_ != NULL && basePtr_ != &size_ )
+			delete [] (void*)basePtr_;
+	}
+#endif
+
 }
 
 
