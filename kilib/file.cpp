@@ -193,6 +193,9 @@ bool FileR::Open( const TCHAR* fname, bool always)
 			size_ = nBytesRead; // Update size with what was actually read.
 			return nBytesRead && ret;
 		#else
+			// Just close the file handle and exit with error.
+			::CloseHandle( handle_ );
+			handle_ = INVALID_HANDLE_VALUE;
 			return false;
 		#endif
 		}
