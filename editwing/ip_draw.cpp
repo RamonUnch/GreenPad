@@ -8,6 +8,7 @@ using namespace editwing::view;
 // LOWORD is dpix, HIWORD is dpiy
 static DWORD myGetDpiForWindow(HWND hwnd, HDC hdc)
 {
+#ifdef PM_DPIAWARE
 	if( app().getOSVer() >= 0x0A00 ) // Win10.00
 	{	// Supported wince Windows 10, version 1607 [desktop apps only]
 		#define FUNK_TYPE ( UINT (WINAPI *)(const HWND hwnd) )
@@ -32,6 +33,7 @@ static DWORD myGetDpiForWindow(HWND hwnd, HDC hdc)
 	// We could use also GetDpiForMonitor available on Win8 but on
 	// Win8 per-monitor dpi awareness does not scale non-client area nor
 	// standart dialog, so we only use PerMonitorV2 awareness.
+#endif // PM_DPIAWARE
 	WORD dpix, dpiy;
 	dpix = dpiy = 96;
 	if( hdc )

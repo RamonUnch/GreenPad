@@ -142,6 +142,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		}
 		break;
 
+	#ifdef PM_DPIAWARE
 	case 0x02E0: // WM_DPICHANGED
 		if( lp )
 		{	// We need to set the font again so that it scales to
@@ -154,6 +155,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 				rc->left, rc->top, rc->right-rc->left, rc->bottom-rc->top,
 				SWP_NOZORDER | SWP_NOACTIVATE);
 		} break;
+	#endif // PM_DPIAWARE
 
 	// ウインドウ移動
 	case WM_MOVE:

@@ -27,8 +27,11 @@
 //
 // RT_MANIFEST
 //
-
+#ifdef PM_DPIAWARE
+1                       RT_MANIFEST             "manifest2.xml"
+#else
 1                       RT_MANIFEST             "manifest.xml"
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //
