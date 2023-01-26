@@ -34,9 +34,19 @@ bool StatusBar::Create( )
 	);
 
 	if( h == NULL )
+	{
+		#ifdef _DEBUG
+		TCHAR buf[64];
+		DWORD err = GetLastError();
+		::wsprintf(buf, TEXT("StatusBar::Create() failed, Error #%d"), err);
+		LOGGERS( buf );
+		#endif
 		return false;
+	}
 
 	SetHwnd( h );
+	visible_ = true;
+	AutoResize( false );
 	return true;
 }
 
@@ -47,8 +57,6 @@ void StatusBar::SetStatusBarVisible(bool b)
 	if( hwnd() )
 		::ShowWindow( hwnd(), b? SW_SHOW: SW_HIDE );
 	visible_= b && hwnd();
-	if( visible_ )
-		AutoResize( false );
 }
 
 int StatusBar::AutoResize( bool maximized )
@@ -73,7 +81,7 @@ bool StatusBar::PreTranslateMessage( MSG* )
 
 void StatusBar::SetText( const TCHAR* str, int part )
 {
-#if defined(UNICOWS) && defined(UNICODE)
+#if defined(UNICODE) && defined(TARGET_VER) && TARGET_VER <= 350
 	if ( app().isNTOSVerLarger(MKVER(3,50,711)) )
 	{	// Unicode in UNICOWS mode to be used on NT only from 3.5 build 711
 		SendMsg( SB_SETTEXTW, part, reinterpret_cast<LPARAM>(str) );
@@ -97,8 +105,12 @@ void ComboBox::Select( const TCHAR* str )
 {
 	// SELECTSTRING は先頭が合ってる物に全てにマッチするので使えない。
 	// おそらくインクリメンタルサーチとかに使うべきものなのだろう。
-	LRESULT i =
+	LRESULT i = // Use CB_FINDSTRING on Windows NT below 3.10.404
+	#if defined(TARGET_VER) && TARGET_VER <= 303
+		SendMsg( app().isNT() && app().getOOSVer() < MKVER(3,10,404)? CB_FINDSTRING :CB_FINDSTRINGEXACT, ~0, reinterpret_cast<LPARAM>(str) );
+	#else
 		SendMsg( CB_FINDSTRINGEXACT, ~0, reinterpret_cast<LPARAM>(str) );
+	#endif
 	if( i != CB_ERR )
 		SendMsg( CB_SETCURSEL, i );
 }

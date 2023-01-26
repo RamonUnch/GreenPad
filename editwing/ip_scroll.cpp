@@ -184,7 +184,7 @@ Canvas::Canvas( const View& vw )
 	: wrapType_ ( -1 )
 	, showLN_   ( false )
 	, font_     ( new Painter( vw.hwnd(),
-	              VConfig(TEXT("FixedSys"),14) ) )
+	              VConfig(TEXT(""),0) ) )
 	, wrapWidth_( 0xffffffff )
 	, figNum_   ( 3 )
 {

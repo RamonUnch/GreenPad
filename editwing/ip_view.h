@@ -196,13 +196,13 @@ private:
 	HDC          dc_;  // Device context used for Painting (non const)
 	const HDC    cdc_; // Compatible DC used for W() (const)
 	const HFONT  font_;
-	const HPEN   pen_;
+	HPEN         pen_;
 	const HBRUSH brush_;
 	HFONT  oldfont_;   // Old objects to be released before
 	HPEN   oldpen_;    // the EndPaint() call.
 	HBRUSH oldbrush_;  //
-	CW_INTTYPE   height_;
 	CW_INTTYPE*  widthTable_; // int or short [65535] values
+	CW_INTTYPE   height_;
 	CW_INTTYPE   figWidth_;
 	LOGFONT      logfont_;
 	GLYPHSET     *fontranges_;
@@ -215,6 +215,7 @@ private:
 private:
 
 	Painter( HWND hwnd, const VConfig& vc );
+	HFONT init_font( const VConfig& vc );
 	HWND getWHND() { return hwnd_; }
 	friend class Canvas;
 	NOCOPY(Painter);

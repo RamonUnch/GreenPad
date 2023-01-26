@@ -153,7 +153,8 @@ using namespace ki;
 	}
 	#else
 	// Stupid naive C90 memmove for GCC
-	#pragma GCC optimize ("O3")
+	#pragma GCC push_options
+	#pragma GCC optimize ("-O3")
 	typedef __attribute__((__may_alias__)) size_t WT;
 	#define WS (sizeof(WT))
 	void *__cdecl memmove(void *dest, const void *src, size_t n)
@@ -185,7 +186,18 @@ using namespace ki;
 		}
 		return dest;
 	}
-	#pragma GCC pop_options ("O3")
+	void __cdecl memset(void *dest, int ch, size_t n)
+	{
+		unsigned char *d = (unsigned char *)dest;
+		const unsigned char c = (const unsigned char)ch;
+		while( n-- )
+			*d++ = c;
+	}
+	void *cdecl memcpy(void *dest, const void *src, size_t n)
+	{
+		return memmove(dest, src, n);
+	}
+	#pragma GCC pop_options
 	#endif
 
 	#ifdef __GNUC__

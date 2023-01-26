@@ -4,7 +4,6 @@
 using namespace ki;
 using namespace editwing;
 
-
 //-------------------------------------------------------------------------
 // 新規プロセス起動
 //-------------------------------------------------------------------------
@@ -142,6 +141,21 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 			cfg_.RememberWnd(this);
 		}
 		break;
+
+	#ifdef PM_DPIAWARE
+	case 0x02E0: // WM_DPICHANGED
+		if( lp )
+		{	// We need to set the font again so that it scales to
+			// The new monitor DPI.
+			edit_.getView().SetFont( cfg_.vConfig() );
+
+			// Resize the window to the advised RECT
+			RECT *rc = (RECT *)lp;
+			::SetWindowPos( hwnd(), NULL,
+				rc->left, rc->top, rc->right-rc->left, rc->bottom-rc->top,
+				SWP_NOZORDER | SWP_NOACTIVATE);
+		} break;
+	#endif // PM_DPIAWARE
 
 	// ウインドウ移動
 	case WM_MOVE:
@@ -506,6 +520,13 @@ void GreenPadWnd::on_pagesetup()
 	if( myPageSetupDlg(&psd) )
 		cfg_.SetPrintMargins(&psd.rtMargin);
 }
+
+void GreenPadWnd::SetFontSizeforDC(LOGFONT *font, HDC hDC, int fsiz, int fx)
+{
+	font->lfWidth          = 0;
+	font->lfHeight = -MulDiv(fsiz, ::GetDeviceCaps(hDC, LOGPIXELSY), 72);
+	if(fx) font->lfWidth = -MulDiv(fx, ::GetDeviceCaps(hDC, LOGPIXELSX), 72);
+}
 void GreenPadWnd::on_print()
 {
 	doc::Document& d = edit_.getDoc();
@@ -566,7 +587,7 @@ void GreenPadWnd::on_print()
 	lf.lfQuality        = cfg_.vConfig().font.lfQuality;
 	lf.lfPitchAndFamily = cfg_.vConfig().font.lfPitchAndFamily;
 	my_lstrcpy(lf.lfFaceName, cfg_.vConfig().font.lfFaceName);
-	SetFontSize(&lf, thePrintDlg.hDC, cfg_.vConfig().fontsize, cfg_.vConfig().fontwidth);
+	SetFontSizeforDC(&lf, thePrintDlg.hDC, cfg_.vConfig().fontsize, cfg_.vConfig().fontwidth);
 	HFONT printfont = ::CreateFontIndirect(&lf);
 	::SelectObject( thePrintDlg.hDC, printfont );
 
@@ -729,14 +750,14 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 
 void GreenPadWnd::on_drop( HDROP hd )
 {
-	UINT iMax = ::DragQueryFile( hd, 0xffffffff, NULL, 0 );
+	UINT iMax = ::myDragQueryFile( hd, 0xffffffff, NULL, 0 );
 	for( UINT i=0; i<iMax; ++i )
 	{
 		// Get length of the i string for array size.
-		UINT len = ::DragQueryFile( hd, i, NULL, 0)+1;
+		UINT len = ::myDragQueryFile( hd, i, NULL, 0)+1;
 		len = Max(len, (UINT)MAX_PATH); // ^ the Above may fail on NT3.1
 		TCHAR *str = new TCHAR [len];
-		::DragQueryFile( hd, i, str, len );
+		::myDragQueryFile( hd, i, str, len );
 		Open( str, AutoDetect );
 		delete [] str;
 	}
@@ -805,7 +826,7 @@ void GreenPadWnd::on_datetime()
 {
 	String g = cfg_.dateFormat();
 
-#ifdef WIN32S
+#if defined(WIN32S) || defined(TARGET_VER) && TARGET_VER <= 303
 	if( !app().isNT() )
 	{	// Dynamically import GetTime/DateFormat on win32s build
 		// So that it can run on NT3.1

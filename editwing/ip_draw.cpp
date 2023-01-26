@@ -3,7 +3,46 @@
 using namespace editwing;
 using namespace editwing::view;
 
+//=========================================================================
+// Gives the actual DPI for the hwnd, fallback to DC for older windows
+// LOWORD is dpix, HIWORD is dpiy
+static DWORD myGetDpiForWindow(HWND hwnd, HDC hdc)
+{
+#ifdef PM_DPIAWARE
+	if( app().getOSVer() >= 0x0A00 ) // Win10.00
+	{	// Supported wince Windows 10, version 1607 [desktop apps only]
+		#define FUNK_TYPE ( UINT (WINAPI *)(const HWND hwnd) )
+		static UINT (WINAPI *funk)(const HWND hwnd) = FUNK_TYPE (-1);
+		if (funk == FUNK_TYPE (-1)) /* First time */
+			funk = FUNK_TYPE GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "GetDpiForWindow");
+		#undef FUNK_TYPE
 
+		if (funk)
+		{	// We know we have the function
+			WORD dpixy = (WORD)funk( hwnd );
+			// Same dpi along X and Y is guarenteed
+			// for a Window DC on Win10
+			return ( dpixy | (dpixy<<16) );
+		}
+	}
+	// Fallback to the DPI found for the DC
+	// this value is unfortunately incorect when using per-monitor DPI (Win8)
+	// It always return the DPI from main monitor. This is why we MUST use
+	// the above GetDpiForWindow() function available on Win10 1607.
+	//
+	// We could use also GetDpiForMonitor available on Win8 but on
+	// Win8 per-monitor dpi awareness does not scale non-client area nor
+	// standart dialog, so we only use PerMonitorV2 awareness.
+#endif // PM_DPIAWARE
+	WORD dpix, dpiy;
+	dpix = dpiy = 96;
+	if( hdc )
+	{
+		dpix = (WORD)GetDeviceCaps( hdc, LOGPIXELSX );
+		dpiy = (WORD)GetDeviceCaps( hdc, LOGPIXELSY );
+	}
+	return ( dpix | (dpiy<<16) );
+}
 
 //=========================================================================
 //---- ip_draw.cpp   描画・他
@@ -233,11 +272,13 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	: hwnd_      ( hwnd )
 	, dc_        ( ::GetDC(hwnd) )
 	, cdc_       ( ::CreateCompatibleDC( dc_ ) )
-	, font_      ( ::CreateFontIndirect( &vc.font ) )
-	, pen_       ( ::CreatePen( PS_SOLID, 0, vc.color[CTL] ) )
+	, font_      ( init_font( vc ) )
+	, pen_       ( NULL )
 	, brush_     ( ::CreateSolidBrush( vc.color[BG] ) )
 //	, widthTable_( new int[65536] )
 	, widthTable_( wtable )
+	, height_    ( 16 )
+	, figWidth_  ( 8  )
 	, fontranges_( NULL )
 #ifdef WIN32S
 	, useOutA_   ( app().isWin32s() || (!app().isNT() && app().getOOSVer() <= MKVER(4,00,99)) )
@@ -256,12 +297,24 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 		colorTable_[i] = vc.color[i];
 	colorTable_[3] = vc.color[CMT];
 
-	// DCにセット, Setup a Compatible Device Context (CDC)
+	if( !font_ ) // Dummy font, no CDC/Tablewidth to setup.
+		return;
+
+	// DCにセット, Setup the Compatible Device Context (CDC)
 	::SelectObject( cdc_, font_  );
-	::SelectObject( cdc_, pen_   );
 	::SelectObject( cdc_, brush_ );
 	::SetBkMode(    cdc_, TRANSPARENT );
 	::SetMapMode(   cdc_, MM_TEXT );
+
+	// 高さの情報, Height Information
+	TEXTMETRIC met;
+	::GetTextMetrics( cdc_, &met );
+	height_ = (CW_INTTYPE) met.tmHeight;
+
+	// Create a pen that is a 16th of font height. (min is 1px)
+	pen_ = ::CreatePen( PS_SOLID, height_/16, vc.color[CTL] );
+	::SelectObject( cdc_, pen_   );
+
 
 	// 文字幅テーブル初期化（ASCII範囲の文字以外は遅延処理）
 	memFF( widthTable_, 65536*sizeof(*widthTable_) );
@@ -314,11 +367,6 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	// Set the width of a Tabulation
 	widthTable_[L'\t'] = NZero(W() * Max(1, vc.tabstep));
 
-	// 高さの情報, Height Information
-	TEXTMETRIC met;
-	::GetTextMetrics( cdc_, &met );
-	height_ = (CW_INTTYPE) met.tmHeight;
-
 	// LOGFONT
 	::GetObject( font_, sizeof(LOGFONT), &logfont_ );
 
@@ -341,6 +389,21 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 			}
 		}
 	}
+}
+HFONT Painter::init_font( const VConfig& vc )
+{
+	// Create a font that has the correct size with regards to the
+	// DPI of the current hwnd.
+	if( !vc.fontsize && !vc.font.lfFaceName[0]  )
+		return NULL; // Dummy font for first init
+	LOGFONT lf;
+	memmove( &lf, &vc.font, sizeof(lf) );
+
+	DWORD dpixy = ::myGetDpiForWindow( hwnd_, dc_ );
+	lf.lfHeight = -MulDiv(vc.fontsize,  HIWORD(dpixy), 72);
+	if( vc.fontwidth )
+		lf.lfWidth  = -MulDiv(vc.fontwidth, LOWORD(dpixy), 72);
+	return ::CreateFontIndirect( &lf );
 }
 void Painter::SetupDC(HDC hdc)
 {
@@ -480,11 +543,14 @@ void Painter::DrawHSP( int x, int y, int times )
 	// 半角スペース記号(ホチキスの芯型)を描く
 	// Draw a half-width space symbol (staple core type)
 	const int w=Wc(L' '), h=H();
+	const int rh = Max(h/4, 4);
+	const int pw = Max(h/16, 1);
+
 	POINT pt[4] = {
-		{ x    , y+h-4 },
-		{ x    , y+h-2 },
-		{ x+w-3, y+h-2 },
-		{ x+w-3, y+h-5 }
+		{ x+pw    , y+h-rh },
+		{ x+pw    , y+h-2*pw },
+		{ x+w-2*pw, y+h-2*pw },
+		{ x+w-2*pw, y+h-rh-1 }
 	};
 	while( times-- )
 	{
@@ -502,10 +568,12 @@ void Painter::DrawZSP( int x, int y, int times )
 	// 全角スペース記号(平たい四角)を描く
 	// Draw a full-width space symbol (flat rectangle)
 	const int w=Wc(0x3000/*L'　'*/), h=H();
-	RECT rc = { x, y+h-4, x+w-2, y+h-1 };
+	const int rh = Max(h/4, 4);
+	const int pw = Max(h/16, 1);
+	RECT rc = { x+pw, y+h-rh, x+w-pw, y+h-pw };
 	while( times-- )
 	{
-		if( 0 <= rc.right ) // Useless check? It was done before so I still do it!
+		if( 0 <= rc.right )
 			::Rectangle( dc_ , rc.left, rc.top, rc.right, rc.bottom );
 		rc.left   += w;
 		rc.right  += w;

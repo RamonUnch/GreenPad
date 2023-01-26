@@ -172,40 +172,36 @@ struct VConfig : public ki::Object
 	}
 
 	//@{ フォント関係設定 //@}
-/*	void SetFont( const TCHAR* fnam, int fsiz )
+	void SetFont(
+		const TCHAR* fnam, int fsiz
+		, uchar fontCS=DEFAULT_CHARSET
+		, LONG fw=FW_DONTCARE, BYTE ff=0, int fx=0
+		, int qual=DEFAULT_QUALITY )
 	{
-		SetFont( fnam,fsiz,DEFAULT_CHARSET );
-	}
-	void SetFont( const TCHAR* fnam, int fsiz, char fontCS )
-	{
-		SetFont( fnam,fsiz,fontCS,DEFAULT_QUALITY );
-	}*/
-	void SetFont( const TCHAR* fnam, int fsiz
-				, uchar fontCS=DEFAULT_CHARSET
-				, LONG fw=FW_DONTCARE, BYTE ff=0, int fx=0
-				, int qual=DEFAULT_QUALITY ) ;
-/*	{
+		// Actual font size in points at 72 DPI.
 		fontsize              = fsiz;
-		font.lfWidth          = 0;
-		font.lfEscapement     = 0;
-		font.lfOrientation    = 0;
-		font.lfWeight         = FW_DONTCARE;
-		font.lfItalic         = FALSE;
-		font.lfUnderline      = FALSE;
-		font.lfStrikeOut      = FALSE;
+		fontwidth             = fx;
+
+		ki::mem00( &font, sizeof(font) );
+	//	font.lfHeight         = 0; // We do not set lfHeight
+	//	font.lfWidth          = 0; // because it must be set for
+	//	font.lfEscapement     = 0; // each DC
+	//	font.lfOrientation    = 0;
+		font.lfWeight         = fw; // FW_DONTCARE;
+		font.lfItalic         = ff&1; // FALSE
+		font.lfUnderline      = ff&2; // FALSE
+		font.lfStrikeOut      = ff&4; // FALSE
 		font.lfOutPrecision   = OUT_DEFAULT_PRECIS;
 		font.lfClipPrecision  = CLIP_DEFAULT_PRECIS;
 		font.lfQuality        = qual;
 		font.lfPitchAndFamily = VARIABLE_PITCH|FF_DONTCARE;
 		font.lfCharSet        = fontCS;
 
-		::lstrcpyn( font.lfFaceName, fnam, LF_FACESIZE );
+		my_lstrcpyn( font.lfFaceName, fnam, LF_FACESIZE-1 );
 
-		HDC h = ::GetDC( NULL );
-		font.lfHeight = -MulDiv(fsiz, ::GetDeviceCaps(h, LOGPIXELSY), 72);
-		::ReleaseDC( NULL, h );
+		// ki::LOGGER( "VConfig::SetFont() end" );
 	}
-*/
+
 	//@{ タブ幅設定 //@}
 	void SetTabStep( int tab )
 	{
