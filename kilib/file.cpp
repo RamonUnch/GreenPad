@@ -176,12 +176,6 @@ bool FileR::Open( const TCHAR* fname, bool always)
 			handle_, NULL, PAGE_READONLY, 0, 0, NULL );
 		if( fmo_ == NULL )
 		{
-			#ifdef _DEBUG
-			TCHAR msg[300];
-			::wsprintf( msg, TEXT("CreateFileMapping(%s) failed #%d"), fname, ::GetLastError() );
-			::MessageBox( NULL,msg,TEXT("Debug"),0 );
-			#endif
-
 		#ifdef OLDWIN32S
 			// We cannot use CreateFileMapping() on old Win32s beta
 			// So we allocate a buffer for the whole file and use ReadFile().
@@ -194,6 +188,11 @@ bool FileR::Open( const TCHAR* fname, bool always)
 			return nBytesRead && ret;
 		#else
 			// Just close the file handle and exit with error.
+			#ifdef _DEBUG
+			TCHAR msg[300];
+			::wsprintf( msg, TEXT("CreateFileMapping(%s) failed #%d"), fname, ::GetLastError() );
+			::MessageBox( NULL,msg,TEXT("Debug"),0 );
+			#endif
 			::CloseHandle( handle_ );
 			handle_ = INVALID_HANDLE_VALUE;
 			return false;
@@ -243,6 +242,7 @@ void FileR::Close()
 		// File handle is already closed.
 		if( basePtr_ != NULL && basePtr_ != &size_ )
 			delete [] (void*)basePtr_;
+		basePtr_ = NULL;
 	}
 #endif
 
