@@ -344,7 +344,7 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	ofn.lpstrFilter    = fltr;
 	ofn.lpstrFile      = filename_;
 	ofn.nMaxFile       = countof(filename_);
-    ofn.lpstrInitialDir= filepath_;
+	ofn.lpstrInitialDir= filepath_;
 	ofn.lpfnHook       = OfnHook;
 	ofn.Flags = OFN_FILEMUSTEXIST |
 				OFN_HIDEREADONLY  |
@@ -445,15 +445,20 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		// OKが押されたら、文字コードの選択状況を記録
 		if(( msg==WM_COMMAND && LOWORD(wp)==1 ) || ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK )
 		{
-			ulong j=0, i=ComboBox(dlg,IDC_CODELIST).GetCurSel();
-			for(;;++j,--i)
+			pThis->csIndex_ = 0;
+			int i=ComboBox(dlg,IDC_CODELIST).GetCurSel();
+			if( 0 <= i && i < (int)pThis->csl_.size() )
 			{
-				while( !(pThis->csl_[j].type & 2) ) // !LOAD
-					++j;
-				if( i==0 )
-					break;
+				ulong j=0;
+				for(;;++j,--i)
+				{
+					while( !(pThis->csl_[j].type & 2) ) // !LOAD
+						++j;
+					if( i==0 )
+						break;
+				}
+				pThis->csIndex_ = j;
 			}
-			pThis->csIndex_ = j;
 		}
 	}
 
@@ -507,14 +512,14 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	}
 
 	myOPENFILENAME ofn = {sizeof(ofn)};
-    ofn.hwndOwner      = wnd;
-    ofn.hInstance      = app().hinst();
-    ofn.lpstrFilter    = fltr;
-    ofn.lpstrFile      = filename_;
-    ofn.nMaxFile       = countof(filename_);
-    ofn.lpstrInitialDir= filepath_;
+	ofn.hwndOwner      = wnd;
+	ofn.hInstance      = app().hinst();
+	ofn.lpstrFilter    = fltr;
+	ofn.lpstrFile      = filename_;
+	ofn.nMaxFile       = countof(filename_);
+	ofn.lpstrInitialDir= filepath_;
 	ofn.lpfnHook       = OfnHook;
-    ofn.Flags = OFN_HIDEREADONLY    |
+	ofn.Flags = OFN_HIDEREADONLY    |
 				OFN_PATHMUSTEXIST   |
 				OFN_ENABLESIZING    |
 				OFN_ENABLEHOOK      |
@@ -600,7 +605,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 
 			for( ulong i=0; i<countof(lbList); ++i )
 				cb.Add( lbList[i] );
-			cb.Select( lbList[pThis->lb_] );
+			cb.Select( lbList[Clamp(0, pThis->lb_, 2)] );
 		}
 		// Older NT wants OfnHook returning TRUE in WM_INITDIALOG
 		return TRUE;
@@ -610,17 +615,26 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		if(( msg==WM_COMMAND && LOWORD(wp)==1 ) || ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK )
 		{
 			// OKが押されたら、文字コードの選択状況を記録
-			ulong j=0, i=ComboBox(dlg,IDC_CODELIST).GetCurSel();
-			for(;;++j,--i)
+			int i=ComboBox(dlg,IDC_CODELIST).GetCurSel();
+			if( 0 <= i && i < (int)pThis->csl_.size() )
 			{
-				while( !(pThis->csl_[j].type & 1) ) // !SAVE
-					++j;
-				if( i==0 )
-					break;
+				ulong j;
+				for(j=0; ;++j,--i)
+				{
+					while( !(pThis->csl_[j].type & 1) ) // !SAVE
+						++j;
+					if( i==0 )
+						break;
+				}
+				pThis->csIndex_ = j;
 			}
-			pThis->csIndex_ = j;
+			else
+			{
+				pThis->csIndex_ = 0;
+			}
 			// 改行コードも
-			pThis->lb_ = ComboBox(dlg,IDC_CRLFLIST).GetCurSel();
+			int lb = ComboBox(dlg,IDC_CRLFLIST).GetCurSel();
+			pThis->lb_ = lb == CB_ERR? 2 :lb; // Default to CRLF;
 		}
 	}
 	return FALSE;
