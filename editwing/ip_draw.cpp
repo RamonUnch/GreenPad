@@ -481,11 +481,6 @@ inline void Painter::StringOut
 					dwNum = ::WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
 				}
 			}
-			// Last fallback: truncate each widechar to a byte.
-			// Needed for Win32s beta 61.
-			dwNum = Min( len, (int)countof(psTXT1K) );
-			for( DWORD i=0; i<dwNum; i++)
-				psText[i] = (char)str[i];
 		}
 		BOOL ret = ::TextOutA( dc_, x, y, psText, dwNum );
 		#ifdef USE_ORIGINAL_MEMMAN
