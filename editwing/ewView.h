@@ -44,7 +44,7 @@ public:
 
 	//@{ 表示色・フォント切替 //@}
 	void SetFont( const VConfig& vc );
-	
+
 	//@{ Set all canva stuff at once (faster) //@}
 	void SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc );
 
@@ -101,11 +101,12 @@ class OleDnDTarget : public IDropTarget
 	~OleDnDTarget();
 
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject);
-	ULONG STDMETHODCALLTYPE AddRef()  { return InterlockedIncrement(&refcnt); }
-	ULONG STDMETHODCALLTYPE Release() { return InterlockedDecrement(&refcnt); }
+	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&refcnt); }
+	ULONG STDMETHODCALLTYPE Release() { return ::InterlockedDecrement(&refcnt); }
 
 	HRESULT STDMETHODCALLTYPE DragEnter(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
 	{
+		// Only accept DragEnter if we can get some text.
 		FORMATETC fmt = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 		if( S_OK == pDataObj->QueryGetData(&fmt) )
 			return S_OK;
@@ -113,7 +114,7 @@ class OleDnDTarget : public IDropTarget
 		if( S_OK == pDataObj->QueryGetData(&fmt) )
 			return S_OK;
 
-		return E_UNEXPECTED; 
+		return E_UNEXPECTED;
 	}
 
 	HRESULT STDMETHODCALLTYPE DragLeave()
@@ -141,7 +142,7 @@ struct VPos : public DPos
 {
 	ulong vl; // VLine-Index
 	ulong rl; // RLine-Index
-	int   vx; // スクロールを考慮しない仮想スクリーン上のx座標(pixel) 
+	int   vx; // スクロールを考慮しない仮想スクリーン上のx座標(pixel)
 	int   rx; // 文字の並びに左右されてないx座標(pixel)
 		      //   == 長い行のしっぽから短い行に [↑] で移動して
 		      //   == その後 [↓] で戻れるようなアレです。

@@ -1257,14 +1257,16 @@ OleDnDTarget::OleDnDTarget( HWND hwnd, ViewImpl& vw )
 {
 	ki::app().InitModule( ki::App::OLE );
 	// Dyamically load because OLE32 might be missing...
-	HRESULT (WINAPI *dyn_RegisterDragDrop)(HWND hwnd, IDropTarget *dt) =
-		( HRESULT (WINAPI *)(HWND hwnd, IDropTarget *dt) )
-		GetProcAddress(GetModuleHandle(TEXT("OLE32.DLL")), "RegisterDragDrop");
+	if( app().hOle32() && app().hOle32() != (HINSTANCE)(-1))
+	{
+		HRESULT (WINAPI *dyn_RegisterDragDrop)(HWND hwnd, IDropTarget *dt) =
+			( HRESULT (WINAPI *)(HWND hwnd, IDropTarget *dt) )
+			GetProcAddress(app().hOle32(), "RegisterDragDrop");
 
-	if( dyn_RegisterDragDrop && S_OK == dyn_RegisterDragDrop(hwnd_, this) )
-		; // Sucess!
-	else
-		hwnd_ = NULL;
+		if( dyn_RegisterDragDrop && S_OK == dyn_RegisterDragDrop(hwnd_, this) )
+			return; // Sucess!
+	}
+	hwnd_ = NULL;
 }
 OleDnDTarget::~OleDnDTarget(  )
 {
@@ -1272,7 +1274,7 @@ OleDnDTarget::~OleDnDTarget(  )
 	{
 		HRESULT (WINAPI *dyn_RevokeDragDrop)(HWND hwnd) =
 			( HRESULT (WINAPI *)(HWND hwnd) )
-			GetProcAddress( GetModuleHandle( TEXT("OLE32.DLL") ), "RevokeDragDrop" );
+			GetProcAddress( app().hOle32(), "RevokeDragDrop" );
 
 		if( dyn_RevokeDragDrop )
 			dyn_RevokeDragDrop(hwnd_);
@@ -1318,7 +1320,7 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKey
 }
 HRESULT STDMETHODCALLTYPE OleDnDTarget::QueryInterface(REFIID riid, void **ppvObject)
 {
-	if( !memCMP((void*)&riid, (void*)&IID_IDropTarget, sizeof(riid)) )
+	if( memEQ((void*)&riid, (void*)&IID_IDropTarget, sizeof(riid)) )
 	{
 		*ppvObject = this;
 		return S_OK;
