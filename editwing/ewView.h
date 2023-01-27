@@ -13,7 +13,7 @@ class Canvas;
 class ViewImpl;
 class Cursor;
 class Caret;
-
+class OleDnDTarget;
 
 
 //=========================================================================
@@ -88,7 +88,48 @@ class CurEvHandler
 	virtual void on_ime( Cursor& cur, unicode* str, ulong len );
 };
 
+//=========================================================================
+//@{
+// OLE Drag and Drop handler.
+//@}
+//=========================================================================
+#ifndef NO_OLE32
+class OleDnDTarget : public IDropTarget
+{
+	friend class Cursor;
+	OleDnDTarget( HWND hwnd, ViewImpl& vw );
+	~OleDnDTarget();
 
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject);
+	ULONG STDMETHODCALLTYPE AddRef()  { return InterlockedIncrement(&refcnt); }
+	ULONG STDMETHODCALLTYPE Release() { return InterlockedDecrement(&refcnt); }
+
+	HRESULT STDMETHODCALLTYPE DragEnter(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
+	{
+		FORMATETC fmt = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+		if( S_OK == pDataObj->QueryGetData(&fmt) )
+			return S_OK;
+		fmt.cfFormat = CF_TEXT;
+		if( S_OK == pDataObj->QueryGetData(&fmt) )
+			return S_OK;
+
+		return E_UNEXPECTED; 
+	}
+
+	HRESULT STDMETHODCALLTYPE DragLeave()
+		{ return S_OK; }
+
+	HRESULT STDMETHODCALLTYPE DragOver(DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
+		{ *pdwEffect &= DROPEFFECT_MOVE; return S_OK; }
+
+	HRESULT STDMETHODCALLTYPE Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect);
+
+private:
+	LONG refcnt;
+	HWND hwnd_;
+	ViewImpl& view_;
+};
+#endif // NO_OLE32
 
 //=========================================================================
 //@{
@@ -213,6 +254,7 @@ private:
 	doc::DocImpl&   doc_;
 	CurEvHandler*   pEvHan_;
 	ki::dptr<Caret> caret_;
+	OleDnDTarget    dndtg_;
 
 	VPos cur_;  // カーソル位置
 	VPos sel_;  // 選択時の軸足位置

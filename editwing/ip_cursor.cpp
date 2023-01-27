@@ -151,6 +151,7 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 	, doc_    ( dc )
 	, pEvHan_ ( &defaultHandler_ )
 	, caret_  ( new Caret(wnd) )
+	, dndtg_  ( wnd, vw )
 	, bIns_   ( true )
 	, bRO_    ( false )
 	, lineSelectMode_( false )
@@ -1245,3 +1246,85 @@ bool Cursor::on_ime_confirmreconvertstring( RECONVERTSTRING* rs )
 {
 	return false;
 }
+
+//=========================================================================
+// OLE Drag and Drop handler.
+//=========================================================================
+#ifndef NO_OLE32
+OleDnDTarget::OleDnDTarget( HWND hwnd, ViewImpl& vw )
+	: hwnd_ ( hwnd )
+	, view_ ( vw )
+{
+	ki::app().InitModule( ki::App::OLE );
+	// Dyamically load because OLE32 might be missing...
+	HRESULT (WINAPI *dyn_RegisterDragDrop)(HWND hwnd, IDropTarget *dt) =
+		( HRESULT (WINAPI *)(HWND hwnd, IDropTarget *dt) )
+		GetProcAddress(GetModuleHandle(TEXT("OLE32.DLL")), "RegisterDragDrop");
+
+	if( dyn_RegisterDragDrop && S_OK == dyn_RegisterDragDrop(hwnd_, this) )
+		; // Sucess!
+	else
+		hwnd_ = NULL;
+}
+OleDnDTarget::~OleDnDTarget(  )
+{
+	if( hwnd_ )
+	{
+		HRESULT (WINAPI *dyn_RevokeDragDrop)(HWND hwnd) =
+			( HRESULT (WINAPI *)(HWND hwnd) )
+			GetProcAddress( GetModuleHandle( TEXT("OLE32.DLL") ), "RevokeDragDrop" );
+
+		if( dyn_RevokeDragDrop )
+			dyn_RevokeDragDrop(hwnd_);
+	}
+}
+
+HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
+{
+	STGMEDIUM stg = { 0 };
+	// Try with UNICODE text first!
+	FORMATETC fmt = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+	if( S_OK == pDataObj->GetData(&fmt, &stg) && stg.hGlobal)
+	{
+		const unicode *txt = (const unicode *)::GlobalLock(stg.hGlobal);
+		if( txt )
+		{
+			view_.cur().Input( txt, my_lstrlenW(txt) );
+			::GlobalUnlock(stg.hGlobal);
+		}
+		// We must only free the buffer when pUnkForRelease is NULL!
+		if( stg.pUnkForRelease == NULL )
+			::GlobalFree(stg.hGlobal);
+		return S_OK;
+	}
+
+	// Fallback to ANSI TEXT
+	fmt.cfFormat = CF_TEXT;
+	if( S_OK == pDataObj->GetData(&fmt, &stg) && stg.hGlobal)
+	{
+		const char *txt = (const char *)::GlobalLock(stg.hGlobal);
+		if( txt )
+		{
+			view_.cur().Input( txt, my_lstrlenA(txt) );
+			::GlobalUnlock(stg.hGlobal);
+		}
+		// We must only free the buffer when pUnkForRelease is NULL!
+		if( stg.pUnkForRelease == NULL )
+			::GlobalFree(stg.hGlobal);
+		return S_OK;
+	}
+	// Shoud I return E_INVALIDARG ??
+	return E_UNEXPECTED;
+}
+HRESULT STDMETHODCALLTYPE OleDnDTarget::QueryInterface(REFIID riid, void **ppvObject)
+{
+	if( !memCMP((void*)&riid, (void*)&IID_IDropTarget, sizeof(riid)) )
+	{
+		*ppvObject = this;
+		return S_OK;
+	}
+	*ppvObject = NULL;
+	return E_NOINTERFACE;
+}
+#endif //NO_OLE32
+//-------------------------------------------------------------------------
