@@ -110,7 +110,7 @@ public:
 
 	//@{ インスタンスハンドル //@}
 	HINSTANCE hinst() const;
-	HINSTANCE       hOle32_;
+	HINSTANCE hOle32() const;
 
 	//@{ Windowsのバージョン //@}
 	DWORD getOOSVer() const;
@@ -141,6 +141,7 @@ private:
 	int             exitcode_;
 	ulong           loadedModule_;
 	const HINSTANCE hInst_;
+	HINSTANCE       hOle32_;
 	HINSTANCE       hInstComCtl_;
 	static App*     pUniqueInstance_;
 
@@ -204,6 +205,8 @@ inline int App::LoadString( UINT id, LPTSTR buf, int siz )
 inline HINSTANCE App::hinst() const
 	{ return hInst_; }
 
+inline HINSTANCE App::hOle32() const
+	{ return hOle32_; }
 
 
 //=========================================================================
