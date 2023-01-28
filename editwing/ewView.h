@@ -187,6 +187,8 @@ public:
 	// テキスト書き換え
 	void Input( const unicode* str, ulong len );
 	void Input( const char* str, ulong len );
+	void InputAt( const unicode *str, ulong len, int x, int y );
+	void InputAt( const char *str, ulong len, int x, int y );
 	void InputChar( unicode ch );
 	void Del(bool wide);
 	void DelBack(bool wide);

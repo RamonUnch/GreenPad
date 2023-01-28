@@ -505,6 +505,40 @@ void Cursor::Input( const char* str, ulong len )
 	Input( ustr, len );
 	delete [] ustr;
 }
+void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
+{
+	VPos oldcur = cur_, oldsel = sel_;
+	const VPos *stt, *end;
+	getCurPos( &stt, &end ); // Ordered cursor position.
+
+	VPos np;
+	view_.GetVPos( x, y, &np );
+
+	if( *stt <= np && np < *end )
+	{
+		// Replace the whole selection if inside.
+		doc_.Execute( Replace( cur_, sel_, str, len ) );
+	}
+	else
+	{
+		// Insert at new position
+		doc_.Execute( Insert( np, str, len ) );
+		// And restore old selection.
+		if( oldsel != oldcur)
+		{
+			MoveTo(oldsel, false);
+			MoveTo(oldcur, true);
+		}
+	}
+}
+void Cursor::InputAt( const char* str, ulong len, int x, int y )
+{
+	unicode* ustr = new unicode[ len*4 ];
+	if(!ustr) return;
+	len = ::MultiByteToWideChar( CP_ACP, 0, str, len, ustr, len*4 );
+	InputAt( ustr, len, x, y );
+	delete [] ustr;
+}
 
 void Cursor::DelBack( bool wide )
 {
@@ -1283,17 +1317,23 @@ OleDnDTarget::~OleDnDTarget(  )
 	}
 }
 
-HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
+HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect)
 {
 	STGMEDIUM stg = { 0 };
 	// Try with UNICODE text first!
 	FORMATETC fmt = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+	POINT pt; pt.x = ptl.x, pt.y = ptl.y;
+	ScreenToClient(hwnd_, &pt);
 	if( S_OK == pDataObj->GetData(&fmt, &stg) && stg.hGlobal)
 	{
 		const unicode *txt = (const unicode *)::GlobalLock(stg.hGlobal);
 		if( txt )
 		{
-			view_.cur().Input( txt, my_lstrlenW(txt) );
+			size_t len = my_lstrlenW(txt);
+			if( grfKeyState&MK_SHIFT ) // Shift to ignore pt.
+				view_.cur().Input( txt, len );
+			else
+				view_.cur().InputAt( txt, len, pt.x, pt.y );
 			::GlobalUnlock(stg.hGlobal);
 		}
 		// We must only free the buffer when pUnkForRelease is NULL!
@@ -1309,7 +1349,11 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKey
 		const char *txt = (const char *)::GlobalLock(stg.hGlobal);
 		if( txt )
 		{
-			view_.cur().Input( txt, my_lstrlenA(txt) );
+			size_t len = my_lstrlenA(txt);
+			if( grfKeyState&MK_SHIFT )
+				view_.cur().Input( txt, len );
+			else
+				view_.cur().InputAt( txt, len, pt.x, pt.y );
 			::GlobalUnlock(stg.hGlobal);
 		}
 		// We must only free the buffer when pUnkForRelease is NULL!
