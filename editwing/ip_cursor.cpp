@@ -151,7 +151,9 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 	, doc_    ( dc )
 	, pEvHan_ ( &defaultHandler_ )
 	, caret_  ( new Caret(wnd) )
+#ifndef NO_OLEDND
 	, dndtg_  ( wnd, vw )
+#endif
 	, bIns_   ( true )
 	, bRO_    ( false )
 	, lineSelectMode_( false )
@@ -1250,7 +1252,7 @@ bool Cursor::on_ime_confirmreconvertstring( RECONVERTSTRING* rs )
 //=========================================================================
 // OLE Drag and Drop handler.
 //=========================================================================
-#ifndef NO_OLE32
+#ifndef NO_OLEDND
 OleDnDTarget::OleDnDTarget( HWND hwnd, ViewImpl& vw )
 	: hwnd_ ( hwnd )
 	, view_ ( vw )
@@ -1331,5 +1333,5 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::QueryInterface(REFIID riid, void **ppvOb
 	*ppvObject = NULL;
 	return E_NOINTERFACE;
 }
-#endif //NO_OLE32
+#endif //NO_OLEDND
 //-------------------------------------------------------------------------

@@ -93,7 +93,7 @@ class CurEvHandler
 // OLE Drag and Drop handler.
 //@}
 //=========================================================================
-#ifndef NO_OLE32
+#ifndef NO_OLEDND
 class OleDnDTarget : public IDropTarget
 {
 	friend class Cursor;
@@ -131,7 +131,7 @@ private:
 	HWND hwnd_;
 	ViewImpl& view_;
 };
-#endif // NO_OLE32
+#endif // NO_OLEDND
 
 //=========================================================================
 //@{
@@ -256,8 +256,9 @@ private:
 	doc::DocImpl&   doc_;
 	CurEvHandler*   pEvHan_;
 	ki::dptr<Caret> caret_;
+#ifndef NO_OLEDND
 	OleDnDTarget    dndtg_;
-
+#endif
 	VPos cur_;  // カーソル位置
 	VPos sel_;  // 選択時の軸足位置
 	bool bIns_; // 挿入モード？, Insertion mode?
