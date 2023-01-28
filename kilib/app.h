@@ -4,7 +4,14 @@
 #include "log.h"
 
 HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
-
+#ifdef __GNUC__
+	// In recent GCC versions this is the only way to link to the real
+	// Win32 functions.
+	#undef InterlockedIncrement
+	#undef InterlockedDecrement
+	extern "C" WINBASEAPI LONG WINAPI InterlockedIncrement(LONG volatile *);
+	extern "C" WINBASEAPI LONG WINAPI InterlockedDecrement(LONG volatile *);
+#endif
 // Use to make a ordered window version ie: MKVER(3,10,511) = 0x030A01FF
 #define MKVER(M, m, b) ( (DWORD)( (BYTE)(M)<<24 | (BYTE)(m)<<16 | (WORD)(b) ) )
 
