@@ -1320,7 +1320,10 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKey
 }
 HRESULT STDMETHODCALLTYPE OleDnDTarget::QueryInterface(REFIID riid, void **ppvObject)
 {
-	if( memEQ((void*)&riid, (void*)&IID_IDropTarget, sizeof(riid)) )
+	// Define locally IID_IDropTarget GUID,
+	// gcc bloats the exe with a bunch of useless GUIDS otherwise.
+	static const IID myIID_IDropTarget = { 0x00000122, 0x0000, 0x0000, {0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
+	if( memEQ((void*)&riid, (void*)&myIID_IDropTarget, sizeof(riid)) )
 	{
 		*ppvObject = this;
 		return S_OK;

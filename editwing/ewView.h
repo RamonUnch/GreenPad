@@ -101,6 +101,7 @@ class OleDnDTarget : public IDropTarget
 	~OleDnDTarget();
 
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject);
+
 	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&refcnt); }
 	ULONG STDMETHODCALLTYPE Release() { return ::InterlockedDecrement(&refcnt); }
 
