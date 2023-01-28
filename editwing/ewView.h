@@ -108,6 +108,7 @@ class OleDnDTarget : public IDropTarget
 	HRESULT STDMETHODCALLTYPE DragEnter(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
 	{
 		// Only accept DragEnter if we can get some text.
+		comes_from_center_ = false;
 		FORMATETC fmt = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 		if( S_OK == pDataObj->QueryGetData(&fmt) )
 			return S_OK;
@@ -121,14 +122,14 @@ class OleDnDTarget : public IDropTarget
 	HRESULT STDMETHODCALLTYPE DragLeave()
 		{ return S_OK; }
 
-	HRESULT STDMETHODCALLTYPE DragOver(DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
-		{ *pdwEffect &= DROPEFFECT_MOVE; return S_OK; }
+	HRESULT STDMETHODCALLTYPE DragOver(DWORD grfKeyState, POINTL pt, DWORD *pdwEffect);
 
 	HRESULT STDMETHODCALLTYPE Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect);
 
 private:
 	LONG refcnt;
 	HWND hwnd_;
+	bool comes_from_center_;
 	ViewImpl& view_;
 };
 #endif // NO_OLEDND
