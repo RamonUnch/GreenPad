@@ -112,6 +112,7 @@ class OleDnDTarget : public IDropTarget
 		FORMATETC fmt = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 		if( S_OK == pDataObj->QueryGetData(&fmt) )
 			return S_OK;
+
 		fmt.cfFormat = CF_TEXT;
 		if( S_OK == pDataObj->QueryGetData(&fmt) )
 			return S_OK;
@@ -127,10 +128,14 @@ class OleDnDTarget : public IDropTarget
 	HRESULT STDMETHODCALLTYPE Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect);
 
 private:
+	void setDropEffect(DWORD grfKeyState, DWORD *pdwEffect) const;
+
+private:
 	LONG refcnt;
 	HWND hwnd_;
-	bool comes_from_center_;
 	ViewImpl& view_;
+
+	bool comes_from_center_;
 };
 #endif // NO_OLEDND
 

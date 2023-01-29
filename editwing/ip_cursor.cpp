@@ -1288,8 +1288,9 @@ bool Cursor::on_ime_confirmreconvertstring( RECONVERTSTRING* rs )
 //=========================================================================
 #ifndef NO_OLEDND
 OleDnDTarget::OleDnDTarget( HWND hwnd, ViewImpl& vw )
-	: hwnd_ ( hwnd )
-	, view_ ( vw )
+	: hwnd_    ( hwnd )
+	, view_    ( vw )
+	, comes_from_center_ ( false )
 {
 	ki::app().InitModule( ki::App::OLE );
 	// Dyamically load because OLE32 might be missing...
@@ -1324,6 +1325,11 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKey
 	FORMATETC fmt = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	POINT pt; pt.x = ptl.x, pt.y = ptl.y;
 	ScreenToClient(hwnd_, &pt);
+
+	// Important to inform the source if we are
+	// actually copying or moving the selection
+	setDropEffect( grfKeyState, pdwEffect );
+
 	if( S_OK == pDataObj->GetData(&fmt, &stg) && stg.hGlobal)
 	{
 		const unicode *txt = (const unicode *)::GlobalLock(stg.hGlobal);
@@ -1377,5 +1383,90 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::QueryInterface(REFIID riid, void **ppvOb
 	*ppvObject = NULL;
 	return E_NOINTERFACE;
 }
+
+HRESULT STDMETHODCALLTYPE OleDnDTarget::DragOver(DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect)
+{
+	setDropEffect( grfKeyState, pdwEffect );
+
+	if( grfKeyState & MK_SHIFT )
+	{	// If we have the Shift key down, we do not scroll
+		// And the text will be pasted to the caret position
+		// without being affected by cursor position.
+		return S_OK;
+	}
+	// Scroll the content when the cursor goes towards the edges
+	// of the text view, we consider two text lines/columns margins.
+	// We must only scroll if the cursor comes from the central region.
+	POINT pt; pt.x = ptl.x; pt.y = ptl.y;
+	ScreenToClient(hwnd_, &pt);
+	const int h = Min( 2*view_.fnt().H(), Max(1, view_.cy()/8) ); // Scroll vmargin
+	const int w = Min( 2*view_.fnt().W(), Max(1, view_.cx()/8) ); // Scroll hmargin
+
+	#define MULT 120
+	if( view_.bottom() - pt.y < h )
+	{
+		if( !comes_from_center_ )
+			return S_OK;
+		short delta = -(h - (view_.bottom() - pt.y))*MULT / h;
+		view_.on_wheel( delta );
+		*pdwEffect |= DROPEFFECT_SCROLL;
+	}
+	else if( pt.y < h )
+	{
+		if( !comes_from_center_ )
+			return S_OK;
+		short delta = (h - pt.y)*MULT / h;
+		view_.on_wheel( delta );
+		*pdwEffect |= DROPEFFECT_SCROLL;
+	}
+	if( view_.right() - pt.x < w )
+	{
+		if( !comes_from_center_ )
+			return S_OK;
+		short delta = (h - (view_.right() - pt.x))*MULT / h;
+		view_.on_hwheel( delta );
+		*pdwEffect |= DROPEFFECT_SCROLL;
+	}
+	else if( pt.x < h )
+	{
+		if( !comes_from_center_ )
+			return S_OK;
+		short delta = -(h - pt.x)*MULT / h;
+		// delta = Clamp((short)-120, delta, (short)-1);
+		view_.on_hwheel( delta );
+		*pdwEffect |= DROPEFFECT_SCROLL;
+	}
+	#undef MULT
+	// We reached the central region of the edit window.
+	comes_from_center_ = true;
+
+	return S_OK;
+}
+void OleDnDTarget::setDropEffect(DWORD grfKeyState, DWORD *pdwEffect) const
+{
+	// It is maybe not the best way to do this but it works
+	// check for MOVE > COPY and we convert LINK in Copy.
+	// Probably there is a smarter way...
+	if( *pdwEffect & DROPEFFECT_MOVE )
+	{	// The source expect us to move the content?
+		// Move or Copy dependig on Control state and if we can.
+		if( grfKeyState & MK_CONTROL && *pdwEffect & DROPEFFECT_COPY )
+			*pdwEffect = DROPEFFECT_COPY;
+		else
+			*pdwEffect = DROPEFFECT_MOVE;
+	}
+	else if( *pdwEffect & DROPEFFECT_COPY )
+	{	// We cannot move the content but copy it.
+		// if we have no DROPEFFECT_MOVE available
+		*pdwEffect = DROPEFFECT_COPY;
+	}
+//	else if( *pdwEffect & DROPEFFECT_LINK )
+//	{
+//		// Links are left alone if they are
+//		// not bundeled with DROPEFFECT_COPY
+//		// Have not seen that yet.
+//	}
+}
+
 #endif //NO_OLEDND
 //-------------------------------------------------------------------------
