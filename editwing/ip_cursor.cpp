@@ -1174,10 +1174,10 @@ bool Cursor::on_drag_start( short x, short y )
 		view_.GetVPos( x, y, &vp );
 		if( isInSelection( vp ) )
 		{
-			VPos dm = Min(cur_, sel_);
-			VPos dM = Max(cur_, sel_);
+			const VPos dm = Min(cur_, sel_);
+			const VPos dM = Max(cur_, sel_);
 			ulong len = doc_.getRangeLength( dm, dM );
-			unicode *p = new unicode[len];
+			unicode *p = new unicode[len+1];
 			if( p )
 			{
 				doc_.getText( p, dm, dM );
