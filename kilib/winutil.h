@@ -3,6 +3,10 @@
 #include "types.h"
 #include "memory.h"
 #include "ktlaptr.h"
+
+bool coolDragDetect( HWND hwnd, LPARAM pt, WORD btup, WORD removebutton );
+
+
 #ifndef __ccdoc__
 namespace ki {
 #endif
@@ -107,6 +111,210 @@ inline UINT Clipboard::RegisterFormat( const TCHAR* name )
 	{ return ::RegisterClipboardFormat(name); }
 
 
+//=========================================================================
+//@{
+//	IDataObjectTxt: Class for a minimalist Text drag and drop data object
+//
+//	OleDnDSourceTxt(str, len) to do the drag and drop
+//@}
+//=========================================================================
+
+#ifndef NO_OLEDND
+// Class for a minimalist Text drag and drop data object
+class IDataObjectTxt : public IDataObject, public Object
+{
+public:
+	IDataObjectTxt(const unicode *str, size_t len)
+		: refcnt( 1 )
+		, str_  ( str )
+		, len_  ( len )
+		{ }
+private:
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
+	{
+		if( memEQ(&riid, &IID_IUnknown, sizeof(riid) )
+		||  memEQ(&riid, &IID_IDataObject, sizeof(riid) ) )
+		{
+			*ppvObject = this;
+			AddRef();
+			return S_OK;
+		}
+		return E_NOINTERFACE;
+	}
+	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&refcnt); }
+	ULONG STDMETHODCALLTYPE Release() { return ::InterlockedDecrement(&refcnt); }
+
+	HRESULT STDMETHODCALLTYPE GetData(FORMATETC *fmt,STGMEDIUM *pm)
+	{
+		if( S_OK == QueryGetData(fmt) )
+		{
+			mem00( pm, sizeof(*pm) ); // In case...
+			pm->hGlobal = GlobalAlloc( GMEM_MOVEABLE, (len_+1)*sizeof(unicode) );
+			if( !pm->hGlobal )
+				return E_OUTOFMEMORY;
+			// Copy the data into pm
+			return GetDataHere(fmt, pm);
+		}
+		return DV_E_FORMATETC;
+	}
+	HRESULT STDMETHODCALLTYPE EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppenumFormatEtc)
+		{ return E_NOTIMPL; }
+
+	HRESULT STDMETHODCALLTYPE GetDataHere(FORMATETC *fmt, STGMEDIUM *pm)
+	{
+		// Data is already allocated by caller!
+		VOID *data;
+		if( S_OK == QueryGetData(fmt) && pm->hGlobal != NULL && (data = GlobalLock(pm->hGlobal)) != NULL )
+		{
+			if( fmt->cfFormat == CF_UNICODETEXT )
+			{
+				size_t len = Min(len_*sizeof(unicode), (size_t)GlobalSize(pm->hGlobal));
+				memmove( data, str_, len );
+				((unicode*)data)[len/sizeof(unicode)] = L'\0'; // NULL Terminate
+			}
+			else // if( fmt->cfFormat == CF_TEXT)
+			{	// Convert unicode string to ANSI.
+				int len = ::WideCharToMultiByte(CP_ACP, 0, str_, len_, NULL, 0, NULL, NULL);
+				char* ansi = new char[len];
+				len = ::WideCharToMultiByte(CP_ACP, 0, str_, len_, ansi, len, NULL, NULL);
+				len = Min(len*sizeof(char), (size_t)GlobalSize(pm->hGlobal));
+				memmove( data, (void*)ansi, len );
+				((char*)data)[len/sizeof(char)] = '\0'; // NULL Terminate
+				delete [] ansi;
+			}
+			GlobalUnlock(pm->hGlobal);
+			pm->pUnkForRelease = NULL; // Caller must free!
+			pm->tymed = TYMED_HGLOBAL;
+			return S_OK;
+		}
+		return DV_E_FORMATETC;
+	}
+
+	HRESULT STDMETHODCALLTYPE QueryGetData(FORMATETC *fmt)
+	{
+		// { CF_(UNI)TEXT, NULL, DVASPECT_CONTENT, -1, |TYMED_HGLOBAL } Only!
+		if( fmt->cfFormat == CF_UNICODETEXT || fmt->cfFormat == CF_TEXT )
+			if( fmt->ptd == NULL
+			&&  fmt->dwAspect == DVASPECT_CONTENT
+		//	&&  fmt->lindex == -1 // Skip this one?
+			&&  fmt->tymed & TYMED_HGLOBAL )
+				return S_OK;
+
+		// Invalid or unsupported format
+		return DV_E_FORMATETC;
+	}
+
+	HRESULT STDMETHODCALLTYPE GetCanonicalFormatEtc(FORMATETC *fmt, FORMATETC *fout)
+	{
+		if(fmt)
+		{
+			if(fmt->cfFormat == CF_UNICODETEXT || fmt->cfFormat == CF_TEXT )
+			{
+				if( fmt->dwAspect == DVASPECT_CONTENT
+				&&  fmt->lindex == -1 )
+				{
+					if (fout)
+					{
+						*fout = *fmt;
+						fout->ptd = NULL;
+					}
+					return DATA_S_SAMEFORMATETC;
+				}
+				if (fout) {
+					*fout = *fmt;
+					fout->ptd = NULL;
+					fout->dwAspect = DVASPECT_CONTENT;
+					fout->lindex = -1;
+					return S_OK;
+				}
+			}
+		}
+		const FORMATETC canon = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+		*fout = canon;
+		return S_OK;
+	}
+	HRESULT STDMETHODCALLTYPE SetData(FORMATETC *pFormatetc, STGMEDIUM *pmedium, BOOL fRelease)
+		{ return E_NOTIMPL; }
+	HRESULT STDMETHODCALLTYPE DAdvise(FORMATETC *pFormatetc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection)
+		{ return E_NOTIMPL; }
+	HRESULT STDMETHODCALLTYPE DUnadvise(DWORD dwConnection)
+		{ return OLE_E_ADVISENOTSUPPORTED; }
+	HRESULT STDMETHODCALLTYPE EnumDAdvise(IEnumSTATDATA ** ppenumAdvise)
+		{ return OLE_E_ADVISENOTSUPPORTED; }
+
+private:
+	LONG refcnt;
+	const unicode *str_;
+	const size_t len_;
+};
+class OleDnDSourceTxt : public IDropSource
+{
+public:
+	OleDnDSourceTxt(const unicode *str, size_t len, DWORD adEffect = DROPEFFECT_MOVE|DROPEFFECT_COPY)
+	: refcnt( 1 )
+	{
+		dwEffect_ = 0;
+
+		// Dynamically load DoDragDrop() from OLE32.DLL
+		#define FUNK_TYPE ( HRESULT (WINAPI *)(IDataObject *, IDropSource *, DWORD, DWORD *) )
+		ki::app().InitModule( App::OLE );
+		static HRESULT (WINAPI *dyn_DoDragDrop)(IDataObject *, IDropSource *, DWORD, DWORD *)=FUNK_TYPE(-1);
+		if( dyn_DoDragDrop == FUNK_TYPE(-1) )
+		{
+			dyn_DoDragDrop = NULL;
+			if( app().hOle32() )
+				dyn_DoDragDrop = FUNK_TYPE GetProcAddress( app().hOle32(), "DoDragDrop" );
+		}
+
+		if( dyn_DoDragDrop )
+		{
+			// Create IData object from the string
+			IDataObjectTxt data(str, len);
+			LOGGER( "OleDnDSourceTxt IDataObjectTxt created" );
+			// Do the drag and drop and set dwEffect_ accordingly.
+			dyn_DoDragDrop( &data, this, adEffect, &dwEffect_ );
+			LOGGER( "OleDnDSourceTxt DoDragDrop end" );
+		}
+	}
+
+	DWORD getEffect() const
+		{ return dwEffect_; }
+
+	~OleDnDSourceTxt(){}
+private:
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
+	{
+		IUnknown *punk = NULL;
+		if( memEQ(&riid, &IID_IUnknown, sizeof(riid) )
+		||  memEQ(&riid, &IID_IDropSource, sizeof(riid) ) )
+		{
+			*ppvObject = this;
+			AddRef();
+			return S_OK;
+		}
+		return E_NOINTERFACE;
+	}
+
+	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&refcnt); }
+	ULONG STDMETHODCALLTYPE Release() { return ::InterlockedDecrement(&refcnt); }
+
+	HRESULT STDMETHODCALLTYPE QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
+		{
+			if( fEscapePressed )
+				return DRAGDROP_S_CANCEL;
+			if (!(grfKeyState & (MK_LBUTTON | MK_RBUTTON)))
+				return DRAGDROP_S_DROP;			// Do the drop!
+			return S_OK;
+		}
+
+	HRESULT STDMETHODCALLTYPE GiveFeedback(DWORD dwEffect)
+		{ return DRAGDROP_S_USEDEFAULTCURSORS; }
+
+private:
+	LONG refcnt;
+	DWORD dwEffect_;
+};
+#endif NO_OLEDND
 
 //=========================================================================
 //@{

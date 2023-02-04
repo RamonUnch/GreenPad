@@ -4,7 +4,42 @@
 #include "string.h"
 using namespace ki;
 
+// Alternative version of DragDetect that beter fits my needs:
+// 1) it does not removes the button up from message queue.
+// 2) Any button can be used to do the drag and a drag can occur
+//    in the non-client area.
+// 3) Should run on All windows versions, even Win32s beta/Chicago.
+bool coolDragDetect( HWND hwnd, LPARAM pt, WORD btup, WORD removebutton )
+{
+	int cxd = GetSystemMetrics(SM_CXDRAG);
+	int cyd = GetSystemMetrics(SM_CYDRAG);
+	short x = LOWORD(pt);
+	short y = HIWORD(pt);
 
+	MSG msg;
+	BOOL mm;
+	do
+	{
+		mm = PeekMessage(&msg, hwnd, btup, btup, removebutton );
+		if( mm )
+			return false;
+
+		mm = PeekMessage(&msg, hwnd, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE);
+		if( mm && msg.message == VK_ESCAPE )
+			return false;
+
+		mm = PeekMessage(&msg, hwnd, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE);
+		if( !mm )
+			mm = PeekMessage(&msg, hwnd, WM_NCMOUSEMOVE, WM_NCMOUSEMOVE, PM_REMOVE);
+		if( mm && (Abs(x-LOWORD(msg.lParam)) > cxd || Abs(y-HIWORD(msg.lParam)) > cyd) )
+		{
+			return true;
+		}
+	}
+	while( WaitMessage() );
+
+	return false;
+}
 
 //=========================================================================
 

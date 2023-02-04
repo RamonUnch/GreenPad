@@ -437,6 +437,7 @@ namespace ki
 	extern "C" void __deregister_frame_info() {};
 	extern "C" void __register_frame_info() {};
 	extern int __stack_chk_guard = 696115047 ;
+
 	extern "C" int __stack_chk_fail(){ MessageBoxA(NULL, "__stack_chk_fail", NULL, MB_OK|MB_TOPMOST) ; ExitProcess(1); };
 #endif
 

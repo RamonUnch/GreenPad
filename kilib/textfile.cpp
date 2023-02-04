@@ -1275,21 +1275,24 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 
 	// •K—v‚È‚çŽ©“®”»’è
 	cs_ = AutoDetection( cs_, buf, siz );
-	int needed_cs = neededCodepage( cs_ );
-
-	if( needed_cs > 0 && !::IsValidCodePage(needed_cs) )
+	if( cs_ )
 	{
-		TCHAR str[128];
-		::wsprintf(str, TEXT("Codepage cp%d Is not installed!\nDefaulting to current ACP"), needed_cs);
-		::MessageBox(::GetActiveWindow(), str, TEXT("Encoding"), MB_OK|MB_TASKMODAL);
-		if( cs_ == Western )
-		{	// Codepage 1252 is not installed,
-			// default to ISO-8859-1 (CP28591)
-			cs_ = 28591;
-		}
-		else
+		int needed_cs = neededCodepage( cs_ );
+	
+		if( needed_cs > 0 && !::IsValidCodePage(needed_cs) )
 		{
-			cs_ = ::GetACP(); // default to ACP...
+			TCHAR str[128];
+			::wsprintf(str, TEXT("Codepage cp%d Is not installed!\nDefaulting to current ACP"), needed_cs);
+			::MessageBox(::GetActiveWindow(), str, TEXT("Encoding"), MB_OK|MB_TASKMODAL);
+			if( cs_ == Western )
+			{	// Codepage 1252 is not installed,
+				// default to ISO-8859-1 (CP28591)
+				cs_ = 28591;
+			}
+			else
+			{
+				cs_ = ::GetACP(); // default to ACP...
+			}
 		}
 	}
 	if( !cs_ ) cs_ = ::GetACP();
@@ -1487,7 +1490,6 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 
 	return cs ? cs : defCs;
 }
-const IID myIID_IMultiLanguage2 = {0xDCCFC164, 0x2B38, 0x11d2, {0xB7, 0xEC, 0x00, 0xC0, 0x4F, 0x8F, 0x5D, 0x9A}};
 int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 {
 	int cs = 0;
@@ -1496,7 +1498,9 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 		return 0;
 	app().InitModule( App::OLE );
 	IMultiLanguage2 *lang = NULL;
-	HRESULT ret = ::MyCoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, myIID_IMultiLanguage2, (LPVOID*)&lang );
+	static const IID myIID_IMultiLanguage2 = {0xDCCFC164, 0x2B38, 0x11d2, {0xB7, 0xEC, 0x00, 0xC0, 0x4F, 0x8F, 0x5D, 0x9A}};
+	static const CLSID myCLSID_CMultiLanguage = { 0x275c23e2, 0x3747, 0x11d0, {0x9f, 0xea, 0x00,0xaa,0x00,0x3f,0x86,0x46} };
+	HRESULT ret = ::MyCoCreateInstance(myCLSID_CMultiLanguage, NULL, CLSCTX_ALL, myIID_IMultiLanguage2, (LPVOID*)&lang );
 	if( S_OK == ret )
 	{
 		int detectEncCount = 5;
