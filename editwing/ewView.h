@@ -93,7 +93,7 @@ class CurEvHandler
 // OLE Drag and Drop handler.
 //@}
 //=========================================================================
-#ifndef NO_OLEDND
+#ifndef NO_OLEDNDTAR
 class OleDnDTarget : public IDropTarget
 {
 	friend class Cursor;
@@ -138,7 +138,7 @@ private:
 	bool comes_from_center_;
 };
 
-#endif // NO_OLEDND
+#endif // NO_OLEDNDTAR
 
 //=========================================================================
 //@{
@@ -268,7 +268,7 @@ private:
 	doc::DocImpl&   doc_;
 	CurEvHandler*   pEvHan_;
 	ki::dptr<Caret> caret_;
-#ifndef NO_OLEDND
+#ifndef NO_OLEDNDTAR
 	OleDnDTarget    dndtg_;
 #endif
 	VPos cur_;  // カーソル位置

@@ -151,7 +151,7 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 	, doc_    ( dc )
 	, pEvHan_ ( &defaultHandler_ )
 	, caret_  ( new Caret(wnd) )
-#ifndef NO_OLEDND
+#ifndef NO_OLEDNDTAR
 	, dndtg_  ( wnd, vw )
 #endif
 	, bIns_   ( true )
@@ -1167,7 +1167,7 @@ void Cursor::on_lbutton_up( short x, short y )
 
 bool Cursor::on_drag_start( short x, short y )
 {
-#ifndef NO_OLEDND
+#ifndef NO_OLEDNDSRC
 	if( cur_ != sel_ )
 	{
 		VPos vp;
@@ -1189,8 +1189,8 @@ bool Cursor::on_drag_start( short x, short y )
 			return true;
 		}
 	}
+#endif // NO_OLEDNDSRC
 	return false;
-#endif // NO_OLEDND
 }
 void Cursor::on_mouse_move( short x, short y, WPARAM fwKeys )
 {
@@ -1303,7 +1303,7 @@ bool Cursor::on_ime_confirmreconvertstring( RECONVERTSTRING* rs )
 //=========================================================================
 // OLE Drag and Drop handler.
 //=========================================================================
-#ifndef NO_OLEDND
+#ifndef NO_OLEDNDTAR
 OleDnDTarget::OleDnDTarget( HWND hwnd, ViewImpl& vw )
 	: refcnt   ( 1 )
 	, hwnd_    ( hwnd )
@@ -1393,7 +1393,7 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::QueryInterface(REFIID riid, void **ppvOb
 	// Define locally IID_IDropTarget GUID,
 	// gcc bloats the exe with a bunch of useless GUIDS otherwise.
 	static const IID myIID_IDropTarget = { 0x00000122, 0x0000, 0x0000, {0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
-	if( memEQ(&riid, &IID_IUnknown, sizeof(riid))
+	if( memEQ(&riid, &myIID_IUnknown, sizeof(riid))
 	||  memEQ(&riid, &myIID_IDropTarget, sizeof(riid)) )
 	{
 		*ppvObject = this;
@@ -1488,5 +1488,5 @@ void OleDnDTarget::setDropEffect(DWORD grfKeyState, DWORD *pdwEffect) const
 //	}
 }
 
-#endif //NO_OLEDND
+#endif //NO_OLEDNDTAR
 //-------------------------------------------------------------------------

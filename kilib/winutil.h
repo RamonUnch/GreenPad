@@ -6,6 +6,9 @@
 
 bool coolDragDetect( HWND hwnd, LPARAM pt, WORD btup, WORD removebutton );
 
+const IID myIID_IUnknown = { 0x00000000, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
+const IID myIID_IDataObject = { 0x0000010e, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
+const IID myIID_IDropSource = { 0x00000121, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 
 #ifndef __ccdoc__
 namespace ki {
@@ -119,7 +122,7 @@ inline UINT Clipboard::RegisterFormat( const TCHAR* name )
 //@}
 //=========================================================================
 
-#ifndef NO_OLEDND
+#ifndef NO_OLEDNDSRC
 // Class for a minimalist Text drag and drop data object
 class IDataObjectTxt : public IDataObject, public Object
 {
@@ -132,8 +135,8 @@ public:
 private:
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
 	{
-		if( memEQ(&riid, &IID_IUnknown, sizeof(riid) )
-		||  memEQ(&riid, &IID_IDataObject, sizeof(riid) ) )
+		if( memEQ(&riid, &myIID_IUnknown, sizeof(riid) )
+		||  memEQ(&riid, &myIID_IDataObject, sizeof(riid) ) )
 		{
 			*ppvObject = this;
 			AddRef();
@@ -251,10 +254,9 @@ class OleDnDSourceTxt : public IDropSource
 {
 public:
 	OleDnDSourceTxt(const unicode *str, size_t len, DWORD adEffect = DROPEFFECT_MOVE|DROPEFFECT_COPY)
-	: refcnt( 1 )
+	: refcnt    ( 1 )
+	, dwEffect_ ( 0 )
 	{
-		dwEffect_ = 0;
-
 		// Dynamically load DoDragDrop() from OLE32.DLL
 		#define FUNK_TYPE ( HRESULT (WINAPI *)(IDataObject *, IDropSource *, DWORD, DWORD *) )
 		ki::app().InitModule( App::OLE );
@@ -284,9 +286,8 @@ public:
 private:
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
 	{
-		IUnknown *punk = NULL;
-		if( memEQ(&riid, &IID_IUnknown, sizeof(riid) )
-		||  memEQ(&riid, &IID_IDropSource, sizeof(riid) ) )
+		if( memEQ(&riid, &myIID_IUnknown, sizeof(riid) )
+		||  memEQ(&riid, &myIID_IDropSource, sizeof(riid) ) )
 		{
 			*ppvObject = this;
 			AddRef();
@@ -314,7 +315,7 @@ private:
 	LONG refcnt;
 	DWORD dwEffect_;
 };
-#endif NO_OLEDND
+#endif // NO_OLEDNDSRC
 
 //=========================================================================
 //@{
