@@ -274,7 +274,11 @@ public:
 			IDataObjectTxt data(str, len);
 			LOGGER( "OleDnDSourceTxt IDataObjectTxt created" );
 			// Do the drag and drop and set dwEffect_ accordingly.
-			dyn_DoDragDrop( &data, this, adEffect, &dwEffect_ );
+			DWORD effect=0;
+			HRESULT ret = dyn_DoDragDrop( &data, this, adEffect, &effect );
+			// Only set the resulting effect if the drop was actually performed
+			if( ret == DRAGDROP_S_DROP )
+				dwEffect_ = effect;
 			LOGGER( "OleDnDSourceTxt DoDragDrop end" );
 		}
 	}
