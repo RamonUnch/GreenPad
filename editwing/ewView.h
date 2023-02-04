@@ -137,6 +137,7 @@ private:
 
 	bool comes_from_center_;
 };
+
 #endif // NO_OLEDND
 
 //=========================================================================
@@ -238,6 +239,7 @@ public:
 	bool isInsMode() const;
 	bool isROMode() const;
 	bool isSelected() const;
+	bool isInSelection(const VPos &vp) const;
 	bool getCurPos( const VPos** start, const VPos** end ) const;
 	bool getCurPosUnordered( const VPos** cur, const VPos** sel ) const;
 	void ResetPos();
@@ -250,7 +252,9 @@ public:
 	void on_char( TCHAR ch );
 	void on_ime_composition( LPARAM lp );
 	void on_lbutton_down( short x, short y, bool shift );
-	void on_mouse_move( short x, short y );
+//	void on_rbutton_down( short x, short y );
+	bool on_drag_start( short x, short y );
+	void on_mouse_move( short x, short y, WPARAM fwKeys );
 	void on_lbutton_up( short x, short y );
 	void on_lbutton_dbl( short x, short y );
 	bool on_contextmenu( short x, short y );
@@ -302,6 +306,10 @@ inline bool Cursor::isInsMode() const
 
 inline bool Cursor::isROMode() const
 	{ return bRO_; }
+
+inline bool Cursor::isInSelection(const VPos &vp) const
+	{ return Min(cur_, sel_) <= vp && vp < Max(cur_,sel_); }
+
 
 //inline void Cursor::on_input_lang_change(int cp, HKL hkl)
 //	{ kbcp_ = cp; hkl_ = hkl; }

@@ -507,14 +507,10 @@ void Cursor::Input( const char* str, ulong len )
 }
 void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
 {
-	VPos oldcur = cur_, oldsel = sel_;
-	const VPos *stt, *end;
-	getCurPos( &stt, &end ); // Ordered cursor position.
-
 	VPos np;
 	view_.GetVPos( x, y, &np );
 
-	if( *stt <= np && np < *end )
+	if( isInSelection( np )  )
 	{
 		// Replace the whole selection if inside.
 		doc_.Execute( Replace( cur_, sel_, str, len ) );
@@ -523,12 +519,6 @@ void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
 	{
 		// Insert at new position
 		doc_.Execute( Insert( np, str, len ) );
-		// And restore old selection.
-		if( oldsel != oldcur)
-		{
-			MoveTo(oldsel, false);
-			MoveTo(oldcur, true);
-		}
 	}
 }
 void Cursor::InputAt( const char* str, ulong len, int x, int y )
@@ -1175,7 +1165,34 @@ void Cursor::on_lbutton_up( short x, short y )
 	}
 }
 
-void Cursor::on_mouse_move( short x, short y )
+bool Cursor::on_drag_start( short x, short y )
+{
+#ifndef NO_OLEDND
+	if( cur_ != sel_ )
+	{
+		VPos vp;
+		view_.GetVPos( x, y, &vp );
+		if( isInSelection( vp ) )
+		{
+			VPos dm = Min(cur_, sel_);
+			VPos dM = Max(cur_, sel_);
+			ulong len = doc_.getRangeLength( dm, dM );
+			unicode *p = new unicode[len];
+			if( p )
+			{
+				doc_.getText( p, dm, dM );
+				OleDnDSourceTxt doDrag(p, len);
+				delete p;
+				if( doDrag.getEffect() == DROPEFFECT_MOVE )
+					doc_.Execute( Delete( dm, dM ) );
+			}
+			return true;
+		}
+	}
+	return false;
+#endif // NO_OLEDND
+}
+void Cursor::on_mouse_move( short x, short y, WPARAM fwKeys )
 {
 	if( timerID_ != 0 )
 	{
@@ -1288,7 +1305,8 @@ bool Cursor::on_ime_confirmreconvertstring( RECONVERTSTRING* rs )
 //=========================================================================
 #ifndef NO_OLEDND
 OleDnDTarget::OleDnDTarget( HWND hwnd, ViewImpl& vw )
-	: hwnd_    ( hwnd )
+	: refcnt   ( 1 )
+	, hwnd_    ( hwnd )
 	, view_    ( vw )
 	, comes_from_center_ ( false )
 {
@@ -1375,9 +1393,11 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::QueryInterface(REFIID riid, void **ppvOb
 	// Define locally IID_IDropTarget GUID,
 	// gcc bloats the exe with a bunch of useless GUIDS otherwise.
 	static const IID myIID_IDropTarget = { 0x00000122, 0x0000, 0x0000, {0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
-	if( memEQ((void*)&riid, (void*)&myIID_IDropTarget, sizeof(riid)) )
+	if( memEQ(&riid, &IID_IUnknown, sizeof(riid))
+	||  memEQ(&riid, &myIID_IDropTarget, sizeof(riid)) )
 	{
 		*ppvObject = this;
+		AddRef();
 		return S_OK;
 	}
 	*ppvObject = NULL;
