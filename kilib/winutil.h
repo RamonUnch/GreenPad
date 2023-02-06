@@ -147,12 +147,15 @@ private:
 	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&refcnt); }
 	ULONG STDMETHODCALLTYPE Release() { return ::InterlockedDecrement(&refcnt); }
 
-	HRESULT STDMETHODCALLTYPE GetData(FORMATETC *fmt,STGMEDIUM *pm)
+	HRESULT STDMETHODCALLTYPE GetData(FORMATETC *fmt, STGMEDIUM *pm)
 	{
 		if( S_OK == QueryGetData(fmt) )
 		{
 			mem00( pm, sizeof(*pm) ); // In case...
-			pm->hGlobal = GlobalAlloc( GMEM_MOVEABLE, (len_+1)*sizeof(unicode) );
+			if( fmt->cfFormat == CF_HDROP )
+				pm->hGlobal = GlobalAlloc( GMEM_MOVEABLE, sizeof(DROPFILES) + Max((size_t)MAX_PATH+2, (size_t)(len_+4)*sizeof(unicode) ) );
+			else
+				pm->hGlobal = GlobalAlloc( GMEM_MOVEABLE, (len_+1)*sizeof(unicode) );
 			if( !pm->hGlobal )
 				return E_OUTOFMEMORY;
 			// Copy the data into pm
@@ -161,7 +164,10 @@ private:
 		return DV_E_FORMATETC;
 	}
 	HRESULT STDMETHODCALLTYPE EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppenumFormatEtc)
-		{ return E_NOTIMPL; }
+	{
+//		return OleRegEnumFormatEtc(myIID_IDataObject, dwDirection, ppenumFormatEtc);
+		return E_NOTIMPL;
+	}
 
 	HRESULT STDMETHODCALLTYPE GetDataHere(FORMATETC *fmt, STGMEDIUM *pm)
 	{
@@ -169,21 +175,63 @@ private:
 		VOID *data;
 		if( S_OK == QueryGetData(fmt) && pm->hGlobal != NULL && (data = GlobalLock(pm->hGlobal)) != NULL )
 		{
+			// Check actual size of allocated mem in case.
+			size_t gmemsz = GlobalSize( pm->hGlobal );
+
 			if( fmt->cfFormat == CF_UNICODETEXT )
 			{
-				size_t len = Min(len_*sizeof(unicode), (size_t)GlobalSize(pm->hGlobal));
+				size_t len = Min( len_*sizeof(unicode), gmemsz );
 				memmove( data, str_, len );
 				((unicode*)data)[len/sizeof(unicode)] = L'\0'; // NULL Terminate
 			}
-			else // if( fmt->cfFormat == CF_TEXT)
+			else if( fmt->cfFormat == CF_TEXT)
 			{	// Convert unicode string to ANSI.
 				int len = ::WideCharToMultiByte(CP_ACP, 0, str_, len_, NULL, 0, NULL, NULL);
 				char* ansi = new char[len];
 				len = ::WideCharToMultiByte(CP_ACP, 0, str_, len_, ansi, len, NULL, NULL);
-				len = Min(len*sizeof(char), (size_t)GlobalSize(pm->hGlobal));
+				len = Min( len*sizeof(char), gmemsz );
 				memmove( data, (void*)ansi, len );
 				((char*)data)[len/sizeof(char)] = '\0'; // NULL Terminate
 				delete [] ansi;
+			}
+			else if( fmt->cfFormat == CF_HDROP )
+			{
+				DROPFILES *df = (DROPFILES *)data;
+				df->pFiles = sizeof(DROPFILES); // File path starts just after the end of struct.
+				df->fWide = app().isNT(); // Use unicode on NT!
+				df->fNC = 1;
+				df->pt.x = df->pt.y = 0;
+				// The string starts just at rhe end of the structure
+				char *dest = (char *)( ((BYTE*)df) + df->pFiles );
+				// length in BYTES!
+				size_t len = Min(len_*sizeof(unicode), gmemsz-sizeof(DROPFILES)-2*sizeof(unicode));
+				if( !df->fWide )
+				{	// Convert to ANSI and copy to dest!
+					::WideCharToMultiByte( CP_ACP, 0, str_, len_, dest, len, NULL, NULL);
+//					if( dest[len-1] == '\n' )
+//					{ // remove eventual \r\n at the end
+//						dest[len-1] = '\0';
+//						if( dest[len-2] == '\r' )
+//							dest[len-2] = '\0';
+//					}
+					dest[len  ] = '\0';
+					dest[len+1] = '\0'; // Double NULL Terminate
+				}
+				else
+				{
+					unicode *uni = (unicode *)dest;
+					memmove(dest, str_, len);
+					// Replace eventual ending \n with NULL
+					len = len/sizeof(unicode);
+//					if( uni[len-1] == L'\n' )
+//					{// remove eventual \r\n at the end
+//						uni[len-1] = L'\0';
+//						if( uni[len-2] == L'\r' )
+//							uni[len-2] = L'\0';
+//					}
+					uni[len  ] = L'\0';
+					uni[len+1] = L'\0'; // Double NULL Terminate
+				}
 			}
 			GlobalUnlock(pm->hGlobal);
 			pm->pUnkForRelease = NULL; // Caller must free!
@@ -196,7 +244,9 @@ private:
 	HRESULT STDMETHODCALLTYPE QueryGetData(FORMATETC *fmt)
 	{
 		// { CF_(UNI)TEXT, NULL, DVASPECT_CONTENT, -1, |TYMED_HGLOBAL } Only!
-		if( fmt->cfFormat == CF_UNICODETEXT || fmt->cfFormat == CF_TEXT )
+		if( fmt->cfFormat == CF_UNICODETEXT
+		||  fmt->cfFormat == CF_TEXT
+		||  fmt->cfFormat == CF_HDROP )
 			if( fmt->ptd == NULL
 			&&  fmt->dwAspect == DVASPECT_CONTENT
 		//	&&  fmt->lindex == -1 // Skip this one?
@@ -211,7 +261,9 @@ private:
 	{
 		if(fmt)
 		{
-			if(fmt->cfFormat == CF_UNICODETEXT || fmt->cfFormat == CF_TEXT )
+			if( fmt->cfFormat == CF_UNICODETEXT
+			||  fmt->cfFormat == CF_TEXT
+			||  fmt->cfFormat == CF_HDROP )
 			{
 				if( fmt->dwAspect == DVASPECT_CONTENT
 				&&  fmt->lindex == -1 )
@@ -232,8 +284,8 @@ private:
 				}
 			}
 		}
-		const FORMATETC canon = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-		*fout = canon;
+		static const FORMATETC canon = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+		if( fout ) *fout = canon;
 		return S_OK;
 	}
 	HRESULT STDMETHODCALLTYPE SetData(FORMATETC *pFormatetc, STGMEDIUM *pmedium, BOOL fRelease)
@@ -308,7 +360,7 @@ private:
 			if( fEscapePressed )
 				return DRAGDROP_S_CANCEL;
 			if (!(grfKeyState & (MK_LBUTTON | MK_RBUTTON)))
-				return DRAGDROP_S_DROP;			// Do the drop!
+				return DRAGDROP_S_DROP; // Do the drop!
 			return S_OK;
 		}
 
