@@ -106,7 +106,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 			UINT nf = myDragQueryFile(h, 0xFFFFFFFF, NULL, 0);
 			size_t totstrlen=0;
 			UINT *lenmap = new UINT[nf];
-			for (uint i=0; i < nf; i++)
+			for( uint i=0; i < nf; i++ )
 			{	// On Windows NT3.1 DragQueryFile() does not return
 				// The required buffer length hence the Min()...
 				lenmap[i] = Min((UINT)MAX_PATH, myDragQueryFile(h, i, NULL, 0));
@@ -114,7 +114,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 			}
 			unicode* ustr = new unicode[totstrlen+2*nf+1];
 			unicode* ptr=ustr; *ptr = L'\0';
-			for (UINT i=0; i < nf; i++)
+			for( UINT i=0; i < nf; i++ )
 			{
 				// Return the length without NULL and requires length with NULL
 				#ifdef UNICODE
@@ -139,4 +139,171 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 		}
 	}
 	return Text( NULL, Text::NEW );
+}
+
+
+//=========================================================================
+// IDataObjectTxt: Class for a minimalist Text drag and drop data object
+//=========================================================================
+
+size_t IDataObjectTxt::convCRLFtoNULLS(unicode *d, const unicode *s, size_t l)
+{
+	unicode *od = d;
+	while( l-- )
+	{
+		if( *s == L'\r' || *s == L'\n' )
+		{	// Replace any sequence of CR or LF by a single NULL.
+			*d++ = L'\0';
+			s++;
+			while( *s == L'\r' || *s == L'\n' )
+				s++; // skip LF
+		}
+		else
+		{	// Copy
+			*d++ = *s++;
+		}
+	}
+	return d - od;
+}
+
+HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetData(FORMATETC *fmt, STGMEDIUM *pm)
+{
+	if( S_OK == QueryGetData(fmt) )
+	{
+		mem00( pm, sizeof(*pm) ); // In case...
+		if( fmt->cfFormat == CF_HDROP )
+			pm->hGlobal = GlobalAlloc( GMEM_MOVEABLE, sizeof(DROPFILES) + Max((size_t)MAX_PATH+2, (size_t)(len_+4)*sizeof(unicode) ) );
+		else
+			pm->hGlobal = GlobalAlloc( GMEM_MOVEABLE, (len_+1)*sizeof(unicode) );
+		if( !pm->hGlobal )
+			return E_OUTOFMEMORY;
+		// Copy the data into pm
+		return GetDataHere(fmt, pm);
+	}
+	return DV_E_FORMATETC;
+}
+
+HRESULT STDMETHODCALLTYPE IDataObjectTxt::EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppefe)
+{
+	if( dwDirection == DATADIR_GET )
+	{
+		// SHCreateStdEnumFmtEtc first appear in win2000, or you need to implement whole IEnumFORMATETC,
+		// for example https://github.com/mirror/sevenzip/blob/master/CPP/7zip/UI/FileManager/EnumFormatEtc.cpp
+		#define FUNK_TYPE ( HRESULT (WINAPI *)(UINT cfmt, const FORMATETC *afmt, IEnumFORMATETC **ppefe) )
+		static HRESULT (WINAPI *dyn_SHCreateStdEnumFmtEtc)(UINT cfmt, const FORMATETC *afmt, IEnumFORMATETC **ppefe) = FUNK_TYPE(-1);
+		if( dyn_SHCreateStdEnumFmtEtc == FUNK_TYPE(-1) )
+			dyn_SHCreateStdEnumFmtEtc = FUNK_TYPE GetProcAddress( GetModuleHandle(TEXT("SHELL32.DLL")), "SHCreateStdEnumFmtEtc" );
+		if( dyn_SHCreateStdEnumFmtEtc )
+			return dyn_SHCreateStdEnumFmtEtc(countof(m_rgfe), m_rgfe, ppefe);
+		#undef FUNK_TYPE
+	}
+	*ppefe = NULL;
+	return E_NOTIMPL;
+}
+
+HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM *pm)
+{
+	// Data is already allocated by caller!
+	VOID *data;
+	if( S_OK == QueryGetData(fmt) && pm->hGlobal != NULL && (data = GlobalLock( pm->hGlobal )) != NULL )
+	{
+		// Check actual size of allocated mem in case.
+		size_t gmemsz = GlobalSize( pm->hGlobal );
+
+		if( fmt->cfFormat == CF_UNICODETEXT )
+		{
+			size_t len = Min( len_*sizeof(unicode), gmemsz );
+			memmove( data, str_, len );
+			((unicode*)data)[len/sizeof(unicode)] = L'\0'; // NULL Terminate
+		}
+		else if( fmt->cfFormat == CF_TEXT )
+		{	// Convert unicode string to ANSI.
+			size_t destlen = Min( len_*sizeof(unicode), gmemsz );
+			char *dest = (char*)data;
+			int len = ::WideCharToMultiByte(CP_ACP, 0, str_, len_, dest, destlen, NULL, NULL);
+			dest[len/sizeof(char)] = '\0'; // NULL Terminate
+		}
+		else if( fmt->cfFormat == CF_HDROP )
+		{
+			DROPFILES *df = (DROPFILES *)data;
+			df->pFiles = sizeof(DROPFILES); // File path starts just after the end of struct.
+			df->fWide = app().isNT(); // Use unicode on NT!
+			df->fNC = 1;
+			df->pt.x = df->pt.y = 0;
+			// The string starts just at the end of the structure
+			char *dest = (char *)( ((BYTE*)df) + df->pFiles );
+			// Convert multi line in multi file paths
+			unicode *flst = new unicode[len_];
+			size_t flen = convCRLFtoNULLS(flst, str_, len_);
+			// Destination length in BYTES!
+			size_t len = Min(flen*sizeof(unicode), gmemsz-sizeof(DROPFILES)-2*sizeof(unicode));
+			if( !df->fWide )
+			{	// Convert to ANSI and copy to dest!
+				::WideCharToMultiByte( CP_ACP, 0, flst, flen, dest, len, NULL, NULL );
+				dest[len+1] = '\0'; // Double NULL Terminate
+			}
+			else
+			{
+				unicode *uni = (unicode *)dest;
+				memmove( dest, flst, len );
+				len = len/sizeof(unicode);
+				uni[len  ] = L'\0';
+				uni[len+1] = L'\0'; // Double NULL Terminate
+			}
+			delete flst;
+		}
+		GlobalUnlock( pm->hGlobal );
+		pm->pUnkForRelease = NULL; // Caller must free!
+		pm->tymed = TYMED_HGLOBAL;
+		return S_OK;
+	}
+	return DV_E_FORMATETC;
+}
+
+HRESULT STDMETHODCALLTYPE IDataObjectTxt::QueryGetData(FORMATETC *fmt)
+{
+	if( fmt->cfFormat == CF_UNICODETEXT
+	||  fmt->cfFormat == CF_TEXT
+	||  fmt->cfFormat == CF_HDROP
+	)
+		if( fmt->ptd == NULL
+		&&  fmt->dwAspect == DVASPECT_CONTENT
+	//	&&  fmt->lindex == -1 // Skip this one?
+		&&  fmt->tymed & TYMED_HGLOBAL )
+			return S_OK;
+
+	// Invalid or unsupported format
+	return DV_E_FORMATETC;
+}
+
+HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetCanonicalFormatEtc(FORMATETC *fmt, FORMATETC *fout)
+{
+	if( fmt )
+	{
+		if( fmt->cfFormat == CF_UNICODETEXT
+		||  fmt->cfFormat == CF_TEXT
+		||  fmt->cfFormat == CF_HDROP
+		){
+			if( fmt->dwAspect == DVASPECT_CONTENT
+			&&  fmt->lindex == -1 )
+			{
+				if( fout )
+				{
+					*fout = *fmt;
+					fout->ptd = NULL;
+				}
+				return DATA_S_SAMEFORMATETC;
+			}
+			if( fout ) {
+				*fout = *fmt;
+				fout->ptd = NULL;
+				fout->dwAspect = DVASPECT_CONTENT;
+				fout->lindex = -1;
+				return S_OK;
+			}
+		}
+	}
+	static const FORMATETC canon = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+	if( fout ) *fout = canon;
+	return S_OK;
 }
