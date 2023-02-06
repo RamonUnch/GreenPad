@@ -6,7 +6,7 @@
 
 bool coolDragDetect( HWND hwnd, LPARAM pt, WORD btup, WORD removebutton );
 
-const IID myIID_IUnknown = { 0x00000000, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
+const IID myIID_IUnknown =    { 0x00000000, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 const IID myIID_IDataObject = { 0x0000010e, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 const IID myIID_IDropSource = { 0x00000121, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 
@@ -123,7 +123,7 @@ inline UINT Clipboard::RegisterFormat( const TCHAR* name )
 //=========================================================================
 
 #ifndef NO_OLEDNDSRC
-// Class for a minimalist Text drag and drop data object
+// Class for a minimalist Text/File drag and drop data object
 class IDataObjectTxt : public IDataObject, public Object
 {
 public:
@@ -131,7 +131,25 @@ public:
 		: refcnt( 1 )
 		, str_  ( str )
 		, len_  ( len )
-		{ }
+//		, cf_filegroupdescriptor ( ::RegisterClipboardFormat(app().isNT()?CFSTR_FILEDESCRIPTORW:CFSTR_FILEDESCRIPTORA) )
+//		, cf_filename            ( ::RegisterClipboardFormat(app().isNT()?CFSTR_FILENAMEW:CFSTR_FILENAMEA) )
+		{
+			SetFORMATETC(&m_rgfe[DATA_TEXT],         CF_TEXT);
+			SetFORMATETC(&m_rgfe[DATA_UNICODETEXT],  CF_UNICODETEXT);
+			SetFORMATETC(&m_rgfe[DATA_HDROP],        CF_HDROP);
+		}
+
+private:
+	void SetFORMATETC(FORMATETC* pfe, UINT cf, TYMED tymed = TYMED_HGLOBAL, LONG lindex = -1,
+		DWORD dwAspect = DVASPECT_CONTENT, DVTARGETDEVICE* ptd = NULL) const
+	{
+	    pfe->cfFormat = (CLIPFORMAT)cf;
+	    pfe->tymed = tymed;
+	    pfe->lindex = lindex;
+	    pfe->dwAspect = dwAspect;
+	    pfe->ptd = ptd;
+	}
+
 private:
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
 	{
@@ -163,9 +181,21 @@ private:
 		}
 		return DV_E_FORMATETC;
 	}
-	HRESULT STDMETHODCALLTYPE EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppenumFormatEtc)
+	HRESULT STDMETHODCALLTYPE EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppefe)
 	{
-//		return OleRegEnumFormatEtc(myIID_IDataObject, dwDirection, ppenumFormatEtc);
+		if( dwDirection == DATADIR_GET )
+		{
+			// SHCreateStdEnumFmtEtc first appear in win2000, or you need to implement whole IEnumFORMATETC,
+			// for example https://github.com/mirror/sevenzip/blob/master/CPP/7zip/UI/FileManager/EnumFormatEtc.cpp
+			#define FUNK_TYPE ( HRESULT (WINAPI *)(UINT cfmt, const FORMATETC *afmt, IEnumFORMATETC **ppefe) )
+			static HRESULT (WINAPI *dyn_SHCreateStdEnumFmtEtc)(UINT cfmt, const FORMATETC *afmt, IEnumFORMATETC **ppefe) = FUNK_TYPE(-1);
+			if( dyn_SHCreateStdEnumFmtEtc == FUNK_TYPE(-1) )
+				dyn_SHCreateStdEnumFmtEtc = FUNK_TYPE GetProcAddress( GetModuleHandle(TEXT("SHELL32.DLL")), "SHCreateStdEnumFmtEtc" );
+			if( dyn_SHCreateStdEnumFmtEtc )
+				return dyn_SHCreateStdEnumFmtEtc(countof(m_rgfe), m_rgfe, ppefe);
+			#undef FUNK_TYPE
+		}
+		*ppefe = NULL;
 		return E_NOTIMPL;
 	}
 
@@ -184,15 +214,12 @@ private:
 				memmove( data, str_, len );
 				((unicode*)data)[len/sizeof(unicode)] = L'\0'; // NULL Terminate
 			}
-			else if( fmt->cfFormat == CF_TEXT)
+			else if( fmt->cfFormat == CF_TEXT )
 			{	// Convert unicode string to ANSI.
-				int len = ::WideCharToMultiByte(CP_ACP, 0, str_, len_, NULL, 0, NULL, NULL);
-				char* ansi = new char[len];
-				len = ::WideCharToMultiByte(CP_ACP, 0, str_, len_, ansi, len, NULL, NULL);
-				len = Min( len*sizeof(char), gmemsz );
-				memmove( data, (void*)ansi, len );
-				((char*)data)[len/sizeof(char)] = '\0'; // NULL Terminate
-				delete [] ansi;
+				size_t destlen = Min( len_*sizeof(unicode), gmemsz );
+				char *dest = (char*)data;
+				int len = ::WideCharToMultiByte(CP_ACP, 0, str_, len_, dest, destlen, NULL, NULL);
+				dest[len/sizeof(char)] = '\0'; // NULL Terminate
 			}
 			else if( fmt->cfFormat == CF_HDROP )
 			{
@@ -201,7 +228,7 @@ private:
 				df->fWide = app().isNT(); // Use unicode on NT!
 				df->fNC = 1;
 				df->pt.x = df->pt.y = 0;
-				// The string starts just at rhe end of the structure
+				// The string starts just at the end of the structure
 				char *dest = (char *)( ((BYTE*)df) + df->pFiles );
 				// length in BYTES!
 				size_t len = Min(len_*sizeof(unicode), gmemsz-sizeof(DROPFILES)-2*sizeof(unicode));
@@ -221,7 +248,6 @@ private:
 				{
 					unicode *uni = (unicode *)dest;
 					memmove(dest, str_, len);
-					// Replace eventual ending \n with NULL
 					len = len/sizeof(unicode);
 //					if( uni[len-1] == L'\n' )
 //					{// remove eventual \r\n at the end
@@ -233,6 +259,25 @@ private:
 					uni[len+1] = L'\0'; // Double NULL Terminate
 				}
 			}
+//			else if( fmt->cfFormat == cf_filegroupdescriptor )
+//			{
+//				mem00( data, sizeof(FILEGROUPDESCRIPTOR) );
+//				FILEGROUPDESCRIPTOR *fg = (FILEGROUPDESCRIPTOR *)data;
+//				fg->cItems = 1;
+//				size_t len = Min(len_*sizeof(unicode), gmemsz-sizeof(FILEGROUPDESCRIPTOR)-sizeof(unicode));
+//
+//				if( app().isNT() )
+//				{
+//					unicode *uni = (unicode*)fg->fgd[0].cFileName;
+//					memmove(uni, str_, len);
+//					uni[len/sizeof(unicode)] = L'\0';
+//				}
+//				else
+//				{
+//					char *dest = (char*)fg->fgd[0].cFileName;
+//					::WideCharToMultiByte( CP_ACP, 0, str_, len_, dest, len, NULL, NULL);
+//				}
+//			}
 			GlobalUnlock(pm->hGlobal);
 			pm->pUnkForRelease = NULL; // Caller must free!
 			pm->tymed = TYMED_HGLOBAL;
@@ -246,7 +291,10 @@ private:
 		// { CF_(UNI)TEXT, NULL, DVASPECT_CONTENT, -1, |TYMED_HGLOBAL } Only!
 		if( fmt->cfFormat == CF_UNICODETEXT
 		||  fmt->cfFormat == CF_TEXT
-		||  fmt->cfFormat == CF_HDROP )
+		||  fmt->cfFormat == CF_HDROP
+//		||  fmt->cfFormat == cf_filegroupdescriptor
+//		||  fmt->cfFormat == cf_filename
+		)
 			if( fmt->ptd == NULL
 			&&  fmt->dwAspect == DVASPECT_CONTENT
 		//	&&  fmt->lindex == -1 // Skip this one?
@@ -263,7 +311,10 @@ private:
 		{
 			if( fmt->cfFormat == CF_UNICODETEXT
 			||  fmt->cfFormat == CF_TEXT
-			||  fmt->cfFormat == CF_HDROP )
+			||  fmt->cfFormat == CF_HDROP
+//			||  fmt->cfFormat == cf_filegroupdescriptor
+//			||  fmt->cfFormat == cf_filename
+			)
 			{
 				if( fmt->dwAspect == DVASPECT_CONTENT
 				&&  fmt->lindex == -1 )
@@ -301,6 +352,16 @@ private:
 	LONG refcnt;
 	const unicode *str_;
 	const size_t len_;
+//	const UINT cf_filegroupdescriptor;
+//	const UINT cf_filename;
+	enum {
+		DATA_UNICODETEXT,
+		DATA_TEXT,
+		DATA_HDROP,
+		DATA_NUM,
+		DATA_INVALID = -1,
+	};
+	FORMATETC m_rgfe[DATA_NUM];
 };
 class OleDnDSourceTxt : public IDropSource
 {
@@ -319,6 +380,7 @@ public:
 			if( app().hOle32() )
 				dyn_DoDragDrop = FUNK_TYPE GetProcAddress( app().hOle32(), "DoDragDrop" );
 		}
+		#undef FUNK_TYPE
 
 		if( dyn_DoDragDrop )
 		{
