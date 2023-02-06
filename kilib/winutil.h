@@ -131,8 +131,6 @@ public:
 		: refcnt( 1 )
 		, str_  ( str )
 		, len_  ( len )
-//		, cf_filegroupdescriptor ( ::RegisterClipboardFormat(app().isNT()?CFSTR_FILEDESCRIPTORW:CFSTR_FILEDESCRIPTORA) )
-//		, cf_filename            ( ::RegisterClipboardFormat(app().isNT()?CFSTR_FILENAMEW:CFSTR_FILENAMEA) )
 		{
 			SetFORMATETC(&m_rgfe[DATA_TEXT],         CF_TEXT);
 			SetFORMATETC(&m_rgfe[DATA_UNICODETEXT],  CF_UNICODETEXT);
@@ -148,6 +146,26 @@ private:
 	    pfe->lindex = lindex;
 	    pfe->dwAspect = dwAspect;
 	    pfe->ptd = ptd;
+	}
+
+	size_t convCRLFtoNULLS(unicode *d, const unicode *s, size_t l)
+	{
+		unicode *od = d;
+		while( l-- )
+		{
+			if( *s == L'\r' || *s == L'\n' )
+			{	// Replace any sequence of CR or LF by a single NULL.
+				*d++ = L'\0';
+				s++;
+				while( *s == L'\r' || *s == L'\n' )
+					s++; // skip LF
+			}
+			else
+			{	// Copy
+				*d++ = *s++;
+			}
+		}
+		return d - od;
 	}
 
 private:
@@ -230,54 +248,26 @@ private:
 				df->pt.x = df->pt.y = 0;
 				// The string starts just at the end of the structure
 				char *dest = (char *)( ((BYTE*)df) + df->pFiles );
-				// length in BYTES!
-				size_t len = Min(len_*sizeof(unicode), gmemsz-sizeof(DROPFILES)-2*sizeof(unicode));
+				// convert multi line in multi file paths
+				unicode *flst = new unicode[len_];
+				size_t flen = convCRLFtoNULLS(flst, str_, len_);
+				// Destination length in BYTES!
+				size_t len = Min(flen*sizeof(unicode), gmemsz-sizeof(DROPFILES)-2*sizeof(unicode));
 				if( !df->fWide )
 				{	// Convert to ANSI and copy to dest!
-					::WideCharToMultiByte( CP_ACP, 0, str_, len_, dest, len, NULL, NULL);
-//					if( dest[len-1] == '\n' )
-//					{ // remove eventual \r\n at the end
-//						dest[len-1] = '\0';
-//						if( dest[len-2] == '\r' )
-//							dest[len-2] = '\0';
-//					}
-					dest[len  ] = '\0';
+					::WideCharToMultiByte( CP_ACP, 0, flst, flen, dest, len, NULL, NULL);
 					dest[len+1] = '\0'; // Double NULL Terminate
 				}
 				else
 				{
 					unicode *uni = (unicode *)dest;
-					memmove(dest, str_, len);
+					memmove(dest, flst, len);
 					len = len/sizeof(unicode);
-//					if( uni[len-1] == L'\n' )
-//					{// remove eventual \r\n at the end
-//						uni[len-1] = L'\0';
-//						if( uni[len-2] == L'\r' )
-//							uni[len-2] = L'\0';
-//					}
 					uni[len  ] = L'\0';
 					uni[len+1] = L'\0'; // Double NULL Terminate
 				}
+				delete flst;
 			}
-//			else if( fmt->cfFormat == cf_filegroupdescriptor )
-//			{
-//				mem00( data, sizeof(FILEGROUPDESCRIPTOR) );
-//				FILEGROUPDESCRIPTOR *fg = (FILEGROUPDESCRIPTOR *)data;
-//				fg->cItems = 1;
-//				size_t len = Min(len_*sizeof(unicode), gmemsz-sizeof(FILEGROUPDESCRIPTOR)-sizeof(unicode));
-//
-//				if( app().isNT() )
-//				{
-//					unicode *uni = (unicode*)fg->fgd[0].cFileName;
-//					memmove(uni, str_, len);
-//					uni[len/sizeof(unicode)] = L'\0';
-//				}
-//				else
-//				{
-//					char *dest = (char*)fg->fgd[0].cFileName;
-//					::WideCharToMultiByte( CP_ACP, 0, str_, len_, dest, len, NULL, NULL);
-//				}
-//			}
 			GlobalUnlock(pm->hGlobal);
 			pm->pUnkForRelease = NULL; // Caller must free!
 			pm->tymed = TYMED_HGLOBAL;
@@ -292,8 +282,6 @@ private:
 		if( fmt->cfFormat == CF_UNICODETEXT
 		||  fmt->cfFormat == CF_TEXT
 		||  fmt->cfFormat == CF_HDROP
-//		||  fmt->cfFormat == cf_filegroupdescriptor
-//		||  fmt->cfFormat == cf_filename
 		)
 			if( fmt->ptd == NULL
 			&&  fmt->dwAspect == DVASPECT_CONTENT
@@ -307,26 +295,23 @@ private:
 
 	HRESULT STDMETHODCALLTYPE GetCanonicalFormatEtc(FORMATETC *fmt, FORMATETC *fout)
 	{
-		if(fmt)
+		if( fmt )
 		{
 			if( fmt->cfFormat == CF_UNICODETEXT
 			||  fmt->cfFormat == CF_TEXT
 			||  fmt->cfFormat == CF_HDROP
-//			||  fmt->cfFormat == cf_filegroupdescriptor
-//			||  fmt->cfFormat == cf_filename
-			)
-			{
+			){
 				if( fmt->dwAspect == DVASPECT_CONTENT
 				&&  fmt->lindex == -1 )
 				{
-					if (fout)
+					if( fout )
 					{
 						*fout = *fmt;
 						fout->ptd = NULL;
 					}
 					return DATA_S_SAMEFORMATETC;
 				}
-				if (fout) {
+				if( fout ) {
 					*fout = *fmt;
 					fout->ptd = NULL;
 					fout->dwAspect = DVASPECT_CONTENT;
@@ -352,8 +337,6 @@ private:
 	LONG refcnt;
 	const unicode *str_;
 	const size_t len_;
-//	const UINT cf_filegroupdescriptor;
-//	const UINT cf_filename;
 	enum {
 		DATA_UNICODETEXT,
 		DATA_TEXT,
@@ -363,6 +346,9 @@ private:
 	};
 	FORMATETC m_rgfe[DATA_NUM];
 };
+
+//-------------------------------------------------------------------------
+// Implementation of a simple IDropSource for Text/File Drag and drop.
 class OleDnDSourceTxt : public IDropSource
 {
 public:
