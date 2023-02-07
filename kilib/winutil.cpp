@@ -145,7 +145,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 //=========================================================================
 // IDataObjectTxt: Class for a minimalist Text drag and drop data object
 //=========================================================================
-
+#ifndef NO_OLEDNDSRC
 size_t IDataObjectTxt::convCRLFtoNULLS(unicode *d, const unicode *s, size_t l)
 {
 	unicode *od = d;
@@ -181,24 +181,6 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetData(FORMATETC *fmt, STGMEDIUM *pm)
 		return GetDataHere(fmt, pm);
 	}
 	return DV_E_FORMATETC;
-}
-
-HRESULT STDMETHODCALLTYPE IDataObjectTxt::EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppefe)
-{
-	if( dwDirection == DATADIR_GET )
-	{
-		// SHCreateStdEnumFmtEtc first appear in win2000, or you need to implement whole IEnumFORMATETC,
-		// for example https://github.com/mirror/sevenzip/blob/master/CPP/7zip/UI/FileManager/EnumFormatEtc.cpp
-		#define FUNK_TYPE ( HRESULT (WINAPI *)(UINT cfmt, const FORMATETC *afmt, IEnumFORMATETC **ppefe) )
-		static HRESULT (WINAPI *dyn_SHCreateStdEnumFmtEtc)(UINT cfmt, const FORMATETC *afmt, IEnumFORMATETC **ppefe) = FUNK_TYPE(-1);
-		if( dyn_SHCreateStdEnumFmtEtc == FUNK_TYPE(-1) )
-			dyn_SHCreateStdEnumFmtEtc = FUNK_TYPE GetProcAddress( GetModuleHandle(TEXT("SHELL32.DLL")), "SHCreateStdEnumFmtEtc" );
-		if( dyn_SHCreateStdEnumFmtEtc )
-			return dyn_SHCreateStdEnumFmtEtc(countof(m_rgfe), m_rgfe, ppefe);
-		#undef FUNK_TYPE
-	}
-	*ppefe = NULL;
-	return E_NOTIMPL;
 }
 
 HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM *pm)
@@ -307,3 +289,4 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetCanonicalFormatEtc(FORMATETC *fmt, 
 	if( fout ) *fout = canon;
 	return S_OK;
 }
+#endif // NO_OLEDNDSRC

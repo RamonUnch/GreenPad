@@ -9,6 +9,7 @@ bool coolDragDetect( HWND hwnd, LPARAM pt, WORD btup, WORD removebutton );
 const IID myIID_IUnknown =    { 0x00000000, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 const IID myIID_IDataObject = { 0x0000010e, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 const IID myIID_IDropSource = { 0x00000121, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
+const IID myIID_IEnumFORMATETC = { 0x00000103, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 
 #ifndef __ccdoc__
 namespace ki {
@@ -123,6 +124,150 @@ inline UINT Clipboard::RegisterFormat( const TCHAR* name )
 //=========================================================================
 
 #ifndef NO_OLEDNDSRC
+
+static void DeepCopyFormatEtc(FORMATETC *dest, const FORMATETC *source)
+{
+	// copy the source FORMATETC into dest
+	*dest = *source;
+
+//  We never use the ptd field!
+	dest->ptd = NULL; // In case.
+//	if(source->ptd)
+//	{
+//		// allocate memory for the DVTARGETDEVICE if necessary
+//		dest->ptd = (DVTARGETDEVICE*)CoTaskMemAlloc(sizeof(DVTARGETDEVICE));
+//
+//		// copy the contents of the source DVTARGETDEVICE into dest->ptd
+//		*(dest->ptd) = *(source->ptd);
+//	}
+}
+static HRESULT CreateEnumFormatEtc(UINT , const FORMATETC *, IEnumFORMATETC **);
+
+class CEnumFormatEtc : public IEnumFORMATETC, public Object
+{
+private:
+	LONG        m_lRefCount;   // Reference count for this COM interface
+	ULONG       m_nIndex;      // current enumerator index
+	ULONG       m_nNumFormats; // number of FORMATETC members
+	FORMATETC  *m_pFormatEtc;  // array of FORMATETC objects
+
+public:
+	//
+	// IUnknown members
+	//
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
+	{
+		if( memEQ(&riid, &myIID_IUnknown, sizeof(riid) )
+		||  memEQ(&riid, &myIID_IEnumFORMATETC, sizeof(riid) ) )
+		{
+			*ppvObject = this;
+			AddRef();
+			return S_OK;
+		}
+		return E_NOINTERFACE;
+	}
+	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&m_lRefCount); }
+	ULONG STDMETHODCALLTYPE Release()
+	{
+		ULONG cnt = ::InterlockedDecrement(&m_lRefCount);
+		if( cnt == 0 ) delete this;
+		return cnt;
+	}
+
+	//
+	// IEnumFormatEtc members
+	//
+	HRESULT __stdcall  Next(ULONG celt, FORMATETC * pFormatEtc, ULONG * pceltFetched)
+	{
+		ULONG copied  = 0;
+
+		// validate arguments
+		if(celt == 0 || pFormatEtc == 0)
+			return E_INVALIDARG;
+
+		// copy FORMATETC structures into caller's buffer
+		while(m_nIndex < m_nNumFormats && copied < celt)
+		{
+			DeepCopyFormatEtc(&pFormatEtc[copied], &m_pFormatEtc[m_nIndex]);
+			copied++;
+			m_nIndex++;
+		}
+
+		// store result
+		if(pceltFetched != 0)
+			*pceltFetched = copied;
+
+		// did we copy all that was requested?
+		return (copied == celt) ? S_OK : S_FALSE;
+	}
+
+	HRESULT __stdcall  Skip(ULONG celt)
+	{
+		m_nIndex += celt;
+		return (m_nIndex <= m_nNumFormats) ? S_OK : S_FALSE;
+	}
+
+	HRESULT __stdcall  Reset(void)
+	{
+		m_nIndex = 0;
+		return S_OK;
+	}
+
+	HRESULT __stdcall  Clone(IEnumFORMATETC ** ppEnumFormatEtc)
+	{
+		HRESULT hResult;
+
+		// make a duplicate enumerator
+		hResult = CreateEnumFormatEtc(m_nNumFormats, m_pFormatEtc, ppEnumFormatEtc);
+
+		if(hResult == S_OK)
+		{
+			// manually set the index state
+			((CEnumFormatEtc *) *ppEnumFormatEtc)->m_nIndex = m_nIndex;
+		}
+		return hResult;
+	}
+
+	//
+	// Construction / Destruction
+	//
+	CEnumFormatEtc(const FORMATETC *pFormatEtc, int nNumFormats)
+		: m_lRefCount   ( 1 )
+		, m_nIndex      ( 0 )
+		, m_nNumFormats ( nNumFormats )
+	{
+		m_pFormatEtc = new FORMATETC[nNumFormats];
+
+		// copy the FORMATETC structures
+		for(int i = 0; i < nNumFormats; i++)
+		{
+			DeepCopyFormatEtc(&m_pFormatEtc[i], &pFormatEtc[i]);
+		}
+	}
+
+	~CEnumFormatEtc()
+	{
+		if(m_pFormatEtc)
+		{
+//			for(ULONG i = 0; i < m_nNumFormats; i++)
+//			{
+//				if(m_pFormatEtc[i].ptd)
+//					CoTaskMemFree(m_pFormatEtc[i].ptd);
+//			}
+			delete[] m_pFormatEtc;
+		}
+	}
+
+};
+static HRESULT CreateEnumFormatEtc(UINT nNumFormats, const FORMATETC *pFormatEtc, IEnumFORMATETC **ppEnumFormatEtc)
+{
+	if(nNumFormats == 0 || pFormatEtc == 0 || ppEnumFormatEtc == 0)
+		return E_INVALIDARG;
+
+	*ppEnumFormatEtc = new CEnumFormatEtc(pFormatEtc, nNumFormats);
+
+	return (*ppEnumFormatEtc) ? S_OK : E_OUTOFMEMORY;
+}
 // Class for a minimalist Text/File drag and drop data object
 class IDataObjectTxt : public IDataObject, public Object
 {
@@ -132,10 +277,11 @@ public:
 		, str_  ( str )
 		, len_  ( len )
 		{
-			SetFORMATETC(&m_rgfe[DATA_TEXT],         CF_TEXT);
 			SetFORMATETC(&m_rgfe[DATA_UNICODETEXT],  CF_UNICODETEXT);
+			SetFORMATETC(&m_rgfe[DATA_TEXT],         CF_TEXT);
 			SetFORMATETC(&m_rgfe[DATA_HDROP],        CF_HDROP);
 		}
+	~IDataObjectTxt(){}
 
 private:
 	void SetFORMATETC(FORMATETC* pfe, UINT cf, TYMED tymed = TYMED_HGLOBAL, LONG lindex = -1,
@@ -163,10 +309,24 @@ private:
 		return E_NOINTERFACE;
 	}
 	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&refcnt); }
-	ULONG STDMETHODCALLTYPE Release() { return ::InterlockedDecrement(&refcnt); }
+	ULONG STDMETHODCALLTYPE Release()
+	{
+		ULONG cnt = ::InterlockedDecrement(&refcnt);
+		if( cnt == 0 ) delete this;
+		return cnt;
+	}
 
 	HRESULT STDMETHODCALLTYPE GetData(FORMATETC *fmt, STGMEDIUM *pm);
-	HRESULT STDMETHODCALLTYPE EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppefe);
+	HRESULT STDMETHODCALLTYPE EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppefe)
+	{
+		if( dwDirection == DATADIR_GET )
+		{
+			// LOGGER( "IDataObjectTxt::EnumFormatEtc(DATADIR_GET)" );
+			return CreateEnumFormatEtc(countof(m_rgfe), m_rgfe, ppefe);
+		}
+		*ppefe = NULL;
+		return E_NOTIMPL;
+	}
 	HRESULT STDMETHODCALLTYPE GetDataHere(FORMATETC *fmt, STGMEDIUM *pm);
 	HRESULT STDMETHODCALLTYPE QueryGetData(FORMATETC *fmt);
 	HRESULT STDMETHODCALLTYPE GetCanonicalFormatEtc(FORMATETC *fmt, FORMATETC *fout);
