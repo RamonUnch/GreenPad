@@ -6,6 +6,36 @@ using doc::Insert;
 using doc::Delete;
 using doc::Replace;
 
+static ulong countLines( const unicode *str, size_t len )
+{
+	ulong nl = 0;
+	while( len-- )
+	{
+		if( *str == L'\r' )
+		{
+			nl++; // CR or CRLF
+			str += str[1] == '\n'; // CRLF
+		}
+		else if( *str == L'\n' )
+		{
+			nl++; // LF
+		}
+		str++;
+	}
+	return nl;
+}
+static ulong lastLineLength( const unicode *str, size_t len )
+{
+	ulong lll = 0;
+	while( len-- )
+	{
+		if( str[len] == L'\r' || str[len] == L'\n' )
+			break;
+		lll++;
+	}
+	return lll;
+}
+
 #if defined(_MBCS)
 static BOOL WINAPI myIsDBCSLeadByteEx_1st(UINT cp, BYTE ch);
 static BOOL WINAPI myIsDBCSLeadByteEx_fb(UINT cp, BYTE ch);
@@ -509,17 +539,62 @@ void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
 {
 	VPos np;
 	view_.GetVPos( x, y, &np );
+	bool curbeforesel = cur_ < sel_;
+	VPos rsel = Min(cur_, sel_);
+	VPos rcur = Max(cur_, sel_);
 
-	if( isInSelection( np )  )
+	if( np >= rcur )
+	{
+		// Insert at new position AFTER selection.
+		// Current selection is not affected.
+		doc_.Execute( Insert( np, str, len ) );
+	}
+	else if( np <= rsel )
+	{
+		// Insert at new position BEFORE selection.
+		doc_.Execute( Insert( np, str, len ) );
+
+		// Current selection MUST be shifted down/left.
+		// This code is a mess, but I do not know any better.
+		if( rcur != rsel )
+		{
+			ulong difflines = countLines(str, len);
+			if( rsel.tl == np.tl )
+			{	// Insertion at the begining of the line with selection.
+				ulong lll = lastLineLength( str, len );
+				int xoffset = difflines==0? lll: lll - np.ad ;
+				rsel.ad += xoffset; // We must shift the begining of selection along X
+				if( rsel.tl == rcur.tl ) // for single line selection we must also
+					rcur.ad += xoffset; // shift the end of selection along X
+			}
+			rcur.tl += difflines;
+			rsel.tl += difflines;
+			view_.ConvDPosToVPos(rcur, &rcur);
+			view_.ConvDPosToVPos(rsel, &rsel);
+		}
+	}
+	else // if( isInSelection( np ) )
 	{
 		// Replace the whole selection if inside.
 		doc_.Execute( Replace( cur_, sel_, str, len ) );
+		return; // Do not restore selection.
 	}
-	else
+
+	// Restore eventual selection.
+	if( rcur != rsel )
 	{
-		// Insert at new position
-		doc_.Execute( Insert( np, str, len ) );
+		if( curbeforesel )
+		{
+			MoveTo(rcur, false);
+			MoveTo(rsel, true);
+		}
+		else
+		{
+			MoveTo(rsel, false);
+			MoveTo(rcur, true);
+		}
 	}
+
 }
 void Cursor::InputAt( const char* str, ulong len, int x, int y )
 {
@@ -1184,7 +1259,7 @@ bool Cursor::on_drag_start( short x, short y )
 				OleDnDSourceTxt doDrag(p, len);
 				delete p;
 				if( doDrag.getEffect() == DROPEFFECT_MOVE )
-					doc_.Execute( Delete( dm, dM ) );
+					doc_.Execute( Delete( cur_, sel_ ) );
 			}
 			return true;
 		}
