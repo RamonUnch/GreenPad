@@ -204,8 +204,7 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM 
 		else if( fmt->cfFormat == CF_TEXT )
 		{	// Convert unicode string to ANSI.
 			size_t destlen = Min( len_*sizeof(unicode), gmemsz-sizeof(char) );
-			char *dest = (char*)data;
-			int len = ::WideCharToMultiByte(CP_ACP, 0, str_, len_, dest, destlen, NULL, NULL);
+			int len = ::WideCharToMultiByte(CP_ACP, 0, str_, len_, (char*)data, destlen, NULL, NULL);
 			remaining_bytes = gmemsz - len;
 		}
 		else if( fmt->cfFormat == CF_HDROP )
@@ -230,18 +229,14 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM 
 			}
 			else
 			{	// Directly copy unicode data
-				unicode *uni = (unicode *)dest;
 				memmove( dest, flst, len );
 			}
 			delete flst;
 			remaining_bytes = gmemsz - len - df->pFiles ;
 		}
-
-		// Clear remaining bytes remaining_bytes should ba at least ONE
-		#ifdef _DEBUG
-		if( remaining_bytes == 0 ) LOGGER( "ZERO remaining_bytes IDataObjectTxt::GetDataHere !!!!!!!!!" );
-		#endif
-		mem00((BYTE*)data+gmemsz-remaining_bytes, remaining_bytes);
+		// Clear remaining bytes
+		if( remaining_bytes )
+			mem00((BYTE*)data+gmemsz-remaining_bytes, remaining_bytes);
 
 		GlobalUnlock( pm->hGlobal );
 		pm->pUnkForRelease = NULL; // Caller must free!
