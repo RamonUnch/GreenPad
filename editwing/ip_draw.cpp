@@ -199,10 +199,12 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		cur().on_lbutton_up( LOWORD(lp), HIWORD(lp) );
 		break;
 
+	#ifndef NO_OLEDNDTAR
 	case WM_RBUTTONDOWN: {
 		if( coolDragDetect( hwnd(), /*pt=*/lp, WM_RBUTTONUP,  PM_NOREMOVE ) )
 			cur().on_drag_start( LOWORD(lp), HIWORD(lp) );
 		} break;
+	#endif // NO_OLEDNDTAR
 
 	case WM_LBUTTONDBLCLK:
 		cur().on_lbutton_dbl( LOWORD(lp), HIWORD(lp) );

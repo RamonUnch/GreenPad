@@ -7,7 +7,7 @@ namespace editwing {
 namespace view {
 #endif
 
-
+using namespace ki;
 
 class Canvas;
 class ViewImpl;
@@ -111,17 +111,24 @@ class OleDnDTarget : public IDropTarget
 		comes_from_center_ = false;
 		FORMATETC fmt = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 		if( S_OK == pDataObj->QueryGetData(&fmt) )
+		{
+			LOGGER( "OleDnDTarget::DragEnter(CF_UNICODETEXT)" );
 			return S_OK;
+		}
 
 		fmt.cfFormat = CF_TEXT;
 		if( S_OK == pDataObj->QueryGetData(&fmt) )
+		{
+			LOGGER( "OleDnDTarget::DragEnter(CF_TEXT)" );
 			return S_OK;
+		}
 
+		LOGGER( "OleDnDTarget::DragEnter(No supported IDataObject format)" );
 		return E_UNEXPECTED;
 	}
 
 	HRESULT STDMETHODCALLTYPE DragLeave()
-		{ return S_OK; }
+		{ LOGGER( "OleDnDTarget::DragLeave()" ); return S_OK; }
 
 	HRESULT STDMETHODCALLTYPE DragOver(DWORD grfKeyState, POINTL pt, DWORD *pdwEffect);
 
@@ -252,7 +259,6 @@ public:
 	void on_char( TCHAR ch );
 	void on_ime_composition( LPARAM lp );
 	void on_lbutton_down( short x, short y, bool shift );
-//	void on_rbutton_down( short x, short y );
 	bool on_drag_start( short x, short y );
 	void on_mouse_move( short x, short y, WPARAM fwKeys );
 	void on_lbutton_up( short x, short y );

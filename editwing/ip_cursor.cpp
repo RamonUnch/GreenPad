@@ -1394,7 +1394,10 @@ OleDnDTarget::OleDnDTarget( HWND hwnd, ViewImpl& vw )
 			GetProcAddress(app().hOle32(), "RegisterDragDrop");
 
 		if( dyn_RegisterDragDrop && S_OK == dyn_RegisterDragDrop(hwnd_, this) )
+		{
+			LOGGER( "OleDnDTarget RegisterDragDrop() Sucess!" );
 			return; // Sucess!
+		}
 	}
 	hwnd_ = NULL;
 }
@@ -1407,12 +1410,16 @@ OleDnDTarget::~OleDnDTarget(  )
 			GetProcAddress( app().hOle32(), "RevokeDragDrop" );
 
 		if( dyn_RevokeDragDrop )
+		{
+			LOGGER( "~OleDnDTarget RevokeDragDrop()" );
 			dyn_RevokeDragDrop(hwnd_);
+		}
 	}
 }
 
 HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect)
 {
+	LOGGER( "OleDnDTarget::Drop()" );
 	STGMEDIUM stg = { 0 };
 	// Try with UNICODE text first!
 	FORMATETC fmt = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
@@ -1436,6 +1443,7 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKey
 			::GlobalUnlock(stg.hGlobal);
 		}
 		// We must only free the buffer when pUnkForRelease is NULL!
+		// ::ReleaseStgMedium(&stg);
 		if( stg.pUnkForRelease == NULL )
 			::GlobalFree(stg.hGlobal);
 		return S_OK;
@@ -1471,16 +1479,19 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::QueryInterface(REFIID riid, void **ppvOb
 	if( memEQ(&riid, &myIID_IUnknown, sizeof(riid))
 	||  memEQ(&riid, &myIID_IDropTarget, sizeof(riid)) )
 	{
+		LOGGER( "OleDnDTarget::QueryInterface S_OK" );
 		*ppvObject = this;
 		AddRef();
 		return S_OK;
 	}
 	*ppvObject = NULL;
+	LOGGER( "OleDnDTarget::QueryInterface E_NOINTERFACE" );
 	return E_NOINTERFACE;
 }
 
 HRESULT STDMETHODCALLTYPE OleDnDTarget::DragOver(DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect)
 {
+	// LOGGER( "OleDnDTarget::DragOver" );
 	setDropEffect( grfKeyState, pdwEffect );
 
 	if( grfKeyState & MK_SHIFT )
