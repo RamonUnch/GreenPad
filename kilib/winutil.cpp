@@ -4,6 +4,7 @@
 #include "string.h"
 using namespace ki;
 
+#ifndef NO_OLEDNDTAR
 // Alternative version of DragDetect that beter fits my needs:
 // 1) it does not removes the button up from message queue.
 // 2) Any button can be used to do the drag and a drag can occur
@@ -40,6 +41,7 @@ bool coolDragDetect( HWND hwnd, LPARAM pt, WORD btup, WORD removebutton )
 
 	return false;
 }
+#endif // NO_OLEDNDTAR
 
 //=========================================================================
 
@@ -191,19 +193,20 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM 
 	{
 		// Check actual size of allocated mem in case.
 		size_t gmemsz = GlobalSize( pm->hGlobal );
+		size_t remaining_bytes = 0;
 
 		if( fmt->cfFormat == CF_UNICODETEXT )
 		{
-			size_t len = Min( len_*sizeof(unicode), gmemsz );
+			size_t len = Min( len_*sizeof(unicode), gmemsz-sizeof(unicode) );
 			memmove( data, str_, len );
-			((unicode*)data)[len/sizeof(unicode)] = L'\0'; // NULL Terminate
+			remaining_bytes = gmemsz - len;
 		}
 		else if( fmt->cfFormat == CF_TEXT )
 		{	// Convert unicode string to ANSI.
-			size_t destlen = Min( len_*sizeof(unicode), gmemsz );
+			size_t destlen = Min( len_*sizeof(unicode), gmemsz-sizeof(char) );
 			char *dest = (char*)data;
 			int len = ::WideCharToMultiByte(CP_ACP, 0, str_, len_, dest, destlen, NULL, NULL);
-			dest[len/sizeof(char)] = '\0'; // NULL Terminate
+			remaining_bytes = gmemsz - len;
 		}
 		else if( fmt->cfFormat == CF_HDROP )
 		{
@@ -214,26 +217,32 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM 
 			df->pt.x = df->pt.y = 0;
 			// The string starts just at the end of the structure
 			char *dest = (char *)( ((BYTE*)df) + df->pFiles );
+
 			// Convert multi line in multi file paths
 			unicode *flst = new unicode[len_];
 			size_t flen = convCRLFtoNULLS(flst, str_, len_);
+
 			// Destination length in BYTES!
 			size_t len = Min(flen*sizeof(unicode), gmemsz-sizeof(DROPFILES)-2*sizeof(unicode));
 			if( !df->fWide )
 			{	// Convert to ANSI and copy to dest!
-				::WideCharToMultiByte( CP_ACP, 0, flst, flen, dest, len, NULL, NULL );
-				dest[len+1] = '\0'; // Double NULL Terminate
+				len = ::WideCharToMultiByte( CP_ACP, 0, flst, flen, dest, len, NULL, NULL );
 			}
 			else
-			{
+			{	// Directly copy unicode data
 				unicode *uni = (unicode *)dest;
 				memmove( dest, flst, len );
-				len = len/sizeof(unicode);
-				uni[len  ] = L'\0';
-				uni[len+1] = L'\0'; // Double NULL Terminate
 			}
 			delete flst;
+			remaining_bytes = gmemsz - len - df->pFiles ;
 		}
+
+		// Clear remaining bytes remaining_bytes should ba at least ONE
+		#ifdef _DEBUG
+		if( remaining_bytes == 0 ) LOGGER( "ZERO remaining_bytes IDataObjectTxt::GetDataHere !!!!!!!!!" );
+		#endif
+		mem00((BYTE*)data+gmemsz-remaining_bytes, remaining_bytes);
+
 		GlobalUnlock( pm->hGlobal );
 		pm->pUnkForRelease = NULL; // Caller must free!
 		pm->tymed = TYMED_HGLOBAL;

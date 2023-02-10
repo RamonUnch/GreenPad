@@ -4,12 +4,14 @@
 #include "memory.h"
 #include "ktlaptr.h"
 
+#ifndef NO_OLEDNDTAR
 bool coolDragDetect( HWND hwnd, LPARAM pt, WORD btup, WORD removebutton );
 
 const IID myIID_IUnknown =    { 0x00000000, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 const IID myIID_IDataObject = { 0x0000010e, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 const IID myIID_IDropSource = { 0x00000121, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
 const IID myIID_IEnumFORMATETC = { 0x00000103, 0x0000, 0x0000, {0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
+#endif // NO_OLEDNDTAR
 
 #ifndef __ccdoc__
 namespace ki {
@@ -160,10 +162,12 @@ public:
 		if( memEQ(&riid, &myIID_IUnknown, sizeof(riid) )
 		||  memEQ(&riid, &myIID_IEnumFORMATETC, sizeof(riid) ) )
 		{
+			LOGGER( "CEnumFormatEtc::QueryInterface S_OK" );
 			*ppvObject = this;
 			AddRef();
 			return S_OK;
 		}
+		LOGGER( "CEnumFormatEtc::QueryInterface E_NOINTERFACE" );
 		return E_NOINTERFACE;
 	}
 	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&m_lRefCount); }
@@ -268,6 +272,7 @@ static HRESULT CreateEnumFormatEtc(UINT nNumFormats, const FORMATETC *pFormatEtc
 
 	return (*ppEnumFormatEtc) ? S_OK : E_OUTOFMEMORY;
 }
+
 // Class for a minimalist Text/File drag and drop data object
 class IDataObjectTxt : public IDataObject, public Object
 {
@@ -296,16 +301,18 @@ private:
 
 	size_t convCRLFtoNULLS(unicode *d, const unicode *s, size_t l);
 
-private:
+public:
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
 	{
 		if( memEQ(&riid, &myIID_IUnknown, sizeof(riid) )
 		||  memEQ(&riid, &myIID_IDataObject, sizeof(riid) ) )
 		{
+			LOGGER( "IDataObjectTxt::QueryInterface S_OK" );
 			*ppvObject = this;
 			AddRef();
 			return S_OK;
 		}
+		LOGGER( "IDataObjectTxt::QueryInterface E_NOINTERFACE" );
 		return E_NOINTERFACE;
 	}
 	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&refcnt); }
@@ -321,7 +328,7 @@ private:
 	{
 		if( dwDirection == DATADIR_GET )
 		{
-			// LOGGER( "IDataObjectTxt::EnumFormatEtc(DATADIR_GET)" );
+			LOGGER( "IDataObjectTxt::EnumFormatEtc(DATADIR_GET)" );
 			return CreateEnumFormatEtc(countof(m_rgfe), m_rgfe, ppefe);
 		}
 		*ppefe = NULL;
@@ -386,7 +393,12 @@ public:
 			// Only set the resulting effect if the drop was actually performed
 			if( ret == DRAGDROP_S_DROP )
 				dwEffect_ = effect;
-			LOGGER( "OleDnDSourceTxt DoDragDrop end" );
+			#ifdef DO_LOGGING
+			DWORD err = ::GetLastError();
+			TCHAR buf[256];
+			::wsprintf( buf, TEXT("OleDnDSourceTxt DoDragDrop end, ret=%x, effect=%d, err=%u"), (DWORD)ret, (int)effect, err );
+			LOGGERS( buf );
+			#endif
 		}
 	}
 
@@ -394,16 +406,19 @@ public:
 		{ return dwEffect_; }
 
 	~OleDnDSourceTxt(){}
-private:
+
+public:
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
 	{
 		if( memEQ(&riid, &myIID_IUnknown, sizeof(riid) )
 		||  memEQ(&riid, &myIID_IDropSource, sizeof(riid) ) )
 		{
+			LOGGER( "OleDnDSourceTxt::QueryInterface S_OK" );
 			*ppvObject = this;
 			AddRef();
 			return S_OK;
 		}
+		LOGGER( "OleDnDSourceTxt::QueryInterface E_NOINTERFACE" );
 		return E_NOINTERFACE;
 	}
 
@@ -412,6 +427,7 @@ private:
 
 	HRESULT STDMETHODCALLTYPE QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
 		{
+			// LOGGER( "OleDnDSourceTxt::QueryContinueDrag" );
 			if( fEscapePressed )
 				return DRAGDROP_S_CANCEL;
 			if (!(grfKeyState & (MK_LBUTTON | MK_RBUTTON)))
