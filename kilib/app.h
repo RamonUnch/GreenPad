@@ -4,6 +4,8 @@
 #include "log.h"
 
 HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
+HRESULT MyCoLockObjectExternal(IUnknown * pUnk, BOOL fLock, BOOL fLastUnlockReleases);
+
 #ifdef __GNUC__
 	// In recent GCC versions this is the only way to link to the real
 	// Win32 functions.
@@ -118,8 +120,9 @@ public:
 	//@{ インスタンスハンドル //@}
 	HINSTANCE hinst() const;
 	HINSTANCE hOle32() const;
-
+	bool hasSysDLL(const TCHAR *dllname) const;
 	//@{ Windowsのバージョン //@}
+
 	DWORD getOOSVer() const;
 	WORD getOSVer() const;
 	WORD getOSBuild() const;

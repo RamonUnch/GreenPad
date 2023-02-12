@@ -13,7 +13,7 @@ static DWORD MyOleInitialize(LPVOID r)
 {
 	static Initialize_funk func = (Initialize_funk)(-1);
 	if (func == (Initialize_funk)(-1)) // First time!
-		func = (Initialize_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "OleInitialize");
+		func = (Initialize_funk)GetProcAddress(app().hOle32(), "OleInitialize");
 
 	if (func) { // We got the function!
 		return func(r);
@@ -26,7 +26,7 @@ static void MyOleUninitialize( )
 {
 	static UnInitialize_funk func = (UnInitialize_funk)(-1);
 	if (func == (UnInitialize_funk)(-1)) // First time!
-		func = (UnInitialize_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "OleUninitialize");
+		func = (UnInitialize_funk)GetProcAddress(app().hOle32(), "OleUninitialize");
 
 	if (func) { // We got the function!
 		func();
@@ -37,7 +37,7 @@ HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsCont
 {
 	static CoCreateInstance_funk func = (CoCreateInstance_funk)(-1);
 	if (func == (CoCreateInstance_funk)(-1)) // First time!
-		func = (CoCreateInstance_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "CoCreateInstance");
+		func = (CoCreateInstance_funk)GetProcAddress(app().hOle32(), "CoCreateInstance");
 
 	if (func)
 	{ // We got the function!
@@ -51,6 +51,20 @@ HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsCont
 		return ret;
 	}
 	return 666; // Fail with 666 error
+}
+HRESULT MyCoLockObjectExternal(IUnknown * pUnk, BOOL fLock, BOOL fLastUnlockReleases)
+{
+	#define FUNK_TYPE ( HRESULT (WINAPI *)(IUnknown *, BOOL, BOOL) )
+
+	static HRESULT (WINAPI *dyn_CoLockObjectExternal)(IUnknown *, BOOL, BOOL) = FUNK_TYPE(-1);
+	if( dyn_CoLockObjectExternal == FUNK_TYPE(-1))
+		dyn_CoLockObjectExternal = FUNK_TYPE GetProcAddress(app().hOle32(), "CoLockObjectExternal");
+
+	if( dyn_CoLockObjectExternal )
+		dyn_CoLockObjectExternal(pUnk, fLock, fLastUnlockReleases);
+	#undef FUNK_TYPE
+
+	return E_NOTIMPL;
 }
 #endif // NO_OLE32
 
@@ -169,7 +183,7 @@ void App::InitModule( imflag what )
 {
 #ifndef NO_OLE32
 	if (hOle32_ == (HINSTANCE)(-1) && what&(OLE|COM|OLEDLL))
-		hOle32_ = ::LoadLibrary(TEXT("OLE32.DLL"));
+		hOle32_ = hasSysDLL(TEXT("OLE32.DLL"))? ::LoadLibrary(TEXT("OLE32.DLL")): NULL;
 #endif
 	// 初期化済みでなければ初期化する
 	bool ret = true;
@@ -179,7 +193,7 @@ void App::InitModule( imflag what )
 		case CTL: {
 			// ::InitCommonControls();
 			if( !hInstComCtl_ )
-				hInstComCtl_ = ::LoadLibrary(TEXT("COMCTL32.DLL"));
+				hInstComCtl_ = hasSysDLL(TEXT("COMCTL32.DLL"))? ::LoadLibrary(TEXT("COMCTL32.DLL")): NULL;
 			if( hInstComCtl_ )
 			{
 				void (WINAPI *dyn_InitCommonControls)(void) = ( void (WINAPI *)(void) )
@@ -206,7 +220,22 @@ void App::InitModule( imflag what )
 	// 今回初期化したモノを記憶
 	if (ret) loadedModule_ |= what;
 }
+bool App::hasSysDLL(const TCHAR *dllname) const
+{
+#ifdef WIN32S
+	if( isWin32s() )
+	{	// Only used for Win32s because LoadLibrary()
+		// Shows an error dialog box otherwise.
+		TCHAR fp[MAX_PATH];
+		UINT len = GetSystemDirectory( fp, countof(fp) );
+		my_lstrcpy( fp+len, TEXT("\\WIN32S\\") );
+		my_lstrcpy( fp+len+8, dllname );
 
+		return 0xffffffff != GetFileAttributes(fp);
+	}
+#endif
+	return true;
+}
 void App::Exit( int code )
 {
 	// 終了コードを設定して
