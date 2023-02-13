@@ -1381,26 +1381,28 @@ bool Cursor::on_ime_confirmreconvertstring( RECONVERTSTRING* rs )
 #ifndef NO_OLEDNDTAR
 OleDnDTarget::OleDnDTarget( HWND hwnd, ViewImpl& vw )
 	: refcnt   ( 1 )
-	, hwnd_    ( hwnd )
+	, hwnd_    ( NULL )
 	, view_    ( vw )
 	, comes_from_center_ ( false )
 {
 	ki::app().InitModule( ki::App::OLE );
 	// Dyamically load because OLE32 might be missing...
-	if( app().hOle32() )
+	if( app().hOle32() && ::IsWindow( hwnd ) )
 	{
 		// Lock object (required for Win32s!
-		// Useless for newer Windows versions ?
+		// Useless for newer Windows versions?
 		if( S_OK != MyCoLockObjectExternal( this, TRUE, FALSE ) )
 		{
 			HRESULT (WINAPI *dyn_RegisterDragDrop)(HWND hwnd, IDropTarget *dt) =
 				( HRESULT (WINAPI *)(HWND hwnd, IDropTarget *dt) )
 				GetProcAddress(app().hOle32(), "RegisterDragDrop");
 
-			if( dyn_RegisterDragDrop && S_OK == dyn_RegisterDragDrop(hwnd_, this) )
+			if( dyn_RegisterDragDrop && S_OK == dyn_RegisterDragDrop(hwnd, this) )
 			{
+				// Sucess!
+				hwnd_ = hwnd;
 				LOGGER( "OleDnDTarget RegisterDragDrop() Sucess!" );
-				return; // Sucess!
+				return;
 			}
 			else
 			{	// Could not Register the Drag&Drop
@@ -1409,11 +1411,10 @@ OleDnDTarget::OleDnDTarget( HWND hwnd, ViewImpl& vw )
 			}
 		}
 	}
-	hwnd_ = NULL;
 }
 OleDnDTarget::~OleDnDTarget(  )
 {
-	if( hwnd_ )
+	if( app().hOle32() && hwnd_ && ::IsWindow( hwnd_ ) )
 	{
 		HRESULT (WINAPI *dyn_RevokeDragDrop)(HWND hwnd) =
 			( HRESULT (WINAPI *)(HWND hwnd) )
