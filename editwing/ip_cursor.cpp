@@ -583,15 +583,22 @@ void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
 	// Restore eventual selection.
 	if( rcur != rsel )
 	{
+		// Only set cur_ and sel_ to the corrected values
+		// Do not force moving back (in case we scrolled...)
+		// This allows deletion of old selection when moving text around.
 		if( curbeforesel )
 		{
-			MoveTo(rcur, false);
-			MoveTo(rsel, true);
+			cur_ = rsel;
+			sel_ = rcur;
+			//MoveTo(rcur, false);
+			//MoveTo(rsel, true);
 		}
 		else
 		{
-			MoveTo(rsel, false);
-			MoveTo(rcur, true);
+			cur_ = rcur;
+			sel_ = rsel;
+			//MoveTo(rsel, false);
+			//MoveTo(rcur, true);
 		}
 	}
 
