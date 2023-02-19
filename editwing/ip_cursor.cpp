@@ -1398,7 +1398,7 @@ OleDnDTarget::OleDnDTarget( HWND hwnd, ViewImpl& vw )
 	{
 		// Lock object (required for Win32s!
 		// Useless for newer Windows versions?
-		if( S_OK != MyCoLockObjectExternal( this, TRUE, FALSE ) )
+		if( S_OK == MyCoLockObjectExternal( this, TRUE, FALSE ) )
 		{
 			HRESULT (WINAPI *dyn_RegisterDragDrop)(HWND hwnd, IDropTarget *dt) =
 				( HRESULT (WINAPI *)(HWND hwnd, IDropTarget *dt) )
