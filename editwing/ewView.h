@@ -123,6 +123,13 @@ class OleDnDTarget : public IDropTarget
 			return S_OK;
 		}
 
+		fmt.cfFormat = CF_HDROP;
+		if( app().isWin32s() && S_OK == pDataObj->QueryGetData(&fmt) )
+		{
+			LOGGER( "OleDnDTarget::DragEnter(CF_HDROP)" );
+			return S_OK;
+		}
+
 		LOGGER( "OleDnDTarget::DragEnter(No supported IDataObject format)" );
 		return E_UNEXPECTED;
 	}

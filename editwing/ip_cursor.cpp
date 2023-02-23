@@ -1489,6 +1489,15 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKey
 			::GlobalFree(stg.hGlobal);
 		return S_OK;
 	}
+
+	// check also HDROP
+	fmt.cfFormat = CF_HDROP;
+	if( app().isWin32s() && S_OK == pDataObj->GetData(&fmt, &stg) && stg.hGlobal)
+	{
+		::SendMessage(GetParent(GetParent(hwnd_)), WM_DROPFILES, (WPARAM) stg.hGlobal, NULL);
+	}
+
+
 	// Shoud I return E_INVALIDARG ??
 	return E_UNEXPECTED;
 }
