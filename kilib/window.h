@@ -234,11 +234,11 @@ private:
 		IActiveIMMMessagePumpOwner* immMsg_;
 	#endif
 	#ifdef NO_IME
-		#define hasIMM32_ = 0;
+		#define hIMM32_ = 0;
 	#elif defined(TARGET_VER) && TARGET_VER<=350
-		const bool hasIMM32_;
+		const HINSTANCE hIMM32_;
 	#else
-		#define hasIMM32_ 1
+		#define hIMM32_ 1
 	#endif
 	static IMEManager* pUniqueInstance_;
 
@@ -404,7 +404,7 @@ protected:
 
 private:
 
-	static BOOL CALLBACK MainProc( HWND, UINT, WPARAM, LPARAM );
+	static INT_PTR CALLBACK MainProc( HWND, UINT, WPARAM, LPARAM );
 
 private:
 

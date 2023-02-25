@@ -46,18 +46,18 @@ static BOOL (WINAPI *dyn_ImmSetCompositionStringA)(HIMC hIMC, DWORD dwIndex, LPC
 #endif // !UNICODE || UNICOWS
 
 
-static bool LoadIMM32DLL()
+static HINSTANCE LoadIMM32DLL()
 {
 	// Don't even try on Win32S because when LoadLibrary()
 	// fails we get an error message
 	if( app().isWin32s() )
-		return false;
+		return NULL;
 //	if ( !::GetSystemMetrics(SM_DBCSENABLED)
 //	&& app().getOSVer() >= 0x0500 && !::GetSystemMetrics(/*SM_IMMENABLED*/ 82) )
-//		return false;
+//		return NULL;
 
 	HINSTANCE h = LoadLibrary(TEXT("IMM32.DLL"));
-	if( ! h) return false;
+	if( ! h) return NULL;
 	// Helper with crazy cast to avoid further casts.
 	#define LOADPROC(proc, procname) if(!(*reinterpret_cast<FARPROC*>(&proc)=GetProcAddress(h,procname)))goto fail;
 
@@ -84,11 +84,11 @@ static bool LoadIMM32DLL()
 #endif // !UNICODE || UNICOWS
 
 	LOGGER( "IMM32.DLL Loaded !" );
-	return true;
+	return h;
 
 	fail:
 	FreeLibrary(h);
-	return false;
+	return NULL;
 }
 
 #endif // #if defined(TARGET_VER) && TARGET_VER<=350 && !defined(NO_IME)
@@ -144,7 +144,7 @@ IMEManager::IMEManager()
 	, immMsg_( NULL )
 #endif
 #if !defined(NO_IME) && defined(TARGET_VER) && TARGET_VER<=350
-	, hasIMM32_ ( LoadIMM32DLL() )
+	, hIMM32_ ( LoadIMM32DLL() )
 #endif
 {
 	// 唯一のインスタンスは私です
@@ -188,9 +188,9 @@ IMEManager::~IMEManager()
 	#endif
 
 	#if !defined(NO_IME) && defined(TARGET_VER) && TARGET_VER<=350
-		if( hasIMM32_ )
+		if( hIMM32_ )
 		{ // IMM32.DLL was loaded, we should free it.
-			FreeLibrary( GetModuleHandle(TEXT("IMM32.DLL")) );
+			FreeLibrary( hIMM32_ );
 		}
 	#endif
 }
@@ -215,7 +215,7 @@ BOOL IMEManager::IsIME()
 		}
 		else
 	#endif // USEGLOBALIME
-		if( hasIMM32_ )
+		if( hIMM32_ )
 		{
 			return ::ImmIsIME( hKL );
 		}
@@ -235,7 +235,7 @@ BOOL IMEManager::CanReconv()
 		}
 		else
 	#endif
-		if( hasIMM32_ )
+		if( hIMM32_ )
 		{
 			nImeProps = ::ImmGetProperty( hKL, IGP_SETCOMPSTR );
 		}
@@ -259,7 +259,7 @@ BOOL IMEManager::GetState( HWND wnd )
 		}
 		else
 	#endif
-		if( hasIMM32_ )
+		if( hIMM32_ )
 		{
 			HIMC ime = ::ImmGetContext( wnd );
 			if( ime )
@@ -285,7 +285,7 @@ void IMEManager::SetState( HWND wnd, bool enable )
 		}
 		else
 	#endif // USEGLOBALIME
-		if( hasIMM32_ )
+		if( hIMM32_ )
 		{
 			HIMC ime = ::ImmGetContext( wnd );
 			::ImmSetOpenStatus(ime, (enable ? TRUE : FALSE) );
@@ -360,7 +360,7 @@ void IMEManager::SetFont( HWND wnd, const LOGFONT& lf )
 	}
 	else
 	#endif //USEGLOBALIME
-	if( hasIMM32_ )
+	if( hIMM32_ )
 	{
 		HIMC ime = ::ImmGetContext( wnd );
 		if( ime )
@@ -393,7 +393,7 @@ void IMEManager::SetPos( HWND wnd, int x, int y )
 	}
 	else
 	#endif // USEGLOBALIME
-	if( hasIMM32_ )
+	if( hIMM32_ )
 	{
 		HIMC ime = ::ImmGetContext( wnd );
 		if( ime )
@@ -421,7 +421,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 	}
 	else
 	#endif //USEGLOBALIME
-	if( hasIMM32_ )
+	if( hIMM32_ )
 	{
 		HIMC ime = ::ImmGetContext( wnd );
 		if( !ime ) return;
@@ -452,7 +452,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 		}
 
 		::ImmReleaseContext( wnd, ime );
-	} // end if( hasIMM32_ )
+	} // end if( hIMM32_ )
 #endif //NO_IME
 }
 
@@ -472,7 +472,7 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 	}
 	else
 	#endif //USEGLOBALIME
-	if( hasIMM32_ )
+	if( hIMM32_ )
 	{
 		HIMC ime = ::ImmGetContext( wnd );
 		if( !ime ) return;
@@ -496,7 +496,7 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 		::ImmNotifyIME( ime, NI_COMPOSITIONSTR, CPS_CONVERT, 0); // 変換実行
 		::ImmNotifyIME( ime, NI_OPENCANDIDATE, 0, 0 ); // 変換候補リスト表示
 		::ImmReleaseContext( wnd, ime );
-	}// end if( hasIMM32_ )
+	}// end if( hIMM32_ )
 #endif //NO_IME
 }
 
@@ -844,7 +844,7 @@ void DlgImpl::GoModeless( HWND parent )
 
 //-------------------------------------------------------------------------
 
-BOOL CALLBACK DlgImpl::MainProc(
+INT_PTR CALLBACK DlgImpl::MainProc(
 	HWND dlg, UINT msg, WPARAM wp, LPARAM lp )
 {
 	if( msg == WM_INITDIALOG )
