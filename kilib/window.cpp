@@ -725,6 +725,8 @@ void WndImpl::SetUpThunk( HWND wnd )
 	#error Unsupported processor type, please implement assembly code or consider defining NO_ASMTHUNK
 	#endif
 
+	DWORD oldprotect; // Make thuk read+execute only for safety.
+	::VirtualProtect(thunk_, THUNK_SIZE, PAGE_EXECUTE_READ, &oldprotect);
 	::FlushInstructionCache( ::GetCurrentProcess(), thunk_, THUNK_SIZE );
 	::SetWindowLongPtr( wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&thunk_[0]) );
 #endif // NO_ASMTHUNK
