@@ -27,6 +27,7 @@ typedef unsigned long ulong;
 // ‘å‚«‚¢•ûA¬‚³‚¢•û
 template<typename T> inline T Min(T x,T y) { return (x<y ? x : y); }
 template<typename T> inline T Max(T x,T y) { return (y<x ? x : y); }
+template<typename T> inline T Abs(T x) { return (x<0 ? -x : x); }
 template<typename T> inline T Clamp(T l, T x,T h) { return (x < l)? l: ((x > h)? h: x); }
 template<typename T> inline T NZero(T x)   { return (x==0? 1 : x); }
 

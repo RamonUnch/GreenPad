@@ -8,12 +8,19 @@
 using namespace ki;
 
 #ifndef NO_OLE32
-typedef DWORD (WINAPI * Initialize_funk)(LPVOID r);
-static DWORD MyOleInitialize(LPVOID r)
+typedef HRESULT (WINAPI * Initialize_funk)(LPVOID r);
+static HRESULT MyOleInitialize(LPVOID r)
 {
-	static Initialize_funk func = (Initialize_funk)(-1);
-	if (func == (Initialize_funk)(-1)) // First time!
-		func = (Initialize_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "OleInitialize");
+	Initialize_funk func = (Initialize_funk)GetProcAddress(app().hOle32(), "OleInitialize");
+
+	if (func) { // We got the function!
+		return func(r);
+	}
+	return 666; // Fail with 666 error.
+}
+static HRESULT MyCoInitialize(LPVOID r)
+{
+	Initialize_funk func = (Initialize_funk)GetProcAddress(app().hOle32(), "CoInitialize");
 
 	if (func) { // We got the function!
 		return func(r);
@@ -24,9 +31,7 @@ static DWORD MyOleInitialize(LPVOID r)
 typedef void (WINAPI * UnInitialize_funk)( );
 static void MyOleUninitialize( )
 {
-	static UnInitialize_funk func = (UnInitialize_funk)(-1);
-	if (func == (UnInitialize_funk)(-1)) // First time!
-		func = (UnInitialize_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "OleUninitialize");
+	UnInitialize_funk func = (UnInitialize_funk)GetProcAddress(app().hOle32(), "OleUninitialize");
 
 	if (func) { // We got the function!
 		func();
@@ -37,7 +42,7 @@ HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsCont
 {
 	static CoCreateInstance_funk func = (CoCreateInstance_funk)(-1);
 	if (func == (CoCreateInstance_funk)(-1)) // First time!
-		func = (CoCreateInstance_funk)GetProcAddress(GetModuleHandleA("OLE32.DLL"), "CoCreateInstance");
+		func = (CoCreateInstance_funk)GetProcAddress(app().hOle32(), "CoCreateInstance");
 
 	if (func)
 	{ // We got the function!
@@ -51,6 +56,20 @@ HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsCont
 		return ret;
 	}
 	return 666; // Fail with 666 error
+}
+HRESULT MyCoLockObjectExternal(IUnknown * pUnk, BOOL fLock, BOOL fLastUnlockReleases)
+{
+	#define FUNK_TYPE ( HRESULT (WINAPI *)(IUnknown *, BOOL, BOOL) )
+
+	static HRESULT (WINAPI *dyn_CoLockObjectExternal)(IUnknown *, BOOL, BOOL) = FUNK_TYPE(-1);
+	if( dyn_CoLockObjectExternal == FUNK_TYPE(-1))
+		dyn_CoLockObjectExternal = FUNK_TYPE GetProcAddress(app().hOle32(), "CoLockObjectExternal");
+
+	if( dyn_CoLockObjectExternal )
+		return dyn_CoLockObjectExternal(pUnk, fLock, fLastUnlockReleases);
+	#undef FUNK_TYPE
+
+	return E_NOTIMPL;
 }
 #endif // NO_OLE32
 
@@ -145,14 +164,18 @@ App::~App()
 {
 	// ロード済みモジュールがあれば閉じておく
 #ifndef NO_OLE32
-//	if( loadedModule_ & COM )
-//		::MyCoUninitialize();
-	if( loadedModule_ & OLE && hOle32_ )
-	{	// Unitialize OLE and free OLE32.DLL
-		::MyOleUninitialize();
+	if( hOle32_ && hOle32_ != (HINSTANCE)(-1) )
+	{
+	//	if( loadedModule_ & COM )
+	//		::MyCoUninitialize();
+		if( loadedModule_ & OLE )
+			::MyOleUninitialize();
+
 		::FreeLibrary( hOle32_ );
 	}
 
+	if( hInstComCtl_ )
+		::FreeLibrary( hInstComCtl_ );
 #endif
 
 	// 終～了～
@@ -169,7 +192,7 @@ void App::InitModule( imflag what )
 {
 #ifndef NO_OLE32
 	if (hOle32_ == (HINSTANCE)(-1) && what&(OLE|COM|OLEDLL))
-		hOle32_ = ::LoadLibrary(TEXT("OLE32.DLL"));
+		hOle32_ = hasSysDLL(TEXT("OLE32.DLL"))? ::LoadLibrary(TEXT("OLE32.DLL")): NULL;
 #endif
 	// 初期化済みでなければ初期化する
 	bool ret = true;
@@ -179,7 +202,7 @@ void App::InitModule( imflag what )
 		case CTL: {
 			// ::InitCommonControls();
 			if( !hInstComCtl_ )
-				hInstComCtl_ = ::LoadLibrary(TEXT("COMCTL32.DLL"));
+				hInstComCtl_ = hasSysDLL(TEXT("COMCTL32.DLL"))? ::LoadLibrary(TEXT("COMCTL32.DLL")): NULL;
 			if( hInstComCtl_ )
 			{
 				void (WINAPI *dyn_InitCommonControls)(void) = ( void (WINAPI *)(void) )
@@ -188,15 +211,15 @@ void App::InitModule( imflag what )
 					dyn_InitCommonControls();
 			}
 			} break;
-		case COM:
+		//case COM:
 			// Actually we only ever use OLE, that calls COM, so it can
 			// be Ignored safely...
-			//ret = S_OK == ::MyCoInitialize( NULL );
+			//ret = hOle32_ && S_OK == ::MyCoInitialize( NULL );
 			//MessageBoxA(NULL, "CoInitialize", ret?"Sucess": "Failed", MB_OK);
 			//break;
 		case OLE:
 			#ifndef NO_OLE32
-			ret = S_OK == ::MyOleInitialize( NULL );
+			ret = hOle32_ && S_OK == ::MyOleInitialize( NULL );
 			#endif
 			// MessageBoxA(NULL, "OleInitialize", ret?"Sucess": "Failed", MB_OK);
 			break;
@@ -206,15 +229,27 @@ void App::InitModule( imflag what )
 	// 今回初期化したモノを記憶
 	if (ret) loadedModule_ |= what;
 }
+bool App::hasSysDLL(const TCHAR *dllname) const
+{
+#ifdef WIN32S
+	if( isWin32s() )
+	{	// Only used for Win32s because LoadLibrary()
+		// Shows an error dialog box otherwise.
+		TCHAR fp[MAX_PATH];
+		UINT len = GetSystemDirectory( fp, countof(fp) );
+		my_lstrcpy( fp+len, TEXT("\\WIN32S\\") );
+		my_lstrcpy( fp+len+8, dllname );
 
+		return 0xffffffff != GetFileAttributes(fp);
+	}
+#endif
+	return true;
+}
 void App::Exit( int code )
 {
 	// 終了コードを設定して
 	SetExitCode( code );
 
-	// only free library when program quits
-	if( hInstComCtl_ )
-		::FreeLibrary( hInstComCtl_ );
 	// 自殺
 	this->~App();
 }
@@ -231,7 +266,7 @@ MYVERINFO App::init_osver()
 	v.dwOSVersionInfoSize = sizeof( OSVERSIONINFOA );
 	MyGetVersionEx( &v );
 
-	#ifdef _DEBUG
+	#ifdef DO_LOGGING
 	TCHAR buf[256];
 	::wsprintf(buf,
 		TEXT("%s %u.%u build %u (%hs) - %s")
@@ -244,20 +279,12 @@ MYVERINFO App::init_osver()
 	);
 	//MessageBox(NULL, buf, TEXT("Windows Version"), 0);
 	LOGGERS( buf );
-	#endif
+	#endif // DO_LOGGING
 
 	MYVERINFO mv;
 	mv.wFromWhichAPI = (WORD)v.dwOSVersionInfoSize != 0;
 	mv.wPlatform =     (WORD)v.dwPlatformId;
 	mv.v.dwVer = MKVER(v.dwMajorVersion, v.dwMinorVersion, v.dwBuildNumber);
-//	TCHAR buf[64];
-//	::wsprintf( buf, TEXT("sz=%lx\n\n=%lx\n%x %x %x\n=%x")
-//		, sizeof( mv )
-//		, mv.v.dwVer
-//		, mv.v.vb.ver.u.cMajor, mv.v.vb.ver.u.cMinor, mv.v.vb.wBuild
-//		, mv.wPlatform
-//	);
-//	MessageBox(NULL, buf, NULL, 0);
 
 	return mv;
 }
@@ -437,6 +464,7 @@ namespace ki
 	extern "C" void __deregister_frame_info() {};
 	extern "C" void __register_frame_info() {};
 	extern int __stack_chk_guard = 696115047 ;
+
 	extern "C" int __stack_chk_fail(){ MessageBoxA(NULL, "__stack_chk_fail", NULL, MB_OK|MB_TOPMOST) ; ExitProcess(1); };
 #endif
 

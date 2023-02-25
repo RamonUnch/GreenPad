@@ -103,9 +103,9 @@ int GpStBar::AutoResize( bool maximized )
 
 	HDC dc = ::GetDC( hwnd() );
 	SIZE s;
-	if( ::GetTextExtentPoint( dc, TEXT("BBBBM"), 5, &s ) ) // Line Ending
+	if( ::GetTextExtentPoint( dc, TEXT("CRLFM"), 5, &s ) ) // Line Ending
 		w[1] = w[2] - s.cx;
-	if( ::GetTextExtentPoint( dc, TEXT("BBBWWWW"), 7, &s ) ) // Charset
+	if( ::GetTextExtentPoint( dc, TEXT("BBBWWW (100)"), 12, &s ) ) // Charset
 		w[0] = w[1] - s.cx;
 
 	::ReleaseDC( hwnd(), dc );
@@ -251,6 +251,29 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 	case WM_DROPFILES:
 		on_drop( reinterpret_cast<HDROP>(wp) );
 		break;
+
+	#ifndef NO_OLEDND
+	case WM_NCRBUTTONDOWN: {
+		if( wp == HTSYSMENU
+		&& !isUntitled()
+		&& coolDragDetect( hwnd(), /*pt=*/lp, WM_NCRBUTTONUP, PM_NOREMOVE )  )
+		{
+			// Allow dragging filename out of system tray with Right button.
+			const unicode *fnu = filename_.ConvToWChar();
+			if( fnu )
+			{
+				OleDnDSourceTxt doDrag( fnu, my_lstrlenW(fnu), DROPEFFECT_COPY );
+				filename_.FreeWCMem(fnu);
+			}
+			break;
+		}
+	} return WndImpl::on_message( msg, wp, lp );
+
+//	case WM_NCRBUTTONUP:
+//		LOGGER( "WM_NCRBUTTONUP" );
+//		return WndImpl::on_message( msg, wp, lp );
+
+	#endif // NO_OLEDND
 
 	// MRU
 	case GPM_MRUCHANGED:
@@ -1104,12 +1127,21 @@ void GreenPadWnd::UpdateWindowName()
 
 	SetText( name.c_str() );
 	// Try to show CP number in the StBar
-	if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000) {
-		static TCHAR cpname[10];
+	static TCHAR cpname[32];
+	if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)
+	{
 		::wsprintf(cpname,TEXT("CP%d"), csi_ & 0xfffff);
 		stb_.SetCsText( cpname );
-	} else {
-		stb_.SetCsText( (UINT)csi_==0xffffffff?TEXT("UNKN"):charSets_[csi_].shortName );
+	}
+	else if( (UINT)csi_==0xffffffff )
+	{
+		stb_.SetCsText( TEXT("UNKN") );
+	}
+	else
+	{
+		my_lstrcpy(cpname, charSets_[csi_].shortName);
+		::wsprintf(cpname+my_lstrlen(cpname), TEXT(" (%d)"), charSets_[csi_].ID);
+		stb_.SetCsText( cpname );
 	}
 	stb_.SetLbText( lb_ );
 }

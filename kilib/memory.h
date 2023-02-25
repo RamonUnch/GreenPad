@@ -119,6 +119,23 @@ inline void memFF( void* ptrv, int siz )
 	  for(;siz>3;siz-=4,ptr+=4) *(DWORD*)ptr = 0xffffffff;
 	  for(;siz;--siz,++ptr) *ptr = 0xff; }
 
+inline bool memEQ( const void *s1, const void *s2, size_t siz )
+{
+	const BYTE *a = (const BYTE *)s1;
+	const BYTE *b = (const BYTE *)s2;
+	for ( ; siz>3 ; siz-=4, a+=4, b+=4)
+	{
+		if ( *(const DWORD*)a != *(const DWORD*)b )
+			return false;
+	}
+	for ( ; siz ; siz--, a++, b++)
+	{ 
+		if ( *a != *b )
+			return false;
+	}
+	return true;
+}
+
 
 
 //=========================================================================

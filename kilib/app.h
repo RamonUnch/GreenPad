@@ -4,7 +4,16 @@
 #include "log.h"
 
 HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
+HRESULT MyCoLockObjectExternal(IUnknown * pUnk, BOOL fLock, BOOL fLastUnlockReleases);
 
+#ifdef __GNUC__
+	// In recent GCC versions this is the only way to link to the real
+	// Win32 functions.
+	#undef InterlockedIncrement
+	#undef InterlockedDecrement
+	extern "C" WINBASEAPI LONG WINAPI InterlockedIncrement(LONG volatile *);
+	extern "C" WINBASEAPI LONG WINAPI InterlockedDecrement(LONG volatile *);
+#endif
 // Use to make a ordered window version ie: MKVER(3,10,511) = 0x030A01FF
 #define MKVER(M, m, b) ( (DWORD)( (BYTE)(M)<<24 | (BYTE)(m)<<16 | (WORD)(b) ) )
 
@@ -110,9 +119,10 @@ public:
 
 	//@{ インスタンスハンドル //@}
 	HINSTANCE hinst() const;
-	HINSTANCE       hOle32_;
-
+	HINSTANCE hOle32() const;
+	bool hasSysDLL(const TCHAR *dllname) const;
 	//@{ Windowsのバージョン //@}
+
 	DWORD getOOSVer() const;
 	WORD getOSVer() const;
 	WORD getOSBuild() const;
@@ -141,6 +151,7 @@ private:
 	int             exitcode_;
 	ulong           loadedModule_;
 	const HINSTANCE hInst_;
+	HINSTANCE       hOle32_;
 	HINSTANCE       hInstComCtl_;
 	static App*     pUniqueInstance_;
 
@@ -204,6 +215,8 @@ inline int App::LoadString( UINT id, LPTSTR buf, int siz )
 inline HINSTANCE App::hinst() const
 	{ return hInst_; }
 
+inline HINSTANCE App::hOle32() const
+	{ return hOle32_; }
 
 
 //=========================================================================

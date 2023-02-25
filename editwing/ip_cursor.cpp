@@ -6,6 +6,36 @@ using doc::Insert;
 using doc::Delete;
 using doc::Replace;
 
+static ulong countLines( const unicode *str, size_t len )
+{
+	ulong nl = 0;
+	while( len-- )
+	{
+		if( *str == L'\r' )
+		{
+			nl++; // CR or CRLF
+			str += str[1] == '\n'; // CRLF
+		}
+		else if( *str == L'\n' )
+		{
+			nl++; // LF
+		}
+		str++;
+	}
+	return nl;
+}
+static ulong lastLineLength( const unicode *str, size_t len )
+{
+	ulong lll = 0;
+	while( len-- )
+	{
+		if( str[len] == L'\r' || str[len] == L'\n' )
+			break;
+		lll++;
+	}
+	return lll;
+}
+
 #if defined(_MBCS)
 static BOOL WINAPI myIsDBCSLeadByteEx_1st(UINT cp, BYTE ch);
 static BOOL WINAPI myIsDBCSLeadByteEx_fb(UINT cp, BYTE ch);
@@ -151,6 +181,9 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 	, doc_    ( dc )
 	, pEvHan_ ( &defaultHandler_ )
 	, caret_  ( new Caret(wnd) )
+#ifndef NO_OLEDNDTAR
+	, dndtg_  ( wnd, vw )
+#endif
 	, bIns_   ( true )
 	, bRO_    ( false )
 	, lineSelectMode_( false )
@@ -500,6 +533,82 @@ void Cursor::Input( const char* str, ulong len )
 	if(!ustr) return;
 	len = ::MultiByteToWideChar( CP_ACP, 0, str, len, ustr, len*4 );
 	Input( ustr, len );
+	delete [] ustr;
+}
+void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
+{
+	VPos np;
+	view_.GetVPos( x, y, &np );
+	bool curbeforesel = cur_ < sel_;
+	VPos rsel = Min(cur_, sel_);
+	VPos rcur = Max(cur_, sel_);
+
+	if( np >= rcur )
+	{
+		// Insert at new position AFTER selection.
+		// Current selection is not affected.
+		doc_.Execute( Insert( np, str, len ) );
+	}
+	else if( np <= rsel )
+	{
+		// Insert at new position BEFORE selection.
+		doc_.Execute( Insert( np, str, len ) );
+
+		// Current selection MUST be shifted down/left.
+		// This code is a mess, but I do not know any better.
+		if( rcur != rsel )
+		{
+			ulong difflines = countLines(str, len);
+			if( rsel.tl == np.tl )
+			{	// Insertion at the begining of the line with selection.
+				ulong lll = lastLineLength( str, len );
+				int xoffset = difflines==0? lll: lll - np.ad ;
+				rsel.ad += xoffset; // We must shift the begining of selection along X
+				if( rsel.tl == rcur.tl ) // for single line selection we must also
+					rcur.ad += xoffset; // shift the end of selection along X
+			}
+			rcur.tl += difflines;
+			rsel.tl += difflines;
+			view_.ConvDPosToVPos(rcur, &rcur);
+			view_.ConvDPosToVPos(rsel, &rsel);
+		}
+	}
+	else // if( isInSelection( np ) )
+	{
+		// Replace the whole selection if inside.
+		doc_.Execute( Replace( cur_, sel_, str, len ) );
+		return; // Do not restore selection.
+	}
+
+	// Restore eventual selection.
+	if( rcur != rsel )
+	{
+		// Only set cur_ and sel_ to the corrected values
+		// Do not force moving back (in case we scrolled...)
+		// This allows deletion of old selection when moving text around.
+		if( curbeforesel )
+		{
+			cur_ = rsel;
+			sel_ = rcur;
+			//MoveTo(rcur, false);
+			//MoveTo(rsel, true);
+		}
+		else
+		{
+			cur_ = rcur;
+			sel_ = rsel;
+			//MoveTo(rsel, false);
+			//MoveTo(rcur, true);
+		}
+	}
+
+}
+void Cursor::InputAt( const char* str, ulong len, int x, int y )
+{
+	unicode* ustr = new unicode[ len*4 ];
+	if(!ustr) return;
+	len = ::MultiByteToWideChar( CP_ACP, 0, str, len, ustr, len*4 );
+	InputAt( ustr, len, x, y );
 	delete [] ustr;
 }
 
@@ -1138,7 +1247,34 @@ void Cursor::on_lbutton_up( short x, short y )
 	}
 }
 
-void Cursor::on_mouse_move( short x, short y )
+bool Cursor::on_drag_start( short x, short y )
+{
+#ifndef NO_OLEDNDSRC
+	if( cur_ != sel_ )
+	{
+		VPos vp;
+		view_.GetVPos( x, y, &vp );
+		if( isInSelection( vp ) )
+		{
+			const VPos dm = Min(cur_, sel_);
+			const VPos dM = Max(cur_, sel_);
+			ulong len = doc_.getRangeLength( dm, dM );
+			unicode *p = new unicode[len+1];
+			if( p )
+			{
+				doc_.getText( p, dm, dM );
+				OleDnDSourceTxt doDrag(p, len);
+				delete p;
+				if( doDrag.getEffect() == DROPEFFECT_MOVE )
+					doc_.Execute( Delete( cur_, sel_ ) );
+			}
+			return true;
+		}
+	}
+#endif // NO_OLEDNDSRC
+	return false;
+}
+void Cursor::on_mouse_move( short x, short y, WPARAM fwKeys )
 {
 	if( timerID_ != 0 )
 	{
@@ -1245,3 +1381,228 @@ bool Cursor::on_ime_confirmreconvertstring( RECONVERTSTRING* rs )
 {
 	return false;
 }
+
+//=========================================================================
+// OLE Drag and Drop handler.
+//=========================================================================
+#ifndef NO_OLEDNDTAR
+OleDnDTarget::OleDnDTarget( HWND hwnd, ViewImpl& vw )
+	: refcnt   ( 1 )
+	, hwnd_    ( NULL )
+	, view_    ( vw )
+	, comes_from_center_ ( false )
+{
+	ki::app().InitModule( ki::App::OLE );
+	// Dyamically load because OLE32 might be missing...
+	if( app().hOle32() && ::IsWindow( hwnd ) )
+	{
+		// Lock object (required for Win32s!
+		// Useless for newer Windows versions?
+		if( S_OK == MyCoLockObjectExternal( this, TRUE, FALSE ) )
+		{
+			HRESULT (WINAPI *dyn_RegisterDragDrop)(HWND hwnd, IDropTarget *dt) =
+				( HRESULT (WINAPI *)(HWND hwnd, IDropTarget *dt) )
+				GetProcAddress(app().hOle32(), "RegisterDragDrop");
+
+			if( dyn_RegisterDragDrop && S_OK == dyn_RegisterDragDrop(hwnd, this) )
+			{
+				// Sucess!
+				hwnd_ = hwnd;
+				LOGGER( "OleDnDTarget RegisterDragDrop() Sucess!" );
+				return;
+			}
+			else
+			{	// Could not Register the Drag&Drop
+				// So we must unlock the object.
+				MyCoLockObjectExternal( this, FALSE, FALSE );
+			}
+		}
+	}
+}
+OleDnDTarget::~OleDnDTarget(  )
+{
+	if( app().hOle32() && hwnd_ && ::IsWindow( hwnd_ ) )
+	{
+		HRESULT (WINAPI *dyn_RevokeDragDrop)(HWND hwnd) =
+			( HRESULT (WINAPI *)(HWND hwnd) )
+			GetProcAddress( app().hOle32(), "RevokeDragDrop" );
+
+		if( dyn_RevokeDragDrop )
+		{
+			LOGGER( "~OleDnDTarget RevokeDragDrop()" );
+			dyn_RevokeDragDrop(hwnd_);
+
+			// Release all pointers to the object
+			MyCoLockObjectExternal( this, FALSE, TRUE );
+		}
+	}
+}
+
+HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect)
+{
+	LOGGER( "OleDnDTarget::Drop()" );
+	STGMEDIUM stg = { 0 };
+	// Try with UNICODE text first!
+	FORMATETC fmt = { CF_UNICODETEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+	POINT pt; pt.x = ptl.x, pt.y = ptl.y;
+	ScreenToClient(hwnd_, &pt);
+
+	// Important to inform the source if we are
+	// actually copying or moving the selection
+	setDropEffect( grfKeyState, pdwEffect );
+
+	if( S_OK == pDataObj->GetData(&fmt, &stg) && stg.hGlobal)
+	{
+		const unicode *txt = (const unicode *)::GlobalLock(stg.hGlobal);
+		if( txt )
+		{
+			size_t len = my_lstrlenW(txt);
+			if( grfKeyState&MK_SHIFT ) // Shift to ignore pt.
+				view_.cur().Input( txt, len );
+			else
+				view_.cur().InputAt( txt, len, pt.x, pt.y );
+			::GlobalUnlock(stg.hGlobal);
+		}
+		// We must only free the buffer when pUnkForRelease is NULL!
+		// ::ReleaseStgMedium(&stg);
+		if( stg.pUnkForRelease == NULL )
+			::GlobalFree(stg.hGlobal);
+		return S_OK;
+	}
+
+	// Fallback to ANSI TEXT
+	fmt.cfFormat = CF_TEXT;
+	if( S_OK == pDataObj->GetData(&fmt, &stg) && stg.hGlobal)
+	{
+		const char *txt = (const char *)::GlobalLock(stg.hGlobal);
+		if( txt )
+		{
+			size_t len = my_lstrlenA(txt);
+			if( grfKeyState&MK_SHIFT )
+				view_.cur().Input( txt, len );
+			else
+				view_.cur().InputAt( txt, len, pt.x, pt.y );
+			::GlobalUnlock(stg.hGlobal);
+		}
+		// We must only free the buffer when pUnkForRelease is NULL!
+		if( stg.pUnkForRelease == NULL )
+			::GlobalFree(stg.hGlobal);
+		return S_OK;
+	}
+
+	// check also HDROP
+	fmt.cfFormat = CF_HDROP;
+	if( app().isWin32s() && S_OK == pDataObj->GetData(&fmt, &stg) && stg.hGlobal)
+	{
+		::SendMessage(GetParent(GetParent(hwnd_)), WM_DROPFILES, (WPARAM) stg.hGlobal, NULL);
+	}
+
+
+	// Shoud I return E_INVALIDARG ??
+	return E_UNEXPECTED;
+}
+HRESULT STDMETHODCALLTYPE OleDnDTarget::QueryInterface(REFIID riid, void **ppvObject)
+{
+	// Define locally IID_IDropTarget GUID,
+	// gcc bloats the exe with a bunch of useless GUIDS otherwise.
+	static const IID myIID_IDropTarget = { 0x00000122, 0x0000, 0x0000, {0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46} };
+	if( memEQ(&riid, &myIID_IUnknown, sizeof(riid))
+	||  memEQ(&riid, &myIID_IDropTarget, sizeof(riid)) )
+	{
+		LOGGER( "OleDnDTarget::QueryInterface S_OK" );
+		*ppvObject = this;
+		AddRef();
+		return S_OK;
+	}
+	*ppvObject = NULL;
+	LOGGER( "OleDnDTarget::QueryInterface E_NOINTERFACE" );
+	return E_NOINTERFACE;
+}
+
+HRESULT STDMETHODCALLTYPE OleDnDTarget::DragOver(DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect)
+{
+	// LOGGER( "OleDnDTarget::DragOver" );
+	setDropEffect( grfKeyState, pdwEffect );
+
+	if( grfKeyState & MK_SHIFT )
+	{	// If we have the Shift key down, we do not scroll
+		// And the text will be pasted to the caret position
+		// without being affected by cursor position.
+		return S_OK;
+	}
+	// Scroll the content when the cursor goes towards the edges
+	// of the text view, we consider two text lines/columns margins.
+	// We must only scroll if the cursor comes from the central region.
+	POINT pt; pt.x = ptl.x; pt.y = ptl.y;
+	ScreenToClient(hwnd_, &pt);
+	const int h = Min( 2*view_.fnt().H(), Max(1, view_.cy()/8) ); // Scroll vmargin
+	const int w = Min( 2*view_.fnt().W(), Max(1, view_.cx()/8) ); // Scroll hmargin
+
+	#define MULT 120
+	if( view_.bottom() - pt.y < h )
+	{
+		if( !comes_from_center_ )
+			return S_OK;
+		short delta = -(h - (view_.bottom() - pt.y))*MULT / h;
+		view_.on_wheel( delta );
+		*pdwEffect |= DROPEFFECT_SCROLL;
+	}
+	else if( pt.y < h )
+	{
+		if( !comes_from_center_ )
+			return S_OK;
+		short delta = (h - pt.y)*MULT / h;
+		view_.on_wheel( delta );
+		*pdwEffect |= DROPEFFECT_SCROLL;
+	}
+	if( view_.right() - pt.x < w )
+	{
+		if( !comes_from_center_ )
+			return S_OK;
+		short delta = (h - (view_.right() - pt.x))*MULT / h;
+		view_.on_hwheel( delta );
+		*pdwEffect |= DROPEFFECT_SCROLL;
+	}
+	else if( pt.x < h )
+	{
+		if( !comes_from_center_ )
+			return S_OK;
+		short delta = -(h - pt.x)*MULT / h;
+		// delta = Clamp((short)-120, delta, (short)-1);
+		view_.on_hwheel( delta );
+		*pdwEffect |= DROPEFFECT_SCROLL;
+	}
+	#undef MULT
+	// We reached the central region of the edit window.
+	comes_from_center_ = true;
+
+	return S_OK;
+}
+void OleDnDTarget::setDropEffect(DWORD grfKeyState, DWORD *pdwEffect) const
+{
+	// It is maybe not the best way to do this but it works
+	// check for MOVE > COPY and we convert LINK in Copy.
+	// Probably there is a smarter way...
+	if( *pdwEffect & DROPEFFECT_MOVE )
+	{	// The source expect us to move the content?
+		// Move or Copy dependig on Control state and if we can.
+		if( grfKeyState & MK_CONTROL && *pdwEffect & DROPEFFECT_COPY )
+			*pdwEffect = DROPEFFECT_COPY;
+		else
+			*pdwEffect = DROPEFFECT_MOVE;
+	}
+	else if( *pdwEffect & DROPEFFECT_COPY )
+	{	// We cannot move the content but copy it.
+		// if we have no DROPEFFECT_MOVE available
+		*pdwEffect = DROPEFFECT_COPY;
+	}
+//	else if( *pdwEffect & DROPEFFECT_LINK )
+//	{
+//		// Links are left alone if they are
+//		// not bundeled with DROPEFFECT_COPY
+//		// Have not seen that yet.
+//	}
+}
+
+#endif //NO_OLEDNDTAR
+//-------------------------------------------------------------------------

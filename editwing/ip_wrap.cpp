@@ -30,6 +30,8 @@ ViewImpl::ViewImpl( View& vw, DocImpl& dc )
 	, cur_   ( vw.hwnd(), *this, dc )
 	, vlNum_ ( 0 )
 	, textCx_( 0 )
+	, accdelta_  ( 0 )
+	, accdeltax_ ( 0 )
 	, hwnd_  ( vw.hwnd() )
 {
 	// 適当に折り返し情報初期化
@@ -38,9 +40,12 @@ ViewImpl::ViewImpl( View& vw, DocImpl& dc )
 	// 適当にスクロール情報初期化
 	udScr_.cbSize = rlScr_.cbSize = sizeof(udScr_);
 	udScr_.fMask  = rlScr_.fMask  = SIF_PAGE | SIF_POS | SIF_RANGE;
-	udScr_.nMin   = rlScr_.nMin   = 0;
-	udScr_.nPos   = rlScr_.nPos   = 0;
 	udScr_.fMask |= SIF_DISABLENOSCROLL;
+	udScr_.nMin   = rlScr_.nMin   = 0;
+	udScr_.nMax   = rlScr_.nMax   = 1;
+	udScr_.nPage  = rlScr_.nPage  = 1;
+	udScr_.nPos   = rlScr_.nPos   = 0;
+	udScr_.nTrackPos = rlScr_.nTrackPos = 0;
 	udScr_tl_     = udScr_vrl_    = 0;
 	ReSetScrollInfo();
 }

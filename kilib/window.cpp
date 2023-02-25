@@ -142,9 +142,9 @@ IMEManager::IMEManager()
 #ifdef USEGLOBALIME
 	: immApp_( NULL )
 	, immMsg_( NULL )
+#endif
 #if !defined(NO_IME) && defined(TARGET_VER) && TARGET_VER<=350
 	, hasIMM32_ ( LoadIMM32DLL() )
-#endif
 #endif
 {
 	// 唯一のインスタンスは私です
