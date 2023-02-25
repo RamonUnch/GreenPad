@@ -18,6 +18,27 @@ void Logger::WriteLine( const TCHAR* str )
 	WriteLine( str, my_lstrlen(str)*sizeof(TCHAR) );
 }
 
+void __cdecl Logger::WriteLineFmtErr(const TCHAR *fmt, ...)
+{
+#ifdef DO_LOGGING
+	va_list arglist;
+	TCHAR str[512];
+	TCHAR lerrorstr[16];
+
+	DWORD lerr = GetLastError();
+
+	va_start( arglist, fmt );
+	wvsprintf( str, fmt, arglist );
+	va_end( arglist );
+
+	wsprintf(lerrorstr, TEXT(" (LERR=%u)"), (UINT)lerr);
+	lstrcat(str, lerrorstr);
+	WriteLine( str, my_lstrlen(str)*sizeof(TCHAR) );
+
+	SetLastError(0);
+#endif
+}
+
 void Logger::WriteLine( const TCHAR* str, int siz )
 {
 #ifdef DO_LOGGING
@@ -36,7 +57,7 @@ void Logger::WriteLine( const TCHAR* str, int siz )
 
 	// ファイルを書き込み専用で開く
 	HANDLE h = ::CreateFile( fname,
-		GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS,
+		FILE_APPEND_DATA, FILE_SHARE_READ, NULL, OPEN_ALWAYS,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL );
 	if( h == INVALID_HANDLE_VALUE )
 		return;

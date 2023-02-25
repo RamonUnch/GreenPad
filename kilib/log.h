@@ -30,7 +30,7 @@ public:
 	void WriteLine( const String& str );
 	void WriteLine( const TCHAR* str );
 	void WriteLine( const TCHAR* str, int siz );
-
+	void __cdecl WriteLineFmtErr(const TCHAR *fmt, ...);
 private:
 
 	NOCOPY(Logger);
@@ -39,9 +39,12 @@ private:
 #ifdef DO_LOGGING
 	#define LOGGER(str) Logger().WriteLine(TEXT(str))
 	#define LOGGERS(str) Logger().WriteLine(str)
+	#define LOGGERF Logger().WriteLineFmtErr
 #else
 	#define LOGGER(x)
 	#define LOGGERS(x)
+	#define LOGGERF if(0)Logger().WriteLineFmtErr
+//	static void __cdecl LOGGERF(const TCHAR *fmt, ...){}
 #endif
 
 //=========================================================================
