@@ -266,10 +266,7 @@ MYVERINFO App::init_osver()
 	v.dwOSVersionInfoSize = sizeof( OSVERSIONINFOA );
 	MyGetVersionEx( &v );
 
-	#ifdef DO_LOGGING
-	TCHAR buf[256];
-	::wsprintf(buf,
-		TEXT("%s %u.%u build %u (%hs) - %s")
+	LOGGERF( TEXT("%s %u.%u build %u (%hs) - %s")
 		, v.dwPlatformId==VER_PLATFORM_WIN32_NT? TEXT("Windows NT")
 		: v.dwPlatformId==VER_PLATFORM_WIN32_WINDOWS? TEXT("Windows")
 		: v.dwPlatformId==VER_PLATFORM_WIN32s? TEXT("Win32s"): TEXT("UNKNOWN")
@@ -277,9 +274,6 @@ MYVERINFO App::init_osver()
 		, v.szCSDVersion
 		, v.dwOSVersionInfoSize? TEXT("GetVersionEx()"): TEXT("GetVersion()")
 	);
-	//MessageBox(NULL, buf, TEXT("Windows Version"), 0);
-	LOGGERS( buf );
-	#endif // DO_LOGGING
 
 	MYVERINFO mv;
 	mv.wFromWhichAPI = (WORD)v.dwOSVersionInfoSize != 0;

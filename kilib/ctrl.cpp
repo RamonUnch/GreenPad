@@ -35,12 +35,7 @@ bool StatusBar::Create( )
 
 	if( h == NULL )
 	{
-		#ifdef _DEBUG
-		TCHAR buf[64];
-		DWORD err = GetLastError();
-		::wsprintf(buf, TEXT("StatusBar::Create() failed, Error #%d"), err);
-		LOGGERS( buf );
-		#endif
+		LOGGERF(TEXT("StatusBar::Create() failed"));
 		return false;
 	}
 
