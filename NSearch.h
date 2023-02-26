@@ -1,7 +1,7 @@
 #ifndef AFX_NSEARCH_H__8336E133_90C5_4059_8605_6066BD37D042__INCLUDED_
 #define AFX_NSEARCH_H__8336E133_90C5_4059_8605_6066BD37D042__INCLUDED_
 #include "Search.h"
-#include "string.h"
+
 //=========================================================================
 //@{ @pkg Gp.Search //@}
 // BM法検索用ポリシーs

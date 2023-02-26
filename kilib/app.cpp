@@ -4,7 +4,7 @@
 #include "memory.h"
 #include "thread.h"
 #include "window.h"
-#include "string.h"
+#include "kstring.h"
 using namespace ki;
 
 #ifndef NO_OLE32

@@ -7,7 +7,7 @@
 #include "thread.h"
 #include "memory.h"
 #include "window.h"
-#include "string.h"
+#include "kstring.h"
 #include "cmdarg.h"
 #include "path.h"
 #include "file.h"

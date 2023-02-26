@@ -4,7 +4,7 @@
 #include "kilib/window.h"
 #include "kilib/memory.h"
 #include "kilib/ktlaptr.h"
-#include "kilib/string.h"
+#include "kilib/kstring.h"
 
 
 
@@ -46,7 +46,7 @@ public:
 //@}
 //=========================================================================
 
-class SearchManager : ki::DlgImpl
+class SearchManager : public ki::DlgImpl
 {
 	typedef editwing::DPos DPos;
 

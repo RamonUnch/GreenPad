@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "cmdarg.h"
-#include "string.h"
+#include "kstring.h"
 using namespace ki;
 
 

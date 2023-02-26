@@ -360,6 +360,9 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_WRAPWINDOW: edit_.getView().SetWrapType( wrap_=0 ); break;
 	case ID_CMD_CONFIG:     on_config();    break;
 	case ID_CMD_STATUSBAR:  on_statusBar(); break;
+	
+	// Help
+	case ID_CMD_HELPABOUT: MessageBox(hwnd(), String(IDS_ABOUTGREENPAD).c_str(), String(IDS_APPNAME).c_str(), MB_OK); break;
 
 	// DocType
 	default: if( ID_CMD_DOCTYPE <= id ) {

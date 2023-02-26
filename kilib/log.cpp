@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "log.h"
 #include "app.h"
-#include "string.h"
+#include "kstring.h"
 using namespace ki;
 
 
