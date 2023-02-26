@@ -458,7 +458,7 @@ void GreenPadWnd::on_helpabout()
 		#define TARGETOS TEXT("Windows 9x/NT")
 	#elif defined(UNICODE)
 		#define TARGETOS TEXT("Windows NT")
-	#elif
+	#else
 		#define TARGETOS TEXT("Windows 9x")
 	#endif
 
