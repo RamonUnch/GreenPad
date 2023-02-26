@@ -55,9 +55,9 @@ PRE:
 RES = $(INTDIR)\gp_rsrc.res
 DEF = /DNDEBUG /DUNICODE /D_UNICODE /DUSEGLOBALIME /DSTDFAX_FPATH /DTARGET_VER=310
 
-COPT = $(DEF) -bt=nt /GA /GF /FD /fh=stdafx.pch /Fd$(INTDIR) /W3 /MT /c /3r /zk0 /d0 /xds /os /za /s /Wcd=391
+COPT = $(DEF) -bt=nt /GA /GF /FD /Fd$(INTDIR) /W3 /MT /c /3r /zk0 /d0 /xds /os /za /s /Wcd=391
 # /nodefaultlib
-LOPT = /manifest:no /release
+LOPT = /release
 ROPT = $(DEF) /L 0x411 /I "rsrc" /DTARGET_VER=310
 
 $(TARGET) : $(OBJS) $(RES)
