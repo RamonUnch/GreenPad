@@ -18,7 +18,7 @@ using namespace ki;
 		{
 			TRYLBL:
 			#ifdef USE_LOCALALLOC
-			void *ret = ::LocalAlloc( LPTR, siz );
+			void *ret = ::LocalAlloc( LMEM_FIXED, siz );
 			#else
 			void *ret = ::HeapAlloc( g_heap, 0, siz );
 			#endif
@@ -52,7 +52,7 @@ using namespace ki;
 		{
 			++allocCounter;
 			#ifdef USE_LOCALALLOC
-			return ::LocalAlloc( LPTR, siz );
+			return ::LocalAlloc( LMEM_FIXED, siz );
 			#else
 			return ::HeapAlloc( g_heap, HEAP_GENERATE_EXCEPTIONS, siz );
 			#endif
@@ -195,7 +195,7 @@ using namespace ki;
 	}
 	void *cdecl memcpy(void *dest, const void *src, size_t n)
 	{
-		return memmove(dest, src, n);
+		return memCP(dest, src, n);
 	}
 	#pragma GCC pop_options
 	#endif
@@ -345,6 +345,7 @@ void MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
 	lastDA_           = 0;
 	blockNum_         = 1;
 	blockNumReserved_ = 4;
+	//::InitializeCriticalSection(&lock_);
 }
 
 void MemoryManager::FixedSizeMemBlockPool::Destruct()
@@ -356,6 +357,7 @@ void MemoryManager::FixedSizeMemBlockPool::Destruct()
 	// ブロック情報保持領域のメモリも解放
 	::delete [] blocks_;
 	blockNum_ = 0;
+	//::DeleteCriticalSection(&lock_);
 }
 
 void* MemoryManager::FixedSizeMemBlockPool::Alloc()
@@ -365,6 +367,7 @@ void* MemoryManager::FixedSizeMemBlockPool::Alloc()
 
 	// 前回メモリを切り出したブロックに
 	// まだ空きがあるかどうかチェック
+	//::EnterCriticalSection(&lock_);
 	if( !blocks_[lastA_].isAvail() )
 	{
 		// 無かった場合、リストの末尾から順に線形探索
@@ -396,13 +399,15 @@ void* MemoryManager::FixedSizeMemBlockPool::Alloc()
 			}
 		}
 	}
-
+	void *ret = blocks_[lastA_].Alloc( fixedSize_ );
+	//::LeaveCriticalSection(&lock_);
 	// ブロックから切り出し割り当て
-	return blocks_[lastA_].Alloc( fixedSize_ );
+	return ret;
 }
 
 void MemoryManager::FixedSizeMemBlockPool::DeAlloc( void* ptr )
 {
+	//::EnterCriticalSection(&lock_);
 	// 該当ブロックを探索
 	const int mx=blockNum_, ln=fixedSize_*numPerBlock_;
 	for( int u=lastDA_, d=lastDA_-1;; )
@@ -458,6 +463,7 @@ void MemoryManager::FixedSizeMemBlockPool::DeAlloc( void* ptr )
 			blocks_[end]     = tmp;
 		}
 	}
+	//::LeaveCriticalSection(&lock_);
 }
 
 inline bool MemoryManager::FixedSizeMemBlockPool::isValid()

@@ -86,6 +86,9 @@ private:
 	int              csi_;
 	int              lb_;
 	int              wrap_;
+//	int              clickHT_;
+//	short            clickX_;
+//	short            clickY_;
 
 	static ClsName   className_;
 

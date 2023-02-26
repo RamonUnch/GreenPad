@@ -3,9 +3,6 @@
 #ifndef DS_SETFOREGROUND
 	#define DS_SETFOREGROUND 0x200L
 #endif
-#ifndef RT_MANIFEST
-	#define RT_MANIFEST 24
-#endif
 
 #if defined(TARGET_VER) && TARGET_VER<=310
 	// Use "Helv" on old Windows, it is present
@@ -16,6 +13,19 @@
 	#define MYDIALOGFONT "MS Shell Dlg"
 #endif
 
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_MANIFEST
+//
+#ifndef RT_MANIFEST
+	#define RT_MANIFEST 24
+#endif
+#ifdef PM_DPIAWARE
+1                       RT_MANIFEST             "manifest2.xml"
+#else
+1                       RT_MANIFEST             "manifest.xml"
+#endif
+
 #include <winresrc.h>
 #include <winuser.h>
 #include "fileopen.dlg"
@@ -23,15 +33,6 @@
 #define IDC_STATIC (-1)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// RT_MANIFEST
-//
-#ifdef PM_DPIAWARE
-1                       RT_MANIFEST             "manifest2.xml"
-#else
-1                       RT_MANIFEST             "manifest.xml"
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //

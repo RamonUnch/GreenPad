@@ -1,4 +1,8 @@
+#ifdef STDFAX_FPATH
+#include "kilib/stdafx.h"
+#else
 #include "stdafx.h"
+#endif
 #include "rsrc/resource.h"
 #include "GpMain.h"
 using namespace ki;
@@ -252,7 +256,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		on_drop( reinterpret_cast<HDROP>(wp) );
 		break;
 
-	#ifndef NO_OLEDND
+	#ifndef NO_OLEDNDSRC
 	case WM_NCRBUTTONDOWN: {
 		if( wp == HTSYSMENU
 		&& !isUntitled()
@@ -273,7 +277,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 //		LOGGER( "WM_NCRBUTTONUP" );
 //		return WndImpl::on_message( msg, wp, lp );
 
-	#endif // NO_OLEDND
+	#endif // NO_OLEDNDSRC
 
 	// MRU
 	case GPM_MRUCHANGED:
@@ -754,7 +758,7 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 #endif
 	if( editmenu_only )
 	{
-		LOGGER("GreenPadWnd::ReloadConfig on_initmenu end");
+		LOGGER("GreenPadWnd::on_initmenu end");
 		return;
 	}
 
@@ -768,7 +772,7 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 	::CheckMenuItem( menu, ID_CMD_WRAPWINDOW, MF_BYCOMMAND|(wrap_==0?MF_CHECKED:MF_UNCHECKED));
 	::CheckMenuItem( menu, ID_CMD_STATUSBAR, cfg_.showStatusBar()?MF_CHECKED:MF_UNCHECKED );
 
-	LOGGER("GreenPadWnd::ReloadConfig on_initmenu end");
+	LOGGER("GreenPadWnd::on_initmenu end");
 }
 
 void GreenPadWnd::on_drop( HDROP hd )

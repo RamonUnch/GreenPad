@@ -468,7 +468,9 @@ namespace ki
 	#ifdef _DEBUG
 		int main(){return 0;}
 	#endif
+	#ifdef _MSC_VER
 	#pragma comment(linker, "/entry:\"Startup\"")
+	#endif
 
 #else
 

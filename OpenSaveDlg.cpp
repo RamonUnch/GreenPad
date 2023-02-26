@@ -1,4 +1,8 @@
+#ifdef STDFAX_FPATH
+#include "kilib/stdafx.h"
+#else
 #include "stdafx.h"
+#endif
 #include "rsrc/resource.h"
 #include "kilib/kilib.h"
 #include "OpenSaveDlg.h"
@@ -721,7 +725,8 @@ bool ReopenDlg::on_ok()
 	}
 
 	// OKが押されたら、文字コードの選択状況を記録
-	ulong j=0, i=ComboBox(hwnd(),IDC_CODELIST).GetCurSel();
+	ulong j=0;
+	int i=ComboBox(hwnd(),IDC_CODELIST).GetCurSel();
 	if( 0 <= i && i < (int)csl_.size() )
 	{ // Only if i is in correct range.
 		for(;;++j,--i)

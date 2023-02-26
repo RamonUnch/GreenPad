@@ -1,5 +1,9 @@
 
+#ifdef STDFAX_FPATH
+#include "kilib/stdafx.h"
+#else
 #include "stdafx.h"
+#endif
 #include "RSearch.h"
 #include "kilib/ktlaptr.h"
 using namespace ki;

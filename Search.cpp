@@ -1,5 +1,9 @@
 
+#ifdef STDFAX_FPATH
+#include "kilib/stdafx.h"
+#else
 #include "stdafx.h"
+#endif
 #include "rsrc/resource.h"
 #include "Search.h"
 #include "NSearch.h"

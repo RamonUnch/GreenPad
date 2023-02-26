@@ -1,4 +1,8 @@
+#ifdef STDFAX_FPATH
+#include "../kilib/stdafx.h"
+#else
 #include "stdafx.h"
+#endif
 #include "ip_doc.h"
 using namespace editwing;
 using namespace editwing::doc;
