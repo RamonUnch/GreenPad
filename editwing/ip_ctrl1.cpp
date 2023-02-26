@@ -1,11 +1,4 @@
-#ifdef STDFAX_FPATH
-#define STDFAX_PATHSTRING "../kilib/stdafx.h"
-#else
-#define STDFAX_PATHSTRING "stdafx.h"
-#endif
-#include STDFAX_PATHSTRING
-#undef STDFAX_PATHSTRING
-
+#include "../kilib/stdafx.h"
 #include "ewCtrl1.h"
 using namespace ki;
 using namespace editwing;

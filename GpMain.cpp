@@ -1,12 +1,5 @@
 
-#ifdef STDFAX_FPATH
-#define STDFAX_PATHSTRING "kilib/stdafx.h"
-#else
-#define STDFAX_PATHSTRING "stdafx.h"
-#endif
-#include STDFAX_PATHSTRING
-#undef STDFAX_PATHSTRING
-
+#include "kilib/stdafx.h"
 #include "rsrc/resource.h"
 #include "GpMain.h"
 using namespace ki;
@@ -1223,7 +1216,7 @@ bool GreenPadWnd::ShowOpenDlg( Path* fn, int* cs )
 		String(IDS_ALLFILES),
 		String(TEXT("*.*"))
 	};
-	aarr<TCHAR> filt = OpenFileDlg::ConnectWithNull(flst,countof(flst));
+	aarr<TCHAR> filt = OpenFileDlg::ConnectWithNull(flst, countof(flst));
 
 	OpenFileDlg ofd( charSets_ );
 	bool ok = ofd.DoModal( hwnd(), filt.get(), filename_.c_str() );

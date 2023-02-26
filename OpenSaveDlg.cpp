@@ -1,12 +1,5 @@
 
-#ifdef STDFAX_FPATH
-#define STDFAX_PATHSTRING "kilib/stdafx.h"
-#else
-#define STDFAX_PATHSTRING "stdafx.h"
-#endif
-#include STDFAX_PATHSTRING
-#undef STDFAX_PATHSTRING
-
+#include "kilib/stdafx.h"
 #include "rsrc/resource.h"
 #include "kilib/kilib.h"
 #include "OpenSaveDlg.h"
