@@ -1,8 +1,12 @@
+
 #ifdef STDFAX_FPATH
-#include "../kilib/stdafx.h"
+#define STDFAX_PATHSTRING "../kilib/stdafx.h"
 #else
-#include "stdafx.h"
+#define STDFAX_PATHSTRING "stdafx.h"
 #endif
+#include STDFAX_PATHSTRING
+#undef STDFAX_PATHSTRING
+
 #include "ip_view.h"
 using namespace editwing;
 using namespace editwing::view;
