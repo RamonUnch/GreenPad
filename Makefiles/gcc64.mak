@@ -3,7 +3,7 @@ NAME       = gcc64
 OBJ_SUFFIX = o
 
 ###############################################################################
-TARGET = release/GreenPad_$(NAME).exe
+TARGET = release/GPad64.exe
 INTDIR = obj\$(NAME)
 
 all: PRE $(TARGET)

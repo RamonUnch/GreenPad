@@ -67,11 +67,11 @@ RES = $(INTDIR)/gp_rsrc.o
 
 VPATH    = editwing:kilib
 # -DSUPERTINY  -flto -fuse-linker-plugin -Wno-narrowing  -fwhole-program
-CXXFLAGS = -m32 -g -c -Og \
- -march=i386 -mpreferred-stack-boundary=2 \
- -fstack-protector-all -fstack-protector-strong -fstack-check \
- -Wall -Wno-parentheses -Wno-unknown-pragmas -Wstack-usage=4096 -Warray-bounds=2 \
- -idirafter kilib \
+#  -fstack-protector-all -fstack-protector-strong -fstack-check
+CXXFLAGS = -m32 -g -c -Og -fno-stack-protector, -fomit-frame-pointer \
+ -march=i386 -mpreferred-stack-boundary=2 -mno-stack-arg-probe \
+ -Wall -Wno-parentheses -Wno-unknown-pragmas -Wstack-usage=4000 -Warray-bounds=2 \
+ -idirafter kilib -DNOWINBASEINTERLOCK \
  -D_UNICODE -DUNICODE -UDEBUG -U_DEBUG -DUSEGLOBALIME -DUNICOWS -DTARGET_VER=350
 LOPT     = -m32
 
