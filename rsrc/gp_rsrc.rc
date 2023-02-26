@@ -40,8 +40,8 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,7,0
- PRODUCTVERSION 1,1,7,0
+ FILEVERSION VER_FILEVERSION
+ PRODUCTVERSION VER_FILEVERSION
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -63,7 +63,7 @@ BEGIN
             VALUE "LegalCopyright", "Written by k.inaba 2002-2008\0"
             VALUE "OriginalFilename", "GreenPad.exe\0"
             VALUE "ProductName", "GreenPad\0"
-            VALUE "ProductVersion", "1.17.0\0"
+            VALUE "ProductVersion", VER_FILEVERSIONSTR
         END
     END
     BLOCK "VarFileInfo"
@@ -163,6 +163,10 @@ BEGIN
         MENUITEM "設定(&S)...",                 ID_CMD_CONFIG
         MENUITEM SEPARATOR
         MENUITEM "ステータス バー(&B)",         ID_CMD_STATUSBAR
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About",    ID_CMD_HELPABOUT
     END
 END
 
@@ -541,6 +545,10 @@ BEGIN
         MENUITEM "&Settings...",                ID_CMD_CONFIG
         MENUITEM SEPARATOR
         MENUITEM "Status&Bar",                  ID_CMD_STATUSBAR
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About",    ID_CMD_HELPABOUT
     END
 END
 

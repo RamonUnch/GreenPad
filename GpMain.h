@@ -97,6 +97,7 @@ private:
 	void    on_create( CREATESTRUCT* cs );
 	LRESULT on_message( UINT msg, WPARAM wp, LPARAM lp );
 	bool    on_command( UINT id, HWND ctrl );
+	void    on_helpabout();
 	void    on_newfile();
 	void    on_openfile();
 	void    on_reopenfile();

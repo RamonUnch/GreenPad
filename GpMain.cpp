@@ -360,9 +360,9 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_WRAPWINDOW: edit_.getView().SetWrapType( wrap_=0 ); break;
 	case ID_CMD_CONFIG:     on_config();    break;
 	case ID_CMD_STATUSBAR:  on_statusBar(); break;
-	
+
 	// Help
-	case ID_CMD_HELPABOUT: MessageBox(hwnd(), String(IDS_ABOUTGREENPAD).c_str(), String(IDS_APPNAME).c_str(), MB_OK); break;
+	case ID_CMD_HELPABOUT: on_helpabout(); break;
 
 	// DocType
 	default: if( ID_CMD_DOCTYPE <= id ) {
@@ -410,6 +410,97 @@ void GreenPadWnd::on_openfile()
 	int  cs;
 	if( ShowOpenDlg( &fn, &cs ) )
 		Open( fn, cs, true );
+}
+
+void GreenPadWnd::on_helpabout()
+{
+	// Crazy double macro so that an int define 
+	// Can be seen as a string
+	#define SHARP(x) #x
+	#define STR(x) SHARP(x)
+
+	#if defined(UNICOWS)
+		#define UNIANSI TEXT(" (Unicows)\n")
+	#elif defined(UNICODE)
+		#define UNIANSI TEXT(" (Unicode)\n")
+	#elif defined(_MBCS)
+		#define UNIANSI TEXT(" (MBCS)\n")
+	#else
+		#define UNIANSI TEXT(" (ANSI)\n")
+	#endif
+
+	#if defined(__GNUC__)
+		#define COMPILER TEXT( "GNU C Compiler - " __VERSION__ "\n" )
+	#elif defined(_MSC_VER)
+		#define COMPILER TEXT("Visual C++ - ")  TEXT(STR(_MSC_VER)) TEXT("\n")
+	#elif defined(__WATCOMC__)
+		#define COMPILER TEXT("Open Watcom - ") TEXT(STR(__WATCOMC__)) TEXT("\n")
+	#elif defined(__BORLANDC__)
+		#define COMPILER TEXT("Borland C++ - ") TEXT(STR(__BORLANDC__)) TEXT("\n")
+	#elif defined(__DMC__)
+		#define COMPILER TEXT("Borland C++ - ") TEXT(STR(__DMC__)) TEXT("\n")
+	#elif defined(__INTEL_COMPILER)
+		#define COMPILER TEXT("Borland C++ - ") TEXT(STR(__INTEL_COMPILER)) TEXT("\n")
+	#elif defined(__clang__)
+		#define COMPILER TEXT("LLVM Clang - ")  TEXT(STR(__clang_major__)) TEXT(".") TEXT(STR(__clang_minor__)) TEXT("\n")
+	#else
+		//#error Unknown compiler, consider adding it to the list.
+		#define COMPILER TEXT( "?\n" )
+	#endif
+
+	#if defined(WIN32S)
+		#if defined(OLDWIN32S)
+			#define TARGETOS TEXT("Win32s beta")
+		#else
+			#define TARGETOS TEXT("Win32s")
+		#endif
+	#elif defined(UNICOWS)
+		#define TARGETOS TEXT("Windows 9x/NT")
+	#elif defined(UNICODE)
+		#define TARGETOS TEXT("Windows NT")
+	#elif
+		#define TARGETOS TEXT("Windows 9x")
+	#endif
+
+	#if defined(TARGET_VER)
+		#if TARGET_VER == 303
+			#define TGVER TEXT(" 3.10.340")
+		#elif TARGET_VER == 310
+			#define TGVER TEXT(" 3.10")
+		#elif TARGET_VER == 350
+			#define TGVER TEXT(" 3.50")
+		#elif TARGET_VER = 351
+			#define TGVER TEXT(" 3.51")
+		#elif TARGET_VER == 400
+			#define TGVER TEXT(" 4.0")
+		#else
+			#define TGVER TEXT(" 4.0")
+		#endif
+	#else
+		// Default to NT4/95 (I guess...)
+		#define TGVER TEXT(" 4.0")
+	#endif //TARGET_VER
+
+	#if defined(_M_AMD64)
+		#define PALT TEXT( " - x86_64" )
+	#elif defined(_M_IX86)
+		#define PALT TEXT( " - i386" )
+	#elif defined(_M_ALPHA)
+		#define PALT TEXT( " - Alpha" )
+	#elif defined(_M_MRX000)
+		#define PALT TEXT( " - MIPS" )
+	#elif defined(_M_PPC)
+		#define PALT TEXT( " - PowerPC" )
+	#endif
+
+	String s = String(IDS_APPNAME);
+	s += TEXT(" - ") TEXT( VER_FILEVERSIONSTR ) UNIANSI COMPILER TARGETOS TGVER PALT TEXT("\n") TEXT( __DATE__ );
+
+	MessageBox(hwnd(), s.c_str(), String(IDS_APPNAME).c_str(), MB_OK);
+
+	#undef UNIANSI
+	#undef COMPILER
+	#undef TGVER
 }
 
 void GreenPadWnd::on_reopenfile()

@@ -2,6 +2,10 @@
 // Microsoft Visual C++ generated include file.
 // Used by kilib.rc
 //
+
+#define VER_FILEVERSION      1,1,7,0
+#define VER_FILEVERSIONSTR  "1.17"
+
 #include "dlgs.h"
 #define IDS_ASKTOSAVE                   1
 #define IDS_APPNAME                     2
@@ -106,6 +110,7 @@
 #define ID_CMD_PRINT                    40035
 #define ID_CMD_RECONV                   40036
 #define ID_CMD_TOGGLEIME                40037
+#define ID_CMD_HELPABOUT                40038
 #define ID_CMD_MRU                      40200
 #define ID_CMD_DOCTYPE                  40300
 
