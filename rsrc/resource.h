@@ -34,6 +34,10 @@
 #define IDD_JUMP                        109
 #define IDD_CONFIG                      110
 #define IDD_ADDDOCTYPE                  111
+#define IDD_ABOUTDLG                    112
+
+#define IDC_ABOUTSTR                    1000
+#define IDC_ABOUTURL                    1001
 #define IDC_CODELIST                    1002
 #define IDC_CRLFLIST                    1003
 #define IDC_FINDBOX                     1004

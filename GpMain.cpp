@@ -414,35 +414,35 @@ void GreenPadWnd::on_openfile()
 
 void GreenPadWnd::on_helpabout()
 {
-	// Crazy double macro so that an int define 
+	// Crazy double macro so that an int define
 	// Can be seen as a string
 	#define SHARP(x) #x
 	#define STR(x) SHARP(x)
 
 	#if defined(UNICOWS)
-		#define UNIANSI TEXT(" (Unicows)\n")
+		#define UNIANSI TEXT(" (Unicows)")
 	#elif defined(UNICODE)
-		#define UNIANSI TEXT(" (Unicode)\n")
+		#define UNIANSI TEXT(" (Unicode)")
 	#elif defined(_MBCS)
-		#define UNIANSI TEXT(" (MBCS)\n")
+		#define UNIANSI TEXT(" (MBCS)")
 	#else
-		#define UNIANSI TEXT(" (ANSI)\n")
+		#define UNIANSI TEXT(" (ANSI)")
 	#endif
 
 	#if defined(__GNUC__)
 		#define COMPILER TEXT( "GNU C Compiler - " __VERSION__ "\n" )
 	#elif defined(_MSC_VER)
-		#define COMPILER TEXT("Visual C++ - ")  TEXT(STR(_MSC_VER)) TEXT("\n")
+		#define COMPILER TEXT("Visual C++ - ")  TEXT(STR(_MSC_VER))
 	#elif defined(__WATCOMC__)
-		#define COMPILER TEXT("Open Watcom - ") TEXT(STR(__WATCOMC__)) TEXT("\n")
+		#define COMPILER TEXT("Open Watcom - ") TEXT(STR(__WATCOMC__))
 	#elif defined(__BORLANDC__)
-		#define COMPILER TEXT("Borland C++ - ") TEXT(STR(__BORLANDC__)) TEXT("\n")
+		#define COMPILER TEXT("Borland C++ - ") TEXT(STR(__BORLANDC__))
 	#elif defined(__DMC__)
-		#define COMPILER TEXT("Borland C++ - ") TEXT(STR(__DMC__)) TEXT("\n")
+		#define COMPILER TEXT("Borland C++ - ") TEXT(STR(__DMC__))
 	#elif defined(__INTEL_COMPILER)
-		#define COMPILER TEXT("Borland C++ - ") TEXT(STR(__INTEL_COMPILER)) TEXT("\n")
+		#define COMPILER TEXT("Borland C++ - ") TEXT(STR(__INTEL_COMPILER))
 	#elif defined(__clang__)
-		#define COMPILER TEXT("LLVM Clang - ")  TEXT(STR(__clang_major__)) TEXT(".") TEXT(STR(__clang_minor__)) TEXT("\n")
+		#define COMPILER TEXT("LLVM Clang - ")  TEXT(STR(__clang_major__)) TEXT(".") TEXT(STR(__clang_minor__))
 	#else
 		//#error Unknown compiler, consider adding it to the list.
 		#define COMPILER TEXT( "?\n" )
@@ -492,15 +492,26 @@ void GreenPadWnd::on_helpabout()
 	#elif defined(_M_PPC)
 		#define PALT TEXT( " - PowerPC" )
 	#endif
-
-	String s = String(IDS_APPNAME);
-	s += TEXT(" - ") TEXT( VER_FILEVERSIONSTR ) UNIANSI COMPILER TARGETOS TGVER PALT TEXT("\n") TEXT( __DATE__ );
-
-	MessageBox(hwnd(), s.c_str(), String(IDS_APPNAME).c_str(), MB_OK);
+	// Show Help->About dialog box.
+	struct AboutDlg : public DlgImpl {
+		AboutDlg(HWND parent) : DlgImpl(IDD_ABOUTDLG), parent_( parent ) { GoModal(parent_); }
+		void on_init()
+		{
+			String s = String(IDS_APPNAME);
+			s += TEXT(" - ") TEXT( VER_FILEVERSIONSTR ) UNIANSI TEXT("\r\n")
+			     COMPILER TEXT(" on ") TEXT( __DATE__ ) TEXT("\r\n")
+			     TARGETOS TGVER PALT;
+			SendMsgToItem(IDC_ABOUTSTR, WM_SETTEXT, s.c_str());
+			SendMsgToItem(IDC_ABOUTURL, WM_SETTEXT, TEXT("https://github.com/RamonUnch/GreenPad"));
+			SetCenter(hwnd(), parent_);
+		}
+		HWND parent_;
+	} ahdlg (hwnd());
 
 	#undef UNIANSI
 	#undef COMPILER
 	#undef TGVER
+	#undef PALT
 }
 
 void GreenPadWnd::on_reopenfile()
