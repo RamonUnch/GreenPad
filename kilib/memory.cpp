@@ -345,7 +345,6 @@ void MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
 	lastDA_           = 0;
 	blockNum_         = 1;
 	blockNumReserved_ = 4;
-	//::InitializeCriticalSection(&lock_);
 }
 
 void MemoryManager::FixedSizeMemBlockPool::Destruct()
@@ -357,7 +356,6 @@ void MemoryManager::FixedSizeMemBlockPool::Destruct()
 	// ブロック情報保持領域のメモリも解放
 	::delete [] blocks_;
 	blockNum_ = 0;
-	//::DeleteCriticalSection(&lock_);
 }
 
 void* MemoryManager::FixedSizeMemBlockPool::Alloc()
@@ -367,7 +365,6 @@ void* MemoryManager::FixedSizeMemBlockPool::Alloc()
 
 	// 前回メモリを切り出したブロックに
 	// まだ空きがあるかどうかチェック
-	//::EnterCriticalSection(&lock_);
 	if( !blocks_[lastA_].isAvail() )
 	{
 		// 無かった場合、リストの末尾から順に線形探索
@@ -400,16 +397,14 @@ void* MemoryManager::FixedSizeMemBlockPool::Alloc()
 		}
 	}
 	void *ret = blocks_[lastA_].Alloc( fixedSize_ );
-	//::LeaveCriticalSection(&lock_);
 	// ブロックから切り出し割り当て
 	return ret;
 }
 
 void MemoryManager::FixedSizeMemBlockPool::DeAlloc( void* ptr )
 {
-	//::EnterCriticalSection(&lock_);
 	// 該当ブロックを探索
-	const int mx=blockNum_, ln=fixedSize_*numPerBlock_;
+	const int mx=blockNum_-1, ln=fixedSize_*numPerBlock_;
 	for( int u=lastDA_, d=lastDA_-1;; )
 	{
 		if( u>=0 )
@@ -463,7 +458,6 @@ void MemoryManager::FixedSizeMemBlockPool::DeAlloc( void* ptr )
 			blocks_[end]     = tmp;
 		}
 	}
-	//::LeaveCriticalSection(&lock_);
 }
 
 inline bool MemoryManager::FixedSizeMemBlockPool::isValid()
