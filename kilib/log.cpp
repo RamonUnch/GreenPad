@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "log.h"
 #include "app.h"
-#include "string.h"
+#include "kstring.h"
 using namespace ki;
 
 
@@ -57,7 +57,12 @@ void Logger::WriteLine( const TCHAR* str, int siz )
 
 	// ファイルを書き込み専用で開く
 	HANDLE h = ::CreateFile( fname,
-		FILE_APPEND_DATA, FILE_SHARE_READ, NULL, OPEN_ALWAYS,
+		#ifndef WIN32S
+		FILE_APPEND_DATA
+		#else
+		GENERIC_WRITE
+		#endif
+		, FILE_SHARE_READ, NULL, OPEN_ALWAYS,
 		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL );
 	if( h == INVALID_HANDLE_VALUE )
 		return;

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "app.h"
 #include "winutil.h"
-#include "string.h"
+#include "kstring.h"
 using namespace ki;
 
 #ifndef NO_OLEDNDTAR

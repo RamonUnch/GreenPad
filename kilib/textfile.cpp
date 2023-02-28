@@ -2,7 +2,7 @@
 #include "app.h"
 #include "textfile.h"
 #include "ktlarray.h"
-#include "string.h"
+#include "kstring.h"
 #include "path.h"
 using namespace ki;
 

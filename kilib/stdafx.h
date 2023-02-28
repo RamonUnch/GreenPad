@@ -38,15 +38,19 @@
 #ifdef SUPERTINY
   #undef memset
 #endif
+
 #ifndef WS_EX_LAYOUTRTL
 #define WS_EX_LAYOUTRTL 0x00400000
 #endif
+
 #ifndef WM_MOUSEWHEEL
 #define WM_MOUSEWHEEL 0x020A
 #endif
+
 #ifndef OFN_ENABLESIZING
 #define OFN_ENABLESIZING 0x00800000
 #endif
+
 #ifndef IMR_RECONVERTSTRING
 #define IMR_RECONVERTSTRING             0x0004
 typedef struct tagRECONVERTSTRING {
@@ -60,9 +64,11 @@ typedef struct tagRECONVERTSTRING {
     DWORD dwTargetStrOffset;
 } RECONVERTSTRING, *PRECONVERTSTRING, NEAR *NPRECONVERTSTRING, FAR *LPRECONVERTSTRING;
 #endif
+
 #ifndef IMR_CONFIRMRECONVERTSTRING
 #define IMR_CONFIRMRECONVERTSTRING      0x0005
 #endif
+
 #ifndef WM_IME_REQUEST
 #define WM_IME_REQUEST                  0x0288
 #endif

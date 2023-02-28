@@ -4,7 +4,7 @@
 #include "memory.h"
 #include "thread.h"
 #include "window.h"
-#include "string.h"
+#include "kstring.h"
 using namespace ki;
 
 #ifndef NO_OLE32
@@ -468,7 +468,9 @@ namespace ki
 	#ifdef _DEBUG
 		int main(){return 0;}
 	#endif
+	#ifdef _MSC_VER
 	#pragma comment(linker, "/entry:\"Startup\"")
+	#endif
 
 #else
 

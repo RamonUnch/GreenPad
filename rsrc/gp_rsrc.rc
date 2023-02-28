@@ -3,9 +3,6 @@
 #ifndef DS_SETFOREGROUND
 	#define DS_SETFOREGROUND 0x200L
 #endif
-#ifndef RT_MANIFEST
-	#define RT_MANIFEST 24
-#endif
 
 #if defined(TARGET_VER) && TARGET_VER<=310
 	// Use "Helv" on old Windows, it is present
@@ -16,6 +13,19 @@
 	#define MYDIALOGFONT "MS Shell Dlg"
 #endif
 
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_MANIFEST
+//
+#ifndef RT_MANIFEST
+	#define RT_MANIFEST 24
+#endif
+#ifdef PM_DPIAWARE
+1                       RT_MANIFEST             "manifest2.xml"
+#else
+1                       RT_MANIFEST             "manifest.xml"
+#endif
+
 #include <winresrc.h>
 #include <winuser.h>
 #include "fileopen.dlg"
@@ -23,15 +33,6 @@
 #define IDC_STATIC (-1)
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// RT_MANIFEST
-//
-#ifdef PM_DPIAWARE
-1                       RT_MANIFEST             "manifest2.xml"
-#else
-1                       RT_MANIFEST             "manifest.xml"
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -39,8 +40,8 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,7,0
- PRODUCTVERSION 1,1,7,0
+ FILEVERSION VER_FILEVERSION
+ PRODUCTVERSION VER_FILEVERSION
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -62,7 +63,7 @@ BEGIN
             VALUE "LegalCopyright", "Written by k.inaba 2002-2008\0"
             VALUE "OriginalFilename", "GreenPad.exe\0"
             VALUE "ProductName", "GreenPad\0"
-            VALUE "ProductVersion", "1.17.0\0"
+            VALUE "ProductVersion", VER_FILEVERSIONSTR
         END
     END
     BLOCK "VarFileInfo"
@@ -163,6 +164,10 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "ステータス バー(&B)",         ID_CMD_STATUSBAR
     END
+    POPUP "ヘルプ(&H)"
+    BEGIN
+        MENUITEM "バージョン情報(&A)",    ID_CMD_HELPABOUT
+    END
 END
 
 
@@ -229,6 +234,22 @@ BEGIN
     CONTROL         "正規表現(&X)",IDC_REGEXP,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,153,58,60,10
     PUSHBUTTON      "閉じる",IDCANCEL,244,59,37,14
+END
+
+IDD_ABOUTDLG DIALOG  0, 0, 180, 110
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP |
+    WS_CAPTION | WS_SYSMENU
+CAPTION "バージョン情報"
+FONT 9, "ＭＳ Ｐゴシック"
+BEGIN
+    ICON            IDR_MAIN,  IDC_STATIC, 8,8,0,0
+    EDITTEXT        IDC_ABOUTSTR, 40,8,135,32, ES_MULTILINE | ES_READONLY | NOT WS_BORDER |  NOT WS_TABSTOP
+
+    LTEXT           "Written by k.inaba 2002-2008\nDerived by roytam1 and RamonUnch", IDC_STATIC,8,50,140,16
+    LTEXT           "URL:", IDC_STATIC,8,70,16,8
+    EDITTEXT        IDC_ABOUTURL, 30,70,150,8, ES_MULTILINE | ES_READONLY | NOT WS_BORDER |  NOT WS_TABSTOP
+
+    PUSHBUTTON      "閉じる",IDCANCEL,70,88,40,14
 END
 
 IDD_JUMP DIALOG  0, 0, 131, 43
@@ -541,6 +562,10 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Status&Bar",                  ID_CMD_STATUSBAR
     END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About",    ID_CMD_HELPABOUT
+    END
 END
 
 
@@ -616,6 +641,24 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,114,58,73,10
     PUSHBUTTON      "Close",IDCANCEL,244,59,29,14
 END
+
+
+IDD_ABOUTDLG DIALOG  0, 0, 180, 110
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP |
+    WS_CAPTION | WS_SYSMENU
+CAPTION "About GreenPad"
+FONT 8, MYDIALOGFONT
+BEGIN
+    ICON            IDR_MAIN,  IDC_STATIC, 8,8,0,0
+    EDITTEXT        IDC_ABOUTSTR, 40,8,135,32, ES_MULTILINE | ES_READONLY | NOT WS_BORDER |  NOT WS_TABSTOP
+
+    LTEXT           "Written by k.inaba 2002-2008\nDerived by roytam1 and RamonUnch", IDC_STATIC,8,50,140,16
+    LTEXT           "URL:", IDC_STATIC,8,70,16,8
+    EDITTEXT        IDC_ABOUTURL, 30,70,150,8, ES_MULTILINE | ES_READONLY | NOT WS_BORDER |  NOT WS_TABSTOP
+
+    PUSHBUTTON      "Close",IDCANCEL,70,88,40,14
+END
+
 
 IDD_ADDDOCTYPE DIALOG  0, 0, 123, 67
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU

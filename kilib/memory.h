@@ -75,6 +75,7 @@ private:
 		byte      numPerBlock_;
 		int       lastA_;
 		int       lastDA_;
+//		CRITICAL_SECTION lock_;
 	};
 	#ifdef STACK_MEM_POOLS
 	FixedSizeMemBlockPool pools_[ SMALL_MAX ];
@@ -119,6 +120,15 @@ inline void memFF( void* ptrv, int siz )
 	  for(;siz>3;siz-=4,ptr+=4) *(DWORD*)ptr = 0xffffffff;
 	  for(;siz;--siz,++ptr) *ptr = 0xff; }
 
+inline void *memCP( void* dst, const void* src, size_t siz )
+{
+	BYTE* d = (BYTE*)dst;
+	const BYTE* s = (const BYTE*)src;
+	for(;siz>3;siz-=4,d+=4, s+=4) *(DWORD*)d = *(DWORD*)s;
+	for(;siz;--siz,++d,++s) *d = *s;
+	return dst;
+}
+
 inline bool memEQ( const void *s1, const void *s2, size_t siz )
 {
 	const BYTE *a = (const BYTE *)s1;
@@ -129,7 +139,7 @@ inline bool memEQ( const void *s1, const void *s2, size_t siz )
 			return false;
 	}
 	for ( ; siz ; siz--, a++, b++)
-	{ 
+	{
 		if ( *a != *b )
 			return false;
 	}

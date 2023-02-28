@@ -2,6 +2,10 @@
 // Microsoft Visual C++ generated include file.
 // Used by kilib.rc
 //
+
+#define VER_FILEVERSION      1,1,7,0
+#define VER_FILEVERSIONSTR  "1.17"
+
 #include "dlgs.h"
 #define IDS_ASKTOSAVE                   1
 #define IDS_APPNAME                     2
@@ -30,6 +34,10 @@
 #define IDD_JUMP                        109
 #define IDD_CONFIG                      110
 #define IDD_ADDDOCTYPE                  111
+#define IDD_ABOUTDLG                    112
+
+#define IDC_ABOUTSTR                    1000
+#define IDC_ABOUTURL                    1001
 #define IDC_CODELIST                    1002
 #define IDC_CRLFLIST                    1003
 #define IDC_FINDBOX                     1004
@@ -106,6 +114,7 @@
 #define ID_CMD_PRINT                    40035
 #define ID_CMD_RECONV                   40036
 #define ID_CMD_TOGGLEIME                40037
+#define ID_CMD_HELPABOUT                40038
 #define ID_CMD_MRU                      40200
 #define ID_CMD_DOCTYPE                  40300
 
@@ -129,8 +138,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        113
-#define _APS_NEXT_COMMAND_VALUE         40038
-#define _APS_NEXT_CONTROL_VALUE         1029
+#define _APS_NEXT_COMMAND_VALUE         40039
+#define _APS_NEXT_CONTROL_VALUE         1034
 #define _APS_NEXT_SYMED_VALUE           102
 #endif
 #endif

@@ -17,19 +17,29 @@
   Freeware, distributed under the NYSL licence.
   Original source code is available at: http://www.kmonos.net/lib/gp.en.html
   New source here: https://github.com/RamonUnch/GreenPad
-  Supported windows versions: Win32s/NT3x/NT4/9x/ME/2000/XP/Vista/7/8.x/10/11
+  Supported OSes: Win32s/NT3x/NT4/9x/ME/2000/XP/Vista/7/8.x/10/11
 
 <<System Requirements>>
  < HARDWARE >
    i386 cpu or compatible and at least a couple of MB of free RAM.
    Tested with Win3.11fw + Win32s-1.30c with 3MB of ram. Performances
    are not great on an i386 even clocked at 33MHz and an i486 or faster
-   is recomended. GreenPad will not benefit from a x87 FPU.
+   is recomended. GreenPad will not benefit from a x87 FPU. However 
+   chardet.dll will.
+
  < OS >
-   You can run Green pad on Win32s from version 1.1. If you want the
+   You can run Green pad on Win32s from beta build 61. If you want the
    statusbar on Win32s 1.25 you can try to copy COMCTL32.DLL version
    3.50.807.1 from Win32s 1.25.127 Also GreenPad Should run on
-   Windows NT3.1.404 at least.
+   Windows NT3.10.340 and later. GreenPad was also tested with early
+   Chicago builds. You could however consider upgrading to Win95...
+
+   GreenPad was also tested on the WIN-OS/2 subsystem for OS/2
+   you will need to first install Win32s (1.25a recomended).
+   Also the ansi version of GreenPad appears to work with Odin.
+
+   GreenPad also supports ReactOS which can be compared to 2000/XP
+   in term of application support.
 
 <<To Do List>>
   * Build for all possible CPUs: MIPS, PowerPC, Alpha, ARM, ARM64.
@@ -40,22 +50,32 @@
   * Handle binary files properly: We will need to flag each line with the
     carriage return type CRLF, LF or CR.
   * Handle per-monitor dpi awareness. This will require to reload the
-    Painter each time we receive the WM_DPICHANGED message this will also
-    forbid the use of the CS_OWNDC class style and we will have to select
-    the font every time we receive a WM_PAINT message.
+    Painter each time we receive the WM_DPICHANGED message.
   * Improve syntactic coloration (highlight matching braces/parenthesis)
   * Add the ability to go to matching brace with Ctrl+B or something.
-  * Handle Dark mode in the non-client area for Windows 10 1607 and later.
+  * Handle Dark mode in the non-client area for Windows 10 1607+
   * Allow a Square selection mode for ASCII-Art or column handling.
   * Improve printer configuration.
   * Fix more bugs, handle low memory situations better.
   * Optimize memory usage so that larger files can be loaded.
 
-<<What's New in 1.17 (by RamonUnch, 2023/XX/XX)>>
+<<What's New in 1.17 (by RamonUnch, 2023/02/28)>>
+ < NEW >
+   * OLE2 style drag and drop support was added in most builds
+     To use it you will need to use the right click (easier to code)
+     Also Win32s 1.25+ or NT3.50+ are needed.
+   * The Help->About menu and Dialog were added to GreenPad.
+
  < FIXED >
-  * Now window can be resized on Win32s 1.15a
-  * Now GreenPad run on Win32s 1.1 (1993) there are still some drawing issues
-    when scrolling less than a fullpage.
+  * Out of bound read in the internal memory manager.
+  * Various refactoring and bugfixes.
+  * Now the `CS_OWNDC` class style is no longer used so GreenPad is
+    Compatible with ReactOS and does not mess up with DC cache.
+  * Now the GPad32sl.exe version is compatible with the early chicago
+    builds and with Win32s beta 61.
+  * Now the GPadNT3b.exe version is compatible with the NT3.10.340 beta.
+  * Now the main GreenPad Window can be resized on Win32s 1.15a
+  * Now GPad32s.exe run on Win32s 1.1 (1993).
   * Fixed Visual glitches with Windows 95 beta (chicago) thanks to roytam1
   * Elevation dialog for write permission will not pop up on network drives
     nor CD-ROM drives (Windows 2000 + only)

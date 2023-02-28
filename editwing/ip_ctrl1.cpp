@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "../kilib/stdafx.h"
 #include "ewCtrl1.h"
 using namespace ki;
 using namespace editwing;

@@ -1,4 +1,5 @@
-#include "stdafx.h"
+
+#include "../kilib/stdafx.h"
 #include "ip_doc.h"
 using namespace editwing;
 using namespace editwing::doc;

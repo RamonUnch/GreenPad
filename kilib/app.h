@@ -6,9 +6,9 @@
 HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
 HRESULT MyCoLockObjectExternal(IUnknown * pUnk, BOOL fLock, BOOL fLastUnlockReleases);
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && defined(_M_IX86) && _M_IX86 == 300
 	// In recent GCC versions this is the only way to link to the real
-	// Win32 functions.
+	// Win32 functions (i386 only).
 	#undef InterlockedIncrement
 	#undef InterlockedDecrement
 	extern "C" WINBASEAPI LONG WINAPI InterlockedIncrement(LONG volatile *);

@@ -1,5 +1,5 @@
 
-#include "stdafx.h"
+#include "kilib/stdafx.h"
 #include "RSearch.h"
 #include "kilib/ktlaptr.h"
 using namespace ki;

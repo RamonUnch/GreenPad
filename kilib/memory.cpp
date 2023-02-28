@@ -18,7 +18,7 @@ using namespace ki;
 		{
 			TRYLBL:
 			#ifdef USE_LOCALALLOC
-			void *ret = ::LocalAlloc( LPTR, siz );
+			void *ret = ::LocalAlloc( LMEM_FIXED, siz );
 			#else
 			void *ret = ::HeapAlloc( g_heap, 0, siz );
 			#endif
@@ -52,7 +52,7 @@ using namespace ki;
 		{
 			++allocCounter;
 			#ifdef USE_LOCALALLOC
-			return ::LocalAlloc( LPTR, siz );
+			return ::LocalAlloc( LMEM_FIXED, siz );
 			#else
 			return ::HeapAlloc( g_heap, HEAP_GENERATE_EXCEPTIONS, siz );
 			#endif
@@ -195,7 +195,7 @@ using namespace ki;
 	}
 	void *cdecl memcpy(void *dest, const void *src, size_t n)
 	{
-		return memmove(dest, src, n);
+		return memCP(dest, src, n);
 	}
 	#pragma GCC pop_options
 	#endif
@@ -396,15 +396,15 @@ void* MemoryManager::FixedSizeMemBlockPool::Alloc()
 			}
 		}
 	}
-
+	void *ret = blocks_[lastA_].Alloc( fixedSize_ );
 	// ブロックから切り出し割り当て
-	return blocks_[lastA_].Alloc( fixedSize_ );
+	return ret;
 }
 
 void MemoryManager::FixedSizeMemBlockPool::DeAlloc( void* ptr )
 {
 	// 該当ブロックを探索
-	const int mx=blockNum_, ln=fixedSize_*numPerBlock_;
+	const int mx=blockNum_-1, ln=fixedSize_*numPerBlock_;
 	for( int u=lastDA_, d=lastDA_-1;; )
 	{
 		if( u>=0 )
