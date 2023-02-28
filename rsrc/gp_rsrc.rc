@@ -164,9 +164,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "ステータス バー(&B)",         ID_CMD_STATUSBAR
     END
-    POPUP "&Help"
+    POPUP "ヘルプ(&H)"
     BEGIN
-        MENUITEM "&About",    ID_CMD_HELPABOUT
+        MENUITEM "バージョン情報(&A)",    ID_CMD_HELPABOUT
     END
 END
 
@@ -239,18 +239,19 @@ END
 IDD_ABOUTDLG DIALOG  0, 0, 180, 100
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP |
     WS_CAPTION | WS_SYSMENU
-CAPTION "About GreenPad"
+CAPTION "バージョン情報"
 FONT 9, "ＭＳ Ｐゴシック"
 BEGIN
     ICON            IDR_MAIN,  IDC_STATIC, 8,8,0,0
     EDITTEXT        IDC_ABOUTSTR, 40,8,131,24, ES_MULTILINE | ES_READONLY | NOT WS_BORDER |  NOT WS_TABSTOP
 
-    LTEXT           "Written by k.inaba 2002-2008\nRevisited by roytam1 and RamonUnch", IDC_STATIC,8,40,140,16
+    LTEXT           "Written by k.inaba 2002-2008\nDerived by roytam1 and RamonUnch", IDC_STATIC,8,40,140,16
     LTEXT           "URL:", IDC_STATIC,8,60,16,8
     EDITTEXT        IDC_ABOUTURL, 30,60,150,8, ES_MULTILINE | ES_READONLY | NOT WS_BORDER |  NOT WS_TABSTOP
 
     PUSHBUTTON      "閉じる",IDCANCEL,70,78,40,14
 END
+
 
 IDD_JUMP DIALOG  0, 0, 131, 43
 STYLE DS_ABSALIGN | DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP |
@@ -652,7 +653,7 @@ BEGIN
     ICON            IDR_MAIN,  IDC_STATIC, 8,8,0,0
     EDITTEXT        IDC_ABOUTSTR, 40,8,131,24, ES_MULTILINE | ES_READONLY | NOT WS_BORDER |  NOT WS_TABSTOP
 
-    LTEXT           "Written by k.inaba 2002-2008\nRevisited by roytam1 and RamonUnch", IDC_STATIC,8,40,140,16
+    LTEXT           "Written by k.inaba 2002-2008\nDerived by roytam1 and RamonUnch", IDC_STATIC,8,40,140,16
     LTEXT           "URL:", IDC_STATIC,8,60,16,8
     EDITTEXT        IDC_ABOUTURL, 30,60,150,8, ES_MULTILINE | ES_READONLY | NOT WS_BORDER |  NOT WS_TABSTOP
 

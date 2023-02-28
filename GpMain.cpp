@@ -468,18 +468,25 @@ void GreenPadWnd::on_helpabout()
 		#elif TARGET_VER == 310
 			#define TGVER TEXT(" 3.10")
 		#elif TARGET_VER == 350
-			#define TGVER TEXT(" 3.50")
-		#elif TARGET_VER = 351
-			#define TGVER TEXT(" 3.51")
-		#elif TARGET_VER == 400
-			#define TGVER TEXT(" 4.0")
-		#else
-			#define TGVER TEXT(" 4.0")
+			#define TGVER TEXT(" 3.50+")
+		#elif // TARGET_VER >= 351
+			#define TGVER TEXT(" 3.51+")
 		#endif
 	#else
-		// Default to NT4/95 (I guess...)
-		#define TGVER TEXT(" 4.0")
+		#if defined(WIN64)
+			// XP/NT5.1 is the first x64 version of Windows.
+			#define TGVER TEXT(" 5.1")
+		#else
+			// Default to NT3.51/95 (I guess...)
+			#define TGVER TEXT(" 3.51+")
+		#endif
 	#endif //TARGET_VER
+
+	#if defined(NO_OLEDNDSRC) && defined(NO_OLEDNDTAR)
+		#define USEOLE TEXT(" ")
+	#else
+		#define USEOLE TEXT(" OLE ")
+	#endif //OLE
 
 	#if defined(_M_AMD64)
 		#define PALT TEXT( " - x86_64" )
@@ -500,7 +507,7 @@ void GreenPadWnd::on_helpabout()
 			String s = String(IDS_APPNAME);
 			s += TEXT(" - ") TEXT( VER_FILEVERSIONSTR ) UNIANSI TEXT("\r\n")
 			     COMPILER TEXT(" on ") TEXT( __DATE__ ) TEXT("\r\n")
-			     TARGETOS TGVER PALT;
+			     TARGETOS TGVER USEOLE PALT;
 			SendMsgToItem(IDC_ABOUTSTR, WM_SETTEXT, s.c_str());
 			SendMsgToItem(IDC_ABOUTURL, WM_SETTEXT, TEXT("https://github.com/RamonUnch/GreenPad"));
 			SetCenter(hwnd(), parent_);
@@ -511,6 +518,7 @@ void GreenPadWnd::on_helpabout()
 	#undef UNIANSI
 	#undef COMPILER
 	#undef TGVER
+	#undef USEOLE
 	#undef PALT
 }
 
