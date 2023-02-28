@@ -507,7 +507,20 @@ void GreenPadWnd::on_helpabout()
 			String s = String(IDS_APPNAME);
 			s += TEXT(" - ") TEXT( VER_FILEVERSIONSTR ) UNIANSI TEXT("\r\n")
 			     COMPILER TEXT(" on ") TEXT( __DATE__ ) TEXT("\r\n")
-			     TARGETOS TGVER USEOLE PALT;
+			     TARGETOS TGVER USEOLE PALT TEXT("\r\n")
+			     TEXT("Running on ");
+
+			if( app().isNT() )
+				s += TEXT("Windows NT ");
+			else if( app().isWin32s() )
+				s += TEXT("Win32s ");
+			else
+				s+= TEXT("Windows ");
+
+			s += String().SetInt( HIBYTE(app().getOSVer()) ) + TEXT(".")
+			   + String().SetInt( LOBYTE(app().getOSVer()) ) + TEXT(".")
+			   + String().SetInt( app().getOSBuild() );
+
 			SendMsgToItem(IDC_ABOUTSTR, WM_SETTEXT, s.c_str());
 			SendMsgToItem(IDC_ABOUTURL, WM_SETTEXT, TEXT("https://github.com/RamonUnch/GreenPad"));
 			SetCenter(hwnd(), parent_);
