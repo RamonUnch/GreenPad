@@ -191,7 +191,11 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 	, timerID_( 0 )
 {
 	// ‚Ä‚«‚Æ[‚Éî•ñ‰Šú‰»
+	// SPI_GETKEYBOARDSPEED gives value from 0-31, 0=>~30Hz, 31=>~2.5Hz
+	// kb speed in in ms = 33 + KEYBOARDSPEED * 11; more or less
+	keyRepTime_ = 15; // Default in case SystemParametersInfo fails
 	::SystemParametersInfo( SPI_GETKEYBOARDSPEED, 0, &keyRepTime_, 0 );
+	keyRepTime_ = 33 + keyRepTime_ * 11;
 	cur_.tl = cur_.ad = cur_.vl = cur_.rl = 0;
 	cur_.vx = cur_.rx = 0; sel_ = cur_;
 }
