@@ -53,17 +53,13 @@ struct rBasicUTF : public ki::TextFileRPimpl
 		state = EOF;
 
 		// 改行が出るまで読む
-		unicode *w=buf, *e=buf+siz;
+		unicode *w=buf, *e=buf+siz-1;
 		while( !Eof() )
 		{
 			*w = GetC();
 			if(BOF && *w!=0xfeff) BOF = false;
-			if( *w==L'\r' || *w==L'\n' )
-			{
-				state = EOL;
-				break;
-			}
-			else if( !BOF && ++w==e )
+
+			if( !BOF && ++w==e )
 			{
 				state = EOB;
 				break;
@@ -71,10 +67,8 @@ struct rBasicUTF : public ki::TextFileRPimpl
 			if(BOF) BOF = false;
 		}
 
-		// 改行コードスキップ処理
-		if( state == EOL )
-			if( *w==L'\r' && !Eof() && PeekC()==L'\n' )
-				Skip();
+		if( *(w-1)==L'\r' && PeekC() == L'\n' )
+			Skip();
 
 		if(BOF) BOF = false;
 		// 読んだ文字数
@@ -1154,15 +1148,15 @@ struct rIso2022 : public TextFileRPimpl
 		len=0;
 
 		// バッファの終端か、ファイルの終端の近い方まで読み込む
-		const uchar *p, *end = Min( fb+siz/2, fe );
+		const uchar *p, *end = Min( fb+siz/2-2, fe );
 		state = (end==fe ? EOF : EOB);
 
 		// 改行が出るまで進む
 		for( p=fb; p<end; ++p )
 			switch( *p )
 			{
-			case '\r':
-			case '\n': state =   EOL; goto outofloop;
+//			case '\r':
+//			case '\n': state =   EOL; goto outofloop;
 			case 0x0F:    GL = &G[0]; break;
 			case 0x0E:    GL = &G[1]; break;
 			case 0x8E: gWhat =     2; break;
@@ -1184,10 +1178,8 @@ struct rIso2022 : public TextFileRPimpl
 			}
 		outofloop:
 
-		// 改行コードスキップ処理
-		if( state == EOL )
-			if( *(p++)=='\r' && p<fe && *p=='\n' )
-				++p;
+		if( *(p-1)=='\r' && p<fe && *p=='\n' )
+			++p;
 		fb = p;
 
 		// 終了
@@ -1274,7 +1266,7 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	if( cs_ )
 	{
 		int needed_cs = neededCodepage( cs_ );
-	
+
 		if( needed_cs > 0 && !::IsValidCodePage(needed_cs) )
 		{
 			TCHAR str[128];
