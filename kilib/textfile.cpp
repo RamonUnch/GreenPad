@@ -956,17 +956,12 @@ struct rMBCS : public TextFileRPimpl
 	{
 		// バッファの終端か、ファイルの終端の近い方まで読み込む
 		// Read to the end of the buffer or near the end of the file
-		const char *p, *end = Min( fb+siz/2, fe );
+		const char *p, *end = Min( fb+siz/2-2, fe );
 		state = (end==fe ? EOF : EOB);
 
 		// 改行が出るまで進む,  Proceed until the line breaks.
 		for( p=fb; p<end; )
-			if( *p=='\r' || *p=='\n' )
-			{
-				state = EOL;
-				break;
-			}
-			else if( (*p) & 0x80 && p+1<fe )
+			if( (*p) & 0x80 && p+1<fe )
 			{
 				p = next(cp,p,0);
 			}
@@ -975,14 +970,15 @@ struct rMBCS : public TextFileRPimpl
 				++p;
 			}
 
+		if( *(p-1)=='\r' && *(p) =='\n' )
+		{ // DOS line ending, skip the '\n' too.
+			++p;
+		}
+
 		// Unicodeへ変換, convertion to Unicode
 		ulong len;
 		len = conv( cp, 0, fb, p-fb, buf, siz );
 
-		// 改行コードスキップ処理, Newline code skipping process
-		if( state == EOL )
-			if( *(p++)=='\r' && p<fe && *p=='\n' )
-				++p;
 		fb = p;
 
 		// 終了
