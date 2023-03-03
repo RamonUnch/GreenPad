@@ -67,6 +67,7 @@ struct rBasicUTF : public ki::TextFileRPimpl
 			if(BOF) BOF = false;
 		}
 
+		// If the end of the buffer contains half a DOS CRLF
 		if( *(w-1)==L'\r' && PeekC() == L'\n' )
 			Skip();
 
@@ -964,10 +965,9 @@ struct rMBCS : public TextFileRPimpl
 				++p;
 			}
 
+		// If the end of the buffer contains half a DOS CRLF
 		if( *(p-1)=='\r' && *(p) =='\n' )
-		{ // DOS line ending, skip the '\n' too.
 			++p;
-		}
 
 		// Unicode‚Ö•ÏŠ·, convertion to Unicode
 		ulong len;
@@ -1178,7 +1178,8 @@ struct rIso2022 : public TextFileRPimpl
 			}
 		outofloop:
 
-		if( *(p-1)=='\r' && p<fe && *p=='\n' )
+		// If the end of the buffer contains half a DOS CRLF
+		if( *(p-1)=='\r' && *p=='\n' )
 			++p;
 		fb = p;
 
