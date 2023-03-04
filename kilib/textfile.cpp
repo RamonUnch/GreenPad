@@ -25,7 +25,7 @@ struct ki::TextFileRPimpl : public Object
 	inline TextFileRPimpl()
 		: state(EOL) {}
 
-	virtual size_t ReadLine( unicode* buf, ulong siz )
+	virtual size_t ReadBuf( unicode* buf, ulong siz )
 		= 0;
 
 	enum { EOF=0, EOL=1, EOB=2 } state;
@@ -48,7 +48,7 @@ struct rBasicUTF : public ki::TextFileRPimpl
 
 	bool BOF;
 
-	size_t ReadLine( unicode* buf, ulong siz )
+	size_t ReadBuf( unicode* buf, ulong siz )
 	{
 		state = EOF;
 
@@ -947,7 +947,7 @@ struct rMBCS : public TextFileRPimpl
 			fb += 3; // BOMスキップ
 	}
 
-	size_t ReadLine( unicode* buf, ulong siz )
+	size_t ReadBuf( unicode* buf, ulong siz )
 	{
 		// バッファの終端か、ファイルの終端の近い方まで読み込む
 		// Read to the end of the buffer or near the end of the file
@@ -1143,7 +1143,7 @@ struct rIso2022 : public TextFileRPimpl
 		len+=wt;
 	}
 
-	size_t ReadLine( unicode* buf, ulong siz )
+	size_t ReadBuf( unicode* buf, ulong siz )
 	{
 		len=0;
 
@@ -1205,9 +1205,9 @@ TextFileR::~TextFileR()
 	Close();
 }
 
-size_t TextFileR::ReadLine( unicode* buf, ulong siz )
+size_t TextFileR::ReadBuf( unicode* buf, ulong siz )
 {
-	return impl_->ReadLine( buf, siz );
+	return impl_->ReadBuf( buf, siz );
 }
 
 int TextFileR::state() const
