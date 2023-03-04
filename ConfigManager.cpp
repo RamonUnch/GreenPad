@@ -504,7 +504,7 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 
 		// Read the whole file at once.
 		unicode buf[1024], *nptr=buf,*ptr;
-		size_t len = tf.ReadLine( buf, countof(buf)-8 );
+		size_t len = tf.ReadBuf( buf, countof(buf)-8 );
 		buf[len] = L'\0'; // NULL terminate in case.
 		for( ptr=buf; ptr<buf+len; ptr=nptr ) // !EOF
 		{
@@ -513,7 +513,6 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 				nptr++;
 			*nptr++ = L'\0'; // zero out endline.
 			nptr += *(nptr) == L'\n'; // Skip eventual \n
-			LOGGERS( ptr );
 
 			if( nptr-ptr < 3 || ptr[0] == L';' || ptr[2] != L'=' )
 				continue;
