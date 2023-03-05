@@ -470,7 +470,7 @@ void GreenPadWnd::on_helpabout()
 			#define TGVER TEXT(" 3.10")
 		#elif TARGET_VER == 350
 			#define TGVER TEXT(" 3.50+")
-		#elif // TARGET_VER >= 351
+		#else // TARGET_VER >= 351
 			#define TGVER TEXT(" 3.51+")
 		#endif
 	#else
@@ -1527,7 +1527,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 
 	// 開く
 	edit_.getDoc().ClearAll();
-	stb_.SetText(TEXT("Loading file..."));
+	stb_.SetText( String(IDS_LOADING).c_str() );
 	edit_.getDoc().OpenFile( tf );
 
 	// タイトルバー更新
