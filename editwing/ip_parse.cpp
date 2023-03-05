@@ -454,7 +454,8 @@ public:
 		// ASCII振り分けテーブル。
 		// シフト無しでTokenTypeに流用出来るようにするため、
 		// 値が４飛びになってます
-		enum { T=0, W=4, A=8, S=12, O=12 };
+		// We want to separate the tabs from other non printable characters.
+		enum { T=1, W=4, A=8, S=12, O=0 };
 		static const uchar letter_type[768] = {
 			O,O,O,O,O,O,O,O,O,T,O,O,O,O,O,O, // NULL-SHI_IN
 			O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O, // DLE-US
@@ -573,6 +574,8 @@ public:
 						f |= kwd_.isKeyword( str+i, j-i );
 					// fall...
 
+				// CTL characters (0-32 + 127-160)
+				case O:
 				// タブ・制御文字, Tabs
 				case T:
 					// fall...
