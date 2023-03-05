@@ -827,9 +827,13 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 						if( u <= 31 || (127 <=u && u <= 160) )
 						{ // ASCII C0 and C1 Control caracters + DEL + NBSP
 							p.SetColor( clr=CTL );
-							unicode c = str[i];
-							c = c<32? ctlMap[c]: ctl2Map[c-127];
-							p.CharOut( c, x+v.XBASE, a.top );
+							for( ; i<i2 ; ++i )
+							{
+								unicode c = str[i];
+								c = c<32? ctlMap[c]: ctl2Map[c-127];
+								p.CharOut( c, x+v.XBASE, a.top );
+								x += p.Wc(c);
+							}
 							break;
 						}
 					}
