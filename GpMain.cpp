@@ -1190,7 +1190,7 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 	}
 
 	TCHAR str[128], *end = str;
-	TCHAR tmp[20];
+	TCHAR tmp[21];
 	*end++ = TEXT('(');
 	end = my_lstrkpy( str+1, Int2lStr(tmp, c.tl+1) );
 	*end++ = TEXT(',');
@@ -1259,10 +1259,9 @@ void GreenPadWnd::UpdateWindowName()
 	SetText( name.c_str() );
 	// Try to show CP number in the StBar
 	static TCHAR cpname[32];
-	TCHAR tmp[20];
+	TCHAR tmp[21];
 	if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)
 	{
-		//::wsprintf(cpname,TEXT("CP%d"), csi_ & 0xfffff);
 		cpname[0] = TEXT('C'); cpname[1] = TEXT('P');
 		my_lstrkpy( cpname+2, Int2lStr(tmp, csi_ & 0xfffff) );
 		stb_.SetCsText( cpname );
@@ -1274,7 +1273,6 @@ void GreenPadWnd::UpdateWindowName()
 	else
 	{
 		TCHAR *end = my_lstrkpy(cpname, charSets_[csi_].shortName);
-		//::wsprintf(cpname+my_lstrlen(cpname), TEXT(" (%d)"), charSets_[csi_].ID);
 		*end++ = TEXT(' ');
 		*end++ = TEXT('(');
 		end = my_lstrkpy( end, Int2lStr(tmp, charSets_[csi_].ID) );
