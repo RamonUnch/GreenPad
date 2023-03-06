@@ -105,35 +105,25 @@ BOOL my_IsCharLowerW(wchar_t c)
 
 }
 
-const TCHAR *Int2lStr(TCHAR str[20], int n)
+const TCHAR *Int2lStr(TCHAR str[21], int n)
 {
-	if( n==0 )
+	int i = 0;
+	BOOL minus;
+	minus = (n<0);
+	str[20] = TEXT('\0');
+
+	for( i=19; i>0; --i )
 	{
-		str[0] = TEXT('0');
-		return str;
+		str[i] = TEXT('0') + (minus ? -1*(n%10) : n%10);
+		n /= 10;
+		if( n==0 )
+			break;
 	}
-	else
-	{
-		bool minus = (n<0);
-		if( minus )
-			n = -n;
 
-		str[19] = TEXT('\0');
-		int i;
+	if( minus )
+		str[--i] = TEXT('-');
 
-		for( i=18; i>=0; --i )
-		{
-			str[i] = TEXT('0') + n%10;
-			n /= 10;
-			if( n==0 )
-				break;
-		}
-
-		if( minus )
-			str[--i] = TEXT('-');
-
-		return str+i;
-	}
+	return str+i;
 }
 
 #ifdef OLDWIN32S
@@ -407,7 +397,7 @@ int String::GetInt( const TCHAR* x )
 
 String& String::SetInt( int n )
 {
-	TCHAR tmp[20];
+	TCHAR tmp[21];
 	return *this = Int2lStr(tmp, n);
 }
 
@@ -429,7 +419,6 @@ const char* String::ConvToChar() const
 	int ln = ::WideCharToMultiByte( CP_ACP, 0, c_str(), -1, NULL, 0, NULL, NULL );
 	char* p = new char[ln+32];
 	::WideCharToMultiByte( CP_ACP,  0, c_str(), -1 , p, ln+1, NULL, NULL );
-//	MessageBoxA(NULL, p, NULL, 0);
 	return p;
 #else
 	return c_str();

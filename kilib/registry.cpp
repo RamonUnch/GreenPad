@@ -233,7 +233,7 @@ bool IniFile::PutStr( const TCHAR* key, const TCHAR* val )
 
 bool IniFile::PutInt( const TCHAR* key, int val )
 {
-	TCHAR buf[20];
+	TCHAR buf[21];
 	return PutStr( key, Int2lStr(buf, val) );
 }
 
