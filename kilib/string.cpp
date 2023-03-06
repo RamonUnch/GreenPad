@@ -105,6 +105,37 @@ BOOL my_IsCharLowerW(wchar_t c)
 
 }
 
+const TCHAR *Int2lStr(TCHAR str[20], int n)
+{
+	if( n==0 )
+	{
+		str[0] = TEXT('0');
+		return str;
+	}
+	else
+	{
+		bool minus = (n<0);
+		if( minus )
+			n = -n;
+
+		str[19] = TEXT('\0');
+		int i;
+
+		for( i=18; i>=0; --i )
+		{
+			str[i] = TEXT('0') + n%10;
+			n /= 10;
+			if( n==0 )
+				break;
+		}
+
+		if( minus )
+			str[--i] = TEXT('-');
+
+		return str+i;
+	}
+}
+
 #ifdef OLDWIN32S
 #undef WideCharToMultiByte
 #undef MultiByteToWideChar
@@ -376,34 +407,8 @@ int String::GetInt( const TCHAR* x )
 
 String& String::SetInt( int n )
 {
-	if( n==0 )
-	{
-		*this = TEXT("0");
-	}
-	else
-	{
-		bool minus = (n<0);
-		if( minus )
-			n= -n;
-
-		TCHAR tmp[20];
-		tmp[19] = TEXT('\0');
-		int i;
-
-		for( i=18; i>=0; --i )
-		{
-			tmp[i] = TEXT('0') + n%10;
-			n /= 10;
-			if( n==0 )
-				break;
-		}
-
-		if( minus )
-			tmp[--i] = TEXT('-');
-
-		*this = tmp+i;
-	}
-	return *this;
+	TCHAR tmp[20];
+	return *this = Int2lStr(tmp, n);
 }
 
 const wchar_t* String::ConvToWChar() const

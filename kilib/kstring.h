@@ -13,6 +13,7 @@
 	#define my_lstrcmp my_lstrcmpW
 	#define my_lstrchr my_lstrchrW
 	#define my_lstrcat my_lstrcatW
+	#define my_lstrkpy my_lstrkpyW
 #else
 	#define my_lstrcpy my_lstrcpyA
 	#define my_lstrcpyn my_lstrcpynA
@@ -20,6 +21,7 @@
 	#define my_lstrcmp my_lstrcmpA
 	#define my_lstrchr my_lstrchrA
 	#define my_lstrcat my_lstrcatA
+	#define my_lstrkpy my_lstrkpyA
 #endif
 
 #ifdef OLDWIN32S
@@ -36,6 +38,7 @@ wchar_t * WINAPI my_CharLowerWW(wchar_t *s);
 wchar_t my_CharUpperSingleW(wchar_t c);
 wchar_t my_CharLowerSingleW(wchar_t c);
 BOOL my_IsCharLowerW(wchar_t c);
+const TCHAR *Int2lStr(TCHAR str[20], int n);
 
 inline static
 const char *my_lstrcatA(char *dest, const char *src)
@@ -53,6 +56,20 @@ const wchar_t *my_lstrcatW(wchar_t *dest, const wchar_t *src)
 	for (; *dest; ++dest) ;	/* go to end of dest */
 	for (; (*dest=*src); ++src,++dest) ;	/* then append from src */
 	return orig;
+}
+
+inline static
+char *my_lstrkpyA(char *dest, const char *src)
+{
+	for (; (*dest=*src); ++src,++dest) ;	/* then append from src */
+	return dest;
+}
+
+inline static
+wchar_t *my_lstrkpyW(wchar_t *dest, const wchar_t *src)
+{
+	for (; (*dest=*src); ++src,++dest) ;	/* then append from src */
+	return dest;
 }
 
 inline static
