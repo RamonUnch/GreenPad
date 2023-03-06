@@ -696,7 +696,7 @@ void ReopenDlg::on_init()
 	if( csi == 0 )
 	{	// Show CP number in the reopen dialog
 		// If selection failed.
-		TCHAR tmp[20];
+		TCHAR tmp[21];
 		SendMsgToItem( IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)Int2lStr(tmp, csIndex_&0xfffff) );
 	}
 }
