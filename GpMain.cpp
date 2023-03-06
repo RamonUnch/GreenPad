@@ -1189,12 +1189,14 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 				cad = cad + 2;
 	}
 
-	String str;
-	str += TEXT('(');
-	str += String().SetInt(c.tl+1);
-	str += TEXT(',');
-	str += String().SetInt(cad+1);
-	str += TEXT(')');
+	TCHAR str[128], *end = str;
+	TCHAR tmp[20];
+	*end++ = TEXT('(');
+	end = my_lstrkpy( str+1, Int2lStr(tmp, c.tl+1) );
+	*end++ = TEXT(',');
+	end = my_lstrkpy( end, Int2lStr(tmp, cad+1) );
+	*end++ = TEXT(')');
+	*end = TEXT('\0');
 	if( c != s )
 	{
 		ulong sad = s.ad;
@@ -1206,13 +1208,14 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 			for( ulong i=0; i<s.ad; ++i )
 				sad += su[i]<0x80 || (0xff60<=su[i] && su[i]<=0xff9f) ? 1 : 2;
 		}
-		str += TEXT(" - (");
-		str += String().SetInt(s.tl+1);
-		str += TEXT(',');
-		str += String().SetInt(sad+1);
-		str += TEXT(')');
+		end = my_lstrkpy( end, TEXT(" - (") );
+		end = my_lstrkpy( end, Int2lStr(tmp, s.tl+1) );
+		*end++ = TEXT(',');
+		end = my_lstrkpy( end, Int2lStr(tmp, sad+1) );
+		*end++ = TEXT(')');
+		*end = TEXT('\0');
 	}
-	stb_.SetText( str.c_str() );
+	stb_.SetText( str );
 }
 
 void GreenPadWnd::on_reconv()
@@ -1256,9 +1259,12 @@ void GreenPadWnd::UpdateWindowName()
 	SetText( name.c_str() );
 	// Try to show CP number in the StBar
 	static TCHAR cpname[32];
+	TCHAR tmp[20];
 	if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)
 	{
-		::wsprintf(cpname,TEXT("CP%d"), csi_ & 0xfffff);
+		//::wsprintf(cpname,TEXT("CP%d"), csi_ & 0xfffff);
+		cpname[0] = TEXT('C'); cpname[1] = TEXT('P');
+		my_lstrkpy( cpname+2, Int2lStr(tmp, csi_ & 0xfffff) );
 		stb_.SetCsText( cpname );
 	}
 	else if( (UINT)csi_==0xffffffff )
@@ -1267,8 +1273,13 @@ void GreenPadWnd::UpdateWindowName()
 	}
 	else
 	{
-		my_lstrcpy(cpname, charSets_[csi_].shortName);
-		::wsprintf(cpname+my_lstrlen(cpname), TEXT(" (%d)"), charSets_[csi_].ID);
+		TCHAR *end = my_lstrkpy(cpname, charSets_[csi_].shortName);
+		//::wsprintf(cpname+my_lstrlen(cpname), TEXT(" (%d)"), charSets_[csi_].ID);
+		*end++ = TEXT(' ');
+		*end++ = TEXT('(');
+		end = my_lstrkpy( end, Int2lStr(tmp, charSets_[csi_].ID) );
+		*end++ = TEXT(')');
+		*end = TEXT('\0');
 		stb_.SetCsText( cpname );
 	}
 	stb_.SetLbText( lb_ );
