@@ -234,8 +234,7 @@ bool IniFile::PutStr( const TCHAR* key, const TCHAR* val )
 bool IniFile::PutInt( const TCHAR* key, int val )
 {
 	TCHAR buf[20];
-	//::wsprintf( buf, TEXT("%d"), val );
-	return PutStr( key, Inbt2lStr(buf, val) );
+	return PutStr( key, Int2lStr(buf, val) );
 }
 
 bool IniFile::PutBool( const TCHAR* key, bool val )
