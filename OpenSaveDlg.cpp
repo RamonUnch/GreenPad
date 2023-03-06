@@ -696,9 +696,8 @@ void ReopenDlg::on_init()
 	if( csi == 0 )
 	{	// Show CP number in the reopen dialog
 		// If selection failed.
-		String s;
-		s.SetInt( csIndex_&0xfffff );
-		SendMsgToItem(IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)s.c_str());
+		TCHAR tmp[20];
+		SendMsgToItem( IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)Int2lStr(tmp, csIndex_&0xfffff) );
 	}
 }
 
