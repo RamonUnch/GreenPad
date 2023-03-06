@@ -393,12 +393,8 @@ public:
 			// Only set the resulting effect if the drop was actually performed
 			if( ret == DRAGDROP_S_DROP )
 				dwEffect_ = effect;
-			#ifdef DO_LOGGING
-			DWORD err = ::GetLastError();
-			TCHAR buf[256];
-			::wsprintf( buf, TEXT("OleDnDSourceTxt DoDragDrop end, ret=%x, effect=%d, err=%u"), (DWORD)ret, (int)effect, err );
-			LOGGERS( buf );
-			#endif
+
+			LOGGERF( TEXT("OleDnDSourceTxt DoDragDrop end, ret=%x, effect=%d"), (DWORD)ret, (int)effect );
 		}
 	}
 
