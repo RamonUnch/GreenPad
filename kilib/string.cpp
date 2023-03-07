@@ -105,14 +105,14 @@ BOOL my_IsCharLowerW(wchar_t c)
 
 }
 
-const TCHAR *Int2lStr(TCHAR str[21], int n)
+const TCHAR *Int2lStr(TCHAR str[INT_DIGITS+1], int n)
 {
 	int i = 0;
 	BOOL minus;
 	minus = (n<0);
-	str[20] = TEXT('\0');
+	str[INT_DIGITS] = TEXT('\0');
 
-	for( i=19; i>0; --i )
+	for( i=INT_DIGITS-1; i>0; --i )
 	{
 		str[i] = TEXT('0') + (minus ? -1*(n%10) : n%10);
 		n /= 10;
@@ -122,6 +122,21 @@ const TCHAR *Int2lStr(TCHAR str[21], int n)
 
 	if( minus )
 		str[--i] = TEXT('-');
+
+	return str+i;
+}
+const TCHAR *Ulong2lStr(TCHAR str[ULONG_DIGITS+1], ulong n)
+{
+	int i = 0;
+	str[ULONG_DIGITS] = TEXT('\0');
+
+	for( i=ULONG_DIGITS-1; i>=0; --i )
+	{
+		str[i] = TEXT('0') + (uchar)(n%10UL);
+		n /= 10;
+		if( n==0 )
+			break;
+	}
 
 	return str+i;
 }
@@ -397,8 +412,14 @@ int String::GetInt( const TCHAR* x )
 
 String& String::SetInt( int n )
 {
-	TCHAR tmp[21];
+	TCHAR tmp[INT_DIGITS+1];
 	return *this = Int2lStr(tmp, n);
+}
+
+String& String::SetUlong( ulong n )
+{
+	TCHAR tmp[ULONG_DIGITS+1];
+	return *this = Ulong2lStr(tmp, n);
 }
 
 const wchar_t* String::ConvToWChar() const

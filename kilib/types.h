@@ -15,10 +15,23 @@ typedef wchar_t unicode;
 typedef unsigned char  uchar;
 typedef unsigned short ushort;
 typedef unsigned int   uint;
+
+#define CHAR_DIGITS 4
+#define UCHAR_DIGITS 3
+#define SHORT_DIGITS 6
+#define UHORT_DIGITS 5
+#define INT_DIGITS 11
+#define UINT_DIGITS 10
+#define LONG_DIGITS 11
+
 #ifdef WIN64
 typedef unsigned long long ulong;
+#define ULONG_DIGITS 20
+#define SIZET_DIGITS 20
 #else
 typedef unsigned long ulong;
+#define ULONG_DIGITS 10
+#define SIZET_DIGITS 10
 #endif
 
 // îzóÒÇÃóvëfêî

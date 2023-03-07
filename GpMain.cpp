@@ -1189,12 +1189,12 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 				cad = cad + 2;
 	}
 
-	TCHAR str[128], *end = str;
-	TCHAR tmp[21];
+	TCHAR str[ULONG_DIGITS*4 + 10], *end = str;
+	TCHAR tmp[ULONG_DIGITS+1];
 	*end++ = TEXT('(');
-	end = my_lstrkpy( str+1, Int2lStr(tmp, c.tl+1) );
+	end = my_lstrkpy( str+1, Ulong2lStr(tmp, c.tl+1) );
 	*end++ = TEXT(',');
-	end = my_lstrkpy( end, Int2lStr(tmp, cad+1) );
+	end = my_lstrkpy( end, Ulong2lStr(tmp, cad+1) );
 	*end++ = TEXT(')');
 	*end = TEXT('\0');
 	if( c != s )
@@ -1209,9 +1209,9 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 				sad += su[i]<0x80 || (0xff60<=su[i] && su[i]<=0xff9f) ? 1 : 2;
 		}
 		end = my_lstrkpy( end, TEXT(" - (") );
-		end = my_lstrkpy( end, Int2lStr(tmp, s.tl+1) );
+		end = my_lstrkpy( end, Ulong2lStr(tmp, s.tl+1) );
 		*end++ = TEXT(',');
-		end = my_lstrkpy( end, Int2lStr(tmp, sad+1) );
+		end = my_lstrkpy( end, Ulong2lStr(tmp, sad+1) );
 		*end++ = TEXT(')');
 		*end = TEXT('\0');
 	}
@@ -1259,7 +1259,7 @@ void GreenPadWnd::UpdateWindowName()
 	SetText( name.c_str() );
 	// Try to show CP number in the StBar
 	static TCHAR cpname[32];
-	TCHAR tmp[21];
+	TCHAR tmp[INT_DIGITS+1];
 	if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)
 	{
 		cpname[0] = TEXT('C'); cpname[1] = TEXT('P');

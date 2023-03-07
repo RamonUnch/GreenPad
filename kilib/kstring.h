@@ -38,7 +38,9 @@ wchar_t * WINAPI my_CharLowerWW(wchar_t *s);
 wchar_t my_CharUpperSingleW(wchar_t c);
 wchar_t my_CharLowerSingleW(wchar_t c);
 BOOL my_IsCharLowerW(wchar_t c);
-const TCHAR *Int2lStr(TCHAR str[20], int n);
+
+const TCHAR *Int2lStr(TCHAR str[INT_DIGITS+1], int n);
+const TCHAR *Ulong2lStr(TCHAR str[ULONG_DIGITS+1], ulong n);
 
 inline static
 const char *my_lstrcatA(char *dest, const char *src)
@@ -234,6 +236,8 @@ public:
 
 	//@{ int‚©‚ç•¶Žš—ñ‚Ö•ÏŠ· //@}
 	String& SetInt( int n );
+
+	String& SetUlong( ulong n );
 
 	//@{ •¶Žš—ñ‚©‚çint‚Ö•ÏŠ· //@}
 	int GetInt();
