@@ -31,7 +31,7 @@ typedef unsigned long long ulong;
 #else
 typedef unsigned long ulong;
 #define ULONG_DIGITS 10
-#define SIZET_DIGITS 11
+#define SIZET_DIGITS 10
 #endif
 
 // îzóÒÇÃóvëfêî
