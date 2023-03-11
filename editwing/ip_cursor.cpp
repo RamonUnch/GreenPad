@@ -196,6 +196,7 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 	keyRepTime_ = 15; // Default in case SystemParametersInfo fails
 	::SystemParametersInfo( SPI_GETKEYBOARDSPEED, 0, &keyRepTime_, 0 );
 	keyRepTime_ = 33 + keyRepTime_ * 11;
+	keyRepTime_ >>= 2;
 	cur_.tl = cur_.ad = cur_.vl = cur_.rl = 0;
 	cur_.vx = cur_.rx = 0; sel_ = cur_;
 }
