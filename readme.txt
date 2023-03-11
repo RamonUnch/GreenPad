@@ -1,5 +1,5 @@
-=<> GreenPad ver 1.16
-=<> RamonUnch builds 2023/01/01
+=<> GreenPad ver 1.17
+=<> RamonUnch builds 2023/03/11
 
 <<What's This?>>
 
@@ -17,14 +17,14 @@
   Freeware, distributed under the NYSL licence.
   Original source code is available at: http://www.kmonos.net/lib/gp.en.html
   New source here: https://github.com/RamonUnch/GreenPad
-  Supported OSes: Win32s/NT3x/NT4/9x/ME/2000/XP/Vista/7/8.x/10/11
+  Supported OSes: Win32s/NT3x/NT4/9x/ME/2000/XP/Vista/7/8.x/10/11, ReactOS.
 
 <<System Requirements>>
  < HARDWARE >
    i386 cpu or compatible and at least a couple of MB of free RAM.
    Tested with Win3.11fw + Win32s-1.30c with 3MB of ram. Performances
    are not great on an i386 even clocked at 33MHz and an i486 or faster
-   is recomended. GreenPad will not benefit from a x87 FPU. However 
+   is recomended. GreenPad will not benefit from a x87 FPU. However
    chardet.dll will.
 
  < OS >
@@ -59,7 +59,7 @@
   * Fix more bugs, handle low memory situations better.
   * Optimize memory usage so that larger files can be loaded.
 
-<<What's New in 1.17 (by RamonUnch, 2023/02/28)>>
+<<What's New in 1.17 (by RamonUnch, 2023/03/11)>>
  < NEW >
    * OLE2 style drag and drop support was added in most builds
      To use it you will need to use the right click (easier to code)
@@ -67,6 +67,7 @@
    * The Help->About menu and Dialog were added to GreenPad.
 
  < FIXED >
+  * Loading is now significantly faster for large files.
   * Out of bound read in the internal memory manager.
   * Various refactoring and bugfixes.
   * Now the `CS_OWNDC` class style is no longer used so GreenPad is
@@ -75,7 +76,7 @@
     builds and with Win32s beta 61.
   * Now the GPadNT3b.exe version is compatible with the NT3.10.340 beta.
   * Now the main GreenPad Window can be resized on Win32s 1.15a
-  * Now GPad32s.exe run on Win32s 1.1 (1993).
+  * Now GPad32s.exe run on Win32s 1.1 (1993), fully functional.
   * Fixed Visual glitches with Windows 95 beta (chicago) thanks to roytam1
   * Elevation dialog for write permission will not pop up on network drives
     nor CD-ROM drives (Windows 2000 + only)
