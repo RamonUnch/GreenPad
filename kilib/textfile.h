@@ -173,7 +173,7 @@ public:
 	//
 	//	少なくとも20くらいのサイズを確保したバッファを指定してください。
 	//@}
-	size_t ReadLine( unicode* buf, ulong siz );
+	size_t ReadBuf( unicode* buf, ulong siz );
 
 public:
 

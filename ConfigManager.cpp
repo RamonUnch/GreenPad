@@ -502,15 +502,25 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		bool   clfound = false;
 		dt->fontCS = DEFAULT_CHARSET;
 
-		unicode buf[1024], *ptr=buf+3;
-		while( tf.state() != 0 ) // !EOF
+		// Read the whole file at once.
+		unicode buf[1024], *nptr=buf,*ptr;
+		size_t len = tf.ReadBuf( buf, countof(buf)-8 );
+		buf[len] = L'\0'; // NULL terminate in case.
+		for( ptr=buf; ptr<buf+len; ptr=nptr ) // !EOF
 		{
-			size_t len = tf.ReadLine( buf, countof(buf)-1 );
-			if( len<=3 || buf[0] == L';' || buf[2]!=L'=' )
-				continue;
-			buf[len] = L'\0';
+			// Get to next line
+			while( *nptr != L'\0' &&  *nptr != L'\r' && *nptr != L'\n' )
+				nptr++;
+			*nptr++ = L'\0'; // zero out endline.
+			nptr += *(nptr) == L'\n'; // Skip eventual \n
 
-			switch( (buf[0]<<8)|buf[1] ) // ASCII only
+			if( nptr-ptr < 3 || ptr[0] == L';' || ptr[2] != L'=' )
+				continue;
+
+			unicode XXoption = (ptr[0]<<8) | ptr[1];
+			ptr += 3; // go just after the = sign
+
+			switch( XXoption ) // ASCII only
 			{
 			case 0x6374: // ct: COLOR-TEXT
 				dt->vc.color[TXT] = GetColor(ptr);
