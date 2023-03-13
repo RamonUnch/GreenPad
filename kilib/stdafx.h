@@ -14,6 +14,29 @@
   #define memset memset_default
 #endif
 
+#ifdef __GNUC__
+// Define some cool gcc attributes
+#define A_HOT __attribute__((hot))
+#define A_COLD __attribute__((cold))
+#define A_PURE __attribute__((pure))
+#define A_XPURE __attribute__((const))
+#define A_FLATTEN __attribute__((flatten))
+#else //__GNUC__
+#define A_HOT
+#define A_COLD
+#define A_PURE
+#define A_XPURE
+#define A_FLATTEN
+#endif
+
+#if defined (__cplusplus) && __cplusplus >= 201103L
+	// Define the cool new 'final' class attribute
+	// Introduced in C++11
+	#define A_FINAL final
+#else
+	#define A_FINAL
+#endif
+
 #include <windows.h>
 #include <shlobj.h>
 #include <commdlg.h>
