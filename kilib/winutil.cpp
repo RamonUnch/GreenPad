@@ -68,7 +68,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 	// Always try to get the best available clipboard data.
 	if( IsClipboardFormatAvailable(CF_UNICODETEXT) )
 	{
-		// NT‚È‚ç’¼ÚUnicode‚Å‚Æ‚ê‚é
+		// NTãªã‚‰ç›´æŽ¥Unicodeã§ã¨ã‚Œã‚‹
 		// Also on Win9x we can use CF_UNICODETEXT with UNICOWS
 		HANDLE h = GetData( CF_UNICODETEXT );
 		if( h != NULL )
@@ -83,7 +83,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 	else if( IsClipboardFormatAvailable(CF_TEXT) )
 	{
 		// Fallback to ANSI clipboard data.
-		// 9x‚È‚ç•ÏŠ·‚ª•K—v
+		// 9xãªã‚‰å¤‰æ›ãŒå¿…è¦
 		HANDLE h = GetData( CF_TEXT );
 		if( h != NULL )
 		{
@@ -231,7 +231,7 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM 
 			{	// Directly copy unicode data
 				memmove( dest, flst, len );
 			}
-			delete flst;
+			delete [] flst;
 			remaining_bytes = gmemsz - len - df->pFiles ;
 		}
 		// Clear remaining bytes
