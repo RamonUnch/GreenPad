@@ -329,24 +329,24 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 #ifdef WIN32S
 	{ // Ascii only characters, so the ansi version should always be fine.
 		#ifndef SHORT_TABLEWIDTH
-		::GetCharWidthA( cdc_, ' ', '~', widthTable_+' ' );
+		::GetCharWidthA( cdc_, 0, 127, widthTable_ );
 		#else
-		int width['~'-' '+1];
-		::GetCharWidthA( cdc_, ' ', '~', width );
-		for( int i=0; i <= '~' - ' '; i++)
-			widthTable_[' ' + i] = (CW_INTTYPE)width[i];
+		int width[128];
+		::GetCharWidthA( cdc_, 0, 127, width );
+		for( int i=0; i <= 127 ; i++)
+			widthTable_[i] = (CW_INTTYPE)width[i];
 		#endif
 	}
 #else // NT/9x
 	{
 		#ifndef SHORT_TABLEWIDTH
-		::GetCharWidthW( cdc_, L' ', L'~', widthTable_+L' ' );
+		::GetCharWidthW( cdc_, 0, 127, widthTable_ );
 		#else
-		int width['~'-' '+1];
-		::GetCharWidthW( cdc_, ' ', '~', width );
+		int width[128];
+		::GetCharWidthW( cdc_, 0, 127, width );
 		int i;
-		for( i=0; i <= '~' - ' '; i++)
-			widthTable_[' ' + i] = (CW_INTTYPE)width[i];
+		for( i=0; i <= 127 - ' '; i++)
+			widthTable_[i] = (CW_INTTYPE)width[i];
 		#endif
 	}
 #endif // WIN32S
@@ -626,7 +626,7 @@ void ViewImpl::ReDraw( ReDrawType r, const DPos* s )
 // WM_PAINTƒnƒ“ƒhƒ‰
 //-------------------------------------------------------------------------
 
-void ViewImpl::on_paint( const PAINTSTRUCT& ps )
+void A_HOT ViewImpl::on_paint( const PAINTSTRUCT& ps )
 {
 	// •`‰æ”ÍˆÍ‚Ìî•ñ‚ðÚ‚µ‚­Žæ“¾, Obtain detailed information about the drawing area
 	Painter& p = cvs_.getPainter();

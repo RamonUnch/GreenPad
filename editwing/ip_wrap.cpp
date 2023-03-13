@@ -163,7 +163,11 @@ void ViewImpl::UpdateTextCx()
 	}
 }
 
-ulong ViewImpl::CalcLineWidth( const unicode* txt, ulong len ) const
+#ifdef __GNUC__
+#pragma GCC push_options
+#pragma GCC optimize ("-O3")
+#endif
+ulong A_HOT ViewImpl::CalcLineWidth( const unicode* txt, ulong len ) const
 {
 	// 行を折り返さずに書いたときの横幅を計算する
 	// ほとんどの行が折り返し無しで表示されるテキストの場合、
@@ -175,12 +179,20 @@ ulong ViewImpl::CalcLineWidth( const unicode* txt, ulong len ) const
 
 	ulong w=0;
 	for( ulong i=0; i<len ; ++i )
-		if( txt[i] == L'\t' )
-			w = p.nextTab(w);
+	{
+		if( txt[i] < 128 )
+			if( txt[i] != L'\t' )
+				w += p.Wc( txt[i] );
+			else
+				w = p.nextTab(w);
 		else
 			w += p.W( &txt[i] );
+	}
 	return w;
 }
+#ifdef __GNUC__
+#pragma GCC pop_options
+#endif
 
 void ViewImpl::CalcEveryLineWidth()
 {
