@@ -109,22 +109,22 @@ static UINT GetInputCP()
 
 
 //=========================================================================
-//---- ip_cursor.cpp ƒJ[ƒ\ƒ‹ƒRƒ“ƒgƒ[ƒ‹
+//---- ip_cursor.cpp ã‚«ãƒ¼ã‚½ãƒ«ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«
 //
-//		ƒJƒŒƒbƒg‚ğ•\¦‚µ‚½‚èIME‚É“K“–‚É‘Î‰‚µ‚½‚èFXB
-//		‚Æ‚±‚ë‚Å‹^–â‚È‚Ì‚¾‚ª Caret ‚Á‚ÄuƒJƒŒƒbƒgv‚Æ
-//		“Ç‚Ş‚Ì‚©uƒLƒƒƒŒƒbƒgv‚Æ“Ç‚Ş‚Ì‚©H
+//		ã‚«ãƒ¬ãƒƒãƒˆã‚’è¡¨ç¤ºã—ãŸã‚ŠIMEã«é©å½“ã«å¯¾å¿œã—ãŸã‚Šè‰²ã€…ã€‚
+//		ã¨ã“ã‚ã§ç–‘å•ãªã®ã ãŒ Caret ã£ã¦ã€Œã‚«ãƒ¬ãƒƒãƒˆã€ã¨
+//		èª­ã‚€ã®ã‹ã€Œã‚­ãƒ£ãƒ¬ãƒƒãƒˆã€ã¨èª­ã‚€ã®ã‹ï¼Ÿ
 //
-//---- ip_text.cpp   •¶š—ñ‘€ìE‘¼, string manipulation, etc.
-//---- ip_parse.cpp  ƒL[ƒ[ƒh‰ğÍ, keyword parsing
-//---- ip_wrap.cpp   Ü‚è•Ô‚µ
-//---- ip_scroll.cpp ƒXƒNƒ[ƒ‹
-//---- ip_draw.cpp   •`‰æE‘¼
+//---- ip_text.cpp   æ–‡å­—åˆ—æ“ä½œãƒ»ä»–, string manipulation, etc.
+//---- ip_parse.cpp  ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰è§£æ, keyword parsing
+//---- ip_wrap.cpp   æŠ˜ã‚Šè¿”ã—
+//---- ip_scroll.cpp ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«
+//---- ip_draw.cpp   æç”»ãƒ»ä»–
 //=========================================================================
 
 
 //-------------------------------------------------------------------------
-// Caret§Œä—pƒ‰ƒbƒp[
+// Caretåˆ¶å¾¡ç”¨ãƒ©ãƒƒãƒ‘ãƒ¼
 //-------------------------------------------------------------------------
 
 class editwing::view::Caret : public Object
@@ -174,7 +174,7 @@ private:
 
 
 //-------------------------------------------------------------------------
-// ƒJ[ƒ\ƒ‹‰Šú‰», Cursor initialization
+// ã‚«ãƒ¼ã‚½ãƒ«åˆæœŸåŒ–, Cursor initialization
 //-------------------------------------------------------------------------
 
 Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
@@ -190,7 +190,7 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 	, lineSelectMode_( false )
 	, timerID_( 0 )
 {
-	// ‚Ä‚«‚Æ[‚Éî•ñ‰Šú‰»
+	// ã¦ãã¨ãƒ¼ã«æƒ…å ±åˆæœŸåŒ–
 	// SPI_GETKEYBOARDSPEED gives value from 0-31, 0=>~30Hz, 31=>~2.5Hz
 	// kb speed in in ms = 33 + KEYBOARDSPEED * 11; more or less
 	keyRepTime_ = 15; // Default in case SystemParametersInfo fails
@@ -219,29 +219,29 @@ void Cursor::DelHandler( CurEvHandler* ev )
 
 
 //-------------------------------------------------------------------------
-// ƒwƒ‹ƒp[ŠÖ”ŒQ, helper function group
+// ãƒ˜ãƒ«ãƒ‘ãƒ¼é–¢æ•°ç¾¤, helper function group
 //-------------------------------------------------------------------------
 
 void Cursor::UpdateCaretPos()
 {
-	// ƒƒ“ƒo•Ï”‚Ì’l‚ğŒ³‚ÉAÀÛ‚ÉCaret‚ğ“®‚©‚·ˆ—
+	// ãƒ¡ãƒ³ãƒå¤‰æ•°ã®å€¤ã‚’å…ƒã«ã€å®Ÿéš›ã«Caretã‚’å‹•ã‹ã™å‡¦ç†
 	int x, y;
 	view_.GetOrigin( &x, &y );
 	x += cur_.vx;
 	y += cur_.vl * view_.fnt().H();
 
-	// s”Ô†ƒ][ƒ“‚ÉCaret‚ª‚ ‚Á‚Ä‚à¢‚é‚Ì‚Å¶‚É’Ç‚¢‚â‚é
+	// è¡Œç•ªå·ã‚¾ãƒ¼ãƒ³ã«CaretãŒã‚ã£ã¦ã‚‚å›°ã‚‹ã®ã§å·¦ã«è¿½ã„ã‚„ã‚‹
 	if( 0<x && x<view_.left() )
 		x = -view_.left();
 
-	// ƒZƒbƒg
+	// ã‚»ãƒƒãƒˆ
 	caret_->SetPos( x, y );
 	pEvHan_->on_move( cur_, sel_ );
 }
 
 void Cursor::Redraw( const VPos& s, const VPos& e )
 {
-	int x, y; // Œ´“_
+	int x, y; // åŸç‚¹
 	view_.GetOrigin( &x, &y );
 
 	POINT sp = {x+s.vx, y+(long)s.vl*view_.fnt().H()};
@@ -251,7 +251,7 @@ void Cursor::Redraw( const VPos& s, const VPos& e )
 		sp.y^=ep.y, ep.y^=sp.y, sp.y^=ep.y;
 	ep.x+=2;
 
-	// è”²‚«16bitƒ`ƒFƒbƒN“ü‚èc
+	// æ‰‹æŠœã16bitãƒã‚§ãƒƒã‚¯å…¥ã‚Šâ€¦
 	const long LFT = view_.left();
 	const long RHT = view_.right();
 	const long TOP = 0;
@@ -295,7 +295,7 @@ bool Cursor::getCurPosUnordered( const VPos** cur, const VPos** sel ) const
 
 
 //-------------------------------------------------------------------------
-// View‚©‚ç‚Ìw—ß‚ğˆ—, Process commands from View
+// Viewã‹ã‚‰ã®æŒ‡ä»¤ã‚’å‡¦ç†, Process commands from View
 //-------------------------------------------------------------------------
 
 void Cursor::on_setfocus()
@@ -324,7 +324,7 @@ void Cursor::on_scroll_end()
 
 void Cursor::ResetPos()
 {
-	// İ’è•ÏX‚È‚Ç‚É‘Î‰, Support for changing settings, etc.
+	// è¨­å®šå¤‰æ›´ãªã©ã«å¯¾å¿œ, Support for changing settings, etc.
 	view_.ConvDPosToVPos( cur_, &cur_ );
 	view_.ConvDPosToVPos( sel_, &sel_ );
 	UpdateCaretPos();
@@ -383,7 +383,7 @@ void Cursor::on_text_update
 
 
 //-------------------------------------------------------------------------
-// ƒL[“ü—Í‚Ö‚Ì‘Î‰, Support for keystrokes
+// ã‚­ãƒ¼å…¥åŠ›ã¸ã®å¯¾å¿œ, Support for keystrokes
 //-------------------------------------------------------------------------
 
 void CurEvHandler::on_char( Cursor& cur, unicode wch )
@@ -447,7 +447,7 @@ void Cursor::on_char( TCHAR ch )
 			}
 			else
 #endif
-			if( ch & 0x80 ) // ”ñASCII•¶š‚É‚ÍƒgƒŠƒrƒAƒ‹‚Å‚È‚¢•ÏŠ·‚ª•K—v
+			if( ch & 0x80 ) // éASCIIæ–‡å­—ã«ã¯ãƒˆãƒªãƒ“ã‚¢ãƒ«ã§ãªã„å¤‰æ›ãŒå¿…è¦
 			{
 				// Non-ASCII characters require non-trivial conversion.
 				unicode wcs[8];
@@ -488,7 +488,7 @@ void Cursor::on_keydown( int vk, LPARAM flag )
 
 
 //-------------------------------------------------------------------------
-// ƒ‚[ƒhØ‘Ö, mode switching
+// ãƒ¢ãƒ¼ãƒ‰åˆ‡æ›¿, mode switching
 //-------------------------------------------------------------------------
 
 void Cursor::SetInsMode( bool bIns )
@@ -505,18 +505,18 @@ void Cursor::SetROMode( bool bRO )
 
 
 //-------------------------------------------------------------------------
-// •¶š“ü—ÍEíœ, Character input and deletion
+// æ–‡å­—å…¥åŠ›ãƒ»å‰Šé™¤, Character input and deletion
 //-------------------------------------------------------------------------
 
 void Cursor::InputChar( unicode ch )
 {
-	// uã‘ƒ‚[ƒh • ‘I‘ğó‘Ô‚Å‚È‚¢ • s––‚Å‚È‚¢v‚È‚ç‰Eˆê•¶š‘I‘ğ
+	// ã€Œä¸Šæ›¸ãƒ¢ãƒ¼ãƒ‰ ï¼† é¸æŠçŠ¶æ…‹ã§ãªã„ ï¼† è¡Œæœ«ã§ãªã„ã€ãªã‚‰å³ä¸€æ–‡å­—é¸æŠ
 	// If you are in overwriting mode, not selected,
 	// and not at the end of a line, select the right character.
 	if( !bIns_ && cur_==sel_ && doc_.len(cur_.tl)!=cur_.ad )
 		Right( false, true );
 
-	// “ü—Í, character input by the user
+	// å…¥åŠ›, character input by the user
 	switch(ch)
 	{
 	case L'\r': Return();     break;
@@ -620,8 +620,8 @@ void Cursor::InputAt( const char* str, ulong len, int x, int y )
 
 void Cursor::DelBack( bool wide )
 {
-	// ‘I‘ğó‘Ô‚È‚ç BackSpace == Delete
-	// ‚Å‚È‚¯‚ê‚ÎA BackSpace == Left + Delete (è”²‚«
+	// é¸æŠçŠ¶æ…‹ãªã‚‰ BackSpace == Delete
+	// ã§ãªã‘ã‚Œã°ã€ BackSpace == Left + Delete (æ‰‹æŠœã
 	// Ctrl+BackSpace == Leftword + delete
 	if( cur_ == sel_ )
 	{
@@ -634,8 +634,8 @@ void Cursor::DelBack( bool wide )
 
 void Cursor::Del( bool wide )
 {
-	// ‘I‘ğó‘Ô‚È‚ç cur_ ` sel_ ‚ğíœ
-	// ‚Å‚È‚¯‚ê‚ÎA cur_ ` rightOf(cur_) ‚ğíœ
+	// é¸æŠçŠ¶æ…‹ãªã‚‰ cur_ ï½ sel_ ã‚’å‰Šé™¤
+	// ã§ãªã‘ã‚Œã°ã€ cur_ ï½ rightOf(cur_) ã‚’å‰Šé™¤
 	// Ctrl+Del == Right + delete
 	if( wide )
 		Right( true, true );
@@ -765,7 +765,7 @@ void Cursor::Tabulation(bool shi)
 	QuoteSelectionW(L"\t", shi); // Quote with a tab!
 }
 //-------------------------------------------------------------------------
-// ƒeƒLƒXƒgæ“¾, Get Text
+// ãƒ†ã‚­ã‚¹ãƒˆå–å¾—, Get Text
 //-------------------------------------------------------------------------
 
 ki::aarr<unicode> Cursor::getSelectedStr() const
@@ -774,7 +774,7 @@ ki::aarr<unicode> Cursor::getSelectedStr() const
 	if( cur_ > sel_ )
 		dm=sel_, dM=cur_;
 
-	// ƒeƒLƒXƒgæ“¾, Get Text
+	// ãƒ†ã‚­ã‚¹ãƒˆå–å¾—, Get Text
 	ulong len = doc_.getRangeLength( dm, dM );
 	ki::aarr<unicode> ub( new unicode[len+1] );
 	doc_.getText( ub.get(), dm, dM );
@@ -782,14 +782,14 @@ ki::aarr<unicode> Cursor::getSelectedStr() const
 }
 
 //-------------------------------------------------------------------------
-// ƒNƒŠƒbƒvƒ{[ƒhˆ—, Clipboard processing
+// ã‚¯ãƒªãƒƒãƒ—ãƒœãƒ¼ãƒ‰å‡¦ç†, Clipboard processing
 //-------------------------------------------------------------------------
 
 void Cursor::Cut()
 {
 	if( cur_ != sel_ )
 	{
-		// ƒRƒs[‚µ‚Äíœ
+		// ã‚³ãƒ”ãƒ¼ã—ã¦å‰Šé™¤
 		Copy();
 		Del( false );
 	}
@@ -810,7 +810,7 @@ void Cursor::Copy()
 
 	if( UNICODEBOOL || app().isNT() )
 	{
-		// NTŒn‚È‚ç‚»‚Ì‚Ü‚Üƒ_ƒCƒŒƒNƒg‚É, Direct copy
+		// NTç³»ãªã‚‰ãã®ã¾ã¾ãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆã«, Direct copy
 		// Also on Win9x we can use CF_UNICODETEXT with UNICOWS
 		// In MBCS build we still copy in CF_UNICODETEXT if running on NT
 		h = ::GlobalAlloc( GMEM_MOVEABLE, (len+1)*2 );
@@ -837,7 +837,7 @@ void Cursor::Copy()
 		// On 9x With UNICOWS We need to also write to the clipboard in ANSI
 		// So that other programs can access the clipboard.
 		// Same for pure ansi mode.
-		// 9xŒn‚È‚ç•ÏŠ·‚ª•K—v, convert to ANSI before.
+		// 9xç³»ãªã‚‰å¤‰æ›ãŒå¿…è¦, convert to ANSI before.
 		h = ::GlobalAlloc( GMEM_MOVEABLE, (len+1)*3 );
 		if (!h) {
 			MessageBox(NULL, TEXT("Selection is too large to hold into memory!")
@@ -1009,7 +1009,7 @@ void Cursor::StripLastChar()
 	ModSelection(StripLastCharsW);
 }
 //-------------------------------------------------------------------------
-// ƒJ[ƒ\ƒ‹ˆÚ“®, Cursor movement
+// ã‚«ãƒ¼ã‚½ãƒ«ç§»å‹•, Cursor movement
 //-------------------------------------------------------------------------
 
 void Cursor::MoveCur( const DPos& dp, bool select )
@@ -1023,13 +1023,13 @@ void Cursor::MoveTo( const VPos& vp, bool sel )
 {
 	if( sel )
 	{
-		// ‘I‘ğó‘Ô‚ª•Ï‚í‚é”ÍˆÍ‚ğÄ•`‰æ
+		// é¸æŠçŠ¶æ…‹ãŒå¤‰ã‚ã‚‹ç¯„å›²ã‚’å†æç”»
 		// Redraw the area where the selection state changes
 		Redraw( vp, cur_ );
 	}
 	else
 	{
-		// ‘I‘ğ‰ğœ‚³‚ê‚é”ÍˆÍ‚ğÄ•`‰æ
+		// é¸æŠè§£é™¤ã•ã‚Œã‚‹ç¯„å›²ã‚’å†æç”»
 		// Redraw the range to be deselected
 		if( cur_ != sel_ )
 			Redraw( cur_, sel_ );
@@ -1044,9 +1044,9 @@ void Cursor::Home( bool wide, bool select )
 {
 	VPos np;
 	np.ad = np.vx = np.rx = np.rl = 0;
-	if( wide ) // •¶‘‚Ì“ª‚Ö, Go to the head of the document.
+	if( wide ) // æ–‡æ›¸ã®é ­ã¸, Go to the head of the document.
 		np.tl = np.vl = 0;
-	else // s‚Ì“ª‚Ö, To the head of the line
+	else // è¡Œã®é ­ã¸, To the head of the line
 	{
 		// 1.07.4 --> 1.08 :: Virtual Home
 		// np.tl = cur_.tl, np.vl = cur_.vl-cur_.rl;
@@ -1062,12 +1062,12 @@ void Cursor::Home( bool wide, bool select )
 void Cursor::End( bool wide, bool select )
 {
 	VPos np;
-	if( wide ) // •¶‘‚Ì––”ö‚Ö, To the end of the document
+	if( wide ) // æ–‡æ›¸ã®æœ«å°¾ã¸, To the end of the document
 	{
 		np.tl = doc_.tln()-1;
 		np.vl = view_.vln()-1;
 	}
-	else // s‚Ì––”ö‚Ö, To the end of the line
+	else // è¡Œã®æœ«å°¾ã¸, To the end of the line
 	{
 		// 1.07.4 --> 1.08 :: Virtual End
 		// np.tl = cur_.tl;
@@ -1086,7 +1086,7 @@ void Cursor::End( bool wide, bool select )
 
 void Cursor::Ud( int dy, bool select )
 {
-	// ‚Í‚İo‚·ê‡‚ÍAæ“ªs/I’[s‚Å~‚Ü‚é‚æ‚¤‚É§ŒÀ
+	// ã¯ã¿å‡ºã™å ´åˆã¯ã€å…ˆé ­è¡Œ/çµ‚ç«¯è¡Œã§æ­¢ã¾ã‚‹ã‚ˆã†ã«åˆ¶é™
 	// Limit overflow to stop at start/end line
 	VPos np = cur_;
 	if( (signed)np.vl + dy < 0 )
@@ -1096,30 +1096,30 @@ void Cursor::Ud( int dy, bool select )
 
 	np.vl += dy;
 	np.rl += dy;
-	if( dy<0 ) // ã‚Ö–ß‚éê‡, To go back to the top
+	if( dy<0 ) // ä¸Šã¸æˆ»ã‚‹å ´åˆ, To go back to the top
 	{
-		// ƒWƒƒƒ“ƒvæ˜_—s‚Ìs“ª‚ÖDash!
+		// ã‚¸ãƒ£ãƒ³ãƒ—å…ˆè«–ç†è¡Œã®è¡Œé ­ã¸Dash!
 		while( (signed)np.rl < 0 )
 			np.rl += view_.rln(--np.tl);
 	}
-	else if( dy>0 ) // ‰º‚Öi‚Şê‡
+	else if( dy>0 ) // ä¸‹ã¸é€²ã‚€å ´åˆ
 	{
-		// ƒWƒƒƒ“ƒvæ˜_—s‚Ìs“ª‚ÖDash!
+		// ã‚¸ãƒ£ãƒ³ãƒ—å…ˆè«–ç†è¡Œã®è¡Œé ­ã¸Dash!
 		while( (signed)np.rl > 0 )
 			np.rl -= view_.rln(np.tl++);
 		if( (signed)np.rl < 0 )
-			np.rl += view_.rln(--np.tl); //s‚«‰ß‚¬C³`
+			np.rl += view_.rln(--np.tl); //è¡Œãéãä¿®æ­£ï½
 	}
 
-	// xÀ•WŒˆ’è‚É‚©‚©‚é, x-coordinate determination
+	// xåº§æ¨™æ±ºå®šã«ã‹ã‹ã‚‹, x-coordinate determination
 	const unicode* str = doc_.tl(np.tl);
 
-	// ‰EŠñ‚¹‚É‚È‚Á‚Ä‚éB•s©‘RH, It's right-justified. Unnatural?
+	// å³å¯„ã›ã«ãªã£ã¦ã‚‹ã€‚ä¸è‡ªç„¶ï¼Ÿ, It's right-justified. Unnatural?
 	np.ad = (np.rl==0 ? 0 : view_.rlend(np.tl,np.rl-1)+1);
 	np.vx = (np.rl==0 ? 0 : view_.fnt().W(&str[np.ad-1]));
 	while( np.vx < np.rx && np.ad < view_.rlend(np.tl,np.rl) )
 	{
-		// ¶Šñ‚¹‚É‚µ‚Ä‚İ‚½B
+		// å·¦å¯„ã›ã«ã—ã¦ã¿ãŸã€‚
 		ulong newvx;
 		if( str[np.ad] == L'\t' )
 			newvx = view_.fnt().nextTab(np.vx);
@@ -1194,14 +1194,14 @@ void Cursor::GotoMatchingBrace()
 #endif
 
 //-------------------------------------------------------------------------
-// ƒ}ƒEƒX“ü—Í‚Ö‚Ì‘Î‰
+// ãƒã‚¦ã‚¹å…¥åŠ›ã¸ã®å¯¾å¿œ
 //-------------------------------------------------------------------------
 
 void Cursor::on_lbutton_dbl( short x, short y )
 {
-	// s”Ô†ƒ][ƒ“‚Ìê‡‚Í“Á‚É‰½‚à‚µ‚È‚¢
+	// è¡Œç•ªå·ã‚¾ãƒ¼ãƒ³ã®å ´åˆã¯ç‰¹ã«ä½•ã‚‚ã—ãªã„
 	if( view_.lna()-view_.fnt().F() < x )
-		// s––‚Ìê‡‚à“Á‚É‰½‚à‚µ‚È‚¢
+		// è¡Œæœ«ã®å ´åˆã‚‚ç‰¹ã«ä½•ã‚‚ã—ãªã„
 		if( cur_.ad != doc_.len(cur_.tl) )
 		{
 			VPos np;
@@ -1221,30 +1221,30 @@ void Cursor::on_lbutton_down( short x, short y, bool shift )
 {
 	if( !shift )
 	{
-		// ‚±‚ê‚Ü‚Å‚Ì‘I‘ğ”ÍˆÍ‚ğƒNƒŠƒA
+		// ã“ã‚Œã¾ã§ã®é¸æŠç¯„å›²ã‚’ã‚¯ãƒªã‚¢
 		Redraw( cur_, sel_ );
 
-		// s”Ô†ƒ][ƒ“‚ÌƒNƒŠƒbƒN‚¾‚Á‚½‚çAs‘I‘ğƒ‚[ƒh‚É
+		// è¡Œç•ªå·ã‚¾ãƒ¼ãƒ³ã®ã‚¯ãƒªãƒƒã‚¯ã ã£ãŸã‚‰ã€è¡Œé¸æŠãƒ¢ãƒ¼ãƒ‰ã«
 		lineSelectMode_ = ( x < view_.lna()-view_.fnt().F() );
 
-		// ‘I‘ğŠJnˆÊ’u‚ğ’²®
+		// é¸æŠé–‹å§‹ä½ç½®ã‚’èª¿æ•´
 		view_.GetVPos( x, y, &sel_ );
 		if( lineSelectMode_ )
 			view_.ConvDPosToVPos( DPos(sel_.tl,0), &sel_, &sel_ );
 		cur_ = sel_;
 	}
 
-	// ˆÚ“®I
+	// ç§»å‹•ï¼
 	MoveByMouse( dragX_=x, dragY_=y );
 
-	// ƒ}ƒEƒXˆÊ’u‚Ì’ÇÕŠJn
+	// ãƒã‚¦ã‚¹ä½ç½®ã®è¿½è·¡é–‹å§‹
 	timerID_ = ::SetTimer( caret_->hwnd(), 178116, keyRepTime_, NULL );
 	::SetCapture( caret_->hwnd() );
 }
 
 void Cursor::on_lbutton_up( short x, short y )
 {
-	// ’ÇÕ‰ğœ
+	// è¿½è·¡è§£é™¤
 	if( timerID_ != 0 )
 	{
 		::ReleaseCapture();
@@ -1270,7 +1270,7 @@ bool Cursor::on_drag_start( short x, short y )
 			{
 				doc_.getText( p, dm, dM );
 				OleDnDSourceTxt doDrag(p, len);
-				delete p;
+				delete [] p;
 				if( doDrag.getEffect() == DROPEFFECT_MOVE )
 					doc_.Execute( Delete( cur_, sel_ ) );
 			}
@@ -1284,7 +1284,7 @@ void Cursor::on_mouse_move( short x, short y, WPARAM fwKeys )
 {
 	if( timerID_ != 0 )
 	{
-		// View“à•”‚È‚çMouseMove‚É”½‰
+		// Viewå†…éƒ¨ãªã‚‰MouseMoveã«åå¿œ
 		POINT pt = { dragX_=x, dragY_=y };
 		if( PtInRect( &view_.zone(), pt ) )
 			MoveByMouse( dragX_, dragY_ );
@@ -1293,7 +1293,7 @@ void Cursor::on_mouse_move( short x, short y, WPARAM fwKeys )
 
 void Cursor::on_timer()
 {
-	// ViewŠO•”‚È‚çTimer‚É”½‰
+	// Viewå¤–éƒ¨ãªã‚‰Timerã«åå¿œ
 	POINT pt = { dragX_, dragY_ };
 	if( !PtInRect( &view_.zone(), pt ) )
 		MoveByMouse( dragX_, dragY_ );
@@ -1334,7 +1334,7 @@ void Cursor::ToggleIME()
 }
 
 //-------------------------------------------------------------------------
-// Ä•ÏŠ·
+// å†å¤‰æ›
 //-------------------------------------------------------------------------
 
 int Cursor::on_ime_reconvertstring( RECONVERTSTRING* rs )
