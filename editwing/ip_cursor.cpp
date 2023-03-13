@@ -1270,7 +1270,7 @@ bool Cursor::on_drag_start( short x, short y )
 			{
 				doc_.getText( p, dm, dM );
 				OleDnDSourceTxt doDrag(p, len);
-				delete p;
+				delete [] p;
 				if( doDrag.getEffect() == DROPEFFECT_MOVE )
 					doc_.Execute( Delete( cur_, sel_ ) );
 			}

@@ -28,7 +28,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class Clipboard : public Object
+class Clipboard A_FINAL: public Object
 {
 public:
 
@@ -145,7 +145,7 @@ static void DeepCopyFormatEtc(FORMATETC *dest, const FORMATETC *source)
 }
 static HRESULT CreateEnumFormatEtc(UINT , const FORMATETC *, IEnumFORMATETC **);
 
-class CEnumFormatEtc : public IEnumFORMATETC, public Object
+class CEnumFormatEtc A_FINAL: public IEnumFORMATETC, public Object
 {
 private:
 	LONG        m_lRefCount;   // Reference count for this COM interface
@@ -157,7 +157,7 @@ public:
 	//
 	// IUnknown members
 	//
-	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject) override
 	{
 		if( memEQ(&riid, &myIID_IUnknown, sizeof(riid) )
 		||  memEQ(&riid, &myIID_IEnumFORMATETC, sizeof(riid) ) )
@@ -170,8 +170,8 @@ public:
 		LOGGER( "CEnumFormatEtc::QueryInterface E_NOINTERFACE" );
 		return E_NOINTERFACE;
 	}
-	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&m_lRefCount); }
-	ULONG STDMETHODCALLTYPE Release()
+	ULONG STDMETHODCALLTYPE AddRef()  override { return ::InterlockedIncrement(&m_lRefCount); }
+	ULONG STDMETHODCALLTYPE Release() override
 	{
 		ULONG cnt = ::InterlockedDecrement(&m_lRefCount);
 		if( cnt == 0 ) delete this;
@@ -181,7 +181,7 @@ public:
 	//
 	// IEnumFormatEtc members
 	//
-	HRESULT __stdcall  Next(ULONG celt, FORMATETC * pFormatEtc, ULONG * pceltFetched)
+	HRESULT __stdcall  Next(ULONG celt, FORMATETC * pFormatEtc, ULONG * pceltFetched) override
 	{
 		ULONG copied  = 0;
 
@@ -205,19 +205,19 @@ public:
 		return (copied == celt) ? S_OK : S_FALSE;
 	}
 
-	HRESULT __stdcall  Skip(ULONG celt)
+	HRESULT __stdcall  Skip(ULONG celt) override
 	{
 		m_nIndex += celt;
 		return (m_nIndex <= m_nNumFormats) ? S_OK : S_FALSE;
 	}
 
-	HRESULT __stdcall  Reset(void)
+	HRESULT __stdcall  Reset(void) override
 	{
 		m_nIndex = 0;
 		return S_OK;
 	}
 
-	HRESULT __stdcall  Clone(IEnumFORMATETC ** ppEnumFormatEtc)
+	HRESULT __stdcall  Clone(IEnumFORMATETC ** ppEnumFormatEtc) override
 	{
 		HRESULT hResult;
 
@@ -274,7 +274,7 @@ static HRESULT CreateEnumFormatEtc(UINT nNumFormats, const FORMATETC *pFormatEtc
 }
 
 // Class for a minimalist Text/File drag and drop data object
-class IDataObjectTxt : public IDataObject, public Object
+class IDataObjectTxt A_FINAL: public IDataObject, public Object
 {
 public:
 	IDataObjectTxt(const unicode *str, size_t len)
@@ -302,7 +302,7 @@ private:
 	size_t convCRLFtoNULLS(unicode *d, const unicode *s, size_t l);
 
 public:
-	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject) override
 	{
 		if( memEQ(&riid, &myIID_IUnknown, sizeof(riid) )
 		||  memEQ(&riid, &myIID_IDataObject, sizeof(riid) ) )
@@ -315,16 +315,16 @@ public:
 		LOGGER( "IDataObjectTxt::QueryInterface E_NOINTERFACE" );
 		return E_NOINTERFACE;
 	}
-	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&refcnt); }
-	ULONG STDMETHODCALLTYPE Release()
+	ULONG STDMETHODCALLTYPE AddRef()  override { return ::InterlockedIncrement(&refcnt); }
+	ULONG STDMETHODCALLTYPE Release() override
 	{
 		ULONG cnt = ::InterlockedDecrement(&refcnt);
 		if( cnt == 0 ) delete this;
 		return cnt;
 	}
 
-	HRESULT STDMETHODCALLTYPE GetData(FORMATETC *fmt, STGMEDIUM *pm);
-	HRESULT STDMETHODCALLTYPE EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppefe)
+	HRESULT STDMETHODCALLTYPE GetData(FORMATETC *fmt, STGMEDIUM *pm) override;
+	HRESULT STDMETHODCALLTYPE EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC **ppefe) override
 	{
 		if( dwDirection == DATADIR_GET )
 		{
@@ -334,17 +334,17 @@ public:
 		*ppefe = NULL;
 		return E_NOTIMPL;
 	}
-	HRESULT STDMETHODCALLTYPE GetDataHere(FORMATETC *fmt, STGMEDIUM *pm);
-	HRESULT STDMETHODCALLTYPE QueryGetData(FORMATETC *fmt);
-	HRESULT STDMETHODCALLTYPE GetCanonicalFormatEtc(FORMATETC *fmt, FORMATETC *fout);
+	HRESULT STDMETHODCALLTYPE GetDataHere(FORMATETC *fmt, STGMEDIUM *pm) override;
+	HRESULT STDMETHODCALLTYPE QueryGetData(FORMATETC *fmt) override;
+	HRESULT STDMETHODCALLTYPE GetCanonicalFormatEtc(FORMATETC *fmt, FORMATETC *fout) override;
 
-	HRESULT STDMETHODCALLTYPE SetData(FORMATETC *pFormatetc, STGMEDIUM *pmedium, BOOL fRelease)
+	HRESULT STDMETHODCALLTYPE SetData(FORMATETC *pFormatetc, STGMEDIUM *pmedium, BOOL fRelease) override
 		{ return E_NOTIMPL; }
-	HRESULT STDMETHODCALLTYPE DAdvise(FORMATETC *pFormatetc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection)
+	HRESULT STDMETHODCALLTYPE DAdvise(FORMATETC *pFormatetc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection) override
 		{ return E_NOTIMPL; }
-	HRESULT STDMETHODCALLTYPE DUnadvise(DWORD dwConnection)
+	HRESULT STDMETHODCALLTYPE DUnadvise(DWORD dwConnection) override
 		{ return OLE_E_ADVISENOTSUPPORTED; }
-	HRESULT STDMETHODCALLTYPE EnumDAdvise(IEnumSTATDATA ** ppenumAdvise)
+	HRESULT STDMETHODCALLTYPE EnumDAdvise(IEnumSTATDATA ** ppenumAdvise) override
 		{ return OLE_E_ADVISENOTSUPPORTED; }
 
 private:
@@ -363,7 +363,7 @@ private:
 
 //-------------------------------------------------------------------------
 // Implementation of a simple IDropSource for Text/File Drag and drop.
-class OleDnDSourceTxt : public IDropSource
+class OleDnDSourceTxt A_FINAL: public IDropSource
 {
 public:
 	OleDnDSourceTxt(const unicode *str, size_t len, DWORD adEffect = DROPEFFECT_MOVE|DROPEFFECT_COPY)
@@ -404,7 +404,7 @@ public:
 	~OleDnDSourceTxt(){}
 
 public:
-	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject)
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject) override
 	{
 		if( memEQ(&riid, &myIID_IUnknown, sizeof(riid) )
 		||  memEQ(&riid, &myIID_IDropSource, sizeof(riid) ) )
@@ -418,10 +418,10 @@ public:
 		return E_NOINTERFACE;
 	}
 
-	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&refcnt); }
-	ULONG STDMETHODCALLTYPE Release() { return ::InterlockedDecrement(&refcnt); }
+	ULONG STDMETHODCALLTYPE AddRef() override  { return ::InterlockedIncrement(&refcnt); }
+	ULONG STDMETHODCALLTYPE Release() override { return ::InterlockedDecrement(&refcnt); }
 
-	HRESULT STDMETHODCALLTYPE QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
+	HRESULT STDMETHODCALLTYPE QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState) override
 		{
 			// LOGGER( "OleDnDSourceTxt::QueryContinueDrag" );
 			if( fEscapePressed )
@@ -431,7 +431,7 @@ public:
 			return S_OK;
 		}
 
-	HRESULT STDMETHODCALLTYPE GiveFeedback(DWORD dwEffect)
+	HRESULT STDMETHODCALLTYPE GiveFeedback(DWORD dwEffect) override
 		{ return DRAGDROP_S_USEDEFAULTCURSORS; }
 
 private:
@@ -448,7 +448,7 @@ private:
 //@}
 //=========================================================================
 
-class Mutex : public Object
+class Mutex A_FINAL: public Object
 {
 public:
 	Mutex( const TCHAR* name );

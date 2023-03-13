@@ -523,7 +523,7 @@ MemoryManager::~MemoryManager()
 }
 
 
-void* MemoryManager::Alloc( size_t siz )
+void* A_HOT MemoryManager::Alloc( size_t siz )
 {
 #if defined(SUPERTINY) && defined(_DEBUG)
 	++allocCounter;
@@ -547,7 +547,7 @@ void* MemoryManager::Alloc( size_t siz )
 	return pools_[i].Alloc();
 }
 
-void MemoryManager::DeAlloc( void* ptr, size_t siz )
+void A_HOT MemoryManager::DeAlloc( void* ptr, size_t siz )
 {
 #if defined(SUPERTINY) && defined(_DEBUG)
 	--allocCounter;

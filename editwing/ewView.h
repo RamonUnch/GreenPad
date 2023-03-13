@@ -26,7 +26,7 @@ class OleDnDTarget;
 //@}
 //=========================================================================
 
-class View : public ki::WndImpl, public doc::DocEvHandler
+class View A_FINAL: public ki::WndImpl, public doc::DocEvHandler
 {
 public:
 
@@ -62,11 +62,11 @@ private:
 
 private:
 
-	void    on_create( CREATESTRUCT* cs );
-	void    on_destroy();
-	LRESULT on_message( UINT msg, WPARAM wp, LPARAM lp );
-	void    on_text_update( const DPos& s, const DPos& e, const DPos& e2, bool bAft, bool mCur );
-	void    on_keyword_change();
+	void    on_create( CREATESTRUCT* cs ) override;
+	void    on_destroy() override;
+	LRESULT on_message( UINT msg, WPARAM wp, LPARAM lp ) override;
+	void    on_text_update( const DPos& s, const DPos& e, const DPos& e2, bool bAft, bool mCur ) override;
+	void    on_keyword_change() override;
 };
 
 
@@ -94,18 +94,18 @@ class CurEvHandler
 //@}
 //=========================================================================
 #ifndef NO_OLEDNDTAR
-class OleDnDTarget : public IDropTarget
+class OleDnDTarget A_FINAL: public IDropTarget
 {
 	friend class Cursor;
 	OleDnDTarget( HWND hwnd, ViewImpl& vw );
 	~OleDnDTarget();
 
-	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject);
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject) override;
 
-	ULONG STDMETHODCALLTYPE AddRef()  { return ::InterlockedIncrement(&refcnt); }
-	ULONG STDMETHODCALLTYPE Release() { return ::InterlockedDecrement(&refcnt); }
+	ULONG STDMETHODCALLTYPE AddRef()  override { return ::InterlockedIncrement(&refcnt); }
+	ULONG STDMETHODCALLTYPE Release() override { return ::InterlockedDecrement(&refcnt); }
 
-	HRESULT STDMETHODCALLTYPE DragEnter(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
+	HRESULT STDMETHODCALLTYPE DragEnter(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect) override
 	{
 		// Only accept DragEnter if we can get some text.
 		comes_from_center_ = false;
@@ -134,12 +134,12 @@ class OleDnDTarget : public IDropTarget
 		return E_UNEXPECTED;
 	}
 
-	HRESULT STDMETHODCALLTYPE DragLeave()
+	HRESULT STDMETHODCALLTYPE DragLeave() override
 		{ LOGGER( "OleDnDTarget::DragLeave()" ); return S_OK; }
 
-	HRESULT STDMETHODCALLTYPE DragOver(DWORD grfKeyState, POINTL pt, DWORD *pdwEffect);
+	HRESULT STDMETHODCALLTYPE DragOver(DWORD grfKeyState, POINTL pt, DWORD *pdwEffect) override;
 
-	HRESULT STDMETHODCALLTYPE Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect);
+	HRESULT STDMETHODCALLTYPE Drop(IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect) override;
 
 private:
 	void setDropEffect(DWORD grfKeyState, DWORD *pdwEffect) const;
@@ -182,7 +182,7 @@ struct VPos : public DPos
 //@}
 //=========================================================================
 typedef unicode *(WINAPI *ModProc)(unicode* str);
-class Cursor : public ki::Object
+class Cursor A_FINAL: public ki::Object
 {
 public:
 

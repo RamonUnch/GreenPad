@@ -14,7 +14,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class StatusBar : public Window
+class StatusBar: public Window
 {
 public:
 
@@ -33,7 +33,7 @@ public:
 
 private:
 	bool Create();
-	virtual bool PreTranslateMessage( MSG* );
+	bool PreTranslateMessage( MSG* ) override A_FINAL;
 
 private:
 
@@ -67,7 +67,7 @@ inline void StatusBar::SetParent(HWND parent)
 //@}
 //=========================================================================
 
-class ComboBox : public Window
+class ComboBox A_FINAL: public Window
 {
 public:
 	explicit ComboBox( HWND cb );
@@ -76,7 +76,7 @@ public:
 	void Select( const TCHAR* str );
 	int GetCurSel();
 private:
-	virtual bool PreTranslateMessage( MSG* );
+	bool PreTranslateMessage( MSG* ) override;
 };
 
 

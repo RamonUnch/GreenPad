@@ -1,5 +1,5 @@
 
-NAME       = gccdb
+NAME       = gccprf
 OBJ_SUFFIX = o
 
 ###############################################################################
@@ -36,10 +36,8 @@ OBJS = \
  $(INTDIR)/ConfigManager.$(OBJ_SUFFIX) \
  $(INTDIR)/app.$(OBJ_SUFFIX)
 
-# -DSUPERTINY  -fpermissive -flto -fuse-linker-plugin
-#,--disable-reloc-section,--disable-runtime-pseudo-reloc
-LIBS = \
- -L. -lunicows \
+LIBS = -pg -flto -fuse-linker-plugin -flto-partition=none \
+ -L. \
  -lkernel32 \
  -luser32   \
  -lgdi32    \
@@ -52,11 +50,29 @@ LIBS = \
  -limm32    \
  -Wl,-dynamicbase,-nxcompat,--no-seh,--enable-auto-import,--disable-stdcall-fixup \
  -Wl,--disable-reloc-section,--disable-runtime-pseudo-reloc \
- -Wl,--tsaware,--large-address-aware
+ -Wl,--tsaware,--large-address-aware \
 
-# -Wl,--print-map \
-# -static-libstdc++ \
-#  -static-libgcc
+WARNINGS = \
+   -Wall \
+   -Wno-register \
+   -Wno-parentheses \
+   -Wformat-overflow=2 \
+   -Wuninitialized \
+   -Winit-self \
+   -Wnull-dereference \
+   -Wnonnull \
+   -Wno-unknown-pragmas \
+   -Wstack-usage=4096
+
+DEFINES = -DSTDFAX_FPATH \
+    -D_WIN32_WINNT=0x400 \
+    -D_UNICODE -DUNICODE \
+    -UDEBUG -U_DEBUG \
+    -DUSEGLOBALIME \
+    -DTARGET_VER=350 \
+    -DUSE_ORIGINAL_MEMMAN
+
+
 PRE:
 	-@if not exist release   mkdir release
 	-@if not exist obj       mkdir obj
@@ -66,14 +82,34 @@ PRE:
 RES = $(INTDIR)/gp_rsrc.o
 
 VPATH    = editwing:kilib
-# -DSUPERTINY  -flto -fuse-linker-plugin -Wno-narrowing  -fwhole-program
-#  -fstack-protector-all -fstack-protector-strong -fstack-check
-CXXFLAGS = -m32 -g -c -Og -fno-stack-protector -fomit-frame-pointer \
- -march=i386 -mpreferred-stack-boundary=2 -mno-stack-arg-probe \
- -Wall -Wno-parentheses -Wno-unknown-pragmas -Wstack-usage=4000 -Warray-bounds=2 \
- -idirafter kilib -DNOWINBASEINTERLOCK \
- -D_UNICODE -DUNICODE -UDEBUG -U_DEBUG -DUSEGLOBALIME -DUNICOWS -DTARGET_VER=350
-LOPT     = -m32
+# -DSUPERTINY  -flto -fuse-linker-plugin -Wno-narrowing  -fwhole-program  -fno-tree-loop-distribute-patterns
+
+CXXFLAGS = \
+	-m32 -c -Os -pg \
+	-march=i686 \
+	-mtune=generic \
+	-flto -fuse-linker-plugin \
+	-fmerge-all-constants \
+	-fno-tree-loop-distribute-patterns \
+	-fno-stack-check \
+	-fno-stack-protector \
+	-fno-threadsafe-statics \
+	-fno-use-cxa-get-exception-ptr \
+	-fno-access-control \
+	-fno-enforce-eh-specs \
+	-fno-nonansi-builtins \
+	-fnothrow-opt \
+	-fno-optional-diags \
+	-fno-use-cxa-atexit \
+	-fno-exceptions \
+	-fno-dwarf2-cfi-asm \
+	-fno-asynchronous-unwind-tables \
+	-fno-extern-tls-init \
+	-fno-rtti \
+	$(WARNINGS) $(DEFINES) \
+	-idirafter kilib
+
+LOPT     = -m32 -mwindows
 
 ifneq ($(NOCHARSET),1)
 CXXFLAGS += -finput-charset=cp932 -fexec-charset=cp932
@@ -81,8 +117,8 @@ endif
 
 $(TARGET) : $(OBJS) $(RES)
 	g++ $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS)
-
+#	strip -s $(TARGET)
 $(INTDIR)/%.o: rsrc/%.rc
-	windres -Fpe-i386 -l=0x411 -I rsrc $< -O coff -o$@
+	windres -DTARGET_VER=350 -Fpe-i386 -l=0x411 -I rsrc $< -O coff -o$@
 $(INTDIR)/%.o: %.cpp
 	g++ $(CXXFLAGS) -o$@ $<

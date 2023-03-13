@@ -14,6 +14,7 @@ HRESULT MyCoLockObjectExternal(IUnknown * pUnk, BOOL fLock, BOOL fLastUnlockRele
 	extern "C" WINBASEAPI LONG WINAPI InterlockedIncrement(LONG volatile *);
 	extern "C" WINBASEAPI LONG WINAPI InterlockedDecrement(LONG volatile *);
 #endif
+
 // Use to make a ordered window version ie: MKVER(3,10,511) = 0x030A01FF
 #define MKVER(M, m, b) ( (DWORD)( (BYTE)(M)<<24 | (BYTE)(m)<<16 | (WORD)(b) ) )
 

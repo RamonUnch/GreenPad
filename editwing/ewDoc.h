@@ -178,7 +178,7 @@ protected:
 //@}
 //=========================================================================
 
-class Insert : public Command
+class Insert A_FINAL: public Command
 {
 public:
 
@@ -193,7 +193,7 @@ public:
 
 private:
 
-	Command* operator()( Document& doc ) const;
+	Command* operator()( Document& doc ) const override;
 	DPos           stt_;
 	const unicode* buf_;
 	ulong          len_;
@@ -208,7 +208,7 @@ private:
 //@}
 //=========================================================================
 
-class Delete : public Command
+class Delete A_FINAL: public Command
 {
 public:
 
@@ -220,7 +220,7 @@ public:
 
 private:
 
-	Command* operator()( Document& doc ) const;
+	Command* operator()( Document& doc ) const override;
 	DPos stt_;
 	DPos end_;
 };
@@ -234,7 +234,7 @@ private:
 //@}
 //=========================================================================
 
-class Replace : public Command
+class Replace A_FINAL: public Command
 {
 public:
 
@@ -251,7 +251,7 @@ public:
 
 private:
 
-	Command* operator()( Document& doc ) const;
+	Command* operator()( Document& doc ) const override;
 	DPos           stt_;
 	DPos           end_;
 	const unicode* buf_;
@@ -274,7 +274,7 @@ private:
 //@}
 //=========================================================================
 
-class MacroCommand : public Command
+class MacroCommand A_FINAL: public Command
 {
 public:
 	//@{ ƒRƒ}ƒ“ƒh‚Ì’Ç‰Á //@}
@@ -291,7 +291,7 @@ public:
 	}
 
 private:
-	Command* operator()( Document& doc ) const;
+	Command* operator()( Document& doc ) const override;
 	ki::storage<Command*> arr_;
 };
 

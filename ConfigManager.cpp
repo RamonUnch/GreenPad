@@ -100,7 +100,7 @@ bool ConfigManager::MatchDocType
 // 設定ダイアログ関連
 //-------------------------------------------------------------------------
 
-struct ConfigDlg : public ki::DlgImpl
+struct ConfigDlg A_FINAL: public ki::DlgImpl
 {
 private:
 	typedef ConfigManager::DtList::iterator DTI;
@@ -158,11 +158,11 @@ private:
 	}
 	void on_newdoctype()
 	{
-		struct NewDocTypeDlg : public DlgImpl
+		struct NewDocTypeDlg A_FINAL: public DlgImpl
 		{
 			NewDocTypeDlg(HWND wnd)
 				: DlgImpl(IDD_ADDDOCTYPE) { GoModal(wnd); }
-			virtual bool on_ok()
+			bool on_ok() override
 			{
 				TCHAR buf[MAX_PATH];
 				SendMsgToItem(IDC_NAME, WM_GETTEXT,
@@ -208,10 +208,10 @@ public:
 	}
 
 private:
-	void on_init()
+	void on_init() override
 	{
-		SendMsgToItem(IDC_LATEST_NUM, WM_SETTEXT,
-			String().SetInt(cfg_.mrus_).c_str() );
+		TCHAR tmp[INT_DIGITS+1];
+		SendMsgToItem( IDC_LATEST_NUM, WM_SETTEXT, Int2lStr(tmp, cfg_.mrus_) );
 		if( cfg_.undoLimit() == -1 )
 		{
 			SendMsgToItem(IDC_UNDOLIM1, BM_SETCHECK, BST_CHECKED);
@@ -220,8 +220,7 @@ private:
 		else
 		{
 			SendMsgToItem(IDC_UNDOLIM2, BM_SETCHECK, BST_CHECKED);
-			SendMsgToItem(IDC_UNDO_CT, WM_SETTEXT,
-				String().SetInt(cfg_.undoLimit()).c_str() );
+			SendMsgToItem(IDC_UNDO_CT, WM_SETTEXT, Int2lStr(tmp, cfg_.undoLimit()) );
 		}
 		if( cfg_.countByUnicode() )
 		{
@@ -306,7 +305,7 @@ private:
 				TEXT("type\\")+buf+TEXT("\"") ).c_str() );
 	}
 
-	bool on_command( UINT cmd, UINT id, HWND ctrl )
+	bool on_command( UINT cmd, UINT id, HWND ctrl ) override
 	{
 		switch( cmd )
 		{
@@ -337,7 +336,7 @@ private:
 		return true;
 	}
 
-	bool on_ok()
+	bool on_ok() override
 	{
 		TCHAR buf[100];
 		SendMsgToItem(IDC_LATEST_NUM, WM_GETTEXT,
@@ -811,8 +810,8 @@ void ConfigManager::LoadIni()
 	for( int i=1; true; ++i )
 	{
 		// 文書タイプ名を読み込み
-		s.SetInt(i);
-		r = ini_.GetStr( s.c_str(), String() );
+		TCHAR tmp[INT_DIGITS+1] ;
+		r = ini_.GetStr( Int2lStr(tmp, i), String() );
 		if( r.len() == 0 )
 			break;
 

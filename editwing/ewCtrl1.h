@@ -19,7 +19,7 @@ namespace editwing {
 //@}
 //=========================================================================
 
-class EwEdit : public ki::WndImpl
+class EwEdit A_FINAL: public ki::WndImpl
 {
 public:
 
@@ -45,9 +45,9 @@ private:
 
 private:
 
-	void    on_create( CREATESTRUCT* cs );
-	void    on_destroy();
-	LRESULT on_message( UINT msg, WPARAM wp, LPARAM lp );
+	void    on_create( CREATESTRUCT* cs ) override;
+	void    on_destroy() override;
+	LRESULT on_message( UINT msg, WPARAM wp, LPARAM lp ) override;
 };
 
 

@@ -46,7 +46,7 @@ public:
 //@}
 //=========================================================================
 
-class SearchManager : public ki::DlgImpl
+class SearchManager A_FINAL: public ki::DlgImpl
 {
 	typedef editwing::DPos DPos;
 
@@ -92,9 +92,10 @@ private:
 
 private:
 	
-	virtual void on_init();
-	virtual void on_destroy();
-	virtual bool on_command( UINT cmd, UINT id, HWND ctrl );
+	void on_init() override;
+	void on_destroy() override;
+	bool on_command( UINT cmd, UINT id, HWND ctrl ) override;
+
 	void on_findnext();
 	void on_findprev();
 	void on_replacenext();

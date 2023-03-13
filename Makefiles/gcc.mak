@@ -62,16 +62,17 @@ WARNINGS = \
    -Wnull-dereference \
    -Wnonnull \
    -Wno-unknown-pragmas \
-   -Wstack-usage=4096
+   -Wstack-usage=4096 \
+   -Wsuggest-override
 
-DEFINES = \
+DEFINES = -DSTDFAX_FPATH \
     -D_WIN32_WINNT=0x400 \
     -D_UNICODE -DUNICODE -DUNICOWS \
     -UDEBUG -U_DEBUG \
     -DUSEGLOBALIME \
     -DSUPERTINY \
     -DTARGET_VER=350 \
-    -DUSE_ORIGINAL_MEMMAN
+    -DUSE_ORIGINAL_MEMMAN \
 
 
 PRE:
@@ -94,6 +95,7 @@ CXXFLAGS = \
 	-mpreferred-stack-boundary=2 \
 	-flto -fuse-linker-plugin \
 	-fmerge-all-constants \
+	-fallow-store-data-races \
 	-fno-tree-loop-distribute-patterns \
 	-fomit-frame-pointer \
 	-fno-stack-check \

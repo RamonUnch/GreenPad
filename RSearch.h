@@ -23,14 +23,14 @@ class RegNFA;
 //@}
 //=========================================================================
 
-class RSearch : public Searchable
+class RSearch A_FINAL: public Searchable
 {
 public:
 	RSearch( const unicode* key, bool caseS, bool down );
 
 private:
-	virtual bool Search( const unicode* str, ulong len, ulong stt,
-		ulong* mbg, ulong* med );
+	bool Search( const unicode* str, ulong len, ulong stt,
+		ulong* mbg, ulong* med ) override;
 
 private:
 	ki::dptr<RegNFA> re_;
