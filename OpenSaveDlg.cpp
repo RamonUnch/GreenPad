@@ -436,7 +436,7 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		{
 			::ShowWindow( hCRLFCombo, SW_HIDE );
 			HWND hCRLFlbl = ::GetDlgItem( dlg, IDC_CRLFLBL );
-			if(hCRLFlbl) ::ShowWindow( hCRLFlbl, SW_HIDE );
+			if( hCRLFlbl ) ::ShowWindow( hCRLFlbl, SW_HIDE );
 		}
 		// older NT wants OfnHook returning TRUE in WM_INITDIALOG
 		return TRUE;
@@ -446,6 +446,22 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		// OKが押されたら、文字コードの選択状況を記録
 		if(( msg==WM_COMMAND && LOWORD(wp)==1 ) || ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK )
 		{
+			TCHAR buf[32];
+			::SendDlgItemMessage(dlg, IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
+			// Typed CP has precedence over droplist
+			if ( buf[0] )
+			{
+				// Clamp cs
+				int cs = Clamp(-65535, String::GetInt(buf), +65535);
+				// Try to find value in the charset list
+				pThis->csIndex_ = pThis->csl_.findCsi( cs );
+
+				// If we could not the index, then store the cp with a mask
+				if( (UINT)pThis->csIndex_ == 0xffffffff )
+					pThis->csIndex_ = 0xf0f00000 | cs;
+				return 0;
+			}
+
 			pThis->csIndex_ = 0;
 			int i=ComboBox(dlg,IDC_CODELIST).GetCurSel();
 			if( 0 <= i && i < (int)pThis->csl_.size() )
@@ -594,7 +610,18 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			for( ulong i=0; i<csl.size(); ++i )
 				if( csl[i].type & 1 ) // 1:=SAVE
 					cb.Add( csl[i].longName );
-			cb.Select( csl[pThis->csIndex_].longName );
+
+			int csi = pThis->csIndex_;
+			if( 0 <= csi && csi < (int)pThis->csl_.size() )
+			{
+				// Select combobox item
+				cb.Select( pThis->csl_[csi].longName );
+			}
+			else
+			{	// Show CP number If selection failed.
+				TCHAR tmp[INT_DIGITS+1];
+				::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)Int2lStr(tmp, csi&0xfffff) );
+			}
 		}
 		{
 			ComboBox cb( dlg, IDC_CRLFLIST );
@@ -616,6 +643,33 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		if(( msg==WM_COMMAND && LOWORD(wp)==1 ) || ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK )
 		{
 			// OKが押されたら、文字コードの選択状況を記録
+			// 改行コードも
+			int lb = ComboBox(dlg,IDC_CRLFLIST).GetCurSel();
+			pThis->lb_ = lb == CB_ERR? 2 :lb; // Default to CRLF;
+
+			TCHAR buf[32];
+			::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
+			// Typed CP has precedence over droplist
+			if ( buf[0] )
+			{
+				// Clamp cs
+				int cs = Clamp(-65535, String::GetInt(buf), +65535);
+				// Try to find value in the charset list
+				pThis->csIndex_ = pThis->csl_.findCsi( cs );
+
+				// If we could not the index, then store the cp with a mask
+				if( (UINT)pThis->csIndex_ == 0xffffffff )
+				{
+					if( ::IsValidCodePage( cs ) )
+						pThis->csIndex_ = 0xf0f00000 | cs;
+					else
+					{
+						MessageBox(dlg, TEXT("Invalid codepage selected"), NULL, MB_OK);
+					}
+				}
+				return 0;
+			}
+
 			int i=ComboBox(dlg,IDC_CODELIST).GetCurSel();
 			if( 0 <= i && i < (int)pThis->csl_.size() )
 			{
@@ -633,9 +687,6 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			{
 				pThis->csIndex_ = 0;
 			}
-			// 改行コードも
-			int lb = ComboBox(dlg,IDC_CRLFLIST).GetCurSel();
-			pThis->lb_ = lb == CB_ERR? 2 :lb; // Default to CRLF;
 		}
 	}
 	return FALSE;
@@ -687,13 +738,12 @@ void ReopenDlg::on_init()
 			cb.Add( csl_[i].longName );
 
 	int csi = csIndex_;
-	if( csi < 0 || csi > (int)csl_.size() )
-		csi = 0; // index is outside of range.
-
-	// Select combobox item
-	cb.Select( csl_[csi].longName );
-
-	if( csi == 0 )
+	if( 0 <= csi && csi < (int)csl_.size() )
+	{
+		// Select combobox item
+		cb.Select( csl_[csi].longName );
+	}
+	else
 	{	// Show CP number in the reopen dialog
 		// If selection failed.
 		TCHAR tmp[INT_DIGITS+1];

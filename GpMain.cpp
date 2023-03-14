@@ -547,7 +547,7 @@ void GreenPadWnd::on_reopenfile()
 		{	// We have a file to reopen
 			if( AskToSave() )
 			{
-				int cs = resolveCSI(csi_); //(csi > 0xf0f00000)? csi&0xfffff: charSets_[csi].ID;
+				int cs = resolveCSI(csi_);
 				OpenByMyself( filename_, cs, false );
 			}
 		}
@@ -561,8 +561,8 @@ void GreenPadWnd::on_reopenfile()
 // Resolves a csi into a usable cs
 int GreenPadWnd::resolveCSI(int csi) const
 {
-	return ((UINT)csi >= 0xf0f00000 && (UINT)csi < 0xf1000000)? csi & 0xfffff
-	       : (0 < csi && csi < (int)charSets_.size())? charSets_[csi].ID: 0;
+	return ( (UINT)csi >= 0xf0f00000 && (UINT)csi < 0xf1000000 )? csi & 0xfffff
+	     : (0 < csi && csi < (int)charSets_.size())? charSets_[csi].ID: 0;
 }
 void GreenPadWnd::on_openelevated(const ki::Path& fn)
 {
@@ -1360,12 +1360,10 @@ bool GreenPadWnd::ShowOpenDlg( Path* fn, int* cs )
 	{
 		LOGGER( "GreenPadWnd::ShowOpenDlg ok" );
 		*fn = ofd.filename();
-		int i = ofd.csi();
-		i = 0 <= i && i < (int)charSets_.size()? i: 0;
-		*cs = charSets_[i].ID;
+		*cs = resolveCSI( ofd.csi() );
 	}
 
-	LOGGER( "GreenPadWnd::ShowOpenDlg end" );
+	LOGGERF( TEXT("GreenPadWnd::ShowOpenDlg end, asked cs = %d"), (int)*cs );
 	return ok;
 }
 
@@ -1568,6 +1566,10 @@ bool GreenPadWnd::ShowSaveDlg()
 	stb_.SetText( TEXT("Saving file...") );
 	if( !sfd.DoModal( hwnd(), filt.get(), filename_.c_str() ) )
 		return false;
+
+	const int csi = sfd.csi();
+	if( !::IsValidCodePage( resolveCSI(csi) ) )
+		return false; // Fail if selected codepage is invalid.
 
 	filename_ = sfd.filename();
 	csi_      = sfd.csi();
