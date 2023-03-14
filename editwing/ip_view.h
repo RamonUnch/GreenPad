@@ -42,6 +42,8 @@ public:
 	//@{ 指定位置に文字列を出力, Output a string at the specified position //@}
 	void StringOut( const unicode* str, int len, int x, int y );
 
+	void DrawCTLs( const unicode* str, int len, int x, int y );
+
 	//@{ 文字色切り替え, text color switching //@}
 	void SetColor( int i );
 
