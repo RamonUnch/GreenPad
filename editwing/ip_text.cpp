@@ -741,10 +741,15 @@ void DocImpl::OpenFile( aptr<TextFileR> tf )
 	size_t buf_sz = 2097152;
 	// static unicode buf[2097152]; // 4MB on x64
 #else
-	// static unicode buf[65536]; // 128KB on i386
+	// static unicode buf[131072]; // 256KB on i386
 	size_t buf_sz = 131072;
 #endif
-	unicode *buf = new unicode[buf_sz];
+	// Do not allocate more mem than twice the file size in bytes.
+	// Should help with loaing small files on Win32s.
+	buf_sz = Min( buf_sz, (size_t)(tf->size()+16)<<1 );
+	unicode *buf=NULL;
+	if( buf_sz > SBUF_SZ )
+		buf = new unicode[buf_sz];
 	if( !buf )
 	{
 		buf = sbuf;
