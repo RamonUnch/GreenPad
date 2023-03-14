@@ -48,7 +48,7 @@ struct MemBlock;
 //@}
 //=========================================================================
 
-class MemoryManager : public EzLockable
+class MemoryManager : private NoLockable // (Ez)Lockable
 {
 public:
 
@@ -75,7 +75,6 @@ private:
 		byte      numPerBlock_;
 		int       lastA_;
 		int       lastDA_;
-//		CRITICAL_SECTION lock_;
 	};
 	#ifdef STACK_MEM_POOLS
 	FixedSizeMemBlockPool pools_[ SMALL_MAX ];

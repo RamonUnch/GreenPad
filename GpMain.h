@@ -15,7 +15,7 @@
 //@}
 //=========================================================================
 
-class GpStBar : public ki::StatusBar
+class GpStBar A_FINAL: public ki::StatusBar
 {
 public:
 	GpStBar();
@@ -35,7 +35,7 @@ private:
 //@}
 //=========================================================================
 
-class GreenPadWnd
+class GreenPadWnd A_FINAL
 	: public ki::WndImpl
 	, public editwing::doc::DocEvHandler
 	, public editwing::view::CurEvHandler
@@ -94,9 +94,10 @@ private:
 
 private:
 
-	void    on_create( CREATESTRUCT* cs );
-	LRESULT on_message( UINT msg, WPARAM wp, LPARAM lp );
-	bool    on_command( UINT id, HWND ctrl );
+	void    on_create( CREATESTRUCT* cs ) override;
+	LRESULT on_message( UINT msg, WPARAM wp, LPARAM lp ) override;
+	bool    on_command( UINT id, HWND ctrl ) override;
+
 	void    on_helpabout();
 	void    on_newfile();
 	void    on_openfile();
@@ -111,8 +112,7 @@ private:
 	void    on_exit();
 	void    on_initmenu( HMENU menu, bool editmenu_only );
 	void    on_drop( HDROP hd );
-	void    on_dirtyflag_change( bool );
-	void    on_move( const editwing::DPos& c, const editwing::DPos& s );
+	void    on_move( const editwing::DPos& c, const editwing::DPos& s ) override;
 	void    on_jump();
 	void    on_grep();
 	void    on_config();
@@ -124,7 +124,9 @@ private:
 	void    on_statusBar();
 	void    on_reconv();
 	void    on_toggleime();
-	bool    PreTranslateMessage( MSG* msg );
+
+	void    on_dirtyflag_change( bool ) override;
+	bool    PreTranslateMessage( MSG* msg ) override;
 };
 
 

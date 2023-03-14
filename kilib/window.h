@@ -184,7 +184,7 @@ inline bool Window::isAlive() const
 //	マクロ USEGLOBALIME が定義されていなければその辺は処理しない。
 //@}
 //=========================================================================
-class IMEManager
+class IMEManager A_FINAL
 {
 public:
 
@@ -316,7 +316,7 @@ protected:
 	virtual void    on_destroy();
 	virtual bool    on_command( UINT id, HWND ctrl );
 	virtual LRESULT on_message( UINT msg, WPARAM wp, LPARAM lp );
-	virtual bool    PreTranslateMessage( MSG* msg );
+	bool    PreTranslateMessage( MSG* msg ) override;
 
 private:
 
@@ -400,7 +400,7 @@ protected:
 	virtual bool on_cancel();
 	virtual bool on_command( UINT cmd, UINT id, HWND ctrl );
 	virtual bool on_message( UINT msg, WPARAM wp, LPARAM lp );
-	virtual bool PreTranslateMessage( MSG* msg );
+	bool PreTranslateMessage( MSG* msg ) override;
 
 private:
 

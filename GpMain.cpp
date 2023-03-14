@@ -501,9 +501,9 @@ void GreenPadWnd::on_helpabout()
 		#define PALT TEXT( " - PowerPC" )
 	#endif
 	// Show Help->About dialog box.
-	struct AboutDlg : public DlgImpl {
+	struct AboutDlg A_FINAL: public DlgImpl {
 		AboutDlg(HWND parent) : DlgImpl(IDD_ABOUTDLG), parent_( parent ) { GoModal(parent_); }
-		void on_init()
+		void on_init() override
 		{
 			String s = String(IDS_APPNAME);
 			s += TEXT(" - ") TEXT( VER_FILEVERSIONSTR ) UNIANSI TEXT("\r\n")
@@ -917,11 +917,11 @@ void GreenPadWnd::on_drop( HDROP hd )
 
 void GreenPadWnd::on_jump()
 {
-	struct JumpDlg : public DlgImpl {
+	struct JumpDlg A_FINAL: public DlgImpl {
 		JumpDlg(HWND w) : DlgImpl(IDD_JUMP), w_(w) { GoModal(w); }
-		void on_init() {
+		void on_init() override {
 			SetCenter(hwnd(),w_); ::SetFocus(item(IDC_LINEBOX)); }
-		bool on_ok() {
+		bool on_ok() override {
 			TCHAR str[100];
 			::GetWindowText( item(IDC_LINEBOX), str, countof(str) );
 			LineNo = String(str).GetInt();

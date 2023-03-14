@@ -42,13 +42,13 @@ struct rBasicUTF : public ki::TextFileRPimpl
 {
 	inline rBasicUTF() : BOF(true) {}
 	virtual unicode PeekC() = 0;
-	virtual unicode GetC() {unicode ch=PeekC(); Skip(); return ch;}
+	virtual unicode GetC() A_FINAL {unicode ch=PeekC(); Skip(); return ch;}
 	virtual void Skip() = 0;
 	virtual bool Eof() = 0;
 
 	bool BOF;
 
-	size_t ReadBuf( unicode* buf, ulong siz )
+	size_t ReadBuf( unicode* buf, ulong siz ) override A_FINAL
 	{
 		state = EOF;
 
@@ -103,9 +103,9 @@ struct rUCS : public rBasicUTF
 											 (val<<8)&0xff0000|
 											 (val<<24)); }
 
-	virtual void Skip() { ++fb; }
-	virtual bool Eof() { return fb==fe; }
-	virtual unicode PeekC() { return (unicode)(be ? swap(*fb) : *fb); }
+	virtual void Skip() override { ++fb; }
+	virtual bool Eof() override { return fb==fe; }
+	virtual unicode PeekC() override { return (unicode)(be ? swap(*fb) : *fb); }
 };
 
 typedef rUCS< byte> rWestISO88591;
@@ -143,7 +143,7 @@ typedef rUCS< byte> rWestISO88591;
 typedef rUCS<dbyte> rUtf16;
 
 // UTF-32読み込み
-struct rUtf32 : public rUCS<qbyte>
+struct rUtf32 A_FINAL : public rUCS<qbyte>
 {
 	rUtf32( const uchar* b, ulong s, bool bigendian )
 		: rUCS<qbyte>(b,s,bigendian)
@@ -153,7 +153,7 @@ struct rUtf32 : public rUCS<qbyte>
 	qbyte curChar() { return be ? swap(*fb) : *fb; }
 	bool inBMP(qbyte c) { return c<0x10000; }
 
-	virtual unicode PeekC()
+	virtual unicode PeekC() override
 	{
 		qbyte c = curChar();
 		if( inBMP(c) )
@@ -162,7 +162,7 @@ struct rUtf32 : public rUCS<qbyte>
 			                      : 0xDC00 + ( (c-0x10000)       &0x3ff));
 	}
 
-	virtual void Skip()
+	virtual void Skip() override
 	{
 		if( inBMP(curChar()) )
 			++fb;
@@ -177,7 +177,7 @@ struct rUtf32 : public rUCS<qbyte>
 //-------------------------------------------------------------------------
 // UTF-1
 //-------------------------------------------------------------------------
-struct rUtf1 : public rBasicUTF
+struct rUtf1 A_FINAL: public rBasicUTF
 {
 	rUtf1( const uchar* b, ulong s )
 		: fb( b )
@@ -195,8 +195,8 @@ struct rUtf1 : public rBasicUTF
 		else               return x - 0x42;
 	}
 
-	bool Eof() { return SurrogateLow ? false : fb==fe; }
-	void Skip()
+	bool Eof() override { return SurrogateLow ? false : fb==fe; }
+	void Skip() override
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
 
@@ -205,7 +205,7 @@ struct rUtf1 : public rBasicUTF
 		else if( *fb >= 0xA0 && *fb <= 0xF5 ) { fb+=2; }
 		else /*if( *fb <= 0x9F )*/            {  ++fb; }
 	}
-	unicode PeekC()
+	unicode PeekC() override
 	{
 		qbyte ch;
 
@@ -242,7 +242,7 @@ struct rUtf1 : public rBasicUTF
 //    0000 0800-0000 FFFF   100100xx 1xxxxxxx 1xxxxxxx
 //    0001 0000-007F FFFF   100101xx 1xxxxxxx 1xxxxxxx 1xxxxxxx
 //    0080 0000-7FFF FFFF   10011xxx 1xxxxxxx 1xxxxxxx 1xxxxxxx 1xxxxxxx
-struct rUtf9 : public rBasicUTF
+struct rUtf9 A_FINAL: public rBasicUTF
 {
 	rUtf9( const uchar* b, ulong s )
 		: fb( b )
@@ -252,8 +252,8 @@ struct rUtf9 : public rBasicUTF
 	const uchar *fb, *fe;
 	qbyte SurrogateLow;
 
-	bool Eof() { return SurrogateLow ? false : fb==fe; }
-	void Skip()
+	bool Eof() override { return SurrogateLow ? false : fb==fe; }
+	void Skip() override
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
 
@@ -263,7 +263,7 @@ struct rUtf9 : public rBasicUTF
 		else if( *fb >= 0x80 && *fb <= 0x8F ) { fb+=2; }
 		else /* 0~0x7F,0xA0~0xFF */           {  ++fb; }
 	}
-	unicode PeekC()
+	unicode PeekC() override
 	{
 		qbyte ch;
 
@@ -292,7 +292,7 @@ struct rUtf9 : public rBasicUTF
 //-------------------------------------------------------------------------
 // Old FSS-UTF (/usr/ken/utf/xutf from dump of Sep 2 1992)
 //-------------------------------------------------------------------------
-struct rUtfOFSS : public rBasicUTF
+struct rUtfOFSS A_FINAL: public rBasicUTF
 {
 	rUtfOFSS( const uchar* b, ulong s )
 		: fb( b )
@@ -302,8 +302,8 @@ struct rUtfOFSS : public rBasicUTF
 	const uchar *fb, *fe;
 	qbyte SurrogateLow;
 
-	bool Eof() { return SurrogateLow ? false : fb==fe; }
-	void Skip()
+	bool Eof() override { return SurrogateLow ? false : fb==fe; }
+	void Skip() override
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
 
@@ -313,7 +313,7 @@ struct rUtfOFSS : public rBasicUTF
 		else if( *fb >= 0x80 && *fb <= 0xc0 ) { fb+=2; }
 		else /* 0~0x7F,0xA0~0xFF */           {  ++fb; }
 	}
-	unicode PeekC()
+	unicode PeekC() override
 	{
 		qbyte ch;
 
@@ -349,7 +349,7 @@ struct rUtfOFSS : public rBasicUTF
 // 各 1bbbb は 'G', 'H', ... 'P', 'Q', ... 'V' の字で表現。
 //-------------------------------------------------------------------------
 
-struct rUtf5 : public rBasicUTF
+struct rUtf5 A_FINAL: public rBasicUTF
 {
 	rUtf5( const uchar* b, ulong s )
 		: fb( b )
@@ -364,9 +364,9 @@ struct rUtf5 : public rBasicUTF
 		else                   return x-'A'+0x0A;
 	}
 
-	void Skip() { do ++fb; while( fb<fe && *fb<'G' ); }
-	bool Eof() { return fb==fe; }
-	unicode PeekC()
+	void Skip() override { do ++fb; while( fb<fe && *fb<'G' ); }
+	bool Eof() override { return fb==fe; }
+	unicode PeekC() override
 	{
 		unicode ch = (*fb-'G');
 		for( const uchar* p=fb+1; p<fe && *p<'G'; ++p )
@@ -397,7 +397,7 @@ namespace
 	0x29,0x2a,0x2b,0x2c,0x2d,0x2e,0x2f,0x30,0x31,0x32,0x33,0xff,0xff,0xff,0xff,0xff };
 }
 
-struct rUtf7 : public rBasicUTF
+struct rUtf7 A_FINAL: public rBasicUTF
 {
 	rUtf7( const uchar* b, ulong s )
 		: fb( b )
@@ -409,9 +409,9 @@ struct rUtf7 : public rBasicUTF
 	int rest;       // バッファの空き
 	bool inB64;     // base64エリア内ならtrue
 
-	void Skip() { if(--rest==0) fillbuf(); }
-	bool Eof() { return fb==fe && rest==0; }
-	unicode PeekC() { return buf[rest-1]; }
+	void Skip() override { if(--rest==0) fillbuf(); }
+	bool Eof() override { return fb==fe && rest==0; }
+	unicode PeekC() override { return buf[rest-1]; }
 
 	void fillbuf()
 	{
@@ -511,7 +511,7 @@ namespace
 	static int SCSU_start[8]={0x0000,0x0080,0x0100,0x0300,0x2000,0x2080,0x2100,0x3000},
 	SCSU_slide[8]={0x0080,0x00C0,0x0400,0x0600,0x0900,0x3040,0x30A0,0xFF00};
 }
-struct rSCSU : public rBasicUTF
+struct rSCSU A_FINAL: public rBasicUTF
 {
 	rSCSU( const uchar* b, ulong s )
 		: fb( b )
@@ -527,10 +527,10 @@ struct rSCSU : public rBasicUTF
 	ulong skip;
 	uchar c, d;
 
-	void Skip() { fb+=skip; skip=0; }
-	bool Eof() { return fb==fe; }
+	void Skip() override { fb+=skip; skip=0; }
+	bool Eof() override { return fb==fe; }
 	uchar GetChar() { return fb+skip>fe ? 0 : *(fb+(skip++)); }
-	unicode PeekC()
+	unicode PeekC() override
 	{
 		c = GetChar();
 		if (!mode && c >= 0x80)
@@ -657,7 +657,7 @@ namespace {
 	0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf0, 0xf1, 0xf2 };
 }
 #undef m1
-struct rBOCU1 : public rBasicUTF
+struct rBOCU1 A_FINAL: public rBasicUTF
 {
 	rBOCU1( const uchar* b, ulong s )
 		: fb( b )
@@ -670,10 +670,10 @@ struct rBOCU1 : public rBasicUTF
 	ulong skip;
 	unicode cp, pc;
 
-	void Skip() { fb+=skip; skip=0; }
-	bool Eof() { return fb==fe; }
+	void Skip() override { fb+=skip; skip=0; }
+	bool Eof() override { return fb==fe; }
 	uchar GetChar() { return (fb+skip < fe) ? *(fb+(skip++)) : 0; }
-	unicode PeekC()
+	unicode PeekC() override
 	{
 		uchar c = GetChar();
 		long diff = 0;
@@ -924,7 +924,7 @@ namespace
 	}
 }
 
-struct rMBCS : public TextFileRPimpl
+struct rMBCS A_FINAL: public TextFileRPimpl
 {
 	// ファイルポインタ＆コードページ, File Pointer & Code Page
 	const char* fb;
@@ -947,7 +947,7 @@ struct rMBCS : public TextFileRPimpl
 			fb += 3; // BOMスキップ
 	}
 
-	size_t ReadBuf( unicode* buf, ulong siz )
+	size_t ReadBuf( unicode* buf, ulong siz ) override
 	{
 		// バッファの終端か、ファイルの終端の近い方まで読み込む
 		// Read to the end of the buffer or near the end of the file
@@ -1031,7 +1031,7 @@ struct rMBCS : public TextFileRPimpl
 
 enum CodeSet { ASCII, LATIN, KANA, JIS, KSX, GB };
 
-struct rIso2022 : public TextFileRPimpl
+struct rIso2022 A_FINAL: public TextFileRPimpl
 {
 	// Helper: JIS X 0208 => SJIS
 	void jis2sjis( uchar k, uchar t, char* s )
@@ -1143,7 +1143,7 @@ struct rIso2022 : public TextFileRPimpl
 		len+=wt;
 	}
 
-	size_t ReadBuf( unicode* buf, ulong siz )
+	size_t ReadBuf( unicode* buf, ulong siz ) override
 	{
 		len=0;
 
@@ -2157,27 +2157,27 @@ protected:
 // Unicodeテキスト
 //-------------------------------------------------------------------------
 
-struct wUtf16LE : public TextFileWPimpl
+struct wUtf16LE A_FINAL: public TextFileWPimpl
 {
 	wUtf16LE( FileW& w, bool bom ) : TextFileWPimpl(w)
 		{ if(bom){ unicode ch=0xfeff; fp_.Write(&ch,2); } }
-	void WriteLine( const unicode* buf, ulong siz ) {fp_.Write(buf,siz*2);}
+	void WriteLine( const unicode* buf, ulong siz ) override {fp_.Write(buf,siz*2);}
 };
 
-struct wUtf16BE : public TextFileWPimpl
+struct wUtf16BE A_FINAL: public TextFileWPimpl
 {
 	wUtf16BE( FileW& w, bool bom ) : TextFileWPimpl(w)
 		{ if(bom) WriteChar(0xfeff); }
-	void WriteChar( unicode ch ) { fp_.WriteC(ch>>8), fp_.WriteC(ch&0xff); }
+	void WriteChar( unicode ch ) override { fp_.WriteC(ch>>8), fp_.WriteC(ch&0xff); }
 };
 
-struct wUtf32LE : public TextFileWPimpl
+struct wUtf32LE A_FINAL: public TextFileWPimpl
 {
 	wUtf32LE( FileW& w, bool bom ) : TextFileWPimpl(w)
 		{ if(bom) {unicode c=0xfeff; WriteLine(&c,1);} }
 //	void WriteChar( unicode ch )
 //		{ fp_.WriteC(ch&0xff), fp_.WriteC(ch>>8), fp_.WriteC(0), fp_.WriteC(0); }
-	virtual void WriteLine( const unicode* buf, ulong siz )
+	virtual void WriteLine( const unicode* buf, ulong siz ) override
 	{
 		while( siz-- )
 		{
@@ -2194,13 +2194,13 @@ struct wUtf32LE : public TextFileWPimpl
 	}
 };
 
-struct wUtf32BE : public TextFileWPimpl
+struct wUtf32BE A_FINAL: public TextFileWPimpl
 {
 	wUtf32BE( FileW& w, bool bom ) : TextFileWPimpl(w)
 		{ if(bom) {unicode c=0xfeff; WriteLine(&c,1);} }
 //	void WriteChar( unicode ch )
 //		{ fp_.WriteC(0), fp_.WriteC(0), fp_.WriteC(ch>>8), fp_.WriteC(ch&0xff); }
-	virtual void WriteLine( const unicode* buf, ulong siz )
+	virtual void WriteLine( const unicode* buf, ulong siz ) override
 	{
 		while( siz-- )
 		{
@@ -2217,13 +2217,13 @@ struct wUtf32BE : public TextFileWPimpl
 	}
 };
 
-struct wWestISO88591 : public TextFileWPimpl
+struct wWestISO88591 A_FINAL: public TextFileWPimpl
 {
 	wWestISO88591( FileW& w ) : TextFileWPimpl(w) {}
-	void WriteChar( unicode ch ) { fp_.WriteC(ch>0xff ? '?' : (uchar)ch); }
+	void WriteChar( unicode ch ) override { fp_.WriteC(ch>0xff ? '?' : (uchar)ch); }
 };
 
-struct wUtf1 : public TextFileWPimpl
+struct wUtf1 A_FINAL: public TextFileWPimpl
 {
 	wUtf1( FileW& w, bool bom ) : TextFileWPimpl(w), SurrogateHi(0)
 	{
@@ -2240,7 +2240,7 @@ struct wUtf1 : public TextFileWPimpl
 		else if( x<=0xDE ) return x - 0xBE;
 		else               return x - 0x60;
 	}
-	void WriteChar( unicode ch )
+	void WriteChar( unicode ch ) override
 	{
 		qbyte c = ch;
 		if( 0xD800<=ch&&ch<=0xDBFF )
@@ -2275,7 +2275,7 @@ struct wUtf1 : public TextFileWPimpl
 	}
 };
 
-struct wUtf9 : public TextFileWPimpl
+struct wUtf9 A_FINAL: public TextFileWPimpl
 {
 	wUtf9( FileW& w, bool bom ) : TextFileWPimpl(w), SurrogateHi(0)
 	{
@@ -2285,7 +2285,7 @@ struct wUtf9 : public TextFileWPimpl
 
 	qbyte SurrogateHi;
 
-	void WriteChar( unicode ch )
+	void WriteChar( unicode ch ) override
 	{
 		qbyte c = ch;
 		if( 0xD800<=ch&&ch<=0xDBFF )
@@ -2322,7 +2322,7 @@ struct wUtf9 : public TextFileWPimpl
 	}
 };
 
-struct wUtfOFSS : public TextFileWPimpl
+struct wUtfOFSS A_FINAL: public TextFileWPimpl
 {
 	wUtfOFSS( FileW& w, bool bom ) : TextFileWPimpl(w), SurrogateHi(0)
 	{
@@ -2332,7 +2332,7 @@ struct wUtfOFSS : public TextFileWPimpl
 
 	qbyte SurrogateHi;
 
-	void WriteChar( unicode ch )
+	void WriteChar( unicode ch ) override
 	{
 		qbyte c = ch;
 		if( 0xD800<=ch&&ch<=0xDBFF )
@@ -2373,10 +2373,10 @@ struct wUtfOFSS : public TextFileWPimpl
 	}
 };
 
-struct wUtf5 : public TextFileWPimpl
+struct wUtf5 A_FINAL: public TextFileWPimpl
 {
 	wUtf5( FileW& w ) : TextFileWPimpl(w) {}
-	void WriteChar( unicode ch )
+	void WriteChar( unicode ch ) override
 	{
 		static const char conv[] = {
 			'0','1','2','3','4','5','6','7',
@@ -2435,7 +2435,7 @@ namespace {
 		0x3000  /* CJK Symbols and punctuation */
 	};
 }
-struct wSCSU : public TextFileWPimpl
+struct wSCSU A_FINAL: public TextFileWPimpl
 {
 	/* SCSU command byte values */
 	enum {
@@ -2473,7 +2473,7 @@ struct wSCSU : public TextFileWPimpl
 		return -1;
 	}
 
-	void WriteChar( unicode c )
+	void WriteChar( unicode c ) override
 	{
 		uchar window; // dynamic window 0..7
 		int w;       // result of getWindow(), -1..7
@@ -2598,7 +2598,7 @@ namespace {
 	0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef,
 	0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff };
 }
-struct wBOCU1 : public TextFileWPimpl
+struct wBOCU1 A_FINAL: public TextFileWPimpl
 {
 	wBOCU1( FileW& w ) : TextFileWPimpl(w), cp ( 0 ) , pc ( 0x40 ), diff( 0 )
 	{ // write BOM
@@ -2610,7 +2610,7 @@ struct wBOCU1 : public TextFileWPimpl
 	unicode cp, pc;
 	long diff;
 
-	void WriteChar( unicode ch )
+	void WriteChar( unicode ch ) override
 	{
 		uchar t1,t2,t3;
 
@@ -2687,7 +2687,7 @@ struct wBOCU1 : public TextFileWPimpl
 //-------------------------------------------------------------------------
 //#ifndef _UNICODE
 
-struct wUTF8 : public TextFileWPimpl
+struct wUTF8 A_FINAL: public TextFileWPimpl
 {
 	wUTF8( FileW& w, int cp )
 		: TextFileWPimpl(w)
@@ -2696,7 +2696,7 @@ struct wUTF8 : public TextFileWPimpl
 			fp_.Write( "\xEF\xBB\xBF", 3 );
 	}
 
-	void WriteLine( const unicode* str, ulong len )
+	void WriteLine( const unicode* str, ulong len ) override
 	{
 		//        0000-0000-0xxx-xxxx | 0xxxxxxx
 		//        0000-0xxx-xxyy-yyyy | 110xxxxx 10yyyyyy
@@ -2743,11 +2743,11 @@ struct wUTF8 : public TextFileWPimpl
 
 
 
-struct wUTF7 : public TextFileWPimpl
+struct wUTF7 A_FINAL: public TextFileWPimpl
 {
 	wUTF7( FileW& w ) : TextFileWPimpl(w) {}
 
-	void WriteLine( const unicode* str, ulong len )
+	void WriteLine( const unicode* str, ulong len ) override
 	{
 		static const uchar mime[64] = {
 		'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
@@ -2808,7 +2808,7 @@ struct wUTF7 : public TextFileWPimpl
 // Windows頼りの変換
 //-------------------------------------------------------------------------
 
-struct wMBCS : public TextFileWPimpl
+struct wMBCS A_FINAL: public TextFileWPimpl
 {
 	wMBCS( FileW& w, int cp )
 		: TextFileWPimpl(w), cp_(cp)
@@ -2821,7 +2821,7 @@ struct wMBCS : public TextFileWPimpl
 		}
 	}
 
-	void WriteLine( const unicode* str, ulong len )
+	void WriteLine( const unicode* str, ulong len ) override
 	{
 		// WideCharToMultiByte API を利用した変換
 		int r;
@@ -2844,7 +2844,7 @@ struct wMBCS : public TextFileWPimpl
 // ASCIIともう一つしか文字集合を使わないもの
 //-------------------------------------------------------------------------
 
-struct wIso2022 : public TextFileWPimpl
+struct wIso2022 A_FINAL: public TextFileWPimpl
 {
 	wIso2022( FileW& w, int cp )
 		: TextFileWPimpl(w), hz_(cp==HZ)
@@ -2865,7 +2865,7 @@ struct wIso2022 : public TextFileWPimpl
 		}
 	}
 
-	void WriteLine( const unicode* str, ulong len )
+	void WriteLine( const unicode* str, ulong len ) override
 	{
 		// まず WideCharToMultiByte API を利用して変換
 		int r;
@@ -2988,12 +2988,12 @@ static const WORD IBM_sjis2kuten[] = {
 	k[1] += 0x20;
 }
 
-struct wEucJp : public TextFileWPimpl
+struct wEucJp A_FINAL: public TextFileWPimpl
 {
 	wEucJp( FileW& w )
 		: TextFileWPimpl(w) {}
 
-	void WriteLine( const unicode* str, ulong len )
+	void WriteLine( const unicode* str, ulong len ) override
 	{
 		// まず WideCharToMultiByte API を利用して変換
 		int r;
@@ -3033,7 +3033,7 @@ struct wEucJp : public TextFileWPimpl
 // ISO-2022 サブセットその３。ISO-2022-JP
 //-------------------------------------------------------------------------
 
-struct wIsoJp : public TextFileWPimpl
+struct wIsoJp A_FINAL: public TextFileWPimpl
 {
 	wIsoJp( FileW& w )
 		: TextFileWPimpl(w)
@@ -3041,7 +3041,7 @@ struct wIsoJp : public TextFileWPimpl
 		fp_.Write( "\x1b\x28\x42", 3 );
 	}
 
-	void WriteLine( const unicode* str, ulong len )
+	void WriteLine( const unicode* str, ulong len ) override
 	{
 		// まず WideCharToMultiByte API を利用して変換
 		int r;

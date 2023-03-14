@@ -157,15 +157,15 @@ inline ki::aarr<TCHAR> SaveFileDlg::ConnectWithNull
 //@}
 //========================================================================
 
-class ReopenDlg : public ki::DlgImpl
+class ReopenDlg A_FINAL: public ki::DlgImpl
 {
 public:
 	ReopenDlg( const CharSetList& csl, int csi );
 	int csi() const;
 
 private:
-	void on_init();
-	bool on_ok();
+	void on_init() override;
+	bool on_ok() override;
 
 private:
 	const CharSetList& csl_;

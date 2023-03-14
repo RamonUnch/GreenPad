@@ -231,7 +231,7 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM 
 			{	// Directly copy unicode data
 				memmove( dest, flst, len );
 			}
-			delete flst;
+			delete [] flst;
 			remaining_bytes = gmemsz - len - df->pFiles ;
 		}
 		// Clear remaining bytes

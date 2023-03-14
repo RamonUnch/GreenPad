@@ -750,7 +750,7 @@ void DocImpl::SetKeyword( const unicode* defbuf, ulong siz )
 	Fire_KEYWORDCHANGE();
 }
 
-bool DocImpl::ReParse( ulong s, ulong e )
+bool A_HOT DocImpl::ReParse( ulong s, ulong e )
 {
 	ulong i;
 	uchar cmt = text_[s].isLineHeadCmt();

@@ -35,6 +35,7 @@
 	#define A_FINAL final
 #else
 	#define A_FINAL
+	#define override
 #endif
 
 #include <windows.h>

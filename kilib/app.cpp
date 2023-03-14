@@ -18,15 +18,15 @@ static HRESULT MyOleInitialize(LPVOID r)
 	}
 	return 666; // Fail with 666 error.
 }
-static HRESULT MyCoInitialize(LPVOID r)
-{
-	Initialize_funk func = (Initialize_funk)GetProcAddress(app().hOle32(), "CoInitialize");
-
-	if (func) { // We got the function!
-		return func(r);
-	}
-	return 666; // Fail with 666 error.
-}
+//static HRESULT MyCoInitialize(LPVOID r)
+//{
+//	Initialize_funk func = (Initialize_funk)GetProcAddress(app().hOle32(), "CoInitialize");
+//
+//	if (func) { // We got the function!
+//		return func(r);
+//	}
+//	return 666; // Fail with 666 error.
+//}
 
 typedef void (WINAPI * UnInitialize_funk)( );
 static void MyOleUninitialize( )

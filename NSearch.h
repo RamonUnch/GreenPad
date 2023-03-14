@@ -152,7 +152,7 @@ public:
 
 private:
 	bool Search(
-		const unicode* str, ulong len, ulong stt, ulong* mbg, ulong* med )
+		const unicode* str, ulong len, ulong stt, ulong* mbg, ulong* med ) override
 	{
 		int n = s_.Search( str+stt, len-stt );
 		if( n < 0 )
@@ -182,7 +182,7 @@ public:
 
 private:
 	bool Search(
-		const unicode* str, ulong len, ulong stt, ulong* mbg, ulong* med )
+		const unicode* str, ulong len, ulong stt, ulong* mbg, ulong* med ) override
 	{
 		int n = s_.Search( str, stt+s_.keylen() );
 		if( n < 0 )

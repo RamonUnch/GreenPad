@@ -199,7 +199,7 @@ public:
 		{ return empty_; }
 
 	//@{ ˆêsæ“¾ //@}
-	void getLine()
+	void A_HOT getLine()
 		{
 			// Ÿ‚Ì‰üs‚ÌˆÊ’u‚ğæ“¾
 			const unicode *p=ptr_, *e=end_;
@@ -323,9 +323,12 @@ inline bool UnReDoChain::isModified() const
 //@}
 //=========================================================================
 
-class DocImpl : public Object, EzLockable
+class DocImpl : public Object
 #ifdef USE_THREADS
-                             , Runnable
+              , private EzLockable
+              , private Runnable
+#else
+              , private NoLockable
 #endif
 {
 public:
