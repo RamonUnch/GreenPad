@@ -510,6 +510,36 @@ inline void Painter::StringOut
 	}
 }
 
+// Print all control characters 0-31 and 127-160
+// First copy to a temp buffer char for Win32s and wide for unicode.
+// This is much faster than a char by char print
+void Painter::DrawCTLs( const unicode *str, int len, int x, int y )
+{
+	#ifdef WIN32S
+	char buf[256];
+	#else
+	unicode buf[256];
+	#endif
+	do
+	{
+		int mx = Min( len, (int)countof(buf) );
+		int x2 = x;
+		for(int j=0 ; j<mx ; ++j )
+		{
+			buf[j] = str[j]<32? ctlMap[str[j]]: ctl2Map[str[j]-127];
+			x2 += Wc( buf[j] );
+		}
+		#ifdef WIN32S
+		::TextOutA( dc_, x, y, buf, mx );
+		#else
+		::TextOutW( dc_, x, y, buf, mx );
+		#endif
+		len -= countof(buf);
+		str += countof(buf);
+		x = x2;
+	} while ( len > 0 );
+}
+
 inline void Painter::SetColor( int i )
 {
 	::SetTextColor( dc_, colorTable_[i] );
@@ -827,13 +857,7 @@ void ViewImpl::DrawTXT( const VDrawInfo v, Painter& p )
 						if( u <= 31 || (127 <=u && u <= 160) )
 						{ // ASCII C0 and C1 Control caracters + DEL + NBSP
 							p.SetColor( clr=CTL );
-							for( ; i<i2 ; ++i )
-							{
-								unicode c = str[i];
-								c = c<32? ctlMap[c]: ctl2Map[c-127];
-								p.CharOut( c, x+v.XBASE, a.top );
-								x += p.Wc(c);
-							}
+							p.DrawCTLs( &str[i], i2-i, x+v.XBASE, a.top );
 							break;
 						}
 					}
