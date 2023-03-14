@@ -660,12 +660,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 				// If we could not the index, then store the cp with a mask
 				if( (UINT)pThis->csIndex_ == 0xffffffff )
 				{
-					if( ::IsValidCodePage( cs ) )
-						pThis->csIndex_ = 0xf0f00000 | cs;
-					else
-					{
-						MessageBox(dlg, TEXT("Invalid codepage selected"), NULL, MB_OK);
-					}
+					pThis->csIndex_ = 0xf0f00000 | cs;
 				}
 				return 0;
 			}
