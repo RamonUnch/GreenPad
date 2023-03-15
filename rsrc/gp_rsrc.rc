@@ -404,6 +404,7 @@ BEGIN
     IDS_NOWRITEACESS        "\nWrite access denied!\n\nOpen elevated so that the file can be modified?"
     IDS_ERRORNUM            "\n\nError #"
     IDS_CANTOPENDIR         "\nCan not open directory!"
+    IDS_INVALIDCP           "Invalid codepage selected!"
 END
 
 #endif    // ì˙ñ{åÍ resources
@@ -805,6 +806,7 @@ BEGIN
     IDS_NOWRITEACESS        "\nWrite access denied!\n\nOpen elevated so that the file can be modified?"
     IDS_ERRORNUM            "\n\nError #"
     IDS_CANTOPENDIR         "\nCan not open directory!"
+    IDS_INVALIDCP           "Invalid codepage selected!"
 END
 
 #endif    // âpåÍ (ïƒçë) resources

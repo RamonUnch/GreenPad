@@ -1574,7 +1574,7 @@ bool GreenPadWnd::ShowSaveDlg()
 		// neededcs i 0 in case it is internaly handled.
 		if( neededcs && !::IsValidCodePage( neededcs ) )
 		{
-			MessageBox(hwnd(), TEXT("Invalid codepage selected!"), NULL, MB_OK);
+			MsgBox( String(IDS_INVALIDCP).c_str(), NULL, MB_OK);
 			return false; // Fail if selected codepage is invalid.
 		}
 	}
