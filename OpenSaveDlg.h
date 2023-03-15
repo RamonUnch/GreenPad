@@ -125,6 +125,7 @@ private:
 private:
 	static SaveFileDlg* pThis; // マルチスレッド禁止！
 	static UINT_PTR CALLBACK OfnHook( HWND, UINT, WPARAM, LPARAM );
+	int getCSIfromNumStr( const TCHAR *buf );
 };
 
 //------------------------------------------------------------------------

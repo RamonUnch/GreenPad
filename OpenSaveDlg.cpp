@@ -598,6 +598,21 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	return ( ret != 0 );
 }
 
+int SaveFileDlg::getCSIfromNumStr( const TCHAR *buf )
+{
+	// Clamp cs
+	int cs = Clamp(-65535, String::GetInt(buf), +65535);
+	// Try to find value in the charset list
+	int csii = csl_.findCsi( cs );
+
+	// If we could not the index, then store the cp with a mask
+	if( (UINT)csii == 0xffffffff )
+	{
+		csii = 0xf0f00000 | cs;
+	}
+	return csii;
+}
+
 UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp )
 {
 	if( msg==WM_INITDIALOG )
@@ -620,7 +635,10 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			else
 			{	// Show CP number If selection failed.
 				TCHAR tmp[INT_DIGITS+1];
-				::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)Int2lStr(tmp, csi&0xfffff) );
+				TCHAR *cpnum = (TCHAR*)Int2lStr(tmp, csi&0xfffff);
+				::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)cpnum);
+				cb.Add( cpnum );
+				cb.Select( cpnum );
 			}
 		}
 		{
@@ -638,34 +656,53 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		// Older NT wants OfnHook returning TRUE in WM_INITDIALOG
 		return TRUE;
 	}
-	else if( msg==WM_NOTIFY ||( msg==WM_COMMAND && LOWORD(wp)==1 ))
+	else if( msg==WM_NOTIFY || msg==WM_COMMAND )
 	{
-		if(( msg==WM_COMMAND && LOWORD(wp)==1 ) || ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK )
+		int id    = LOWORD(wp);
+		int nCode = HIWORD(wp);
+		if( msg == WM_COMMAND && nCode == CBN_SELCHANGE && id == IDC_CODELIST )
+		{
+			// User selected the cp list combobox
+			TCHAR cpnum[64];
+			cpnum[0] = TEXT('0');
+			if( ComboBox(dlg,IDC_CODELIST).GetCurText( cpnum, countof(cpnum) ) )
+				if( TEXT('0') <= cpnum[0] && cpnum[0] <= TEXT('9') )
+				{
+					// Set back the CP number if selected (starts with an number).
+					::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)cpnum );
+					return FALSE;
+				}
+			// Clear cp number.
+			::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)TEXT("") );
+		}
+		if(( msg==WM_COMMAND && LOWORD(wp) == 1 ) || (msg==WM_NOTIFY && ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK) )
 		{
 			// OKが押されたら、文字コードの選択状況を記録
 			// 改行コードも
 			int lb = ComboBox(dlg,IDC_CRLFLIST).GetCurSel();
 			pThis->lb_ = lb == CB_ERR? 2 :lb; // Default to CRLF;
 
-			TCHAR buf[32];
+			TCHAR buf[64];
 			::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
 			// Typed CP has precedence over droplist
 			if ( buf[0] )
 			{
-				// Clamp cs
-				int cs = Clamp(-65535, String::GetInt(buf), +65535);
-				// Try to find value in the charset list
-				pThis->csIndex_ = pThis->csl_.findCsi( cs );
-
-				// If we could not the index, then store the cp with a mask
-				if( (UINT)pThis->csIndex_ == 0xffffffff )
-				{
-					pThis->csIndex_ = 0xf0f00000 | cs;
-				}
-				return 0;
+				pThis->csIndex_ = pThis->getCSIfromNumStr(buf);
+				return FALSE;
 			}
 
-			int i=ComboBox(dlg,IDC_CODELIST).GetCurSel();
+			ComboBox cb(dlg,IDC_CODELIST);
+			// First check if the temporary cpnumber item is selected
+			// We check by number....
+			if( cb.GetCurText( buf, countof(buf) ) )
+			{
+				if( TEXT('0') <= buf[0] && buf[0] <= TEXT('9') )
+				{
+					pThis->csIndex_ = pThis->getCSIfromNumStr(buf);
+					return FALSE;
+				}
+			}
+			int i = cb.GetCurSel();
 			if( 0 <= i && i < (int)pThis->csl_.size() )
 			{
 				ulong j;
