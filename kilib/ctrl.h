@@ -75,6 +75,21 @@ public:
 	void Add( const TCHAR* str );
 	void Select( const TCHAR* str );
 	int GetCurSel();
+	bool GetTextFrom( TCHAR *buf, int len, int i )
+	{
+		if( i >= 0 )
+		{
+			int txtlen = SendMsg( CB_GETLBTEXTLEN, i, 0 );
+			if( 0 < txtlen && txtlen < len )
+			{
+				SendMsg( CB_GETLBTEXT, i, (LPARAM)buf );
+				return true;
+			}
+		}
+		return false;
+	}
+	bool GetCurText( TCHAR *buf, int len )
+		{ return GetTextFrom( buf, len, GetCurSel() ); }
 private:
 	bool PreTranslateMessage( MSG* ) override;
 };
