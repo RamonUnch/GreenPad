@@ -77,7 +77,6 @@
 #define IDC_COUNTBYLETTER2              1032
 #define IDC_NEWLB2                      1033
 #define IDC_NEWDT                       1033
-#define IDC_CPNUMBER                    1034
 #define IDC_CRLFLBL                     1050
 
 #define ID_CMD_OPENELEVATED             40001

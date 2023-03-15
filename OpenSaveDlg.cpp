@@ -460,7 +460,7 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		{
 			TCHAR buf[32];
 			buf[0] = TEXT('\0');
-			::SendDlgItemMessage(dlg, IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
+			::SendDlgItemMessage(dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), (LPARAM)buf);
 			// Typed CP has precedence over droplist
 			if ( isSDigit(buf[0]) )
 			{
@@ -628,7 +628,6 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			{	// Show CP number If selection failed.
 				TCHAR tmp[INT_DIGITS+1];
 				TCHAR *cpnum = (TCHAR*)Int2lStr(tmp, csi&0xfffff);
-				::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)cpnum);
 				cb.Add( cpnum );
 				cb.Select( cpnum );
 			}
@@ -650,26 +649,8 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 	}
 	else if( msg==WM_NOTIFY || msg==WM_COMMAND )
 	{
-		int id    = LOWORD(wp);
-		int nCode = HIWORD(wp);
-		if( msg == WM_COMMAND && nCode == CBN_SELCHANGE && id == IDC_CODELIST )
-		{
-			// User selected the cp list combobox
-			TCHAR buf[64];
-			buf[0] = TEXT('\0');
-			if( ComboBox(dlg,IDC_CODELIST).GetCurText( buf, countof(buf) ) )
-			{	// We got the text from selected item.
-				if( isSDigit(buf[0]) )
-				{
-					// Set back the CP number if selected (starts with an number).
-					::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)buf );
-					return FALSE;
-				}
-			}
-			// Clear cp number.
-			::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)TEXT("") );
-		}
-		if(( msg==WM_COMMAND && LOWORD(wp) == 1 ) || (msg==WM_NOTIFY && ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK) )
+		if(( msg==WM_COMMAND && LOWORD(wp) == 1 )
+		|| ( msg==WM_NOTIFY && ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK) )
 		{
 			// OKが押されたら、文字コードの選択状況を記録
 			// 改行コードも
@@ -677,7 +658,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			pThis->lb_ = lb == CB_ERR? 2 :lb; // Default to CRLF;
 
 			TCHAR buf[64];
-			::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
+			::SendDlgItemMessage( dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), (LPARAM)buf);
 			// Typed CP has precedence over droplist
 			if ( isSDigit(buf[0]) )
 			{
@@ -685,18 +666,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 				return FALSE;
 			}
 
-			ComboBox cb(dlg,IDC_CODELIST);
-			// First check if the temporary cpnumber item is selected
-			// We check by number....
-			if( cb.GetCurText( buf, countof(buf) ) )
-			{
-				if( isSDigit(buf[0]) )
-				{
-					pThis->csIndex_ = pThis->csl_.GetCSIfromNumStr(buf);
-					return FALSE;
-				}
-			}
-			int i = cb.GetCurSel();
+			int i = ComboBox(dlg,IDC_CODELIST).GetCurSel();
 			if( 0 <= i && i < (int)pThis->csl_.size() )
 			{
 				ulong j;
@@ -773,14 +743,14 @@ void ReopenDlg::on_init()
 	{	// Show CP number in the reopen dialog
 		// If selection failed.
 		TCHAR tmp[INT_DIGITS+1];
-		SendMsgToItem( IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)Int2lStr(tmp, csIndex_&0xfffff) );
+		SendMsgToItem( IDC_CODELIST, WM_SETTEXT, 0, (LPARAM)Int2lStr(tmp, csIndex_&0xfffff) );
 	}
 }
 
 bool ReopenDlg::on_ok()
 {
 	TCHAR buf[32];
-	SendMsgToItem(IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
+	SendMsgToItem( IDC_CODELIST, WM_GETTEXT, countof(buf), (LPARAM)buf );
 	// Typed CP has precedence over droplist
 	if ( isSDigit(buf[0]) )
 	{
