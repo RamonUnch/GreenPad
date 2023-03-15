@@ -459,10 +459,10 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		if(( msg==WM_COMMAND && LOWORD(wp)==1 ) || ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK )
 		{
 			TCHAR buf[32];
-			buf[0] = TEXT('0');
+			buf[0] = TEXT('\0');
 			::SendDlgItemMessage(dlg, IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
 			// Typed CP has precedence over droplist
-			if ( buf[0] )
+			if ( isSDigit(buf[0]) )
 			{
 				// Try to find value in the charset list
 				pThis->csIndex_ = pThis->csl_.GetCSIfromNumStr( buf );
@@ -655,15 +655,17 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		if( msg == WM_COMMAND && nCode == CBN_SELCHANGE && id == IDC_CODELIST )
 		{
 			// User selected the cp list combobox
-			TCHAR cpnum[64];
-			cpnum[0] = TEXT('0');
-			if( ComboBox(dlg,IDC_CODELIST).GetCurText( cpnum, countof(cpnum) ) )
-				if( TEXT('0') <= cpnum[0] && cpnum[0] <= TEXT('9') )
+			TCHAR buf[64];
+			buf[0] = TEXT('\0');
+			if( ComboBox(dlg,IDC_CODELIST).GetCurText( buf, countof(buf) ) )
+			{	// We got the text from selected item.
+				if( isSDigit(buf[0]) )
 				{
 					// Set back the CP number if selected (starts with an number).
-					::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)cpnum );
+					::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)buf );
 					return FALSE;
 				}
+			}
 			// Clear cp number.
 			::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)TEXT("") );
 		}
@@ -677,7 +679,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			TCHAR buf[64];
 			::SendDlgItemMessage( dlg, IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
 			// Typed CP has precedence over droplist
-			if ( buf[0] )
+			if ( isSDigit(buf[0]) )
 			{
 				pThis->csIndex_ = pThis->csl_.GetCSIfromNumStr(buf);
 				return FALSE;
@@ -688,7 +690,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			// We check by number....
 			if( cb.GetCurText( buf, countof(buf) ) )
 			{
-				if( TEXT('0') <= buf[0] && buf[0] <= TEXT('9') )
+				if( isSDigit(buf[0]) )
 				{
 					pThis->csIndex_ = pThis->csl_.GetCSIfromNumStr(buf);
 					return FALSE;
@@ -780,13 +782,9 @@ bool ReopenDlg::on_ok()
 	TCHAR buf[32];
 	SendMsgToItem(IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
 	// Typed CP has precedence over droplist
-	if ( buf[0] )
+	if ( isSDigit(buf[0]) )
 	{
-		// Clamp cs
-		int cs = Clamp(-65535, String::GetInt(buf), +65535);
-		// Try to find value in the charset list
-		csIndex_ = csl_.findCsi( cs );
-
+		csIndex_ = csl_.GetCSIfromNumStr( buf );
 		return true;
 	}
 
