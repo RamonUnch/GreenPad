@@ -35,6 +35,7 @@ public:
 	ulong defaultCsi() const;
 	ulong findCsi( int cs ) const;
 	void EnrollCs( int _id, ushort _num);
+	ulong GetCSIfromNumStr( const TCHAR *buf ) const;
 
 private:
 
@@ -125,7 +126,6 @@ private:
 private:
 	static SaveFileDlg* pThis; // マルチスレッド禁止！
 	static UINT_PTR CALLBACK OfnHook( HWND, UINT, WPARAM, LPARAM );
-	int getCSIfromNumStr( const TCHAR *buf );
 };
 
 //------------------------------------------------------------------------

@@ -227,7 +227,19 @@ ulong CharSetList::findCsi( int cs ) const
 	for( ulong i=0,ie=list_.size(); i<ie; ++i )
 		if( list_[i].ID == cs )
 			return i;
-	return 0xffffffff;
+
+	// If we could not find the index, then store the cs with a mask
+	return 0xf0f00000 | (cs & 0xfffff);
+}
+
+ulong CharSetList::GetCSIfromNumStr( const TCHAR *buf ) const
+{
+	// Clamp cs
+	int cs = Clamp(-65535, String::GetInt(buf), +65535);
+	// Try to find value in the charset list
+	ulong csi = findCsi( cs );
+
+	return csi;
 }
 
 
@@ -447,19 +459,14 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		if(( msg==WM_COMMAND && LOWORD(wp)==1 ) || ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK )
 		{
 			TCHAR buf[32];
+			buf[0] = TEXT('0');
 			::SendDlgItemMessage(dlg, IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
 			// Typed CP has precedence over droplist
 			if ( buf[0] )
 			{
-				// Clamp cs
-				int cs = Clamp(-65535, String::GetInt(buf), +65535);
 				// Try to find value in the charset list
-				pThis->csIndex_ = pThis->csl_.findCsi( cs );
-
-				// If we could not the index, then store the cp with a mask
-				if( (UINT)pThis->csIndex_ == 0xffffffff )
-					pThis->csIndex_ = 0xf0f00000 | cs;
-				return 0;
+				pThis->csIndex_ = pThis->csl_.GetCSIfromNumStr( buf );
+				return FALSE;
 			}
 
 			pThis->csIndex_ = 0;
@@ -479,7 +486,7 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		}
 	}
 
-	return 0;
+	return FALSE;
 }
 
 
@@ -598,21 +605,6 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	return ( ret != 0 );
 }
 
-int SaveFileDlg::getCSIfromNumStr( const TCHAR *buf )
-{
-	// Clamp cs
-	int cs = Clamp(-65535, String::GetInt(buf), +65535);
-	// Try to find value in the charset list
-	int csii = csl_.findCsi( cs );
-
-	// If we could not the index, then store the cp with a mask
-	if( (UINT)csii == 0xffffffff )
-	{
-		csii = 0xf0f00000 | cs;
-	}
-	return csii;
-}
-
 UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp )
 {
 	if( msg==WM_INITDIALOG )
@@ -687,7 +679,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			// Typed CP has precedence over droplist
 			if ( buf[0] )
 			{
-				pThis->csIndex_ = pThis->getCSIfromNumStr(buf);
+				pThis->csIndex_ = pThis->csl_.GetCSIfromNumStr(buf);
 				return FALSE;
 			}
 
@@ -698,7 +690,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			{
 				if( TEXT('0') <= buf[0] && buf[0] <= TEXT('9') )
 				{
-					pThis->csIndex_ = pThis->getCSIfromNumStr(buf);
+					pThis->csIndex_ = pThis->csl_.GetCSIfromNumStr(buf);
 					return FALSE;
 				}
 			}
@@ -794,10 +786,6 @@ bool ReopenDlg::on_ok()
 		int cs = Clamp(-65535, String::GetInt(buf), +65535);
 		// Try to find value in the charset list
 		csIndex_ = csl_.findCsi( cs );
-
-		// If we could not the index, then store the cp with a mask
-		if( (UINT)csIndex_ == 0xffffffff )
-			csIndex_ = 0xf0f00000 | cs;
 
 		return true;
 	}
