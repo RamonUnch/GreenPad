@@ -1260,18 +1260,18 @@ void GreenPadWnd::UpdateWindowName()
 	// Try to show CP number in the StBar
 	static TCHAR cpname[32];
 	TCHAR tmp[INT_DIGITS+1];
-	if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)
-	{
+	if( (UINT)csi_==0xffffffff )
+	{	// Unknow cs
+		stb_.SetCsText( TEXT("UNKN") );
+	}
+	else if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)
+	{	// cs number is specified
 		cpname[0] = TEXT('C'); cpname[1] = TEXT('P');
 		my_lstrkpy( cpname+2, Int2lStr(tmp, csi_ & 0xfffff) );
 		stb_.SetCsText( cpname );
 	}
-	else if( (UINT)csi_==0xffffffff )
-	{
-		stb_.SetCsText( TEXT("UNKN") );
-	}
-	else
-	{
+	else if (0 <= csi_ && csi_ < (int)charSets_.size() )
+	{	// Get cs name from charSets_ list
 		TCHAR *end = my_lstrkpy(cpname, charSets_[csi_].shortName);
 		*end++ = TEXT(' ');
 		*end++ = TEXT('(');
@@ -1279,6 +1279,9 @@ void GreenPadWnd::UpdateWindowName()
 		*end++ = TEXT(')');
 		*end = TEXT('\0');
 		stb_.SetCsText( cpname );
+	} else {
+		// csi_ does not match any pattern.
+		stb_.SetCsText( Int2lStr(cpname, csi_) );
 	}
 	stb_.SetLbText( lb_ );
 }
