@@ -657,7 +657,8 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			int lb = ComboBox(dlg,IDC_CRLFLIST).GetCurSel();
 			pThis->lb_ = lb == CB_ERR? 2 :lb; // Default to CRLF;
 
-			TCHAR buf[64];
+			TCHAR buf[32];
+			buf[0] = TEXT('\0');
 			::SendDlgItemMessage( dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), (LPARAM)buf);
 			// Typed CP has precedence over droplist
 			if ( isSDigit(buf[0]) )
@@ -681,7 +682,9 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			}
 			else
 			{
-				pThis->csIndex_ = 0;
+				// Failed to select any cs
+				// An error will occur and we shall not save
+				pThis->csIndex_ = 0xffffffff;
 			}
 		}
 	}

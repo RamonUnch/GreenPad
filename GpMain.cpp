@@ -1571,15 +1571,19 @@ bool GreenPadWnd::ShowSaveDlg()
 		return false;
 
 	const int csi = sfd.csi();
-	if( (UINT)csi >= 0xf0f00000 && (UINT)csi < 0xf1000000 )
+	bool invalidCS = false;
+	if( (UINT)csi == 0xffffffff )
+		invalidCS = true;
+	else if( (UINT)csi >= 0xf0f00000 && (UINT)csi < 0xf1000000 )
 	{
 		int neededcs = TextFileR::neededCodepage( resolveCSI(csi) );
 		// neededcs i 0 in case it is internaly handled.
-		if( neededcs && !::IsValidCodePage( neededcs ) )
-		{
-			MsgBox( String(IDS_INVALIDCP).c_str(), NULL, MB_OK);
-			return false; // Fail if selected codepage is invalid.
-		}
+		invalidCS = neededcs != 0 && !::IsValidCodePage( neededcs );
+	}
+	if( invalidCS )
+	{
+		MsgBox( String(IDS_INVALIDCP).c_str(), NULL, MB_OK);
+		return false; // Fail if selected codepage is invalid.
 	}
 
 	filename_ = sfd.filename();
