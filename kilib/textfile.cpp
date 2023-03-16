@@ -1401,15 +1401,27 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 		return UTF5;
 
 //-- UTF-16/32 detection
-	if( freq[ 0 ] > siz >> 11) // More than 1/2048 nulls in content?
-	{ // then it may be UTF-16/32 without BOM
-		// Note: even and odd checks must be applied on the total file size.
-		// UTF-16 byte count will always be even
-		if(!(totsiz&1) && CheckUTFConfidence(ptr,siz,sizeof(dbyte),true)) return UTF16LE;
-		if(!(totsiz&1) && CheckUTFConfidence(ptr,siz,sizeof(dbyte),false)) return UTF16BE;
-		// UTF-32 byte count will always be multiple of 4
-		if(!(totsiz&3) && CheckUTFConfidence(ptr,siz,sizeof(qbyte),true)) return UTF32LE;
-		if(!(totsiz&3) && CheckUTFConfidence(ptr,siz,sizeof(qbyte),false)) return UTF32BE;
+	if( freq[ 0 ] > siz >> 11 ) // More than 1/2048 nulls in content?
+	{	// then it may be UTF-16/32 without BOM We make some sanity
+		// checks on NULs frequency with 1% extra NULs tolerance
+		if( freq[ 0 ] <= (siz>>1) + (siz>>7) && !(totsiz&1) )
+		{	// If we got less than 50% NULs it might be UTF16
+			// UTF-16 byte count will always be even
+			if(CheckUTFConfidence(ptr,siz,sizeof(dbyte),true)) return UTF16LE;
+			if(CheckUTFConfidence(ptr,siz,sizeof(dbyte),false)) return UTF16BE;
+		}
+		if( freq[ 0 ] <= 3*(siz>>2) + (siz>>7) && !(totsiz&3) )
+		{	// If we got less than 75% NULs it might be UTF32
+			// UTF-32 byte count will always be multiple of 4
+			if(CheckUTFConfidence(ptr,siz,sizeof(qbyte),true)) return UTF32LE;
+			if(CheckUTFConfidence(ptr,siz,sizeof(qbyte),false)) return UTF32BE;
+		}
+
+		if ( freq[ 0 ] >= siz>>9 )
+		{	// More than 1/512 NULs and not UTF16/32? BINARY file!
+			// Use ISO8859-1 mode which is internally handled and very simple.
+			return 28591; // Latin-1 but not cp1252
+		}
 	}
 
 //-- chardet and MLang detection
