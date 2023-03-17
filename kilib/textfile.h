@@ -191,6 +191,9 @@ public:
 
 	//@{ ‰üs‚ªˆêŒÂ‚àŒ©‚Â‚©‚ç‚È‚©‚Á‚½ƒtƒ‰ƒO //@}
 	bool nolb_found() const;
+
+	static int neededCodepage(int cs);
+
 private:
 
 	dptr<TextFileRPimpl> impl_;
@@ -204,7 +207,6 @@ private:
 	int AutoDetection( int cs, const uchar* ptr, ulong siz );
 	int MLangAutoDetection( const uchar* ptr, ulong siz );
 	int chardetAutoDetection( const uchar* ptr, ulong siz );
-	int neededCodepage(int cs);
 
 	bool IsNonUnicodeRange(qbyte u);
 	bool IsAscii(uchar c);

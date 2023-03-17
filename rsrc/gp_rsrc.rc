@@ -183,7 +183,7 @@ BEGIN
     LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT
                     WS_GROUP
     LTEXT           "文字コード(&C):",IDC_STATIC,7,18,42,8
-    COMBOBOX        IDC_CODELIST,66,16,111,103,CBS_DROPDOWNLIST | WS_VSCROLL |
+    COMBOBOX        IDC_CODELIST,66,16,111,103,CBS_DROPDOWN | WS_VSCROLL |
                     WS_TABSTOP
 END
 
@@ -194,7 +194,7 @@ BEGIN
     LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT
                     WS_GROUP
     LTEXT           "文字コード(&C):",IDC_STATIC,7,18,42,8
-    COMBOBOX        IDC_CODELIST,66,16,111,103,CBS_DROPDOWNLIST | WS_VSCROLL |
+    COMBOBOX        IDC_CODELIST,66,16,111,103,CBS_DROPDOWN | WS_VSCROLL |
                     WS_TABSTOP
     LTEXT           "改行コード(&L):",IDC_STATIC,7,37,41,8
     COMBOBOX        IDC_CRLFLIST,66,35,60,103,CBS_DROPDOWNLIST | WS_VSCROLL |
@@ -208,7 +208,7 @@ CAPTION "開き直す"
 FONT 9, "ＭＳ Ｐゴシック"
 BEGIN
     LTEXT           "文字コード(&C):",IDC_STATIC,9,13,42,8
-    COMBOBOX        IDC_CODELIST,59,11,111,103,CBS_DROPDOWNLIST | WS_VSCROLL |
+    COMBOBOX        IDC_CODELIST,59,11,111,103,CBS_DROPDOWN | WS_VSCROLL |
                     WS_TABSTOP
     PUSHBUTTON      "OK",IDOK,66,32,56,14
     PUSHBUTTON      "キャンセル",IDCANCEL,125,32,56,14
@@ -397,6 +397,7 @@ BEGIN
     IDS_NOWRITEACESS        "\nWrite access denied!\n\nOpen elevated so that the file can be modified?"
     IDS_ERRORNUM            "\n\nError #"
     IDS_CANTOPENDIR         "\nCan not open directory!"
+    IDS_INVALIDCP           "Invalid codepage selected!"
 END
 
 #endif    // 日本語 resources
@@ -579,10 +580,9 @@ IDD_SAVEFILEHOOK DIALOG 0, 0, 187, 55
 STYLE DS_SETFONT | DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
 FONT 8, MYDIALOGFONT
 BEGIN
-    LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT
-                    WS_GROUP
+    LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT WS_GROUP
     LTEXT           "&Character Encoding:",IDC_STATIC,6,18,70,8
-    COMBOBOX        IDC_CODELIST,76,16,120,103,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_CODELIST,76,16,120,103,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     LTEXT           "&Line ending:",IDC_STATIC,6,37,70,8
     COMBOBOX        IDC_CRLFLIST,76,35,60,103,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
@@ -594,9 +594,7 @@ CAPTION "ReOpen File"
 FONT 8, MYDIALOGFONT
 BEGIN
     LTEXT           "&Character Encoding:",IDC_STATIC,4,13,68,8
-    COMBOBOX        IDC_CODELIST,70,11,112,103,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "C&P:",IDC_STATIC, 4, 34, 13, 8
-    EDITTEXT        IDC_CPNUMBER, 17, 32, 45, 13, WS_TABSTOP | ES_AUTOHSCROLL
+    COMBOBOX        IDC_CODELIST,70,11,112,103,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "OK",IDOK,66,32,56,14
     PUSHBUTTON      "Cancel",IDCANCEL,125,32,56,14
 END
@@ -607,7 +605,7 @@ FONT 8, MYDIALOGFONT
 BEGIN
     LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT WS_GROUP
     LTEXT           "&Character Encoding:",IDC_STATIC,4,18,68,8
-    COMBOBOX        IDC_CODELIST,76,16,120,103,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_CODELIST,76,16,120,103,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_JUMP DIALOG  0, 0, 131, 43
@@ -795,6 +793,7 @@ BEGIN
     IDS_NOWRITEACESS        "\nWrite access denied!\n\nOpen elevated so that the file can be modified?"
     IDS_ERRORNUM            "\n\nError #"
     IDS_CANTOPENDIR         "\nCan not open directory!"
+    IDS_INVALIDCP           "Invalid codepage selected!"
 END
 
 #endif    // 英語 (米国) resources

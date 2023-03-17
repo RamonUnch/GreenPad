@@ -26,6 +26,7 @@
 #define IDS_NOWRITEACESS                13
 #define IDS_ERRORNUM                    14
 #define IDS_CANTOPENDIR                 15
+#define IDS_INVALIDCP                   16
 
 #define IDR_MAIN                        103
 #define IDD_OPENFILEHOOK                105
@@ -76,7 +77,6 @@
 #define IDC_COUNTBYLETTER2              1032
 #define IDC_NEWLB2                      1033
 #define IDC_NEWDT                       1033
-#define IDC_CPNUMBER                    1034
 #define IDC_CRLFLBL                     1050
 
 #define ID_CMD_OPENELEVATED             40001

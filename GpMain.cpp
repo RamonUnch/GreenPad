@@ -547,7 +547,7 @@ void GreenPadWnd::on_reopenfile()
 		{	// We have a file to reopen
 			if( AskToSave() )
 			{
-				int cs = resolveCSI(csi_); //(csi > 0xf0f00000)? csi&0xfffff: charSets_[csi].ID;
+				int cs = resolveCSI(csi_);
 				OpenByMyself( filename_, cs, false );
 			}
 		}
@@ -561,8 +561,8 @@ void GreenPadWnd::on_reopenfile()
 // Resolves a csi into a usable cs
 int GreenPadWnd::resolveCSI(int csi) const
 {
-	return ((UINT)csi >= 0xf0f00000 && (UINT)csi < 0xf1000000)? csi & 0xfffff
-	       : (0 < csi && csi < (int)charSets_.size())? charSets_[csi].ID: 0;
+	return ( (UINT)csi >= 0xf0f00000 && (UINT)csi < 0xf1000000 )? csi & 0xfffff
+	     : (0 < csi && csi < (int)charSets_.size())? charSets_[csi].ID: 0;
 }
 void GreenPadWnd::on_openelevated(const ki::Path& fn)
 {
@@ -1260,18 +1260,18 @@ void GreenPadWnd::UpdateWindowName()
 	// Try to show CP number in the StBar
 	static TCHAR cpname[32];
 	TCHAR tmp[INT_DIGITS+1];
-	if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)
-	{
+	if( (UINT)csi_==0xffffffff )
+	{	// Unknow cs
+		stb_.SetCsText( TEXT("UNKN") );
+	}
+	else if((UINT)csi_ >= 0xf0f00000 && (UINT)csi_ < 0xf1000000)
+	{	// cs number is specified
 		cpname[0] = TEXT('C'); cpname[1] = TEXT('P');
 		my_lstrkpy( cpname+2, Int2lStr(tmp, csi_ & 0xfffff) );
 		stb_.SetCsText( cpname );
 	}
-	else if( (UINT)csi_==0xffffffff )
-	{
-		stb_.SetCsText( TEXT("UNKN") );
-	}
-	else
-	{
+	else if (0 <= csi_ && csi_ < (int)charSets_.size() )
+	{	// Get cs name from charSets_ list
 		TCHAR *end = my_lstrkpy(cpname, charSets_[csi_].shortName);
 		*end++ = TEXT(' ');
 		*end++ = TEXT('(');
@@ -1279,6 +1279,9 @@ void GreenPadWnd::UpdateWindowName()
 		*end++ = TEXT(')');
 		*end = TEXT('\0');
 		stb_.SetCsText( cpname );
+	} else {
+		// csi_ does not match any pattern.
+		stb_.SetCsText( Int2lStr(cpname, csi_) );
 	}
 	stb_.SetLbText( lb_ );
 }
@@ -1360,12 +1363,10 @@ bool GreenPadWnd::ShowOpenDlg( Path* fn, int* cs )
 	{
 		LOGGER( "GreenPadWnd::ShowOpenDlg ok" );
 		*fn = ofd.filename();
-		int i = ofd.csi();
-		i = 0 <= i && i < (int)charSets_.size()? i: 0;
-		*cs = charSets_[i].ID;
+		*cs = resolveCSI( ofd.csi() );
 	}
 
-	LOGGER( "GreenPadWnd::ShowOpenDlg end" );
+	LOGGERF( TEXT("GreenPadWnd::ShowOpenDlg end, asked cs = %d"), (int)*cs );
 	return ok;
 }
 
@@ -1568,6 +1569,22 @@ bool GreenPadWnd::ShowSaveDlg()
 	stb_.SetText( TEXT("Saving file...") );
 	if( !sfd.DoModal( hwnd(), filt.get(), filename_.c_str() ) )
 		return false;
+
+	const int csi = sfd.csi();
+	bool invalidCS = false;
+	if( (UINT)csi == 0xffffffff )
+		invalidCS = true;
+	else if( (UINT)csi >= 0xf0f00000 && (UINT)csi < 0xf1000000 )
+	{
+		int neededcs = TextFileR::neededCodepage( resolveCSI(csi) );
+		// neededcs i 0 in case it is internaly handled.
+		invalidCS = neededcs != 0 && !::IsValidCodePage( neededcs );
+	}
+	if( invalidCS )
+	{
+		MsgBox( String(IDS_INVALIDCP).c_str(), NULL, MB_OK);
+		return false; // Fail if selected codepage is invalid.
+	}
 
 	filename_ = sfd.filename();
 	csi_      = sfd.csi();

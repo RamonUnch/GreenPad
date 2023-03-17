@@ -44,6 +44,9 @@ template<typename T> inline T Abs(T x) { return (x<0 ? -x : x); }
 template<typename T> inline T Clamp(T l, T x,T h) { return (x < l)? l: ((x > h)? h: x); }
 template<typename T> inline T NZero(T x)   { return (x==0? 1 : x); }
 
+inline bool isUDigit(TCHAR x) { return TEXT('0') <= x && x <= TEXT('9'); }
+inline bool isSDigit(TCHAR x) { return isUDigit(x) || x == TEXT('-'); }
+
 // 古いC++処理系でも、forで使う変数のスコープを強制的に制限
 #if defined(_MSC_VER) || defined(__DMC__)
 #define for if(0);else for

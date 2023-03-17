@@ -227,7 +227,19 @@ ulong CharSetList::findCsi( int cs ) const
 	for( ulong i=0,ie=list_.size(); i<ie; ++i )
 		if( list_[i].ID == cs )
 			return i;
-	return 0xffffffff;
+
+	// If we could not find the index, then store the cs with a mask
+	return 0xf0f00000 | (cs & 0xfffff);
+}
+
+ulong CharSetList::GetCSIfromNumStr( const TCHAR *buf ) const
+{
+	// Clamp cs
+	int cs = Clamp(-65535, String::GetInt(buf), +65535);
+	// Try to find value in the charset list
+	ulong csi = findCsi( cs );
+
+	return csi;
 }
 
 
@@ -375,24 +387,14 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	// clear last error
 	pThis = this;
 	TryAgain:
+	pThis->dlgEverOpened_ = false;
 	::SetLastError(0);
 	BOOL ret = ::GetOpenFileName((LPOPENFILENAME)&ofn);
 	if( !ret )
 	{
 		DWORD ErrCode = ::GetLastError();
 
-		if( !ErrCode
-		|| ErrCode == ERROR_NO_MORE_FILES
-		|| ErrCode == ERROR_INVALID_PARAMETER
-		|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST ) // On XP I sometime get this!!!!
-		{
-			// user pressed Cancel button
-			LOGGER( "OpenFileDlg::DoModal CANCEL end" );
-		}
-		else if(( ErrCode == ERROR_INVALID_PARAMETER
-		       || ErrCode == ERROR_CALL_NOT_IMPLEMENTED
-		       || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
-		&&   ( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
+		if( !pThis->dlgEverOpened_ && ofn.Flags&OFN_EXPLORER )
 		{
 			// maybe Common Dialog DLL doesn't like OFN_EXPLORER, try again without it
 			ofn.Flags &= ~OFN_EXPLORER;
@@ -401,12 +403,20 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			// try again!
 			goto TryAgain;
 		}
+		else if( !ErrCode
+			|| ErrCode == ERROR_NO_MORE_FILES
+			|| ErrCode == ERROR_INVALID_PARAMETER
+			|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST ) // On XP I sometime get this!!!!
+		{
+			// user pressed Cancel button
+			LOGGER( "OpenFileDlg::DoModal CANCEL end" );
+		}
 		else
 		{	// Failed, display LastError.
 			//TCHAR tmp[64]; tmp[0] = TEXT('\0');
-			//::wsprintf(tmp,TEXT("GetOpenFileName LastError #%d"), ErrCode);
+			//::wsprintf(tmp,TEXT("GetOpenFileName LastError #%d, dlgEverOpened_=%d"), ErrCode, (int)pThis->dlgEverOpened_);
 			//::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK );
-			LOGGER( "OpenFileDlg::DoModal FAILED end" );
+			LOGGERF( TEXT("OpenFileDlg::DoModal FAILED end, dlgEverOpened_=%d"), (int)pThis->dlgEverOpened_ );
 		}
 	}
 	else
@@ -436,9 +446,9 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		{
 			::ShowWindow( hCRLFCombo, SW_HIDE );
 			HWND hCRLFlbl = ::GetDlgItem( dlg, IDC_CRLFLBL );
-			if(hCRLFlbl) ::ShowWindow( hCRLFlbl, SW_HIDE );
+			if( hCRLFlbl ) ::ShowWindow( hCRLFlbl, SW_HIDE );
 		}
-		// older NT wants OfnHook returning TRUE in WM_INITDIALOG
+		// Older NT wants OfnHook returning TRUE in WM_INITDIALOG
 		return TRUE;
 	}
 	else if( msg==WM_NOTIFY ||( msg==WM_COMMAND && LOWORD(wp)==1 ))
@@ -446,6 +456,17 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		// OKが押されたら、文字コードの選択状況を記録
 		if(( msg==WM_COMMAND && LOWORD(wp)==1 ) || ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK )
 		{
+			TCHAR buf[32];
+			buf[0] = TEXT('\0');
+			::SendDlgItemMessage(dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), (LPARAM)buf);
+			// Typed CP has precedence over droplist
+			if ( isSDigit(buf[0]) )
+			{
+				// Try to find value in the charset list
+				pThis->csIndex_ = pThis->csl_.GetCSIfromNumStr( buf );
+				return FALSE;
+			}
+
 			pThis->csIndex_ = 0;
 			int i=ComboBox(dlg,IDC_CODELIST).GetCurSel();
 			if( 0 <= i && i < (int)pThis->csl_.size() )
@@ -462,8 +483,12 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			}
 		}
 	}
+	else if (msg == WM_PAINT)
+	{
+		pThis->dlgEverOpened_ = true;
+	}
 
-	return 0;
+	return FALSE;
 }
 
 
@@ -546,23 +571,14 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 
 	pThis = this;
 	TryAgain:
+	pThis->dlgEverOpened_ = false;
 	::SetLastError(0);
 	BOOL ret = ::GetSaveFileName((LPOPENFILENAME)&ofn);
 	if( !ret )
 	{
 		DWORD ErrCode = ::GetLastError();
 
-		if( !ErrCode
-		|| ErrCode == ERROR_NO_MORE_FILES
-		|| ErrCode == ERROR_INVALID_PARAMETER
-		|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST ) // On XP I sometime get this!!!!
-		{
-			// user pressed Cancel button
-		}
-		else if(( ErrCode == ERROR_INVALID_PARAMETER
-		       || ErrCode == ERROR_CALL_NOT_IMPLEMENTED
-		       || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
-		&&   ( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
+		if( !pThis->dlgEverOpened_ && ofn.Flags&OFN_EXPLORER )
 		{
 			// maybe Common Dialog DLL doesn't like OFN_EXPLORER, try again without it
 			ofn.Flags &= ~OFN_EXPLORER;
@@ -572,11 +588,19 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			// try again!
 			goto TryAgain;
 		}
+		else if( !ErrCode
+			|| ErrCode == ERROR_NO_MORE_FILES
+			|| ErrCode == ERROR_INVALID_PARAMETER
+			|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST ) // On XP I sometime get this!!!!
+		{
+			// user pressed Cancel button
+		}
 		else
 		{	// Failed, display LastError.
-			TCHAR tmp[64]; tmp[0] = TEXT('\0');
-			::wsprintf(tmp,TEXT("GetSaveFileName LastError #%d"), ErrCode);
-			::MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+			//TCHAR tmp[64]; tmp[0] = TEXT('\0');
+			//::wsprintf(tmp,TEXT("GetSaveFileName LastError #%d"), ErrCode);
+			//::MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+			LOGGERF( TEXT("SaveFileDlg::DoModal FAILED end, dlgEverOpened_=%d"), (int)pThis->dlgEverOpened_ );
 		}
 	}
 	return ( ret != 0 );
@@ -594,7 +618,20 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			for( ulong i=0; i<csl.size(); ++i )
 				if( csl[i].type & 1 ) // 1:=SAVE
 					cb.Add( csl[i].longName );
-			cb.Select( csl[pThis->csIndex_].longName );
+
+			int csi = pThis->csIndex_;
+			if( 0 <= csi && csi < (int)pThis->csl_.size() )
+			{
+				// Select combobox item
+				cb.Select( pThis->csl_[csi].longName );
+			}
+			else
+			{	// Show CP number If selection failed.
+				TCHAR tmp[INT_DIGITS+1];
+				TCHAR *cpnum = (TCHAR*)Int2lStr(tmp, csi&0xfffff);
+				cb.Add( cpnum );
+				cb.Select( cpnum );
+			}
 		}
 		{
 			ComboBox cb( dlg, IDC_CRLFLIST );
@@ -611,12 +648,27 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		// Older NT wants OfnHook returning TRUE in WM_INITDIALOG
 		return TRUE;
 	}
-	else if( msg==WM_NOTIFY ||( msg==WM_COMMAND && LOWORD(wp)==1 ))
+	else if( msg==WM_NOTIFY || msg==WM_COMMAND )
 	{
-		if(( msg==WM_COMMAND && LOWORD(wp)==1 ) || ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK )
+		if(( msg==WM_COMMAND && LOWORD(wp) == 1 )
+		|| ( msg==WM_NOTIFY && ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK) )
 		{
 			// OKが押されたら、文字コードの選択状況を記録
-			int i=ComboBox(dlg,IDC_CODELIST).GetCurSel();
+			// 改行コードも
+			int lb = ComboBox(dlg,IDC_CRLFLIST).GetCurSel();
+			pThis->lb_ = lb == CB_ERR? 2 :lb; // Default to CRLF;
+
+			TCHAR buf[32];
+			buf[0] = TEXT('\0');
+			::SendDlgItemMessage( dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), (LPARAM)buf);
+			// Typed CP has precedence over droplist
+			if ( isSDigit(buf[0]) )
+			{
+				pThis->csIndex_ = pThis->csl_.GetCSIfromNumStr(buf);
+				return FALSE;
+			}
+
+			int i = ComboBox(dlg,IDC_CODELIST).GetCurSel();
 			if( 0 <= i && i < (int)pThis->csl_.size() )
 			{
 				ulong j;
@@ -631,13 +683,17 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			}
 			else
 			{
-				pThis->csIndex_ = 0;
+				// Failed to select any cs
+				// An error will occur and we shall not save
+				pThis->csIndex_ = 0xffffffff;
 			}
-			// 改行コードも
-			int lb = ComboBox(dlg,IDC_CRLFLIST).GetCurSel();
-			pThis->lb_ = lb == CB_ERR? 2 :lb; // Default to CRLF;
 		}
 	}
+	else if (msg == WM_PAINT)
+	{
+		pThis->dlgEverOpened_ = true;
+	}
+
 	return FALSE;
 }
 
@@ -687,36 +743,27 @@ void ReopenDlg::on_init()
 			cb.Add( csl_[i].longName );
 
 	int csi = csIndex_;
-	if( csi < 0 || csi > (int)csl_.size() )
-		csi = 0; // index is outside of range.
-
-	// Select combobox item
-	cb.Select( csl_[csi].longName );
-
-	if( csi == 0 )
+	if( 0 <= csi && csi < (int)csl_.size() )
+	{
+		// Select combobox item
+		cb.Select( csl_[csi].longName );
+	}
+	else
 	{	// Show CP number in the reopen dialog
 		// If selection failed.
 		TCHAR tmp[INT_DIGITS+1];
-		SendMsgToItem( IDC_CPNUMBER, WM_SETTEXT, 0, (LPARAM)Int2lStr(tmp, csIndex_&0xfffff) );
+		SendMsgToItem( IDC_CODELIST, WM_SETTEXT, 0, (LPARAM)Int2lStr(tmp, csIndex_&0xfffff) );
 	}
 }
 
 bool ReopenDlg::on_ok()
 {
 	TCHAR buf[32];
-	SendMsgToItem(IDC_CPNUMBER, WM_GETTEXT, countof(buf), (LPARAM)buf);
+	SendMsgToItem( IDC_CODELIST, WM_GETTEXT, countof(buf), (LPARAM)buf );
 	// Typed CP has precedence over droplist
-	if ( buf[0] )
+	if ( isSDigit(buf[0]) )
 	{
-		// Clamp cs
-		int cs = Clamp(-65535, String::GetInt(buf), +65535);
-		// Try to find value in the charset list
-		csIndex_ = csl_.findCsi( cs );
-
-		// If we could not the index, then store the cp with a mask
-		if( (UINT)csIndex_ == 0xffffffff )
-			csIndex_ = 0xf0f00000 | cs;
-
+		csIndex_ = csl_.GetCSIfromNumStr( buf );
 		return true;
 	}
 
