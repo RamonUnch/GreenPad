@@ -387,24 +387,14 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	// clear last error
 	pThis = this;
 	TryAgain:
+	pThis->dlgEverOpened_ = false;
 	::SetLastError(0);
 	BOOL ret = ::GetOpenFileName((LPOPENFILENAME)&ofn);
 	if( !ret )
 	{
 		DWORD ErrCode = ::GetLastError();
 
-		if( !ErrCode
-		|| ErrCode == ERROR_NO_MORE_FILES
-		|| ErrCode == ERROR_INVALID_PARAMETER
-		|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST ) // On XP I sometime get this!!!!
-		{
-			// user pressed Cancel button
-			LOGGER( "OpenFileDlg::DoModal CANCEL end" );
-		}
-		else if(( ErrCode == ERROR_INVALID_PARAMETER
-		       || ErrCode == ERROR_CALL_NOT_IMPLEMENTED
-		       || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
-		&&   ( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
+		if( !pThis->dlgEverOpened_ && ofn.Flags&OFN_EXPLORER )
 		{
 			// maybe Common Dialog DLL doesn't like OFN_EXPLORER, try again without it
 			ofn.Flags &= ~OFN_EXPLORER;
@@ -413,12 +403,20 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			// try again!
 			goto TryAgain;
 		}
+		else if( !ErrCode
+			|| ErrCode == ERROR_NO_MORE_FILES
+			|| ErrCode == ERROR_INVALID_PARAMETER
+			|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST ) // On XP I sometime get this!!!!
+		{
+			// user pressed Cancel button
+			LOGGER( "OpenFileDlg::DoModal CANCEL end" );
+		}
 		else
 		{	// Failed, display LastError.
 			//TCHAR tmp[64]; tmp[0] = TEXT('\0');
-			//::wsprintf(tmp,TEXT("GetOpenFileName LastError #%d"), ErrCode);
+			//::wsprintf(tmp,TEXT("GetOpenFileName LastError #%d, dlgEverOpened_=%d"), ErrCode, (int)pThis->dlgEverOpened_);
 			//::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK );
-			LOGGER( "OpenFileDlg::DoModal FAILED end" );
+			LOGGERF( TEXT("OpenFileDlg::DoModal FAILED end, dlgEverOpened_=%d"), (int)pThis->dlgEverOpened_ );
 		}
 	}
 	else
@@ -450,7 +448,7 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			HWND hCRLFlbl = ::GetDlgItem( dlg, IDC_CRLFLBL );
 			if( hCRLFlbl ) ::ShowWindow( hCRLFlbl, SW_HIDE );
 		}
-		// older NT wants OfnHook returning TRUE in WM_INITDIALOG
+		// Older NT wants OfnHook returning TRUE in WM_INITDIALOG
 		return TRUE;
 	}
 	else if( msg==WM_NOTIFY ||( msg==WM_COMMAND && LOWORD(wp)==1 ))
@@ -484,6 +482,10 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 				pThis->csIndex_ = j;
 			}
 		}
+	}
+	else if (msg == WM_PAINT)
+	{
+		pThis->dlgEverOpened_ = true;
 	}
 
 	return FALSE;
@@ -569,23 +571,14 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 
 	pThis = this;
 	TryAgain:
+	pThis->dlgEverOpened_ = false;
 	::SetLastError(0);
 	BOOL ret = ::GetSaveFileName((LPOPENFILENAME)&ofn);
 	if( !ret )
 	{
 		DWORD ErrCode = ::GetLastError();
 
-		if( !ErrCode
-		|| ErrCode == ERROR_NO_MORE_FILES
-		|| ErrCode == ERROR_INVALID_PARAMETER
-		|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST ) // On XP I sometime get this!!!!
-		{
-			// user pressed Cancel button
-		}
-		else if(( ErrCode == ERROR_INVALID_PARAMETER
-		       || ErrCode == ERROR_CALL_NOT_IMPLEMENTED
-		       || ErrCode == ERROR_INVALID_ACCEL_HANDLE )
-		&&   ( ofn.Flags&OFN_EXPLORER == OFN_EXPLORER) )
+		if( !pThis->dlgEverOpened_ && ofn.Flags&OFN_EXPLORER )
 		{
 			// maybe Common Dialog DLL doesn't like OFN_EXPLORER, try again without it
 			ofn.Flags &= ~OFN_EXPLORER;
@@ -595,11 +588,19 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 			// try again!
 			goto TryAgain;
 		}
+		else if( !ErrCode
+			|| ErrCode == ERROR_NO_MORE_FILES
+			|| ErrCode == ERROR_INVALID_PARAMETER
+			|| ErrCode == ERROR_CLASS_DOES_NOT_EXIST ) // On XP I sometime get this!!!!
+		{
+			// user pressed Cancel button
+		}
 		else
 		{	// Failed, display LastError.
-			TCHAR tmp[64]; tmp[0] = TEXT('\0');
-			::wsprintf(tmp,TEXT("GetSaveFileName LastError #%d"), ErrCode);
-			::MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+			//TCHAR tmp[64]; tmp[0] = TEXT('\0');
+			//::wsprintf(tmp,TEXT("GetSaveFileName LastError #%d"), ErrCode);
+			//::MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+			LOGGERF( TEXT("SaveFileDlg::DoModal FAILED end, dlgEverOpened_=%d"), (int)pThis->dlgEverOpened_ );
 		}
 	}
 	return ( ret != 0 );
@@ -688,6 +689,11 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			}
 		}
 	}
+	else if (msg == WM_PAINT)
+	{
+		pThis->dlgEverOpened_ = true;
+	}
+
 	return FALSE;
 }
 

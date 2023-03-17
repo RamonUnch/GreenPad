@@ -71,6 +71,7 @@ private:
 	const CharSetList& csl_;
 	TCHAR filename_[MAX_PATH];
 	int   csIndex_;
+	bool  dlgEverOpened_;
 
 private:
 	static OpenFileDlg* pThis; // マルチスレッド禁止！
@@ -122,6 +123,7 @@ private:
 	TCHAR filename_[MAX_PATH];
 	int   csIndex_;
 	int   lb_;
+	bool  dlgEverOpened_;
 
 private:
 	static SaveFileDlg* pThis; // マルチスレッド禁止！
