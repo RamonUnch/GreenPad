@@ -784,6 +784,8 @@ void ConfigManager::LoadIni()
 	}
 	// Exit with the ESC key?
 	useQuickExit_ = ini_.GetBool( TEXT("QuickExit"), false );
+	// Exit with the ESC key?
+	useOldOpenSaveDlg_ = ini_.GetBool( TEXT("OldOpenSaveDlg"), false );
 
 	// Print Margins
 	SetRect(&rcPMargins_, 500, 500, 500, 500);

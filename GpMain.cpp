@@ -1357,7 +1357,7 @@ bool GreenPadWnd::ShowOpenDlg( Path* fn, int* cs )
 	};
 	aarr<TCHAR> filt = OpenFileDlg::ConnectWithNull(flst, countof(flst));
 
-	OpenFileDlg ofd( charSets_ );
+	OpenFileDlg ofd( charSets_, cfg_.useOldOpenSaveDlg() );
 	bool ok = ofd.DoModal( hwnd(), filt.get(), filename_.c_str() );
 	if( ok )
 	{
@@ -1565,7 +1565,7 @@ bool GreenPadWnd::ShowSaveDlg()
 	};
 	aarr<TCHAR> filt = SaveFileDlg::ConnectWithNull( flst, countof(flst) );
 
-	SaveFileDlg sfd( charSets_, csi_, lb_ );
+	SaveFileDlg sfd( charSets_, csi_, lb_, cfg_.useOldOpenSaveDlg() );
 	stb_.SetText( TEXT("Saving file...") );
 	if( !sfd.DoModal( hwnd(), filt.get(), filename_.c_str() ) )
 		return false;
