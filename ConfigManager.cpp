@@ -784,7 +784,7 @@ void ConfigManager::LoadIni()
 	}
 	// Exit with the ESC key?
 	useQuickExit_ = ini_.GetBool( TEXT("QuickExit"), false );
-	// Exit with the ESC key?
+	// Use the old Windows 3.x Open/Save dialog style?
 	useOldOpenSaveDlg_ = ini_.GetBool( TEXT("OldOpenSaveDlg"), false );
 
 	// Print Margins
