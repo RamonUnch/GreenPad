@@ -368,7 +368,7 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 
 	// On Windows 95 4.00.116 we cannot add the cs droplist.
 	// Only use the New style dialog on Win95 347+/NT4 RTM.
-	if( app().isNewOpenSaveDlg() )
+	if(  !oldstyleDlg_ && app().isNewOpenSaveDlg() )
 	{
 		// Include the OFN_EXPLORER flag to get the new look.
 		ofn.Flags |= OFN_EXPLORER;
@@ -553,7 +553,7 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 				OFN_OVERWRITEPROMPT;
 
 
-	if( app().isNewOpenSaveDlg() )
+	if( !oldstyleDlg_ && app().isNewOpenSaveDlg() )
 	{
 		// Include the OFN_EXPLORER flag to get the new look.
 		ofn.Flags |= OFN_EXPLORER;

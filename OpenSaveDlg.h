@@ -57,7 +57,7 @@ private:
 class OpenFileDlg
 {
 public:
-	explicit OpenFileDlg( const CharSetList& csl );
+	explicit OpenFileDlg( const CharSetList& csl, bool oldstyle );
 	bool DoModal( HWND wnd, const TCHAR* filter, const TCHAR* fnm );
 
 public:
@@ -72,6 +72,7 @@ private:
 	TCHAR filename_[MAX_PATH];
 	int   csIndex_;
 	bool  dlgEverOpened_;
+	bool  oldstyleDlg_;
 
 private:
 	static OpenFileDlg* pThis; // マルチスレッド禁止！
@@ -83,8 +84,8 @@ private:
 //------------------------------------------------------------------------
 #ifndef __ccdoc__
 
-inline OpenFileDlg::OpenFileDlg( const CharSetList& csl )
-	: csl_(csl) {}
+inline OpenFileDlg::OpenFileDlg( const CharSetList& csl, bool oldstyle )
+	: csl_(csl), oldstyleDlg_(oldstyle) {}
 
 inline const TCHAR* OpenFileDlg::filename() const
 	{ return filename_; }
@@ -107,7 +108,7 @@ inline int OpenFileDlg::csi() const
 class SaveFileDlg
 {
 public:
-	explicit SaveFileDlg( const CharSetList& csl, int cs, int lb );
+	explicit SaveFileDlg( const CharSetList& csl, int cs, int lb, bool oldstyle );
 	bool DoModal( HWND wnd, const TCHAR* filter, const TCHAR* fnm );
 
 public:
@@ -124,6 +125,7 @@ private:
 	int   csIndex_;
 	int   lb_;
 	bool  dlgEverOpened_;
+	bool  oldstyleDlg_;
 
 private:
 	static SaveFileDlg* pThis; // マルチスレッド禁止！
@@ -133,8 +135,8 @@ private:
 //------------------------------------------------------------------------
 #ifndef __ccdoc__
 
-inline SaveFileDlg::SaveFileDlg( const CharSetList& csl, int cs, int lb )
-	: csl_(csl), csIndex_(cs), lb_(lb) {}
+inline SaveFileDlg::SaveFileDlg( const CharSetList& csl, int cs, int lb, bool oldstyle )
+	: csl_(csl), csIndex_(cs), lb_(lb), oldstyleDlg_(oldstyle) {}
 
 inline const TCHAR* SaveFileDlg::filename() const
 	{ return filename_; }

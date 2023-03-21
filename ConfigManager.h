@@ -119,6 +119,7 @@ public:
 	const RECT *PMargins() const;
 	void SetPrintMargins(const RECT *rc);
 	bool useQuickExit() const;
+	bool useOldOpenSaveDlg() const;
 
 private:
 
@@ -139,6 +140,7 @@ private:
 	bool       rememberWindowSize_;
 	bool       rememberWindowPlace_;
 	bool       useQuickExit_;
+	bool       useOldOpenSaveDlg_;
 
 	ki::String dateFormat_;
 //	ki::String timeFormat_;
@@ -283,6 +285,10 @@ inline void ConfigManager::SetPrintMargins(const RECT *rc)
 
 inline bool ConfigManager::useQuickExit() const
 	{ return useQuickExit_; }
+
+inline bool ConfigManager::useOldOpenSaveDlg() const
+	{ return useOldOpenSaveDlg_; }
+
 //=========================================================================
 
 #endif // __ccdoc__
