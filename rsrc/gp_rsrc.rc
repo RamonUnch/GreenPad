@@ -1,16 +1,16 @@
 
 #include "resource.h"
 #ifndef DS_SETFOREGROUND
-	#define DS_SETFOREGROUND 0x200L
+    #define DS_SETFOREGROUND 0x200L
 #endif
 
 #if defined(TARGET_VER) && TARGET_VER<=310
-	// Use "Helv" on old Windows, it is present
-	// On NT3.10.340
-	#define MYDIALOGFONT "Helv"
+    // Use "Helv" on old Windows, it is present
+    // On NT3.10.340
+    #define MYDIALOGFONT "Helv"
 #else
-	// Use the prefered default dialog font
-	#define MYDIALOGFONT "MS Shell Dlg"
+    // Use the prefered default dialog font
+    #define MYDIALOGFONT "MS Shell Dlg"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -18,7 +18,7 @@
 // RT_MANIFEST
 //
 #ifndef RT_MANIFEST
-	#define RT_MANIFEST 24
+    #define RT_MANIFEST 24
 #endif
 #ifdef PM_DPIAWARE
 1                       RT_MANIFEST             "manifest2.xml"
@@ -133,7 +133,17 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "全てを選択(&A)\tCtrl+A",      ID_CMD_SELECTALL
         MENUITEM SEPARATOR
-        MENUITEM "日時の挿入(&T)\tF5",          ID_CMD_DATETIME
+        MENUITEM "日時の挿入(&T)\tF6",          ID_CMD_DATETIME
+        MENUITEM "Insert Date&&&Time\tF6",      ID_CMD_DATETIME
+        MENUITEM SEPARATOR
+        MENUITEM "Upper Ca&se\tAlt+U",          ID_CMD_UPPERCASE
+        MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
+        MENUITEM "I&nvert Case\tAlt+I",         ID_CMD_INVERTCASE
+        MENUITEM "Tri&m Trailing Spaces\tAlt+W",ID_CMD_TTSPACES
+        MENUITEM "Strip &First Characters\tAlt+Z",ID_CMD_SFCHAR
+        MENUITEM "Strip &Last Characters\tAlt+A",ID_CMD_SFCHAR
+        MENUITEM "&Quote\tAlt+Q",               ID_CMD_QUOTE
+        MENUITEM "Unqu&ote\tAlt+N",             ID_CMD_UNQUOTE
       # ifndef NO_IME
         MENUITEM SEPARATOR
         MENUITEM "再変換(&V)",              ID_CMD_RECONV
@@ -176,24 +186,28 @@ END
 // Dialog
 //
 
-IDD_OPENFILEHOOK DIALOG 0, 0, 200, 18
+IDD_OPENFILEHOOK DIALOG 0, 0, 187, 34
 STYLE DS_SETFONT | DS_CONTROL | DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
 FONT 9, "ＭＳ Ｐゴシック"
 BEGIN
-    LTEXT           "文字コード(&C):",IDC_STATIC,7,2,42,8
-    COMBOBOX        IDC_CODELIST,66,0,111,103,CBS_DROPDOWN | WS_VSCROLL |
+    LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT
+                    WS_GROUP
+    LTEXT           "文字コード(&C):",IDC_STATIC,7,18,42,8
+    COMBOBOX        IDC_CODELIST,66,16,111,103,CBS_DROPDOWN | WS_VSCROLL |
                     WS_TABSTOP
 END
 
-IDD_SAVEFILEHOOK DIALOG 0, 0, 200, 36
+IDD_SAVEFILEHOOK DIALOG 0, 0, 187, 55
 STYLE DS_SETFONT | DS_CONTROL | DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
 FONT 9, "ＭＳ Ｐゴシック"
 BEGIN
-    LTEXT           "文字コード(&C):",IDC_STATIC,7,2,42,8
-    COMBOBOX        IDC_CODELIST,66,0,111,103,CBS_DROPDOWN | WS_VSCROLL |
+    LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT
+                    WS_GROUP
+    LTEXT           "文字コード(&C):",IDC_STATIC,7,18,42,8
+    COMBOBOX        IDC_CODELIST,66,16,111,103,CBS_DROPDOWN | WS_VSCROLL |
                     WS_TABSTOP
-    LTEXT           "改行コード(&L):",IDC_STATIC,7,20,41,8
-    COMBOBOX        IDC_CRLFLIST,66,18,60,103,CBS_DROPDOWNLIST | WS_VSCROLL |
+    LTEXT           "改行コード(&L):",IDC_STATIC,7,37,41,8
+    COMBOBOX        IDC_CRLFLIST,66,35,60,103,CBS_DROPDOWNLIST | WS_VSCROLL |
                     WS_TABSTOP
 END
 
@@ -429,16 +443,16 @@ BEGIN
     "V",            ID_CMD_PASTE,           VIRTKEY, CONTROL, NOINVERT
     "L",            ID_CMD_LOWERCASE,       VIRTKEY, ALT, NOINVERT
     "U",            ID_CMD_UPPERCASE,       VIRTKEY, ALT, NOINVERT
-	"I",            ID_CMD_INVERTCASE,      VIRTKEY, ALT, NOINVERT
-	"W",            ID_CMD_TTSPACES,        VIRTKEY, ALT, NOINVERT
-	"Z",            ID_CMD_SFCHAR,          VIRTKEY, ALT, NOINVERT
-	"A",            ID_CMD_SLCHAR,          VIRTKEY, ALT, NOINVERT
-	"Q",            ID_CMD_QUOTE,           VIRTKEY, ALT, NOINVERT
-	"N",            ID_CMD_UNQUOTE,         VIRTKEY, ALT, NOINVERT
-	"K",            ID_CMD_DELENDLINE,      VIRTKEY, CONTROL, NOINVERT
-	"U",            ID_CMD_DELSTALINE,      VIRTKEY, CONTROL, NOINVERT
-	"K",            ID_CMD_DELENDFILE,      VIRTKEY, SHIFT, CONTROL, NOINVERT
-	"U",            ID_CMD_DELSTAFILE,      VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "I",            ID_CMD_INVERTCASE,      VIRTKEY, ALT, NOINVERT
+    "W",            ID_CMD_TTSPACES,        VIRTKEY, ALT, NOINVERT
+    "Z",            ID_CMD_SFCHAR,          VIRTKEY, ALT, NOINVERT
+    "A",            ID_CMD_SLCHAR,          VIRTKEY, ALT, NOINVERT
+    "Q",            ID_CMD_QUOTE,           VIRTKEY, ALT, NOINVERT
+    "N",            ID_CMD_UNQUOTE,         VIRTKEY, ALT, NOINVERT
+    "K",            ID_CMD_DELENDLINE,      VIRTKEY, CONTROL, NOINVERT
+    "U",            ID_CMD_DELSTALINE,      VIRTKEY, CONTROL, NOINVERT
+    "K",            ID_CMD_DELENDFILE,      VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "U",            ID_CMD_DELSTAFILE,      VIRTKEY, SHIFT, CONTROL, NOINVERT
 
     VK_ESCAPE,      ID_CMD_QUICKEXIT,       VIRTKEY, NOINVERT
     VK_DELETE,      ID_CMD_CUT,             VIRTKEY, SHIFT, NOINVERT
@@ -464,11 +478,11 @@ END
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
-	#if defined(TARGET_VER) && TARGET_VER <= 310
-	LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-	#else
-	LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-	#endif
+    #if defined(TARGET_VER) && TARGET_VER <= 310
+    LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+    #else
+    LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+    #endif
 #if defined(_MSC_VER) && _MSC_VER >= 1100
 #pragma code_page(1252)
 #endif
@@ -487,7 +501,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Open...\tCtrl+O",            ID_CMD_OPENFILE
         MENUITEM "&ReOpen...\tCtrl+R",          ID_CMD_REOPENFILE
-		MENUITEM "Re&fresh\tF5",                ID_CMD_REFRESHFILE
+        MENUITEM "Re&fresh\tF5",                ID_CMD_REFRESHFILE
         MENUITEM "Open e&levated...\tCtrl+L",   ID_CMD_OPENELEVATED
         MENUITEM SEPARATOR
         MENUITEM "&Save\tCtrl+S",               ID_CMD_SAVEFILE
@@ -523,9 +537,9 @@ BEGIN
         MENUITEM "Upper Ca&se\tAlt+U",          ID_CMD_UPPERCASE
         MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
         MENUITEM "I&nvert Case\tAlt+I",         ID_CMD_INVERTCASE
-		MENUITEM "Tri&m Trailing Spaces\tAlt+W",ID_CMD_TTSPACES
-		MENUITEM "Strip &First Characters\tAlt+Z",ID_CMD_SFCHAR
-		MENUITEM "Strip &Last Characters\tAlt+A",ID_CMD_SFCHAR
+        MENUITEM "Tri&m Trailing Spaces\tAlt+W",ID_CMD_TTSPACES
+        MENUITEM "Strip &First Characters\tAlt+Z",ID_CMD_SFCHAR
+        MENUITEM "Strip &Last Characters\tAlt+A",ID_CMD_SFCHAR
         MENUITEM "&Quote\tAlt+Q",               ID_CMD_QUOTE
         MENUITEM "Unqu&ote\tAlt+N",             ID_CMD_UNQUOTE
 
@@ -572,22 +586,25 @@ END
 // Dialog
 //
 
-IDD_OPENFILEHOOK DIALOG 0, 0, 200, 18
+IDD_OPENFILEHOOK DIALOG 0, 0, 187, 34
 STYLE DS_SETFONT | DS_CONTROL | DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
 FONT 8, MYDIALOGFONT
 BEGIN
-    LTEXT           "&Character Encoding:",IDC_STATIC,4,2,68,8
-    COMBOBOX        IDC_CODELIST,76,0,120,103,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    // Keep this line, it is need for some windows versions (Chicago build 180)
+    LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT WS_GROUP
+    LTEXT           "&Character Encoding:",IDC_STATIC,4,18,68,8
+    COMBOBOX        IDC_CODELIST,76,16,120,103,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_SAVEFILEHOOK DIALOG 0, 0, 200, 36
+IDD_SAVEFILEHOOK DIALOG 0, 0, 187, 55
 STYLE DS_SETFONT | DS_CONTROL | DS_3DLOOK | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
 FONT 8, MYDIALOGFONT
 BEGIN
-    LTEXT           "&Character Encoding:",IDC_STATIC,6,2,70,8
-    COMBOBOX        IDC_CODELIST,76,0,120,103,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "&Line ending:",IDC_STATIC,6,20,70,8
-    COMBOBOX        IDC_CRLFLIST,76,18,60,103,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",1119,0,0,187,13,SS_SUNKEN | NOT WS_VISIBLE | NOT WS_GROUP
+    LTEXT           "&Character Encoding:",IDC_STATIC,6,18,70,8
+    COMBOBOX        IDC_CODELIST,76,16,120,103,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Line ending:",IDC_STATIC,6,37,70,8
+    COMBOBOX        IDC_CRLFLIST,76,35,60,103,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_REOPENDLG DIALOG  0, 0, 187, 54
