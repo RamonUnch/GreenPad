@@ -328,12 +328,7 @@ static void CommonDialogPrepareBuffers( const TCHAR* fnm, TCHAR* filepath, TCHAR
 	mem00( filepath, MAX_PATH );
 	mem00( filename, MAX_PATH );
 
-	if( fnm == NULL )
-	{
-		filename[0] = TEXT('\0');
-		filepath[0] = TEXT('\0');
-	}
-	else
+	if( fnm != NULL )
 	{
 		// Limit to MAX_PATH because fnm can be longer
 		// And SHELL API does not handle UNC anyway!
