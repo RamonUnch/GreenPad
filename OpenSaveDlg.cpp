@@ -325,8 +325,8 @@ namespace
 
 static void CommonDialogPrepareBuffers( const TCHAR* fnm, TCHAR* filepath, TCHAR* filename )
 {
-	mem00( filepath, MAX_PATH );
-	mem00( filename, MAX_PATH );
+	mem00( filepath, MAX_PATH*sizeof(TCHAR) );
+	mem00( filename, MAX_PATH*sizeof(TCHAR) );
 
 	if( fnm != NULL )
 	{
