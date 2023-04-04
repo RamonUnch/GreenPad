@@ -82,11 +82,16 @@ using namespace ki;
 	CHARSET_VALUE("MSDOS(us)",			"MSDOS(us)",			"DOS")
 
 CharSetList::CharSetList()
-	: list_( 30 )
+	: list_( 66 )
 {
-	#define Enroll(_id,_nm)  EnrollCs( _id, _nm|(LOAD|SAVE)<<8 )
-	#define EnrollS(_id,_nm) EnrollCs( _id, _nm|SAVE<<8 )
-	#define EnrollL(_id,_nm) EnrollCs( _id, _nm|LOAD<<8 )
+	#if !defined(TARGET_VER) || TARGET_VER >= 350
+	short useJP = GetACP() == 932;
+	#else
+	#define useJP 0
+	#endif
+	#define Enroll(_id,_nm)  EnrollCs( _id, _nm|(LOAD|SAVE)<<8 | useJP<<16 )
+	#define EnrollS(_id,_nm) EnrollCs( _id, _nm|SAVE<<8 | useJP<<16)
+	#define EnrollL(_id,_nm) EnrollCs( _id, _nm|LOAD<<8 | useJP<<16)
 	// 適宜登録
 	                               EnrollL( AutoDetect,      0 );
 	if( ::IsValidCodePage(932) )   Enroll(  SJIS,            1 )
@@ -161,7 +166,7 @@ CharSetList::CharSetList()
 	#undef EnrollL
 }
 
-void CharSetList::EnrollCs(int _id, ushort nmtype)
+void CharSetList::EnrollCs(int _id, uint nmtype)
 {
 	#if !defined(TARGET_VER) || TARGET_VER >= 350
 	static const TCHAR* const lnmJp[] = {
@@ -185,7 +190,8 @@ void CharSetList::EnrollCs(int _id, ushort nmtype)
 
 	// 日本語環境なら日本語表示を選ぶ
 	#if !defined(TARGET_VER) || TARGET_VER >= 350
-	const TCHAR* const * lnm = (::GetACP()==932 ? lnmJp : lnmEn);
+	bool useJP = HIWORD(nmtype) != 0;
+	const TCHAR* const * lnm = (useJP ? lnmJp : lnmEn);
 	#else
 	// On Windows 3.1 we cannot have the japaneese UI so for
 	// Consistancy sake we remove also this string table.
@@ -193,8 +199,8 @@ void CharSetList::EnrollCs(int _id, ushort nmtype)
 	#endif
 
 	CsInfo cs;
-	uchar type = nmtype>>8;
-	uchar nm = (uchar)nmtype;
+	uchar type = LOWORD(nmtype)>>8;
+	uchar nm = (uchar)LOWORD(nmtype);
 	cs.ID=_id;
 	cs.longName=lnm[nm];
 	cs.shortName=snm[nm];
@@ -310,11 +316,50 @@ namespace
 	// 関数終了時に、カレントディレクトリを元に戻す
 	class CurrentDirRecovery
 	{
-		Path cur_;
+		TCHAR cur_[MAX_PATH];
 	public:
-		CurrentDirRecovery() : cur_(Path::Cur) {}
-		~CurrentDirRecovery() { ::SetCurrentDirectory(cur_.c_str()); }
+		CurrentDirRecovery()  { cur_[0] = TEXT('\0'); ::GetCurrentDirectory( countof(cur_), cur_ ); }
+		~CurrentDirRecovery() { ::SetCurrentDirectory( cur_ ); }
 	};
+}
+
+static void CommonDialogPrepareBuffers( const TCHAR* fnm, TCHAR* filepath, TCHAR* filename )
+{
+	mem00( filepath, MAX_PATH );
+	mem00( filename, MAX_PATH );
+
+	if( fnm == NULL )
+	{
+		filename[0] = TEXT('\0');
+		filepath[0] = TEXT('\0');
+	}
+	else
+	{
+		// Limit to MAX_PATH because fnm can be longer
+		// And SHELL API does not handle UNC anyway!
+		my_lstrcpyn( filepath, fnm, MAX_PATH );
+		my_lstrcpyn( filename, fnm, MAX_PATH );
+
+		int i = 0;
+		int j = -1;
+
+		while( filepath[i] != TEXT('\0') )
+		{
+			if( filepath[i] == TEXT('\\') )
+			{
+				j = i;
+			}
+			i++;
+		}
+
+		int x = 0;
+		for( i = j+1; filepath[i] != TEXT('\0'); i++ )
+		{
+			filename[x++] = filepath[i];
+		}
+		filename[x++] = TEXT('\0');
+		filepath[j+1] = TEXT('\0');
+	}
 }
 
 OpenFileDlg* OpenFileDlg::pThis;
@@ -323,41 +368,17 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 {
 	LOGGER( "OpenFileDlg::DoModal begin" );
 	CurrentDirRecovery cdr;
-	TCHAR filepath_[MAX_PATH];
+	TCHAR filepath[MAX_PATH];
 
-	if( fnm == NULL )
-	{
-		filepath_[0] = TEXT('\0');
-	}
-	else
-	{
-		// Limit to MAX_PATH because fnm can be longer
-		// And SHELL API does not handle UNC anyway!
-		my_lstrcpyn(filepath_, fnm, MAX_PATH);
-		filepath_[MAX_PATH-1] = TEXT('\0'); // in case
+	CommonDialogPrepareBuffers(fnm, filepath, filename_);
 
-		int i = 0;
-		int j = -1;
-
-		while(filepath_[i] != TEXT('\0'))
-		{
-			if(filepath_[i] == TEXT('\\'))
-			{
-				j = i;
-			}
-			i++;
-		}
-		filepath_[j+1] = TEXT('\0');
-	}
-
-	filename_[0] = TEXT('\0');
 	myOPENFILENAME ofn = {sizeof(ofn)};
 	ofn.hwndOwner      = wnd;
 	ofn.hInstance      = app().hinst();
 	ofn.lpstrFilter    = fltr;
 	ofn.lpstrFile      = filename_;
 	ofn.nMaxFile       = countof(filename_);
-	ofn.lpstrInitialDir= filepath_;
+	ofn.lpstrInitialDir= filepath;
 	ofn.lpfnHook       = OfnHook;
 	ofn.Flags = OFN_FILEMUSTEXIST |
 				OFN_HIDEREADONLY  |
@@ -502,40 +523,9 @@ SaveFileDlg* SaveFileDlg::pThis;
 bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 {
 	CurrentDirRecovery cdr;
-	TCHAR filepath_[MAX_PATH];
+	TCHAR filepath[MAX_PATH];
 
-	if( fnm == NULL )
-	{
-		filename_[0] = TEXT('\0');
-		filepath_[0] = TEXT('\0');
-	}
-	else
-	{
-		// Limit to MAX_PATH because fnm can be longer
-		// And SHELL API does not handle UNC anyway!
-		my_lstrcpyn(filepath_, fnm, MAX_PATH);
-		my_lstrcpyn(filename_, fnm, MAX_PATH);
-
-		int i = 0;
-		int j = -1;
-
-		while(filepath_[i] != TEXT('\0'))
-		{
-			if(filepath_[i] == TEXT('\\'))
-			{
-				j = i;
-			}
-			i++;
-		}
-
-		int x = 0;
-		for (i = j+1; filepath_[i] != TEXT('\0'); i++)
-		{
-			filename_[x++] = filepath_[i];
-		}
-		filename_[x++] = TEXT('\0');
-		filepath_[j+1] = TEXT('\0');
-	}
+	CommonDialogPrepareBuffers(fnm, filepath, filename_);
 
 	myOPENFILENAME ofn = {sizeof(ofn)};
 	ofn.hwndOwner      = wnd;
@@ -543,7 +533,7 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	ofn.lpstrFilter    = fltr;
 	ofn.lpstrFile      = filename_;
 	ofn.nMaxFile       = countof(filename_);
-	ofn.lpstrInitialDir= filepath_;
+	ofn.lpstrInitialDir= filepath;
 	ofn.lpfnHook       = OfnHook;
 	ofn.Flags = OFN_HIDEREADONLY    |
 				OFN_PATHMUSTEXIST   |
