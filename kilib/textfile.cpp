@@ -1593,12 +1593,18 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 					return b; \
 				}
 
-#ifdef _M_AMD64
+#if defined(_M_AMD64) || defined(_M_X64)
 # define CHARDET_DLL "chardet_x64.dll"
+#elif defined(_M_IA64)
+# define CHARDET_DLL "chardet_ia64.dll"
 #elif defined(_M_ARM64)
 # define CHARDET_DLL "chardet_arm64.dll"
-#elif defined(_MIPS_)
+#elif defined(_M_ALPHA)
+# define CHARDET_DLL "cdetaxp.dll"
+#elif defined(_M_MRX000) || defined(_MIPS_)
 # define CHARDET_DLL "cdetmips.dll"
+#elif defined(_M_PPC)
+# define CHARDET_DLL "cdetppc.dll"
 #else
 # define CHARDET_DLL "chardet.dll"
 #endif

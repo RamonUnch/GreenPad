@@ -474,7 +474,7 @@ void GreenPadWnd::on_helpabout()
 			#define TGVER TEXT(" 3.51+")
 		#endif
 	#else
-		#if defined(WIN64)
+		#if defined(_M_AMD64) || defined(_M_X64) || defined(_M_IA64) || defined(WIN64)
 			// XP/NT5.1 is the first x64 version of Windows.
 			#define TGVER TEXT(" 5.1")
 		#else
@@ -489,13 +489,17 @@ void GreenPadWnd::on_helpabout()
 		#define USEOLE TEXT(" OLE ")
 	#endif //OLE
 
-	#if defined(_M_AMD64)
+	#if defined(_M_AMD64) || defined(_M_X64)
 		#define PALT TEXT( " - x86_64" )
+	#elif defined(_M_IA64)
+		#define PALT TEXT( "- IA64" )
+	#elif defined(_M_ARM64)
+		#define PALT TEXT( "- ARM64" )
 	#elif defined(_M_IX86)
 		#define PALT TEXT( " - i386" )
 	#elif defined(_M_ALPHA)
 		#define PALT TEXT( " - Alpha" )
-	#elif defined(_M_MRX000)
+	#elif defined(_M_MRX000) || defined(_MIPS_)
 		#define PALT TEXT( " - MIPS" )
 	#elif defined(_M_PPC)
 		#define PALT TEXT( " - PowerPC" )
