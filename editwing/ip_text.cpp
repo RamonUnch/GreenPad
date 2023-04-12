@@ -44,7 +44,7 @@ void Document::AddHandler( DocEvHandler* h )
 void Document::DelHandler( DocEvHandler* h )
 	{ impl_->DelHandler( h ); }
 
-void Document::OpenFile( aptr<TextFileR> t )
+void Document::OpenFile( TextFileR& t )
 	{ impl_->OpenFile( t ); }
 
 void Document::SaveFile( TextFileW& t )
@@ -723,7 +723,7 @@ void DocImpl::ClearAll()
 // ファイルを開く（暫定）, Open a file (temporary)
 //-------------------------------------------------------------------------
 
-void DocImpl::OpenFile( aptr<TextFileR> tf )
+void DocImpl::OpenFile( TextFileR& tf )
 {
 	// ToDo: マルチスレッド化, ToDo: multi-threaded
 	//currentOpeningFile_ = tf;
@@ -745,7 +745,7 @@ void DocImpl::OpenFile( aptr<TextFileR> tf )
 #endif
 	// Do not allocate more mem than twice the file size in bytes.
 	// Should help with loaing small files on Win32s.
-	buf_sz = Min( buf_sz, (size_t)(tf->size()+16)<<1 );
+	buf_sz = Min( buf_sz, (size_t)(tf.size()+16)<<1 );
 	unicode *buf=NULL;
 	if( buf_sz > SBUF_SZ )
 		buf = new unicode[buf_sz];
@@ -754,15 +754,15 @@ void DocImpl::OpenFile( aptr<TextFileR> tf )
 		buf = sbuf;
 		buf_sz = SBUF_SZ;
 	}
-	for( ulong i=0; tf->state(); )
+	for( ulong i=0; tf.state(); )
 	{
-		if( size_t L = tf->ReadBuf( buf, buf_sz ) )
+		if( size_t L = tf.ReadBuf( buf, buf_sz ) )
 		{
 			DPos p(i,0xffffffff);
 			InsertingOperation( p, buf, (ulong)L, e );
 			i = tln() - 1;
 		}
-		if( tf->state() == 1 )
+		if( tf.state() == 1 )
 		{
 			DPos p(i++,0xffffffff);
 			InsertingOperation( p, L"\n", 1, e );

@@ -1414,9 +1414,9 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	//MsgBox(fn.c_str(), TEXT("File:"), 0);
 	LOGGERS( fn );
 	// ファイルを開けなかったらそこでおしまい。
-	aptr<TextFileR> tf( new TextFileR(cs) );
+	TextFileR tf(cs);
 
-	if( !tf->Open( fn.c_str(), always ) )
+	if( !tf.Open( fn.c_str(), always ) )
 	{
 		// ERROR!
 		int err = GetLastError();
@@ -1505,16 +1505,16 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 		filename_ = fn;
 	else
 		filename_ = Path( Path::Cur ) + fn;
-	if( tf->size() )
+	if( tf.size() )
 	{
-		csi_      = charSets_.findCsi( tf->codepage() );
+		csi_      = charSets_.findCsi( tf.codepage() );
 		if( (UINT)csi_ == 0xffffffff )
-			csi_       = 0xf0f00000 | tf->codepage();
+			csi_       = 0xf0f00000 | tf.codepage();
 
-		if( tf->nolb_found() )
+		if( tf.nolb_found() )
 			lb_       = cfg_.GetNewfileLB();
 		else
-			lb_       = tf->linebreak();
+			lb_       = tf.linebreak();
 	}
 	else
 	{ // 空ファイルの場合は新規作成と同じ扱い
