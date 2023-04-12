@@ -331,9 +331,8 @@ DPos DocImpl::leftOf( const DPos& dp, bool wide ) const
 	{
 		// s‚Ì“r’†‚ÅA‚P’PŒê•ª–ß‚éê‡, To go back one word in the middle of a line
 		const uchar* f = pl(dp.tl);
-			  ulong  s = dp.ad-1;
-		while( (f[s]>>5)==0 && 0<=s )
-			--s;
+			  ulong  s = dp.ad;
+		while( --s && (f[s]>>5)==0 );
 		return DPos( dp.tl, s );
 	}
 }
@@ -390,9 +389,9 @@ DPos DocImpl::wordStartOf( const DPos& dp ) const
 	{
 		// s‚Ì“r’†, Midline
 		const uchar* f = pl(dp.tl);
-			  ulong  s = dp.ad;
-		while( (f[s]>>5)==0 && 0<=s )
-			--s;
+			  ulong  s = dp.ad+1;
+		while( --s && (f[s]>>5)==0 );
+
 		return DPos( dp.tl, s );
 	}
 }
