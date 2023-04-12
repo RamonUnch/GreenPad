@@ -36,7 +36,7 @@ public:
 	~Document();
 
 	//@{ ファイルを開く //@}
-	void OpenFile( ki::aptr<ki::TextFileR> tf );
+	void OpenFile( ki::TextFileR& tf );
 
 	//@{ ファイルを保存 //@}
 	void SaveFile( ki::TextFileW& tf );

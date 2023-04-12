@@ -349,7 +349,7 @@ public:
 	void DelHandler( DocEvHandler* eh );
 
 	//@{ ファイルを開く //@}
-	void OpenFile( aptr<TextFileR> tf );
+	void OpenFile( TextFileR& tf );
 
 	//@{ ファイルを保存 //@}
 	void SaveFile( TextFileW& tf );
