@@ -200,7 +200,7 @@ struct rUtf1 A_FINAL: public rBasicUTF
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
 
-		if( *fb >= 0xFC && *fb <= 0xFF )      { fb+=5; }
+		if( *fb >= 0xFC /*&& *fb <= 0xFF */ ) { fb+=5; }
 		else if( *fb >= 0xF6 && *fb <= 0xFB ) { fb+=3; }
 		else if( *fb >= 0xA0 && *fb <= 0xF5 ) { fb+=2; }
 		else /*if( *fb <= 0x9F )*/            {  ++fb; }
@@ -780,25 +780,26 @@ namespace
 	}
 
 	// CharNextExAはGB18030の４バイト文字列を扱えないそうだ。
-	static char* WINAPI CharNextGB18030( WORD, const char* p, DWORD )
+	static char* WINAPI CharNextGB18030( WORD, const char* sp, DWORD )
 	{
-		const char *q;
+		const unsigned char *q;
+		const unsigned char *p = (const unsigned char *)sp;
 		if (!(*p & 0x80) || *p == 0x80 || *p == 0xFF || // ASCII, Euro sign, EOF
-			!p[1] || p[1] == 0xFF || (unsigned char)p[1] < 0x30) // invalid DBCS
+			!p[1] || p[1] == 0xFF || p[1] < 0x30) // invalid DBCS
 			q = p+1;
 		else if (p[1] >= 0x30 && p[1] <= 0x39) // 4BCS leading
 		{
 			if (p[2] && p[3] && (p[2] & 0x80) && p[2] != 0x80 && p[2] != 0xFF
 				&& p[3] >= 0x30 && p[3] <= 0x39 &&
-				(((unsigned char)*p >= 0x81 && (unsigned char)*p <= 0x84) ||
-				 ((unsigned char)*p >= 0x90 && (unsigned char)*p <= 0xE3)))
+				(( *p >= 0x81 && *p <= 0x84) ||
+				 ( *p >= 0x90 && *p <= 0xE3)))
 				q = p+4;
 			else
 				q = p+1;
 		}
 		else // DBCS
 			q = p+2;
-		return const_cast<char*>( q );
+		return (char *)( q );
 	}
 
 	static char* WINAPI IncCharNextExA(WORD cp, const char *p, DWORD flags)
@@ -1587,7 +1588,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 	chardet_t pdet = NULL;
 	char charset[128];
 
-# define STR2CP(a,b) if(0 == my_lstrcmpA(charset,a)) { \
+# define STR2CP(a,b) if(0 == my_lstrcmpiASCII(charset,a)) { \
 					chardet_destroy(pdet); \
 					::FreeLibrary(hIL); \
 					return b; \
@@ -1647,7 +1648,6 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 				STR2CP("x-euc-tw",CNS)
 				STR2CP("Big5",Big5)
 				STR2CP("GB18030",(::IsValidCodePage(GB18030) ? GB18030 : GBK))
-				STR2CP("gb18030",(::IsValidCodePage(GB18030) ? GB18030 : GBK))
 				STR2CP("UTF-8",UTF8N)
 				STR2CP("windows-1253",Greek)
 				STR2CP("ISO-8859-7",GreekISO)
@@ -1660,7 +1660,6 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 				STR2CP("ISO-8859-5",CyrillicISO)
 				STR2CP("windows-1255",Hebrew)
 				STR2CP("windows-1250",Central)
-				STR2CP("WINDOWS-1250",Central)
 				STR2CP("ISO-8859-2",CentralISO)
 				STR2CP("TIS-620",Thai)
 				STR2CP("ISO-8859-11",ThaiISO)
@@ -2105,7 +2104,7 @@ bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uCh
 			impossible = true;
 			break;
 		}
-		if((0x00 <= uchr && uchr < 0x80)) confidence+=4; // unicode ASCII
+		if( uchr < 0x80 ) confidence+=4; // unicode ASCII
 		else if(uChrSize==2 && IsAscii(ptr[x*2]) && IsAscii(ptr[x*2+1])) // both char are ASCII
 		{
 			confidence+=2;
@@ -2496,7 +2495,7 @@ struct wSCSU A_FINAL: public TextFileWPimpl
 		uchar window; // dynamic window 0..7
 		int w;       // result of getWindow(), -1..7
 
-		if( c<0 || c>0x10ffff || (isUnicodeMode&~1)!=0 || (win&~7)!=0 )
+		if( (isUnicodeMode&~1)!=0 || (win&~7)!=0 )
 		{
 			return;
 		}

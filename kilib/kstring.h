@@ -138,6 +138,15 @@ int my_lstrcmpA(const char *X, const char *Y)
 	return *(const unsigned char*)X - *(const unsigned char*)Y;
 }
 
+#define tolowerASCII(x) ( (x) | ('A'<(x) && (x)<'Z') << 5 )
+static inline
+int my_lstrcmpiASCII(const char *X, const char *Y)
+{
+	while ( *X && tolowerASCII(*X) == tolowerASCII(*Y) ) { X++; Y++; }
+	return tolowerASCII( *(const unsigned char*)X )
+	     - tolowerASCII( *(const unsigned char*)Y );
+}
+
 static inline
 wchar_t *my_lstrcpynW(wchar_t *out, const wchar_t *in, int outlen)
 {
@@ -251,7 +260,7 @@ public:
 	size_t len() const;
 
 	//@{ óvëf //@}
-	const TCHAR operator[](int n) const;
+	TCHAR operator[](int n) const;
 
 	//@{ ÉèÉCÉhï∂éöóÒÇ…ïœä∑ÇµÇƒï‘Ç∑ //@}
 	const wchar_t* ConvToWChar() const;
@@ -375,7 +384,7 @@ inline const TCHAR* String::c_str() const
 inline size_t String::len() const
 	{ return data_->len-1; }
 // óvëf
-inline const TCHAR String::operator[](int n) const
+inline TCHAR String::operator[](int n) const
 	{ return data_->buf()[n]; }
 
 // î‰är
