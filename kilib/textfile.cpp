@@ -200,7 +200,7 @@ struct rUtf1 A_FINAL: public rBasicUTF
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
 
-		if( *fb >= 0xFC && *fb <= 0xFF )      { fb+=5; }
+		if( *fb >= 0xFC /*&& *fb <= 0xFF */ ) { fb+=5; }
 		else if( *fb >= 0xF6 && *fb <= 0xFB ) { fb+=3; }
 		else if( *fb >= 0xA0 && *fb <= 0xF5 ) { fb+=2; }
 		else /*if( *fb <= 0x9F )*/            {  ++fb; }
@@ -780,25 +780,26 @@ namespace
 	}
 
 	// CharNextExAはGB18030の４バイト文字列を扱えないそうだ。
-	static char* WINAPI CharNextGB18030( WORD, const char* p, DWORD )
+	static char* WINAPI CharNextGB18030( WORD, const char* sp, DWORD )
 	{
-		const char *q;
+		const unsigned char *q;
+		const unsigned char *p = (const unsigned char *)sp;
 		if (!(*p & 0x80) || *p == 0x80 || *p == 0xFF || // ASCII, Euro sign, EOF
-			!p[1] || p[1] == 0xFF || (unsigned char)p[1] < 0x30) // invalid DBCS
+			!p[1] || p[1] == 0xFF || p[1] < 0x30) // invalid DBCS
 			q = p+1;
 		else if (p[1] >= 0x30 && p[1] <= 0x39) // 4BCS leading
 		{
 			if (p[2] && p[3] && (p[2] & 0x80) && p[2] != 0x80 && p[2] != 0xFF
 				&& p[3] >= 0x30 && p[3] <= 0x39 &&
-				(((unsigned char)*p >= 0x81 && (unsigned char)*p <= 0x84) ||
-				 ((unsigned char)*p >= 0x90 && (unsigned char)*p <= 0xE3)))
+				(( *p >= 0x81 && *p <= 0x84) ||
+				 ( *p >= 0x90 && *p <= 0xE3)))
 				q = p+4;
 			else
 				q = p+1;
 		}
 		else // DBCS
 			q = p+2;
-		return const_cast<char*>( q );
+		return (char *)( q );
 	}
 
 	static char* WINAPI IncCharNextExA(WORD cp, const char *p, DWORD flags)
@@ -1587,27 +1588,22 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 	chardet_t pdet = NULL;
 	char charset[128];
 
-# define STR2CP(a,b) if(0 == my_lstrcmpA(charset,a)) { \
-					chardet_destroy(pdet); \
-					::FreeLibrary(hIL); \
-					return b; \
-				}
+	#if defined(_M_AMD64) || defined(_M_X64)
+	# define CHARDET_DLL "chardet_x64.dll"
+	#elif defined(_M_IA64)
+	# define CHARDET_DLL "chardet_ia64.dll"
+	#elif defined(_M_ARM64)
+	# define CHARDET_DLL "chardet_arm64.dll"
+	#elif defined(_M_ALPHA)
+	# define CHARDET_DLL "cdetaxp.dll"
+	#elif defined(_M_MRX000) || defined(_MIPS_)
+	# define CHARDET_DLL "cdetmips.dll"
+	#elif defined(_M_PPC)
+	# define CHARDET_DLL "cdetppc.dll"
+	#else
+	# define CHARDET_DLL "chardet.dll"
+	#endif
 
-#if defined(_M_AMD64) || defined(_M_X64)
-# define CHARDET_DLL "chardet_x64.dll"
-#elif defined(_M_IA64)
-# define CHARDET_DLL "chardet_ia64.dll"
-#elif defined(_M_ARM64)
-# define CHARDET_DLL "chardet_arm64.dll"
-#elif defined(_M_ALPHA)
-# define CHARDET_DLL "cdetaxp.dll"
-#elif defined(_M_MRX000) || defined(_MIPS_)
-# define CHARDET_DLL "cdetmips.dll"
-#elif defined(_M_PPC)
-# define CHARDET_DLL "cdetppc.dll"
-#else
-# define CHARDET_DLL "chardet.dll"
-#endif
 	// On Win32s we must check if CHARDET.DLL exist before trying LoadLibrary()
 	// Otherwise we would get a system  message
 	Path chardet_in_gp_dir = Path(Path::ExeName).BeDirOnly() + String(TEXT(CHARDET_DLL));
@@ -1615,85 +1611,101 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 		return 0;
 
 	// Use LoadLibrary with full pathname (safer)
-	if((hIL = ::LoadLibrary( chardet_in_gp_dir.c_str() )))
-	{
-		chardet_create = (int(__cdecl*)(chardet_t*))::GetProcAddress(hIL, "chardet_create");
-		chardet_destroy = (void(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_destroy");
-		chardet_handle_data = (int(__cdecl*)(chardet_t, const char*, unsigned int))::GetProcAddress(hIL, "chardet_handle_data");
-		chardet_data_end = (int(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_data_end");
-		chardet_get_charset = (int(__cdecl*)(chardet_t, char*, unsigned int))::GetProcAddress(hIL, "chardet_get_charset");
-		//chardet_reset = (int(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_reset");
-
-		if( !(chardet_create && chardet_destroy && chardet_handle_data && chardet_data_end && chardet_get_charset) )
-		{
-			#ifdef MLANG_DEBUG
-			::MessageBox(NULL,TEXT("Unable to find all procs in chardet.dll"),NULL,0);
-			#endif
-			return cs;
-		}
-
-	    if( 0 == chardet_create(&pdet) )
-		{
-			if( siz == 16384 ) siz-=1; // prevert off-by-one error
-			if( 0 == chardet_handle_data(pdet, (const char *)ptr, siz) )
-			{
-				chardet_data_end(pdet);
-				chardet_get_charset(pdet, charset, 128);
-
-				STR2CP("Shift_JIS",SJIS)
-				STR2CP("EUC-JP",EucJP)
-				STR2CP("EUC-KR",UHC)
-				//STR2CP("EUC-TW",CNS)
-				STR2CP("x-euc-tw",CNS)
-				STR2CP("Big5",Big5)
-				STR2CP("GB18030",(::IsValidCodePage(GB18030) ? GB18030 : GBK))
-				STR2CP("gb18030",(::IsValidCodePage(GB18030) ? GB18030 : GBK))
-				STR2CP("UTF-8",UTF8N)
-				STR2CP("windows-1253",Greek)
-				STR2CP("ISO-8859-7",GreekISO)
-				STR2CP("KOI8-R",Koi8R)
-				STR2CP("windows-1251",Cyrillic)
-				STR2CP("IBM866",CyrillicDOS)
-				STR2CP("IBM855",CyrillicIBM)
-				STR2CP("x-mac-cyrillic",CyrillicMAC)
-				STR2CP("MAC-CYRILLIC",CyrillicMAC)
-				STR2CP("ISO-8859-5",CyrillicISO)
-				STR2CP("windows-1255",Hebrew)
-				STR2CP("windows-1250",Central)
-				STR2CP("WINDOWS-1250",Central)
-				STR2CP("ISO-8859-2",CentralISO)
-				STR2CP("TIS-620",Thai)
-				STR2CP("ISO-8859-11",ThaiISO)
-				STR2CP("windows-1252",Western)
-				STR2CP("ISO-8859-1",Western)
-				STR2CP("ISO-8859-15",WesternISO)
-				STR2CP("ISO-8859-3",EsperantoISO)
-				STR2CP("ISO-8859-9",TurkishISO)
-				STR2CP("ISO-8859-6",ArabicISO)
-				STR2CP("windows-1256",Arabic)
-				STR2CP("windows-1258",Vietnamese)
-
-			}
-		}
-		else
-		{
-			#ifdef MLANG_DEBUG
-			::MessageBox(NULL,TEXT("chardet_create() failed!"),NULL,0);
-			#endif
-		}
-
-	}
-	else
+	hIL = ::LoadLibrary( chardet_in_gp_dir.c_str() );
+	if( !hIL )
 	{
 		#ifdef MLANG_DEBUG
 		::MessageBox(NULL,TEXT("Cannot Load CHARDET.DLL"),NULL,0);
 		#endif
+		return 0;
 	}
-# undef STR2CP
-#endif //NO_CHARDET
+
+	chardet_create = (int(__cdecl*)(chardet_t*))::GetProcAddress(hIL, "chardet_create");
+	chardet_destroy = (void(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_destroy");
+	chardet_handle_data = (int(__cdecl*)(chardet_t, const char*, unsigned int))::GetProcAddress(hIL, "chardet_handle_data");
+	chardet_data_end = (int(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_data_end");
+	chardet_get_charset = (int(__cdecl*)(chardet_t, char*, unsigned int))::GetProcAddress(hIL, "chardet_get_charset");
+	//chardet_reset = (int(__cdecl*)(chardet_t))::GetProcAddress(hIL, "chardet_reset");
+
+	if( !(chardet_create && chardet_destroy && chardet_handle_data && chardet_data_end && chardet_get_charset) )
+	{
+		#ifdef MLANG_DEBUG
+		::MessageBox(NULL,TEXT("Unable to find all procs in chardet.dll"),NULL,0);
+		#endif
+		goto freeandexit;
+	}
+
+    if( 0 != chardet_create(&pdet) )
+	{
+		#ifdef MLANG_DEBUG
+		::MessageBox(NULL,TEXT("chardet_create() failed!"),NULL,0);
+		#endif
+		goto freeandexit;
+	}
+
+	if( 0 == chardet_handle_data(pdet, (const char *)ptr, siz-1) )
+	{
+		static const struct {
+			const char *str; int cs;
+		} cslist[] = {
+			{ "Shift_JIS",      SJIS },
+			{ "EUC-JP",         EucJP },
+			{ "EUC-KR",         UHC },
+			{ "x-euc-tw",       CNS },
+			{ "Big5",           Big5 },
+			{ "GB18030",        GB18030 },
+			{ "UTF-8",          UTF8N },
+			{ "windows-1253",   Greek },
+			{ "ISO-8859-7",     GreekISO },
+			{ "KOI8-R",         Koi8R },
+			{ "windows-1251",   Cyrillic },
+			{ "IBM866",         CyrillicDOS },
+			{ "IBM855",         CyrillicIBM },
+			{ "x-mac-cyrillic", CyrillicMAC },
+			{ "MAC-CYRILLIC",   CyrillicMAC },
+			{ "ISO-8859-5",     CyrillicISO },
+			{ "windows-1255",   Hebrew },
+			{ "windows-1250",   Central },
+			{ "ISO-8859-2",     CentralISO },
+			{ "TIS-620",        Thai },
+			{ "ISO-8859-11",    ThaiISO },
+			{ "windows-1252",   Western },
+			{ "ISO-8859-1",     Western },
+			{ "ISO-8859-15",    WesternISO },
+			{ "ISO-8859-3",     EsperantoISO },
+			{ "ISO-8859-9",     TurkishISO },
+			{ "ISO-8859-6",     ArabicISO },
+			{ "windows-1256",   Arabic },
+			{ "windows-1258",   Vietnamese }
+		};
+
+		chardet_data_end(pdet);
+		chardet_get_charset(pdet, charset, 128);
+
+		for (size_t i =0; i < countof(cslist); i++)
+		{
+			// Pure ASCII case insensitive comparison.
+			if(0 == my_lstrcmpiASCII(charset,cslist[i].str))
+			{
+				cs = cslist[i].cs;
+				break;
+			}
+		}
+		chardet_destroy(pdet);
+	}
+
+	// Spetial GB18030 check!
+	if( cs == GB18030 && !::IsValidCodePage(GB18030) )
+		cs = GBK;
+
+	freeandexit:
+	::FreeLibrary(hIL);
+
 	#ifdef MLANG_DEBUG
 	::MessageBox(NULL,cs? TEXT("Chardet sucess!"): TEXT("Detection failed") ,TEXT("CHARDET"),0);
 	#endif
+
+#endif //NO_CHARDET
 	return cs;
 }
 
@@ -2105,7 +2117,7 @@ bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uCh
 			impossible = true;
 			break;
 		}
-		if((0x00 <= uchr && uchr < 0x80)) confidence+=4; // unicode ASCII
+		if( uchr < 0x80 ) confidence+=4; // unicode ASCII
 		else if(uChrSize==2 && IsAscii(ptr[x*2]) && IsAscii(ptr[x*2+1])) // both char are ASCII
 		{
 			confidence+=2;
@@ -2496,7 +2508,7 @@ struct wSCSU A_FINAL: public TextFileWPimpl
 		uchar window; // dynamic window 0..7
 		int w;       // result of getWindow(), -1..7
 
-		if( c<0 || c>0x10ffff || (isUnicodeMode&~1)!=0 || (win&~7)!=0 )
+		if( (isUnicodeMode&~1)!=0 || (win&~7)!=0 )
 		{
 			return;
 		}
