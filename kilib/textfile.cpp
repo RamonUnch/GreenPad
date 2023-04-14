@@ -104,7 +104,7 @@ struct rUCS : public rBasicUTF
 											 (val<<24)); }
 
 	virtual void Skip() override { ++fb; }
-	virtual bool Eof() override { return fb==fe; }
+	virtual bool Eof() override { return fb>=fe; }
 	virtual unicode PeekC() override { return (unicode)(be ? swap(*fb) : *fb); }
 };
 
@@ -195,7 +195,7 @@ struct rUtf1 A_FINAL: public rBasicUTF
 		else               return x - 0x42;
 	}
 
-	bool Eof() override { return SurrogateLow ? false : fb==fe; }
+	bool Eof() override { return SurrogateLow ? false : fb>=fe; }
 	void Skip() override
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
@@ -252,7 +252,7 @@ struct rUtf9 A_FINAL: public rBasicUTF
 	const uchar *fb, *fe;
 	qbyte SurrogateLow;
 
-	bool Eof() override { return SurrogateLow ? false : fb==fe; }
+	bool Eof() override { return SurrogateLow ? false : fb>=fe; }
 	void Skip() override
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
@@ -302,7 +302,7 @@ struct rUtfOFSS A_FINAL: public rBasicUTF
 	const uchar *fb, *fe;
 	qbyte SurrogateLow;
 
-	bool Eof() override { return SurrogateLow ? false : fb==fe; }
+	bool Eof() override { return SurrogateLow ? false : fb>=fe; }
 	void Skip() override
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
@@ -365,7 +365,7 @@ struct rUtf5 A_FINAL: public rBasicUTF
 	}
 
 	void Skip() override { do ++fb; while( fb<fe && *fb<'G' ); }
-	bool Eof() override { return fb==fe; }
+	bool Eof() override { return fb>=fe; }
 	unicode PeekC() override
 	{
 		unicode ch = (*fb-'G');
@@ -410,7 +410,7 @@ struct rUtf7 A_FINAL: public rBasicUTF
 	bool inB64;     // base64ƒGƒŠƒA“à‚È‚çtrue
 
 	void Skip() override { if(--rest==0) fillbuf(); }
-	bool Eof() override { return fb==fe && rest==0; }
+	bool Eof() override { return fb>=fe && rest==0; }
 	unicode PeekC() override { return buf[rest-1]; }
 
 	void fillbuf()
@@ -528,7 +528,7 @@ struct rSCSU A_FINAL: public rBasicUTF
 	uchar c, d;
 
 	void Skip() override { fb+=skip; skip=0; }
-	bool Eof() override { return fb==fe; }
+	bool Eof() override { return fb>=fe; }
 	uchar GetChar() { return fb+skip>fe ? 0 : *(fb+(skip++)); }
 	unicode PeekC() override
 	{
@@ -671,7 +671,7 @@ struct rBOCU1 A_FINAL: public rBasicUTF
 	unicode cp, pc;
 
 	void Skip() override { fb+=skip; skip=0; }
-	bool Eof() override { return fb==fe; }
+	bool Eof() override { return fb>=fe; }
 	uchar GetChar() { return (fb+skip < fe) ? *(fb+(skip++)) : 0; }
 	unicode PeekC() override
 	{
