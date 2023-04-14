@@ -1050,7 +1050,8 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 	bool    mode_hz; // HZÇÃèÍçáÅB
 
 	// çÏã∆ïœêî
-	CodeSet *GL, *GR, G[4];
+	const CodeSet *GL;
+	CodeSet      G[4];
 	int gWhat; // éüÇÃéöÇÕ 1:GL/GR 2:G2 3:G3 Ç≈èoóÕ
 	ulong len;
 
@@ -1062,7 +1063,6 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 		, fixed( f )
 		, mode_hz( hz )
 		, GL( &G[0] )
-		, GR( &G[1] )
 		, gWhat( 1 )
 	{
 		G[0]=g0, G[1]=g1, G[2]=g2, G[3]=g3;
@@ -1079,9 +1079,9 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 		else
 		{
 			if( p[1]==0x4A )
-				G[ (p[0]-0x28)%4 ] = ASCII;         // 1B [28-2B] 4A
+				G[ (p[0]-0x28)&3 ] = ASCII;         // 1B [28-2B] 4A
 			else if( p[1]==0x49 )
-				G[ (p[0]-0x28)%4 ] = KANA;          // 1B [28-2B] 49
+				G[ (p[0]-0x28)&3 ] = KANA;          // 1B [28-2B] 49
 			else if( *reinterpret_cast<const dbyte*>(p)==0x4228 )
 				G[ 0 ] = ASCII;                     // 1B 28 42
 			else if( *reinterpret_cast<const dbyte*>(p)==0x412E )
@@ -1094,9 +1094,9 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 				else if( p+2 < fe )
 				{
 					if( p[2]==0x41 )
-						G[ ((*++p)-0x28)%4 ] = GB;  // 1B 24 [28-2B] 41
+						G[ ((*++p)-0x28)&3 ] = GB;  // 1B 24 [28-2B] 41
 					else if( p[2]==0x43 )
-						G[ ((*++p)-0x28)%4 ] = KSX; // 1B 24 [28-2B] 43
+						G[ ((*++p)-0x28)&3 ] = KSX; // 1B 24 [28-2B] 43
 				}
 			}
 		}
@@ -1109,7 +1109,7 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 		CodeSet cs =
 			(gWhat==2 ? G[2] :
 			(gWhat==3 ? G[3] :
-			(*p&0x80  ? *GR  : *GL)));
+			(*p&0x80  ? G[1] : *GL)));
 
 		char c[2];
 		ulong wt=1;
@@ -1164,7 +1164,7 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 			case 0x8F: gWhat =     3; break;
 			case 0x1B:
 				if( p+1<fe ) {
-					++p; if( *p==0x7E )    GR = &G[1];
+					++p; if( *p==0x7E ) ; // Nothing to do.
 					else if( *p==0x4E ) gWhat =  2;
 					else if( *p==0x4F ) gWhat =  3;
 					else if( p+1<fe )   DoSwitching(p);
