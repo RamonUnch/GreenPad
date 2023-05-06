@@ -72,7 +72,7 @@ using namespace ki;
 
 	#endif
 
-	#if _MSC_VER >= 1300
+	#if _MSC_VER >= 1300 && _MSC_VER != 1500
 	extern "C"
 	void* __cdecl memset( void* buf, int ch, size_t n )
 	{
@@ -92,7 +92,7 @@ using namespace ki;
 			mov  edx, [cnt]    ;V  edx =       void* cnt
 			mov  edi, [dst]    ;U  edi =       ulong dst
 			mov  ebx, edx      ;V
-			mov  eax, 03h      ;U  eax = const ulong  3 (for masking)
+//			mov  eax, 03h      ;U  eax = const ulong  3 (for masking)
 			add  ebx, esi      ;V  ebx = const void* src+cnt
 
 			cmp  edi, esi      ;
@@ -101,21 +101,20 @@ using namespace ki;
 			jb   CopyDown      ;     downward copy
 
 		CopyUp:
-			cmp  edx, eax      ;   if( cnt<=3 )
+			cmp  edx, 03h      ;   if( cnt<=3 )
 			jbe  MiniCopy      ;     byte by byte copy
 
 			mov  ebx, edi      ;U
-			mov  ecx, eax      ;V
-			and  ebx, eax      ;U  ebx = (dst&3)
-			inc  ecx           ;V
+			mov  ecx, 04h      ;V
+			and  ebx, 03h      ;U  ebx = (dst&3)
 			sub  ecx, ebx      ;   ecx = (4-(dst&3))
-			and  ecx, eax      ;   ecx = {dst%4 0->0 1->3 2->2 3->1}
+			and  ecx, 03h      ;   ecx = {dst%4 0->0 1->3 2->2 3->1}
 			sub  edx, ecx      ;
 			rep  movsb         ;N  BYTE MOVE (align dst)
 
 			mov  ecx, edx      ;
 			shr  ecx, 2        ;   ecx = [rest bytes]/4
-			and  edx, eax      ;   edx = [rest bytes]%4
+			and  edx, 03h      ;   edx = [rest bytes]%4
 			rep  movsd         ;N  DWORD MOVE
 			jmp  MiniCopy      ;
 
@@ -128,34 +127,101 @@ using namespace ki;
 			jbe  MiniCopy      ;     byte by byte copy
 
 			mov  ecx, edi      ;
-			and  ecx, eax      ;
+			and  ecx, 03h      ;
 			inc  ecx           ;   ecx = {dst%4 0->1 1->2 2->3 3->4}
 			sub  edx, ecx      ;
 			rep  movsb         ;N  BYTE MOVE (align dst @ dword)
 
-			sub  edi, eax      ;U
+			sub  edi, 03h      ;U
 			mov  ecx, edx      ;V
-			sub  esi, eax      ;U
+			sub  esi, 03h      ;U
 			shr  ecx, 2        ;V  ecx = [rest bytes]/4
-			and  edx, eax      ;   edx = [rest bytes]%4
+			and  edx, 03h      ;   edx = [rest bytes]%4
 			rep  movsd         ;N  DWORD MOVE
-			add  edi, eax      ;U
-			add  esi, eax      ;V
+			add  edi, 03h      ;U
+			add  esi, 03h      ;V
 
 		MiniCopy:
 			mov  ecx, edx      ;
 			rep  movsb         ;N  BYTE MOVE
 
 			cld                ;U
-			mov  eax, [dst]    ;V  return dst
+//			mov  eax, [dst]    ;V  return dst
 		}
 		return dst;
 	}
 	#else
-	// Stupid naive C90 memmove for GCC
-	#pragma GCC push_options
-	#pragma GCC optimize ("-O3")
-	typedef __attribute__((__may_alias__)) size_t WT;
+	#if defined(__i386__)
+	// This is a convertion from the normal intel syntax
+	// Converted %%edx into a generic register "q" -> %1
+	// GCC seems to choose edx anyway.
+	void *__cdecl memmove(void *dst, const void *src, size_t n)
+	{
+		void *odst = dst;
+		asm (
+//		"    mov      %0, %%esi\n"    //U  esi = const void* src
+//		"    mov      %1, %%edx\n"    //V  edx =       size_t  n
+//		"    mov      %2, %%edi\n"    //U  edi =       void* dst
+		"    mov      %1, %%ebx\n"    //V  ebx = n
+		"    add      %%esi, %%ebx\n" //V  ebx = const void* src+cnt
+
+		"    cmp      %%esi, %%edi\n"
+		"    jbe      CopyUp\n"
+		"    cmp      %%ebx, %%edi\n" //if( src < dst < src+cnt )
+		"    jb       CopyDown\n"     //downward copy
+
+		"CopyUp:    \n"
+		"    cmp      $0x3, %1\n"     //if( cnt<=3 )
+		"    jbe      MiniCopy\n"     //byte by byte copy
+
+		"    mov      %%edi, %%ebx\n" //U
+		"    mov      $0x4, %%ecx\n"  //ecx = 4
+		"    and      $0x3, %%ebx\n"  //U  ebx = (dst&3)
+		"    sub      %%ebx, %%ecx\n" //ecx = (4-(dst&3))
+		"    and      $0x3, %%ecx\n"  //ecx = {dst%4 0->0 1->3 2->2 3->1}
+		"    sub      %%ecx, %1\n"
+		"    rep movsb\n"             //N  BYTE MOVE (align dst)
+
+		"    mov      %1, %%ecx\n"
+		"    shr      $0x2, %%ecx\n"  //ecx = [rest bytes]/4
+		"    and      $0x3, %1\n"  //edx = [rest bytes]%4
+		"    rep movsl\n"             //N  DWORD MOVE
+		"    jmp      MiniCopy\n"
+		"CopyDown:    \n"
+		"    std\n"
+		"    lea      (-1)(%%esi,%1,1), %%esi\n"
+		"    lea      (-1)(%%edi,%1,1), %%edi\n"
+
+		"    cmp      $0x4, %1\n"  //if( cnt<=4 )
+		"    jbe      MiniCopy\n"     //byte by byte copy
+
+		"    mov      %%edi, %%ecx\n"
+		"    and      $0x3, %%ecx\n"
+		"    inc      %%ecx\n"        //ecx = {dst%4 0->1 1->2 2->3 3->4}
+		"    sub      %%ecx, %1\n"
+		"    rep movsb\n"             //N  BYTE MOVE (align dst @ dword)
+
+		"    sub      $0x3, %%edi\n"  //U
+		"    mov      %1, %%ecx\n" //V
+		"    sub      $0x3, %%esi\n"  //U
+		"    shr      $0x2, %%ecx\n"  //V  ecx = [rest bytes]/4
+		"    and      $0x3, %1\n"  //edx[= [rest bytes]%4
+		"    rep movsl\n"             //N  DWORD MOVE
+		"    add      $0x3, %%edi\n"  //U
+		"    add      $0x3, %%esi\n"  //V
+
+		"MiniCopy:    \n"
+		"    mov      %1, %%ecx\n"
+		"    rep movsb\n"             //N  BYTE MOVE
+		"    cld\n"                   //U
+		:
+		:"S"(src), "q"(n), "D"(dst)
+		:"memory", "ebx", "ecx"
+		);
+		return odst;
+	}
+	#else // Other CPUS
+	typedef __attribute__((__may_alias__)) uintptr_t WT;
 	#define WS (sizeof(WT))
 	void *__cdecl memmove(void *dest, const void *src, size_t n)
 	{
@@ -186,18 +252,23 @@ using namespace ki;
 		}
 		return dest;
 	}
-	void __cdecl memset(void *dest, int ch, size_t n)
+	#endif
+
+
+	extern "C" void *__cdecl memset(void *dest, int ch, size_t n)
 	{
 		unsigned char *d = (unsigned char *)dest;
-		const unsigned char c = (const unsigned char)ch;
+		const unsigned char c = (unsigned char)ch;
 		while( n-- )
 			*d++ = c;
+
+		return dest;
 	}
-	void *cdecl memcpy(void *dest, const void *src, size_t n)
-	{
-		return memCP(dest, src, n);
-	}
-	#pragma GCC pop_options
+//	void *__cdecl memcpy(void *dest, const void * restrict src, size_t n)
+//	{
+//		return memmove(dest, src, n);
+//	}
+
 	#endif
 
 	#ifdef __GNUC__
@@ -206,6 +277,10 @@ using namespace ki;
 		::operator delete(ptr);;
 	}
 	void operator delete [] (void * ptr)
+	{
+		::operator delete(ptr);;
+	}
+	void operator delete [](void * ptr, size_t size)
 	{
 		::operator delete(ptr);;
 	}
