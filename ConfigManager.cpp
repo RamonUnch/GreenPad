@@ -503,7 +503,7 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 
 		// Read the whole file at once.
 		unicode buf[1024], *nptr=buf,*ptr;
-		size_t len = tf.ReadBuf( buf, countof(buf)-8 );
+		size_t len = tf.ReadBuf( buf, countof(buf)-1 );
 		buf[len] = L'\0'; // NULL terminate in case.
 		for( ptr=buf; ptr<buf+len; ptr=nptr ) // !EOF
 		{
@@ -798,7 +798,9 @@ void ConfigManager::LoadIni()
 	// V‹Kƒtƒ@ƒCƒ‹ŠÖŒW
 	newfileCharset_ = ini_.GetInt( TEXT("NewfileCharset"), charSets_.defaultCs() );
 	if(newfileCharset_ == -1) newfileCharset_ = 1252; // 1.07.4 bugfix
-	if(!::IsValidCodePage(newfileCharset_)) newfileCharset_ = ::GetACP();
+	int neededCP = TextFileR::neededCodepage(newfileCharset_);
+	if( neededCP > 0 && !::IsValidCodePage(neededCP) )
+		newfileCharset_ = ::GetACP();
 	newfileDoctype_ = ini_.GetStr( TEXT("NewfileDoctype"), String( IDS_DEFAULT ) );
 	newfileLB_      = (lbcode) ini_.GetInt( TEXT("NewfileLB"), CRLF );
 
@@ -830,6 +832,7 @@ void ConfigManager::LoadIni()
 			dtList_.Add( d );
 		}
 	}
+	LOGGER( "ConfigManager::LoadIni() LOADED!" );
 }
 
 void ConfigManager::SaveIni()
