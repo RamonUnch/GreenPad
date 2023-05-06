@@ -28,6 +28,8 @@ enum charset {
 					   // UTF5/UTF8/UTF8N/UTF16b/UTF16l/UTF32b/UTF32l
 					   // ‚ð”»’è‚·‚éB‘¼‚Í’m‚ç‚È‚¢B(^^;
 
+	ASCIICP    = 20127,// Normal plain ASCII.
+
 	WesternDOS = 850,  // ‰¢•Ä      (CP850 != ISO-8859-1)
 	Western    = 1252, // ‰¢•Ä      (Windows1252 >> ISO-8859-1)
 //	WesternOS2 = 1004  // CP1004 OS/2 encoding ~ Windows1252

@@ -821,7 +821,7 @@ namespace
 		||  app().isNTOSVerEqual( MKVER(3,51,1057) )
 		||  app().isNTOSVerLarger( MKVER(4,00,1381) ) )
 		{
-			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandleA("USER32.DLL"), "CharNextExA");
+			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "CharNextExA");
 			if (Window_CharNextExA)
 			{ // We got the function!
 			  // Double check that it actually works, Just in case
@@ -1425,21 +1425,44 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 		}
 	}
 
+//-- Autodetect pure ASCII File (Fast method)
+	// We can do that because we ignore UTF-7 autodection anyway.
+	if( !bit8 )
+	{
+		// 7-bit encoded file.
+		// Check if there are any [0-8] or [14-31] and 127
+		for( int i = 0; i <= 8; i++)
+			if( freq[ i ] )
+				goto nonASCII;
+		for( int i = 14; i <= 31; i++)
+			if( freq[ i ] )
+				goto nonASCII;
+		if( !freq[ 127 ] )
+			goto nonASCII;
+
+		// File is ASCII => use CP_ACP.
+		return defCs;
+		nonASCII:;
+	}
+
 //-- chardet and MLang detection
 	// chardet works better when size > 64
 	if( siz <= 80 )
 	{
 		cs = MLangAutoDetection( ptr, siz );
+		if( cs == ASCIICP ) return defCs;
 		if( cs ) return cs;
 	}
 	// Chardet may be the only auto detection method
 	cs = chardetAutoDetection( ptr, siz );
+	if( cs == ASCIICP ) return defCs;
 	if( cs ) return cs;
 
 	// Try Mlang for larger sizes if chardet failed.
 	if( siz > 80 )
 	{
 		cs = MLangAutoDetection( ptr, siz );
+		if( cs == ASCIICP ) return defCs;
 		if( cs ) return cs;
 	}
 
@@ -1562,8 +1585,8 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 		::MessageBox(NULL,tmp,TEXT("MLangDetect"),0);
 	# endif
 
-		if (cs == 20127) cs = 0; // 20127 == ASCII, 0 = unknown
-		if (cs == 65000) cs = 0; // 65000 == UTF-7, let's disable misdetecting as UTF-7
+//		if (cs == 20127) cs = 0; // 20127 == ASCII, 0 = unknown
+		if (cs == 65000) cs = ASCIICP; // 65000 == UTF-7, let's disable misdetecting as UTF-7
 
 		if (lang)
 			lang->Release();
@@ -1594,6 +1617,8 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 	# define CHARDET_DLL "chardet_ia64.dll"
 	#elif defined(_M_ARM64)
 	# define CHARDET_DLL "chardet_arm64.dll"
+	#elif defined(_M_ARM)
+	# define CHARDET_DLL "chardet_arm.dll"
 	#elif defined(_M_ALPHA)
 	# define CHARDET_DLL "cdetaxp.dll"
 	#elif defined(_M_MRX000) || defined(_MIPS_)
@@ -1648,6 +1673,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 		static const struct {
 			const char *str; int cs;
 		} cslist[] = {
+			{ "ASCII",          ASCIICP },
 			{ "Shift_JIS",      SJIS },
 			{ "EUC-JP",         EucJP },
 			{ "EUC-KR",         UHC },
@@ -1933,7 +1959,6 @@ bool TextFileR::IsNonUnicodeRange(qbyte u)
 		//	U+10E60..U+10E7F	Rumi Numeral Symbols
 		//	U+10E80..U+10EBF	Yezidi
 		//	U+10EC0..U+10EFF	Arabic Extended-C (Uni 15.0)
-		(0x010F00 <= u && u < 0x010F00) ||
 		//	U+10F00..U+10F2F	Old Sogdian
 		//	U+10F30..U+10F6F	Sogdian
 		//	U+10F70..U+10FAF	Old Uyghur
