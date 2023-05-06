@@ -1386,7 +1386,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 	else if( bom4 == 0xfffe0000 ) cs = UTF32l;
 	else if( bom2 == 0xfeff )     cs = UTF16b;
 	else if( bom2 == 0xfffe )     cs = UTF16l;
-	else if( bom4 == 0x1b242941 && ::IsValidCodePage(949) ) cs = IsoKR;
+	else if( bom4 == 0x1b242943 && ::IsValidCodePage(949) ) cs = IsoKR;
 	else if( bom4 == 0x1b242941 && ::IsValidCodePage(936) ) cs = IsoCN;
 	else if( Jp && !bit8 && freq[0x1b]>0 )                  cs = IsoJP;
 
