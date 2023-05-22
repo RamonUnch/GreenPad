@@ -168,6 +168,8 @@ protected:
 	friend class UnReDoChain;
 	friend class MacroCommand;
 	virtual Command* operator()( Document& doc ) const = 0;
+public:
+	virtual ~Command() {};
 };
 
 

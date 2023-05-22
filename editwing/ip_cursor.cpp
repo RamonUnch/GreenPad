@@ -94,7 +94,7 @@ static UINT GetInputCP()
 {
 	UINT kb_cp = CP_ACP;
 #if defined(UNICOWS) || !defined(UNICODE) || defined(_MBCS)
-	LCID lcid = LOWORD(MyGetKeyboardLayout( 0 ));
+	LCID lcid = LOWORD( MyGetKeyboardLayout( 0 ) );
 	TCHAR cpstr[16]; cpstr[0] = TEXT('\0');
 	if( lcid && ::GetLocaleInfo(lcid, LOCALE_IDEFAULTANSICODEPAGE, cpstr, countof(cpstr)))
 	{	// This should be the codepage of the local associated with
@@ -189,6 +189,7 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 	, bRO_    ( false )
 	, lineSelectMode_( false )
 	, timerID_( 0 )
+	, inputCP_( GetInputCP() )
 {
 	// ‚Ä‚«‚Æ[‚Éî•ñ‰Šú‰»
 	// SPI_GETKEYBOARDSPEED gives value from 0-31, 0=>~30Hz, 31=>~2.5Hz
@@ -415,6 +416,11 @@ void CurEvHandler::on_key( Cursor& cur, int vk, bool sft, bool ctl )
 	}
 }
 
+void Cursor::on_inputlangchange( HKL hkl )
+{
+	inputCP_ = GetInputCP();
+}
+
 void Cursor::on_char( TCHAR ch )
 {
 	if( !bRO_ && ch!=0x7f
@@ -427,7 +433,7 @@ void Cursor::on_char( TCHAR ch )
 		else
 		{ // Use _MBCS
 			unicode wc = ch;
-			UINT kb_cp = GetInputCP();
+			UINT kb_cp = inputCP_; //GetInputCP();
 #if defined(_MBCS)
 			static char prevchar=0;
 			unicode wcs[8];

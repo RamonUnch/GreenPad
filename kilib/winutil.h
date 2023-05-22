@@ -448,7 +448,7 @@ private:
 //@}
 //=========================================================================
 
-class Mutex A_FINAL: public Object
+class Mutex
 {
 public:
 	Mutex( const TCHAR* name );
@@ -467,7 +467,7 @@ private:
 
 //-------------------------------------------------------------------------
 
-inline Mutex::Mutex( const TCHAR* name )
+inline Mutex::Mutex( const TCHAR* name)
 	: mtx_( ::CreateMutex( NULL, TRUE, name ) )
 	, locked_ (false)
 	{
@@ -501,7 +501,6 @@ inline Mutex::~Mutex()
 			::CloseHandle( mtx_ );
 		}
 	}
-
 
 
 //=========================================================================

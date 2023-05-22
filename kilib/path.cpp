@@ -9,7 +9,7 @@ static void MyCoTaskMemFree(void *mem)
 {
 	static funkk func = (funkk) (-1);
 	if (func == (funkk)(-1))
-		func = (funkk)GetProcAddress(GetModuleHandleA("OLE32.DLL"),"CoTaskMemFree");
+		func = (funkk)GetProcAddress(GetModuleHandle(TEXT("OLE32.DLL")),"CoTaskMemFree");
 	if (func) func(mem);
 }
 typedef HRESULT (WINAPI * funkk2)(HWND h, int i, LPITEMIDLIST *idl);
@@ -17,7 +17,7 @@ HRESULT MySHGetSpecialFolderLocation(HWND h, int i, LPITEMIDLIST *idl)
 {
 	static funkk2 func = (funkk2) (-1);
 	if (func == (funkk2)(-1))
-		func = (funkk2)GetProcAddress(GetModuleHandleA("SHELL32.DLL"),"SHGetSpecialFolderLocation");
+		func = (funkk2)GetProcAddress(GetModuleHandle(TEXT("SHELL32.DLL")),"SHGetSpecialFolderLocation");
 	if (func)
 		return func(h, i, idl);
 	return 666;

@@ -80,7 +80,7 @@ static BOOL MyGetVersionEx(LPOSVERSIONINFOA s_osVer)
 	// We use the ANSI version because it does not matter.
 	typedef BOOL (WINAPI *GetVersionEx_funk)(LPOSVERSIONINFOA s_osVer);
 	GetVersionEx_funk func = (GetVersionEx_funk)
-		GetProcAddress(GetModuleHandleA("KERNEL32.DLL"), "GetVersionExA");
+		GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetVersionExA");
 	if (func && func( s_osVer ))
 	{
 		if (s_osVer->dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
@@ -149,10 +149,10 @@ App* App::pUniqueInstance_;
 
 inline App::App()
 	: osver_       (init_osver())
-	, hOle32_      ((HINSTANCE)(-1))
 	, exitcode_    (-1)
 	, loadedModule_(0)
 	, hInst_       (::GetModuleHandle(NULL))
+	, hOle32_      ((HINSTANCE)(-1))
 	, hInstComCtl_ (NULL)
 {
 	// 唯一のインスタンスは私です。
@@ -309,7 +309,7 @@ bool App::isNTOSVerEqual(DWORD ver) const
 }
 bool App::is9xOSVerEqual(DWORD ver) const
 {
-#if defined(WIN64)
+#if defined(WIN64) || defined(UNICODE) && !defined(UNICOWS)
 	return false;
 #else
 	return !isNT() && osver_.v.dwVer == ver;
@@ -328,7 +328,7 @@ bool App::isNTOSVerLarger(DWORD ver) const
 
 bool App::is9xOSVerLarger(DWORD ver) const
 {
-#if defined(WIN64)
+#if defined(WIN64) || defined(UNICODE) && !defined(UNICOWS)
 	return false;
 #else
 	return !isNT() &&  ver <= osver_.v.dwVer;
@@ -349,7 +349,7 @@ bool App::isNewTypeWindows() const
 
 bool App::isWin95() const
 {
-#if defined(WIN64)
+#if defined(WIN64) || defined(UNICODE) && !defined(UNICOWS)
 	return false;
 #else
 #if defined(_M_IX86) || defined(_M_AMD64)

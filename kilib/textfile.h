@@ -198,7 +198,7 @@ public:
 
 private:
 
-	dptr<TextFileRPimpl> impl_;
+	TextFileRPimpl    *impl_;
 	FileR                fp_;
 	int                  cs_;
 	int                  lb_;
@@ -264,7 +264,7 @@ public:
 
 private:
 
-	dptr<TextFileWPimpl> impl_;
+	TextFileWPimpl    *impl_;
 	FileW                fp_;
 	const int            cs_;
 	const int            lb_;

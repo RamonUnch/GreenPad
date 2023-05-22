@@ -101,7 +101,7 @@ HKL MyGetKeyboardLayout(DWORD dwLayout)
 {
 	static funkk func = (funkk)(-1);
 	if(func == (funkk)(-1)) {
-		func = (funkk) GetProcAddress(GetModuleHandleA("USER32.DLL"), "GetKeyboardLayout");
+		func = (funkk) GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "GetKeyboardLayout");
 	}
 	if (func) return func(dwLayout);
 
@@ -139,18 +139,16 @@ static const GUID myIID_IActiveIMMApp = {0x08c0e040, 0x62d1, 0x11d1,{0x93,0x26, 
 static const GUID myCLSID_CActiveIMM = {0x4955dd33, 0xb159, 0x11d0, {0x8f,0xcf, 0x00,0xaa,0x00,0x6b,0xcc,0x59}};
 IMEManager* IMEManager::pUniqueInstance_;
 IMEManager::IMEManager()
-#ifdef USEGLOBALIME
-	: immApp_( NULL )
-	, immMsg_( NULL )
-#endif
 #if !defined(NO_IME) && defined(TARGET_VER) && TARGET_VER<=350
-	, hIMM32_ ( LoadIMM32DLL() )
+	: hIMM32_ ( LoadIMM32DLL() )
 #endif
 {
 	// 唯一のインスタンスは私です
 	pUniqueInstance_ = this;
 
 	#ifdef USEGLOBALIME
+		immApp_ = NULL;
+		immMsg_ = NULL;
 		// 色々面倒なのでWin95ではGlobalIME無し
 		// No global IME on Win95 because it is buggy...
 		// RamonUnch: I found it is not so buggy so
@@ -548,6 +546,39 @@ void Window::ProcessMsg()
 
 
 //-------------------------------------------------------------------------
+
+int __cdecl Window::MsgBoxf( LPCTSTR fmt, ... ) const
+{
+	va_list arglist;
+	TCHAR str[512];
+	TCHAR lerrorstr[16];
+	LPVOID lpMsgBuf;
+
+	DWORD lerr = GetLastError();
+
+	va_start( arglist, fmt );
+	wvsprintf( str, fmt, arglist );
+	va_end( arglist );
+
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		lerr,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language */
+		(LPTSTR) &lpMsgBuf, /* &, because FORMAT_MESSAGE_ALLOCATE_BUFFER */
+		0, NULL
+	);
+
+	wsprintf(lerrorstr, TEXT("\nLast Eror #%u:\n"), (UINT)lerr);
+	lstrcat(str, lerrorstr);
+	lstrcat(str, (LPCTSTR)lpMsgBuf);
+
+	/* Free the buffer using LocalFree. */
+	LocalFree( lpMsgBuf );
+	return MsgBox( str );
+}
 
 void Window::SetCenter( HWND hwnd, HWND rel )
 {

@@ -20,7 +20,7 @@ typedef void* chardet_t;
 // テキストファイル読み出し共通インターフェイス
 //=========================================================================
 
-struct ki::TextFileRPimpl : public Object
+struct ki::TextFileRPimpl: public Object
 {
 	inline TextFileRPimpl()
 		: state(EOL) {}
@@ -29,6 +29,8 @@ struct ki::TextFileRPimpl : public Object
 		= 0;
 
 	enum { EOF=0, EOL=1, EOB=2 } state;
+
+	virtual ~TextFileRPimpl() {};
 };
 
 
@@ -1196,7 +1198,7 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 //-------------------------------------------------------------------------
 
 TextFileR::TextFileR( int charset )
-	: cs_( charset )
+	: impl_ (NULL),  cs_( charset )
 	, nolbFound_(true)
 {
 }
@@ -1204,6 +1206,8 @@ TextFileR::TextFileR( int charset )
 TextFileR::~TextFileR()
 {
 	Close();
+	if( impl_ )
+		delete impl_;
 }
 
 size_t TextFileR::ReadBuf( unicode* buf, ulong siz )
@@ -1318,7 +1322,7 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	default:      impl_ = new rMBCS(buf,siz,cs_); break;
 	}
 
-	return true;
+	return impl_ != NULL;
 }
 
 int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
@@ -2180,7 +2184,7 @@ struct ki::TextFileWPimpl : public Object
 	virtual void WriteChar( unicode ch )
 		{}
 
-	~TextFileWPimpl()
+	virtual ~TextFileWPimpl()
 		{ delete [] buf_; }
 
 protected:
@@ -2468,7 +2472,7 @@ struct wUtf5 A_FINAL: public TextFileWPimpl
 //-------------------------------------------------------------------------
 
 namespace {
-	static const ulong SCSU_offsets[16]={
+	static const uint SCSU_offsets[16]={
 		/* initial offsets for the 8 dynamic (sliding) windows */
 		0x0080, /* Latin-1 */
 		0x00C0, /* Latin Extended A */
@@ -2510,7 +2514,7 @@ struct wSCSU A_FINAL: public TextFileWPimpl
 
 	char isUnicodeMode, win;
 
-	char isInWindow(ulong offset, ulong c)
+	char isInWindow(uint offset, ulong c)
 	{
 		return (char)(offset<=c && c<=(offset+0x7f));
 	}
@@ -3147,18 +3151,20 @@ struct wIsoJp A_FINAL: public TextFileWPimpl
 //-------------------------------------------------------------------------
 
 TextFileW::TextFileW( int charset, int linebreak )
-	: cs_( charset ), lb_(linebreak)
+	: impl_ (NULL), cs_( charset ), lb_(linebreak)
 {
 }
 
 TextFileW::~TextFileW()
 {
+	if( impl_ )
+		delete impl_;
+//	impl_ = NULL;
 	Close();
 }
 
 void TextFileW::Close()
 {
-	impl_ = NULL;
 	fp_.Close();
 }
 
@@ -3223,5 +3229,5 @@ bool TextFileW::Open( const TCHAR* fname )
 		impl_ = new wMBCS( fp_, cs_ );
 		break;
 	}
-	return true;
+	return impl_ != NULL;
 }

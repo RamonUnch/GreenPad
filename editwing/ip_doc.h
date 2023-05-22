@@ -323,7 +323,7 @@ inline bool UnReDoChain::isModified() const
 //@}
 //=========================================================================
 
-class DocImpl : public Object
+class DocImpl A_FINAL : public Object
 #ifdef USE_THREADS
               , private EzLockable
               , private Runnable
@@ -418,7 +418,7 @@ private:
 	mutable storage<DocEvHandler*> pEvHan_; // イベント通知先
 	UnReDoChain                    urdo_;   // アンドゥリドゥ
 
-	aptr<TextFileR> currentOpeningFile_;
+//	aptr<TextFileR> currentOpeningFile_; // ToDo: multi-threaded
 
 private:
 
