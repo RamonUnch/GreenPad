@@ -2514,13 +2514,13 @@ struct wSCSU A_FINAL: public TextFileWPimpl
 
 	char isUnicodeMode, win;
 
-	char isInWindow(uint offset, ulong c)
+	char isInWindow(uint offset, uint c)
 	{
 		return (char)(offset<=c && c<=(offset+0x7f));
 	}
 
 	// get the index of the static/dynamic window that contains c; -1 if none
-	int getWindow(ulong c)
+	int getWindow(uint c)
 	{
 		int i;
 
