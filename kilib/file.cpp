@@ -18,8 +18,8 @@ static TCHAR *GetUNCPath(const TCHAR *ifn)
 	// this also mean we do not have to check for Win9x/NT versions.
 	if (len > MAX_PATH) // len includes the terminating '\0'.
 	{
-		TCHAR *buf = new TCHAR [(len + 16) * sizeof(wchar_t)];
-		if (!buf) return NULL;
+		TCHAR *buf = new TCHAR [(len + 16) * sizeof(TCHAR)];
+		if (!buf) return (TCHAR* )ifn;
 		int buffstart = 0;
 		if (ifn[0] == '\\' && ifn[1] == '\\')
 		{
@@ -63,7 +63,7 @@ static TCHAR *GetUNCPath(const TCHAR *ifn)
 			delete [] buf;
 		}
 	}
-	return NULL;
+	return (TCHAR *)ifn;
 }
 #endif
 
@@ -80,11 +80,7 @@ static HANDLE CreateFileUNC(
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
 	if( app().isNT() )
-	{
-		UNCPath = GetUNCPath(fname);
-		if( !UNCPath ) // Failed then fallback to non UNC
-			UNCPath = (TCHAR *)fname;
-	}
+		UNCPath = GetUNCPath(fname); // may return fname!
 #endif
 
 	// ファイルを読みとり専用で開く
@@ -98,7 +94,7 @@ static HANDLE CreateFileUNC(
 		hTemplateFile
 	);
 #ifdef UNICODE
-	if(UNCPath && UNCPath != fname) // Was allocated...
+	if( UNCPath != fname ) // Was allocated...
 		delete [] UNCPath;
 #endif
 	return hFile;
@@ -110,17 +106,13 @@ DWORD GetFileAttributesUNC(LPCTSTR fname)
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
 	if( app().isNT() )
-	{
-		UNCPath = GetUNCPath(fname);
-		if( !UNCPath ) // Failed then fallback to non UNC
-			UNCPath = (TCHAR *)fname;
-	}
+		UNCPath = GetUNCPath(fname); // may return fname!
 #endif
 
 	DWORD ret = ::GetFileAttributes(UNCPath);
 
 #ifdef UNICODE
-	if(UNCPath && UNCPath != fname) // Was allocated...
+	if( UNCPath != fname ) // Was allocated...
 		delete [] UNCPath;
 #endif
 	return ret;
@@ -280,9 +272,7 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
 	if( app().isNT() )
-		UNCPath = GetUNCPath(fname);
-	if( !UNCPath ) // Failed then fallback to non UNC
-		UNCPath = (TCHAR *)fname;
+		UNCPath = GetUNCPath(fname); // may return fname!
 #endif
 
 	// Check for readonly flag
@@ -309,7 +299,7 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 		fattr | FILE_FLAG_SEQUENTIAL_SCAN, NULL );
 
 #ifdef UNICODE
-	if(UNCPath && UNCPath != fname) // Was allocated...
+	if( UNCPath != fname ) // Was allocated...
 		delete [] UNCPath;
 #endif
 
