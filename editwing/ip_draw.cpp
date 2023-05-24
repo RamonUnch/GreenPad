@@ -192,6 +192,10 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		cur().on_char( (TCHAR)wp );
 		break;
 
+	case WM_INPUTLANGCHANGE:
+		cur().on_inputlangchange( (HKL)lp );
+		return WndImpl::on_message( msg, wp, lp );
+
 	case WM_LBUTTONDOWN:
 		cur().on_lbutton_down( LOWORD(lp), HIWORD(lp), (wp&MK_SHIFT)!=0 );
 		break;

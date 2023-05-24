@@ -119,15 +119,6 @@ inline void memFF( void* ptrv, int siz )
 	  for(;siz>3;siz-=4,ptr+=4) *(DWORD*)ptr = 0xffffffff;
 	  for(;siz;--siz,++ptr) *ptr = 0xff; }
 
-inline void *memCP( void* dst, const void* src, size_t siz )
-{
-	BYTE* d = (BYTE*)dst;
-	const BYTE* s = (const BYTE*)src;
-	for(;siz>3;siz-=4,d+=4, s+=4) *(DWORD*)d = *(DWORD*)s;
-	for(;siz;--siz,++d,++s) *d = *s;
-	return dst;
-}
-
 inline bool memEQ( const void *s1, const void *s2, size_t siz )
 {
 	const BYTE *a = (const BYTE *)s1;
@@ -154,6 +145,12 @@ inline bool memEQ( const void *s1, const void *s2, size_t siz )
 //	JavaのObject や MFCのCObject みたいに使う…わけではなく、
 //	単にここから派生すると自動で operator new/delete が高速版に
 //	なるので便利だよ、という使い方のための基底クラスです。
+//
+// Standard Base Class
+//
+// Not to be used like Java's Object or MFC's CObject,
+// It is simply a base class for the usage that operator new/delete becomes
+// a fast version automatically when derived from this class.
 //@}
 //=========================================================================
 
@@ -168,10 +165,6 @@ public:
 	static void operator delete( void* ptr, size_t siz )
 		{ mem().DeAlloc( ptr, siz ); }
 #endif
-
-protected:
-	virtual ~Object()
-		{}
 };
 
 

@@ -43,7 +43,7 @@ private:
 #else
 	#define LOGGER(x)
 	#define LOGGERS(x)
-	#define LOGGERF if(0)Logger().WriteLineFmtErr
+	#define LOGGERF Logger().WriteLineFmtErr
 //	static void __cdecl LOGGERF(const TCHAR *fmt, ...){}
 #endif
 

@@ -43,7 +43,7 @@ const TCHAR *Int2lStr(TCHAR str[INT_DIGITS+1], int n);
 const TCHAR *Ulong2lStr(TCHAR str[ULONG_DIGITS+1], ulong n);
 
 inline static
-const char *my_lstrcatA(char *dest, const char *src)
+const char *my_lstrcatA(char *dest, const char * restrict src)
 {
 	char *orig=dest;
 	for (; *dest; ++dest) ;	/* go to end of dest */
@@ -52,7 +52,7 @@ const char *my_lstrcatA(char *dest, const char *src)
 }
 
 inline static
-const wchar_t *my_lstrcatW(wchar_t *dest, const wchar_t *src)
+const wchar_t *my_lstrcatW(wchar_t *dest, const wchar_t * restrict src)
 {
 	wchar_t *orig=dest;
 	for (; *dest; ++dest) ;	/* go to end of dest */
@@ -61,14 +61,14 @@ const wchar_t *my_lstrcatW(wchar_t *dest, const wchar_t *src)
 }
 
 inline static
-char *my_lstrkpyA(char *dest, const char *src)
+char *my_lstrkpyA(char *dest, const char * restrict src)
 {
 	for (; (*dest=*src); ++src,++dest) ;	/* then append from src */
 	return dest;
 }
 
 inline static
-wchar_t *my_lstrkpyW(wchar_t *dest, const wchar_t *src)
+wchar_t *my_lstrkpyW(wchar_t *dest, const wchar_t * restrict src)
 {
 	for (; (*dest=*src); ++src,++dest) ;	/* then append from src */
 	return dest;
@@ -94,7 +94,7 @@ const unicode *my_lstrchrW(const unicode *str, unicode c)
 }
 
 inline static
-unicode* my_lstrcpyW( unicode* const d, const unicode* s )
+unicode* my_lstrcpyW( unicode* const d, const unicode* restrict s )
 {
 	for(unicode* n=d; (*n++ = *s++););
 	return d;
@@ -119,7 +119,7 @@ bool my_instringW(const unicode *X, const unicode *Y)
 	return !*Y; // Match if we reached the end of Y
 }
 inline static
-char* my_lstrcpyA( char* const d, const char* s )
+char* my_lstrcpyA( char* const d, const char * restrict s )
 {
 	for(char* n=d; (*n++ = *s++););
 	return d;
@@ -148,9 +148,9 @@ int my_lstrcmpiASCII(const char *X, const char *Y)
 }
 
 static inline
-wchar_t *my_lstrcpynW(wchar_t *out, const wchar_t *in, int outlen)
+wchar_t *my_lstrcpynW(wchar_t *out, const wchar_t * restrict in, size_t outlen)
 {
-	int i;
+	size_t i;
 	for (i=0; i<outlen && in[i]; i++)
 	{
 		out[i] = in[i];
@@ -159,9 +159,9 @@ wchar_t *my_lstrcpynW(wchar_t *out, const wchar_t *in, int outlen)
 	return out;
 }
 static inline
-char *my_lstrcpynA(char *out, const char *in, int outlen)
+char *my_lstrcpynA(char *out, const char * restrict in, size_t outlen)
 {
-	int i;
+	size_t i;
 	for (i=0; i<outlen && in[i]; i++)
 	{
 		out[i] = in[i];
@@ -286,7 +286,7 @@ protected:
 
 	// 書き込み可能なバッファを、終端含めて最低でもminimum文字分用意する
 	TCHAR* AllocMem( size_t minimum );
-	TCHAR* ReallocMem( size_t minimum );
+	TCHAR* ReallocMem( size_t minimum=0 );
 
 	// 書き込み終了後、長さを再設定
 	void UnlockMem( long siz=-1 );
@@ -425,6 +425,8 @@ inline const String operator+( const String& a, const TCHAR* b )
 	{ return String(a) += b; }
 //@{ TCHAR* + String //@}
 inline const String operator+( const TCHAR* a, const String& b )
+	{ return String(a) += b; }
+inline const String operator+( const String& a, TCHAR b )
 	{ return String(a) += b; }
 
 // ConvToWCharの返値バッファの解放

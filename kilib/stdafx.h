@@ -21,12 +21,16 @@
 #define A_PURE __attribute__((pure))
 #define A_XPURE __attribute__((const))
 #define A_FLATTEN __attribute__((flatten))
+#define ASSUME(x) do { if (!(x)) __builtin_unreachable(); } while (0)
+#define restrict __restrict
 #else //__GNUC__
+#define ASSUME(x)
 #define A_HOT
 #define A_COLD
 #define A_PURE
 #define A_XPURE
 #define A_FLATTEN
+#define restrict
 #endif
 
 #if defined (__cplusplus) && __cplusplus >= 201103L

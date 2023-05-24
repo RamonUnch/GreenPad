@@ -59,7 +59,7 @@ static int WINAPI MySetScrollInfo_fb(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BO
 static int WINAPI MySetScrollInfo_1st(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BOOL fredraw)
 {
 	// Should be supported since Windows NT 3.51.944
-	ssnfo_funk dyn_SetScrollInfo = (ssnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "SetScrollInfo");
+	ssnfo_funk dyn_SetScrollInfo = (ssnfo_funk)GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "SetScrollInfo");
 	if( dyn_SetScrollInfo
 	&& !(  app().is9xOSVerLarger( MKVER(4,00,275) ) // Win95 4.00.275
 		|| app().isNTOSVerLarger( MKVER(3,51,944) ) // WinNT 3.51.944
@@ -104,7 +104,7 @@ static int WINAPI MyGetScrollInfo_fb(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 static int WINAPI MyGetScrollInfo_1st(HWND hwnd, int fnBar, LPSCROLLINFO lpsi)
 {
 	// Should be supported since Windows NT 3.51...
-	gsnfo_funk dyn_GetScrollInfo = (gsnfo_funk)GetProcAddress(GetModuleHandleA("USER32.DLL"), "GetScrollInfo");
+	gsnfo_funk dyn_GetScrollInfo = (gsnfo_funk)GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "GetScrollInfo");
 	if( dyn_GetScrollInfo
 	&& !(  app().is9xOSVerLarger(MKVER(4,00,275)) // Win95 4.00.275
 		|| app().isNTOSVerLarger(MKVER(3,51,944)) // WinNT 3.51.944

@@ -46,6 +46,8 @@ public:
 	//@}
 	int MsgBox( LPCTSTR msg, LPCTSTR caption=NULL, UINT type=MB_OK ) const;
 
+	int __cdecl MsgBoxf( LPCTSTR fmt, ... ) const;
+
 	//@{ テキスト設定 //@}
 	void SetText( const TCHAR* str );
 

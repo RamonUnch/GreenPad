@@ -282,7 +282,7 @@ String::~String()
 	ReleaseData();
 }
 
-TCHAR* String::ReallocMem( size_t minimum=0 )
+TCHAR* String::ReallocMem( size_t minimum/*=0*/ )
 {
 	return AllocMemHelper( minimum, c_str(), len()+1 );
 }
@@ -438,7 +438,7 @@ const char* String::ConvToChar() const
 {
 #ifdef _UNICODE
 	int ln = ::WideCharToMultiByte( CP_ACP, 0, c_str(), -1, NULL, 0, NULL, NULL );
-	char* p = new char[ln+32];
+	char* p = new char[ln+1];
 	::WideCharToMultiByte( CP_ACP,  0, c_str(), -1 , p, ln+1, NULL, NULL );
 	return p;
 #else

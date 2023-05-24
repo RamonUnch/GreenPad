@@ -182,7 +182,7 @@ struct VPos : public DPos
 //@}
 //=========================================================================
 typedef unicode *(WINAPI *ModProc)(unicode* str);
-class Cursor A_FINAL: public ki::Object
+class Cursor : public ki::Object
 {
 public:
 
@@ -274,6 +274,7 @@ public:
 	void on_timer();
 	int  on_ime_reconvertstring( RECONVERTSTRING* rs );
 	bool on_ime_confirmreconvertstring( RECONVERTSTRING* rs );
+	void on_inputlangchange( HKL hkl );
 
 private:
 
@@ -295,6 +296,8 @@ private:
 	int  keyRepTime_; // タイマー関係
 	int  dragX_;      // 位置
 	int  dragY_;      // 位置
+
+	UINT inputCP_;    // Current keyboard codepage
 
 	CurEvHandler defaultHandler_;
 
