@@ -577,6 +577,7 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 				break;
 			case 0x7773: // ws WRAP-SMART
 				dt->wrapSmart = (0!=GetInt(ptr));
+				break;
 			case 0x6C6E: // ln: LINE-NO
 				dt->showLN = (0!=GetInt(ptr));
 				break;
