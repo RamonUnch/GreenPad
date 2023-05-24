@@ -57,7 +57,7 @@ static HINSTANCE LoadIMM32DLL()
 //		return NULL;
 
 	HINSTANCE h = LoadLibrary(TEXT("IMM32.DLL"));
-	if( ! h) return NULL;
+	if( !h ) return NULL;
 	// Helper with crazy cast to avoid further casts.
 	#define LOADPROC(proc, procname) if(!(*reinterpret_cast<FARPROC*>(&proc)=GetProcAddress(h,procname)))goto fail;
 
@@ -83,10 +83,12 @@ static HINSTANCE LoadIMM32DLL()
 	LOADPROC( dyn_ImmSetCompositionStringA, "ImmSetCompositionStringA");
 #endif // !UNICODE || UNICOWS
 
+	#undef LOADPROC
+
 	LOGGER( "IMM32.DLL Loaded !" );
 	return h;
 
-	fail:
+	fail: // Only if we fail.
 	FreeLibrary(h);
 	return NULL;
 }
@@ -99,8 +101,8 @@ static HINSTANCE LoadIMM32DLL()
 typedef HKL(WINAPI *funkk)(DWORD dwLayout);
 HKL MyGetKeyboardLayout(DWORD dwLayout)
 {
-	static funkk func = (funkk)(-1);
-	if(func == (funkk)(-1)) {
+	static funkk func = (funkk)(1);
+	if(func == (funkk)(1)) {
 		func = (funkk) GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "GetKeyboardLayout");
 	}
 	if (func) return func(dwLayout);
@@ -552,7 +554,7 @@ int __cdecl Window::MsgBoxf( LPCTSTR fmt, ... ) const
 	va_list arglist;
 	TCHAR str[512];
 	TCHAR lerrorstr[16];
-	LPVOID lpMsgBuf;
+	LPVOID lpMsgBuf = NULL;
 
 	DWORD lerr = GetLastError();
 
@@ -560,7 +562,7 @@ int __cdecl Window::MsgBoxf( LPCTSTR fmt, ... ) const
 	wvsprintf( str, fmt, arglist );
 	va_end( arglist );
 
-	FormatMessage(
+	DWORD ok = FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER |
 		FORMAT_MESSAGE_FROM_SYSTEM |
 		FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -571,9 +573,9 @@ int __cdecl Window::MsgBoxf( LPCTSTR fmt, ... ) const
 		0, NULL
 	);
 
-	wsprintf(lerrorstr, TEXT("\nLast Eror #%u:\n"), (UINT)lerr);
-	lstrcat(str, lerrorstr);
-	lstrcat(str, (LPCTSTR)lpMsgBuf);
+	wsprintf( lerrorstr, TEXT("\nLast Eror #%u:\n"), (UINT)lerr );
+	lstrcat( str, lerrorstr );
+	lstrcat( str, ok? lpMsgBuf? (LPCTSTR)lpMsgBuf: TEXT("(null)"): TEXT("FormatMessage() failed!") );
 
 	/* Free the buffer using LocalFree. */
 	LocalFree( lpMsgBuf );
