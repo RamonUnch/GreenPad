@@ -32,6 +32,8 @@ public:
 	//@}
 	virtual bool Search( const unicode* str, ulong len, ulong stt,
 		ulong* mbg, ulong* med ) = 0;
+
+	virtual ~Searchable() {};
 };
 
 
