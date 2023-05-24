@@ -474,9 +474,15 @@ void GreenPadWnd::on_helpabout()
 			#define TGVER TEXT(" 3.51+")
 		#endif
 	#else
-		#if defined(_M_AMD64) || defined(_M_X64) || defined(_M_IA64) || defined(WIN64)
+		#if defined(_M_AMD64) || defined(_M_X64) || defined(WIN64)
 			// XP/NT5.1 is the first x64 version of Windows.
 			#define TGVER TEXT(" 5.1")
+		#elif defined(_M_IA64)
+			// 2000/NT5.0 is the first IA64 version of Windows.
+			#define TGVER TEXT(" 5.0+")
+		#elif defined(_M_ARM64) || defined(_M_ARM)
+			// 8/NT6.2 is the first ARM version of Windows.
+			#define TGVER TEXT(" 6.2+")
 		#else
 			// Default to NT3.51/95 (I guess...)
 			#define TGVER TEXT(" 3.51+")
@@ -494,7 +500,9 @@ void GreenPadWnd::on_helpabout()
 	#elif defined(_M_IA64)
 		#define PALT TEXT( "- IA64" )
 	#elif defined(_M_ARM64)
-		#define PALT TEXT( "- ARM64" )
+		#define PALT TEXT( " - ARM64" )
+	#elif defined(_M_ARM)
+		#define PALT TEXT( " - ARM" )
 	#elif defined(_M_IX86)
 		#define PALT TEXT( " - i386" )
 	#elif defined(_M_ALPHA)
@@ -521,9 +529,9 @@ void GreenPadWnd::on_helpabout()
 				s += TEXT("Win32s ");
 			else
 				s+= TEXT("Windows ");
-
-			s += String().SetInt( HIBYTE(app().getOSVer()) ) + TEXT(".")
-			   + String().SetInt( LOBYTE(app().getOSVer()) ) + TEXT(".")
+			WORD osver = app().getOSVer();
+			s += String().SetInt( HIBYTE(osver) ) + TEXT(".")
+			   + String().SetInt( LOBYTE(osver) ) + TEXT(".")
 			   + String().SetInt( app().getOSBuild() );
 
 			SendMsgToItem(IDC_ABOUTSTR, WM_SETTEXT, s.c_str());
@@ -982,6 +990,7 @@ void GreenPadWnd::on_datetime()
 	String g = cfg_.dateFormat();
 
 #if defined(WIN32S) || defined(TARGET_VER) && TARGET_VER <= 303
+	HMODULE h = GetModuleHandle(TEXT("KERNEL32.DLL"));
 	if( !app().isNT() )
 	{	// Dynamically import GetTime/DateFormat on win32s build
 		// So that it can run on NT3.1
@@ -990,8 +999,8 @@ void GreenPadWnd::on_datetime()
 		const CHAR *lpFormat = g.len()?sfmt=const_cast<CHAR*>(g.ConvToChar()):"HH:mm yyyy/MM/dd";
 
 		typedef int (WINAPI *GetDTFormat_type)( LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCSTR lpFormat, LPSTR lpTimeStr,int cchTime);
-		GetDTFormat_type MyGetTimeFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetTimeFormatA");
-		GetDTFormat_type MyGetDateFormatA = (GetDTFormat_type)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetDateFormatA");
+		GetDTFormat_type MyGetTimeFormatA = (GetDTFormat_type)GetProcAddress(h, "GetTimeFormatA");
+		GetDTFormat_type MyGetDateFormatA = (GetDTFormat_type)GetProcAddress(h, "GetDateFormatA");
 		if( MyGetTimeFormatA )
 			MyGetTimeFormatA( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
 		if( MyGetDateFormatA )
@@ -1009,8 +1018,8 @@ void GreenPadWnd::on_datetime()
 		const WCHAR *lpFormat = g.len()?wfmt=const_cast<WCHAR*>(g.ConvToWChar()):L"HH:mm yyyy/MM/dd";
 
 		typedef int (WINAPI *GetDTFormat_typeW)(LCID Locale, DWORD dwFlags, CONST SYSTEMTIME *lpTime,LPCWSTR lpFormat, LPWSTR lpTimeStr,int cchTime);
-		GetDTFormat_typeW MyGetTimeFormatW = (GetDTFormat_typeW)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetTimeFormatW");
-		GetDTFormat_typeW MyGetDateFormatW = (GetDTFormat_typeW)GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetDateFormatW");
+		GetDTFormat_typeW MyGetTimeFormatW = (GetDTFormat_typeW)GetProcAddress(h, "GetTimeFormatW");
+		GetDTFormat_typeW MyGetDateFormatW = (GetDTFormat_typeW)GetProcAddress(h, "GetDateFormatW");
 		if( MyGetTimeFormatW )
 			MyGetTimeFormatW( LOCALE_USER_DEFAULT, 0, NULL, lpFormat, buf, countof(buf));
 		if( MyGetDateFormatW )
