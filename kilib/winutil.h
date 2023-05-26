@@ -28,7 +28,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class Clipboard A_FINAL: public Object
+class Clipboard : public Object
 {
 public:
 

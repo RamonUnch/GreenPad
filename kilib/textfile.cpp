@@ -1740,7 +1740,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 }
 
 // functions for detecting BOM-less UTF-16/32
-bool TextFileR::IsNonUnicodeRange(qbyte u)
+bool TextFileR::IsNonUnicodeRange(qbyte u) const
 { // Unicode 14.0 based, Updated to Unicode 15.0
 	return
 		//	U+0000..U+007F	Basic Latin
@@ -2121,10 +2121,10 @@ bool TextFileR::IsNonUnicodeRange(qbyte u)
 		//	U+100000..U+10FFFF	Supplementary Private Use Area-B
 		(0x110000 <= u);
 }
-bool TextFileR::IsAscii(uchar c) { return 0x20 <= c && c < 0x80; }
-bool TextFileR::IsSurrogateLead(qbyte w) { return 0xD800 <= w && w <= 0xDBFF; }
+bool TextFileR::IsAscii(uchar c) const { return 0x20 <= c && c < 0x80; }
+bool TextFileR::IsSurrogateLead(qbyte w) const { return 0xD800 <= w && w <= 0xDBFF; }
 
-bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uChrSize, bool LE)
+bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uChrSize, bool LE) const
 {
 	qbyte uchr = '\0';
 	ulong usize = siz / NZero(uChrSize);

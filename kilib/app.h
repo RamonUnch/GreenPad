@@ -124,21 +124,21 @@ public:
 	bool hasSysDLL(const TCHAR *dllname) const;
 	//@{ WindowsÇÃÉoÅ[ÉWÉáÉì //@}
 
-	DWORD getOOSVer() const;
-	WORD getOSVer() const;
-	WORD getOSBuild() const;
-	bool isOSVerLarger(DWORD ver) const;
-	bool is9xOSVerLarger(DWORD ver) const;
-	bool isNTOSVerLarger(DWORD ver) const;
-	bool isOSVerEqual(DWORD ver) const;
-	bool is9xOSVerEqual(DWORD ver) const;
-	bool isNTOSVerEqual(DWORD ver) const;
-	bool isWin95() const;
-	bool isNT() const;
-	bool isWin32s() const;
-	bool isNewShell() const;
-	bool isNewOpenSaveDlg() const;
-	bool isNewTypeWindows() const;
+	DWORD getOOSVer() const A_PURE;
+	WORD getOSVer() const A_PURE;
+	WORD getOSBuild() const A_PURE;
+	bool isOSVerLarger(DWORD ver) const A_PURE;
+	bool is9xOSVerLarger(DWORD ver) const A_PURE;
+	bool isNTOSVerLarger(DWORD ver) const A_PURE;
+	bool isOSVerEqual(DWORD ver) const A_PURE;
+	bool is9xOSVerEqual(DWORD ver) const A_PURE;
+	bool isNTOSVerEqual(DWORD ver) const A_PURE;
+	bool isWin95() const A_PURE;
+	bool isNT() const A_PURE;
+	bool isWin32s() const A_PURE;
+	bool isNewShell() const A_PURE;
+	bool isNewOpenSaveDlg() const A_PURE;
+	bool isNewTypeWindows() const A_PURE;
 
 private:
 

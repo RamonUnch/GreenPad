@@ -77,7 +77,7 @@ View::View( doc::Document& d, HWND wnd )
 	{
 		// 初回構築時のみ、クラス登録を行う
 		ClassRegistered = true;
-		WNDCLASS wc    = {0};
+		WNDCLASS wc      = {0};
 		wc.lpszClassName = className_;
 		wc.style         = CS_DBLCLKS;
 		wc.hCursor       = app().LoadOemCursor( IDC_IBEAM );
