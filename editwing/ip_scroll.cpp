@@ -22,11 +22,11 @@ using namespace editwing::view;
 #if defined(TARGET_VER) && TARGET_VER < 351
 #ifdef WIN32S
 // Win32s scroll range is mimited to 32767
-#define MAX_SCROLL 32500
+#define MAX_SCROLL 32000
 #define MAX_MULT (32768-MAX_SCROLL)
 #else
 // Windows NT: scrollrange is limited to 65535
-#define MAX_SCROLL 65400
+#define MAX_SCROLL 65000
 #define MAX_MULT (65536-MAX_SCROLL)
 #endif
 
@@ -44,11 +44,11 @@ static int WINAPI MySetScrollInfo_fb(HWND hwnd, int fnBar, LPSCROLLINFO lpsi, BO
 	int nMax = lpsi->nMax;
 	// If we go beyond MAX_SCROLL then we use a divider
 	if (nMax > MAX_SCROLL)
-	{   // 32500 - 32767 = 267 values MULT from 2-268
+	{   // 32000 - 32767 = 767 values MULT from 2-768 (~24M lines)
 		MULT = Min( (nMax / MAX_SCROLL) + 1,  MAX_MULT );
-		// We store the divider in the last 135 values
+		// We store the divider in the last 767 values
 		// of the max scroll range.
-		nMax = MAX_SCROLL + MULT - 1 ; // 32501 => MULT = 2
+		nMax = MAX_SCROLL + MULT - 1 ; // 32001 => MULT = 2
 	}
 	if (lpsi->fMask|SIF_RANGE)
 		::SetScrollRange( hwnd, fnBar, lpsi->nMin, nMax, FALSE );
