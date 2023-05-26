@@ -154,7 +154,7 @@ struct TextFileWPimpl;
 //@}
 //=========================================================================
 
-class TextFileR A_FINAL: public Object
+class TextFileR : public Object
 {
 public:
 
@@ -194,7 +194,7 @@ public:
 	//@{ â¸çsÇ™àÍå¬Ç‡å©Ç¬Ç©ÇÁÇ»Ç©Ç¡ÇΩÉtÉâÉO //@}
 	bool nolb_found() const;
 
-	static int neededCodepage(int cs);
+	static int neededCodepage(int cs) A_XPURE;
 
 private:
 
@@ -210,10 +210,10 @@ private:
 	int MLangAutoDetection( const uchar* ptr, ulong siz );
 	int chardetAutoDetection( const uchar* ptr, ulong siz );
 
-	bool IsNonUnicodeRange(qbyte u);
-	bool IsAscii(uchar c);
-	bool IsSurrogateLead(qbyte w);
-	bool CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uChrSize, bool LE);
+	bool IsNonUnicodeRange(qbyte u) const A_XPURE;
+	bool IsAscii(uchar c) const A_XPURE;
+	bool IsSurrogateLead(qbyte w) const A_XPURE;
+	bool CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uChrSize, bool LE) const A_XPURE;
 
 private:
 
@@ -245,7 +245,7 @@ inline bool TextFileR::nolb_found() const
 //@}
 //=========================================================================
 
-class TextFileW A_FINAL: public Object
+class TextFileW : public Object
 {
 public:
 

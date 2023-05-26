@@ -20,7 +20,7 @@ EwEdit::EwEdit()
 		ClassRegistered = true;
 
 		// 初回構築時のみ、クラス登録を行う
-		WNDCLASS wc    = {0};
+		WNDCLASS wc      = {0};
 		wc.lpszClassName = className_;
 		WndImpl::Register( &wc );
 	}

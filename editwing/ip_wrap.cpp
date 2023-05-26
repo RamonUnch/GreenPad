@@ -202,7 +202,7 @@ void ViewImpl::CalcEveryLineWidth()
 		wrap_[i].width() = CalcLineWidth( doc_.tl(i), doc_.len(i) );
 }
 
-bool ViewImpl::isSpaceLike(unicode ch)
+bool ViewImpl::isSpaceLike(unicode ch) const
 {
 	static const bool spacelike[128] = {
 		1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // 0-15

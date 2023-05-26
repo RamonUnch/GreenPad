@@ -186,7 +186,7 @@ inline bool Window::isAlive() const
 //	マクロ USEGLOBALIME が定義されていなければその辺は処理しない。
 //@}
 //=========================================================================
-class IMEManager A_FINAL
+class IMEManager
 {
 public:
 

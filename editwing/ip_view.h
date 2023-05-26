@@ -467,7 +467,7 @@ private:
 
 	void CalcEveryLineWidth();
 	ulong CalcLineWidth( const unicode* txt, ulong len ) const;
-	bool isSpaceLike(unicode ch);
+	bool isSpaceLike(unicode ch) const A_XPURE;
 	void ModifyWrapInfo( const unicode* txt, ulong len, WLine& wl, ulong stt );
 	void ReWrapAll();
 	int ReWrapSingle( const DPos& s );

@@ -454,7 +454,7 @@ namespace ki
   #ifdef SUPERTINY
 	extern "C" void WINAPI entryp() { ki::Startup(); }
   #endif
-	extern "C" void __cdecl __cxa_pure_virtual(void) {};
+	extern "C" void __cdecl __cxa_pure_virtual(void) { ExitProcess(1); };
 	extern "C" void __deregister_frame_info() {};
 	extern "C" void __register_frame_info() {};
 	extern int __stack_chk_guard = 696115047 ;
