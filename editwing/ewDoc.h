@@ -104,7 +104,7 @@ public:
 private:
 
 	// ŽÀ‘•
-	ki::dptr<DocImpl> impl_;
+	DocImpl *impl_;
 	bool busy_;
 
 private:

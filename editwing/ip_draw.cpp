@@ -106,6 +106,7 @@ void View::on_create( CREATESTRUCT* cs )
 void View::on_destroy()
 {
 	doc_.DelHandler( this );
+	delete impl_;
 	impl_ = NULL;
 }
 

@@ -39,7 +39,9 @@ void EwEdit::on_create( CREATESTRUCT* cs )
 
 void EwEdit::on_destroy()
 {
+	delete view_;
 	view_ = NULL;
+	delete doc_;
 	doc_  = NULL;
 }
 

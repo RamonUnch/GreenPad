@@ -39,9 +39,9 @@ public:
 
 private:
 
-	ki::dptr<doc::Document> doc_;
-	ki::dptr<view::View>    view_;
-	static ClsName          className_;
+	doc::Document*     doc_;
+	view::View*        view_;
+	static ClsName     className_;
 
 private:
 

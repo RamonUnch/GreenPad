@@ -192,6 +192,11 @@ Canvas::Canvas( const View& vw )
 	vw.getClientRect( &txtZone_ );
 }
 
+Canvas::~Canvas()
+{
+	delete font_;
+}
+
 // Return true if warp width has changed.
 bool Canvas::on_view_resize( int cx, int cy )
 {
@@ -212,7 +217,7 @@ bool Canvas::on_view_resize( int cx, int cy )
 void Canvas::on_font_change( const VConfig& vc )
 {
 	HWND hwnd = font_->getWHND();
-	font_ = NULL; // 先にデストラクタを呼ばねばならない…
+	delete font_; // 先にデストラクタを呼ばねばならない…
 	              // ってうわー格好悪ぃーーー(T_T)
 	font_ = new Painter( hwnd, vc );
 

@@ -30,7 +30,7 @@ Document::Document() : busy_(false)
 	{ impl_ = new DocImpl( *this ); }
 
 Document::~Document()
-	{}
+	{ delete impl_; }
 
 void Document::Execute( const Command& c )
 	{ impl_->Execute( c ); }
