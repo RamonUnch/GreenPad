@@ -133,14 +133,28 @@ struct RegClass
 		{ aptr<RegClass> an(n); range.stt=s, range.end=e, next=an; }
 };
 
-struct RegNode
+struct RegNode: public Object
 {
+	RegNode()
+	: type ( N_Char )
+	, ch   ( L'\0' )
+	, cls  ( NULL )
+	, cmpcls (false)
+	, left (NULL)
+	, right (NULL)
+	{
+	}
+	~RegNode()
+	{
+		if( left )  delete left;
+		if( right ) delete right;
+	}
 	RegType           type; // このノードの種類
 	wchar_t             ch; // 文字
 	aptr<RegClass>     cls; // 文字集合
 	bool            cmpcls; // ↑補集合かどうか
-	dptr<RegNode>     left; // 左の子
-	dptr<RegNode>    right; // 右の子
+	RegNode          *left; // 左の子
+	RegNode         *right; // 右の子
 };
 
 
@@ -155,7 +169,8 @@ class RegParser
 {
 public:
 	RegParser( const unicode* pat );
-	RegNode* root() { return root_.get(); }
+	~RegParser() { delete root_; }
+	RegNode* root() { return root_; }
 	bool err() { return err_; }
 	bool isHeadType() const { return isHeadType_; }
 	bool isTailType() const { return isTailType_; }
@@ -175,7 +190,7 @@ private:
 	bool    err_;
 	bool    isHeadType_;
 	bool    isTailType_;
-	dptr<RegNode> root_;
+	RegNode *root_;
 
 	RegLexer lex_;
 	RegToken nextToken_;
@@ -531,16 +546,16 @@ void RegNFA::gen_nfa( int entry, RegNode* t, int exit )
 		//         left         right
 		//  entry ------> step -------> exit
 		int step = gen_state();
-		gen_nfa( entry, t->left.get(), step );
-		gen_nfa( step, t->right.get(), exit );
+		gen_nfa( entry, t->left, step );
+		gen_nfa( step, t->right, exit );
 		} break;
 	case N_Or:
 		//          left
 		//         ------>
 		//  entry ------->--> exit
 		//          right
-		gen_nfa( entry, t->left.get(), exit );
-		gen_nfa( entry, t->right.get(), exit );
+		gen_nfa( entry, t->left, exit );
+		gen_nfa( entry, t->right, exit );
 		break;
 	case N_Closure:
 		//                       e
@@ -559,7 +574,7 @@ void RegNFA::gen_nfa( int entry, RegNode* t, int exit )
 		add_e_transition( entry, before );
 		add_e_transition( after, exit );
 		add_e_transition( after, before );
-		gen_nfa( before, t->left.get(), after );
+		gen_nfa( before, t->left, after );
 		if( t->type != N_Closure1 )
 			add_e_transition( entry, exit );
 		} break;
@@ -569,7 +584,7 @@ void RegNFA::gen_nfa( int entry, RegNode* t, int exit )
 		//  entry ------> exit
 		//         left
 		add_e_transition( entry, exit );
-		gen_nfa( entry, t->left.get(), exit );
+		gen_nfa( entry, t->left, exit );
 		break;
 	case N_Empty:
 		//         e
@@ -710,6 +725,11 @@ RSearch::RSearch( const unicode* key, bool caseS, bool down )
 	, caseS_ ( caseS )
 	, down_  ( down )
 {
+}
+
+RSearch::~RSearch()
+{
+	delete re_;
 }
 
 bool RSearch::Search(

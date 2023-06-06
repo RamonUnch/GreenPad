@@ -70,7 +70,7 @@ public:
 
 	//@{ ¡‚·‚®ŒŸõ‰Â”\‚©H //@}
 	bool isReady() const
-		{ return searcher_.isValid(); }
+		{ return searcher_ != NULL; }
 
 	//@{ İ’èSave //@}
 	void SaveToINI( ki::IniFile& ini );
@@ -93,7 +93,7 @@ private:
 	void ReplaceAllImpl();
 
 private:
-	
+
 	void on_init() override;
 	void on_destroy() override;
 	bool on_command( UINT cmd, UINT id, HWND ctrl ) override;
@@ -111,7 +111,7 @@ private:
 
 private:
 	editwing::EwEdit& edit_;
-	ki::dptr<Searchable> searcher_;
+	Searchable *searcher_;
 	ki::Window& mainWnd_;
 
 	bool bIgnoreCase_; // ‘å•¶š¬•¶š‚ğ“¯ˆê‹H
