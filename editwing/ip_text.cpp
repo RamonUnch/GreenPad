@@ -30,7 +30,7 @@ Document::Document() : busy_(false)
 	{ impl_ = new DocImpl( *this ); }
 
 Document::~Document()
-	{}
+	{ delete impl_; }
 
 void Document::Execute( const Command& c )
 	{ impl_->Execute( c ); }
@@ -194,8 +194,10 @@ ulong UnReDoChain::Node::ChainDelete(Node*& savedPos_ref)
 		return 0;
 	if( savedPos_ref == this )
 		savedPos_ref = NULL;
-	dptr<Node> d(this);
-	return 1 + next_->ChainDelete(savedPos_ref);
+	//dptr<Node> d(this);
+	ulong ret = 1 + next_->ChainDelete(savedPos_ref);
+	delete this; // Delete this node.
+	return ret;
 }
 
 void UnReDoChain::Clear()

@@ -26,6 +26,8 @@ SearchManager::SearchManager( ki::Window& w, editwing::EwEdit& e )
 
 SearchManager::~SearchManager()
 {
+	if(searcher_)
+		delete searcher_;
 }
 
 void SearchManager::SaveToINI( ki::IniFile& ini )
@@ -93,7 +95,7 @@ void SearchManager::on_init()
 		for( ; str[len]!=L'\0' && str[len]!=L'\n'; ++len );
 		str[len] = L'\0';
 
-		if( searcher_.isValid() &&
+		if( searcher_ &&
 		    searcher_->Search( str.get(), len, 0, &dmy, &dmy ) )
 		{
 			SendMsgToItem( IDC_FINDBOX, WM_SETTEXT, 0,
@@ -243,6 +245,9 @@ void SearchManager::ConstructSearcher( bool down )
 		bDownSearch_ = down;
 		const unicode *u = findStr_.ConvToWChar();
 
+		if( searcher_ )
+			delete searcher_;
+		searcher_ = NULL;
 		if( bRegExp_ )
 			searcher_ = new RSearch( u, !bIgnoreCase_, bDownSearch_ );
 		else

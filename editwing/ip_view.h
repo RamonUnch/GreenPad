@@ -240,7 +240,7 @@ class Canvas : public Object
 public:
 
 	Canvas( const View& vw );
-
+	~Canvas();
 	//@{ Viewの大きさ変更イベント処理
 	//	 @return 折り返し幅が変わったらtrue //@}
 	bool on_view_resize( int cx, int cy );
@@ -282,7 +282,7 @@ private:
 	bool  warpSmart_; // [ Enable wrapping at word boundaries ]
 	bool  showLN_;    // [ 行番号を表示するか否か ]
 
-	dptr<Painter> font_; // 描画用オブジェクト
+	Painter      *font_; // 描画用オブジェクト
 	ulong    wrapWidth_; // 折り返し幅(pixel)
 	RECT       txtZone_; // テキスト表示域の位置(pixel)
 	int         figNum_; // 行番号の桁数

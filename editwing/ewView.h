@@ -57,7 +57,7 @@ public:
 private:
 
 	doc::DocImpl&      doc_;
-	ki::dptr<ViewImpl> impl_;
+	ViewImpl*          impl_;
 	static ClsName     className_;
 
 private:
@@ -281,7 +281,7 @@ private:
 	ViewImpl&       view_;
 	doc::DocImpl&   doc_;
 	CurEvHandler*   pEvHan_;
-	ki::dptr<Caret> caret_;
+	Caret*          caret_;
 #ifndef NO_OLEDNDTAR
 	OleDnDTarget    dndtg_;
 #endif

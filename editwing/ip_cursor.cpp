@@ -204,6 +204,7 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 
 Cursor::~Cursor()
 {
+	delete caret_;
 }
 
 void Cursor::AddHandler( CurEvHandler* ev )

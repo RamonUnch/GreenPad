@@ -27,13 +27,14 @@ class RSearch A_FINAL: public Searchable
 {
 public:
 	RSearch( const unicode* key, bool caseS, bool down );
+	~RSearch();
 
 private:
 	bool Search( const unicode* str, ulong len, ulong stt,
 		ulong* mbg, ulong* med ) override;
 
 private:
-	ki::dptr<RegNFA> re_;
+	RegNFA *re_;
 	bool caseS_;
 	bool down_;
 };
