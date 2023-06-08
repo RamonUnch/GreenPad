@@ -144,9 +144,9 @@ private:
 		if( p==e ) return;
 
 		String msg = TEXT("[");
-		msg += p->name, msg += TEXT("]"), msg += String(IDS_OKTODEL);
+		msg += p->name, msg += TEXT("]"), msg += RzsString(IDS_OKTODEL).c_str();
 		if( IDNO ==
-			MsgBox( msg.c_str(), String(IDS_APPNAME).c_str(), MB_YESNO ) )
+			MsgBox( msg.c_str(), RzsString(IDS_APPNAME).c_str(), MB_YESNO ) )
 			return;
 
 		myDtl_.Del(p);
@@ -376,7 +376,7 @@ private:
 		cfg_.newfileCharset_ = cfg_.GetCharSetList()[1+SendMsgToItem(IDC_NEWCS, CB_GETCURSEL)].ID;
 		cfg_.newfileLB_ = (lbcode) SendMsgToItem(IDC_NEWLB, CB_GETCURSEL);
 		size_t nfd_idx=SendMsgToItem(IDC_NEWDT, CB_GETCURSEL), nfd_cnt=1;
-		cfg_.newfileDoctype_ = String( IDS_DEFAULT );
+		cfg_.newfileDoctype_ = RzsString( IDS_DEFAULT ).c_str();
 
 		SaveDt();
 		cfg_.dtList_.DelAfter( ++cfg_.dtList_.begin() );
@@ -802,7 +802,7 @@ void ConfigManager::LoadIni()
 	int neededCP = TextFileR::neededCodepage(newfileCharset_);
 	if( neededCP > 0 && !::IsValidCodePage(neededCP) )
 		newfileCharset_ = ::GetACP();
-	newfileDoctype_ = ini_.GetStr( TEXT("NewfileDoctype"), String( IDS_DEFAULT ) );
+	newfileDoctype_ = ini_.GetStr( TEXT("NewfileDoctype"), RzsString( IDS_DEFAULT ).c_str() );
 	newfileLB_      = (lbcode) ini_.GetInt( TEXT("NewfileLB"), CRLF );
 
 	// 文書タイプリストの０番以外のクリア
@@ -1002,7 +1002,7 @@ void ConfigManager::RememberWnd( ki::Window* wnd )
 	{
 		RECT rc;
 		wnd->getPos(&rc);
-		WINDOWPLACEMENT wp = {sizeof(wp)};
+		WINDOWPLACEMENT wp; wp.length = sizeof(wp);
 		::GetWindowPlacement( wnd->hwnd(), &wp );
 
 		if( wp.showCmd==SW_SHOWNORMAL || wp.showCmd == SW_MAXIMIZE )

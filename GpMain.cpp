@@ -104,7 +104,7 @@ int GpStBar::AutoResize( bool maximized )
 
 	HDC dc = ::GetDC( hwnd() );
 	SIZE s;
-	if( ::GetTextExtentPoint( dc, TEXT("CRLFM"), 5, &s ) ) // Line Ending
+	if( ::GetTextExtentPoint( dc, TEXT("CRLF1"), 5, &s ) ) // Line Ending
 		w[1] = w[2] - s.cx;
 	if( ::GetTextExtentPoint( dc, TEXT("BBBWWW (100)"), 12, &s ) ) // Charset
 		w[0] = w[1] - s.cx;
@@ -517,7 +517,7 @@ void GreenPadWnd::on_helpabout()
 		AboutDlg(HWND parent) : DlgImpl(IDD_ABOUTDLG), parent_( parent ) { GoModal(parent_); }
 		void on_init() override
 		{
-			String s = String(IDS_APPNAME);
+			String s = RzsString(IDS_APPNAME).c_str();
 			s += TEXT(" - ") TEXT( VER_FILEVERSIONSTR ) UNIANSI TEXT("\r\n")
 			     COMPILER TEXT(" on ") TEXT( __DATE__ ) TEXT("\r\n")
 			     TARGETOS TGVER USEOLE PALT TEXT("\r\n")
@@ -718,7 +718,7 @@ void GreenPadWnd::on_print()
 	name += isUntitled() ? TEXT("untitled") : filename_.name();
 	if( edit_.getDoc().isModified() ) name += TEXT(" *");
 	name += TEXT(" - ");
-	name += String(IDS_APPNAME).c_str();
+	name += RzsString(IDS_APPNAME).c_str();
 
 	// Set DOCINFO structure
 	DOCINFO di = { sizeof(DOCINFO) };
@@ -732,7 +732,7 @@ void GreenPadWnd::on_print()
 	{
 		TCHAR tmp[128];
 		::wsprintf(tmp,TEXT("StartDoc Error #%d - please check printer."),::GetLastError());
-		MsgBox(tmp, String(IDS_APPNAME).c_str(), MB_OK|MB_TASKMODAL );
+		MsgBox(tmp, RzsString(IDS_APPNAME).c_str(), MB_OK|MB_TASKMODAL );
 		return;
 		// Handle the error intelligently
 	}
@@ -920,9 +920,12 @@ void GreenPadWnd::on_drop( HDROP hd )
 		UINT len = ::myDragQueryFile( hd, i, NULL, 0)+1;
 		len = Max(len, (UINT)MAX_PATH); // ^ the Above may fail on NT3.1
 		TCHAR *str = new TCHAR [len];
-		::myDragQueryFile( hd, i, str, len );
-		Open( str, AutoDetect );
-		delete [] str;
+		if( str )
+		{
+			::myDragQueryFile( hd, i, str, len );
+			Open( str, AutoDetect );
+			delete [] str;
+		}
 	}
 	::DragFinish( hd );
 }
@@ -1134,7 +1137,7 @@ void GreenPadWnd::on_nextwnd()
 	if( HWND next = ::MyFindWindowEx( NULL, hwnd(), className_, NULL ) )
 	{
 		int i=0;;
-		HWND last=next, pos;
+		HWND last=next, pos=NULL;
 		while( last != NULL && i++ < 1024 )
 			last = ::MyFindWindowEx( NULL, pos=last, className_, NULL );
 		if( pos != next )
@@ -1169,7 +1172,8 @@ void GreenPadWnd::on_statusBar()
 	stb_.SetStatusBarVisible( !stb_.isStatusBarVisible() );
 	cfg_.ShowStatusBarSwitch();
 
-	WINDOWPLACEMENT wp = {sizeof(wp)};
+	WINDOWPLACEMENT wp;
+	wp.length = sizeof(wp);
 	::GetWindowPlacement( hwnd(), &wp );
 	if( wp.showCmd != SW_MINIMIZE )
 	{
@@ -1267,7 +1271,7 @@ void GreenPadWnd::UpdateWindowName()
 	name += isUntitled() ? TEXT("untitled") : filename_.name();
 	if( edit_.getDoc().isModified() ) name += TEXT(" *");
 	name += TEXT("] - ");
-	name += String(IDS_APPNAME).c_str();
+	name += RzsString(IDS_APPNAME).c_str();
 
 	SetText( name.c_str() );
 	// Try to show CP number in the StBar
@@ -1363,9 +1367,9 @@ bool GreenPadWnd::ShowOpenDlg( Path* fn, int* cs )
 {
 	// [Open][Cancel] 開くファイル名指定ダイアログを表示
 	String flst[] = {
-		String(IDS_TXTFILES),
+		RzsString(IDS_TXTFILES).c_str(),
 		String(cfg_.txtFileFilter()),
-		String(IDS_ALLFILES),
+		RzsString(IDS_ALLFILES).c_str(),
 		String(TEXT("*.*"))
 	};
 	aarr<TCHAR> filt = OpenFileDlg::ConnectWithNull(flst, countof(flst));
@@ -1433,23 +1437,24 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	{
 		// ERROR!
 		int err = GetLastError();
-		String fnerror = fn + String(IDS_ERRORNUM) + String().SetInt(err);
+		RzsString ids_oerr(IDS_OPENERROR);
+		String fnerror = fn + ids_oerr.c_str() + String().SetInt(err);
 		if( err == ERROR_ACCESS_DENIED )
 		{
 			if ( fn.isDirectory() )
 			{ // We cannot open dir yet
-				fnerror += String(IDS_CANTOPENDIR); // Can not open directory!
-				MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str(), MB_OK );
+				fnerror += RzsString(IDS_CANTOPENDIR).c_str(); // Can not open directory!
+				MsgBox( fnerror.c_str(), ids_oerr.c_str(), MB_OK );
 				return false;
 			}
 			// cannot open file for READ.
 			// Directly try to open elevated.
 			//fnerror += TEXT(": Access Denied\n\nTry to open elevated?");
-			//if (IDYES == MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str(), MB_YESNO ))
+			//if (IDYES == MsgBox( fnerror.c_str(), RzsString(IDS_OPENERROR).c_str(), MB_YESNO ))
 			on_openelevated(fn);
 			return false;
 		}
-		MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str() );
+		MsgBox( fnerror.c_str(), ids_oerr.c_str() );
 		return false; // Failed to open.
 	}
 	else if ( app().getOSVer() >= 0x0500 )
@@ -1501,8 +1506,8 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 		{
 			if( !networkpath )
 			{
-				String fnerror = fn + String(IDS_NOWRITEACESS);
-				if ( IDYES == MsgBox( fnerror.c_str(), String(IDS_OPENERROR).c_str(), MB_YESNO ) )
+				String fnerror = fn + RzsString(IDS_NOWRITEACESS).c_str();
+				if ( IDYES == MsgBox( fnerror.c_str(), RzsString(IDS_OPENERROR).c_str(), MB_YESNO ) )
 				{
 					on_openelevated(fn);
 					return false;
@@ -1550,7 +1555,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 
 	// 開く
 	edit_.getDoc().ClearAll();
-	stb_.SetText( String(IDS_LOADING).c_str() );
+	stb_.SetText( RzsString(IDS_LOADING).c_str() );
 	edit_.getDoc().OpenFile( tf );
 
 	// タイトルバー更新
@@ -1573,7 +1578,7 @@ bool GreenPadWnd::ShowSaveDlg()
 {
 	// [Save][Cancel] 保存先ファイル名指定ダイアログを表示
 	String flst[] = {
-		String(IDS_ALLFILES),
+		RzsString(IDS_ALLFILES).c_str(),
 		String(TEXT("*.*"))
 	};
 	aarr<TCHAR> filt = SaveFileDlg::ConnectWithNull( flst, countof(flst) );
@@ -1595,7 +1600,7 @@ bool GreenPadWnd::ShowSaveDlg()
 	}
 	if( invalidCS )
 	{
-		MsgBox( String(IDS_INVALIDCP).c_str(), NULL, MB_OK);
+		MsgBox( RzsString(IDS_INVALIDCP).c_str(), NULL, MB_OK);
 		return false; // Fail if selected codepage is invalid.
 	}
 
@@ -1633,8 +1638,8 @@ bool GreenPadWnd::AskToSave()
 	if( edit_.getDoc().isModified() )
 	{
 		int answer = MsgBox(
-			String(IDS_ASKTOSAVE).c_str(),
-			String(IDS_APPNAME).c_str(),
+			RzsString(IDS_ASKTOSAVE).c_str(),
+			RzsString(IDS_APPNAME).c_str(),
 			MB_YESNOCANCEL|MB_ICONQUESTION
 		);
 		if( answer == IDYES )    return Save_showDlgIfNeeded();
@@ -1669,7 +1674,7 @@ bool GreenPadWnd::Save()
 	// Error!
 	DWORD err = GetLastError();
 	String fnerror = filename_ + TEXT("\n\nError #") + String().SetInt(err);
-	MsgBox( fnerror.c_str(), String(IDS_SAVEERROR).c_str() );
+	MsgBox( fnerror.c_str(), RzsString(IDS_SAVEERROR).c_str() );
 	return false;
 }
 

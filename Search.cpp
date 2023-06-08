@@ -107,11 +107,12 @@ void SearchManager::on_init()
 			SendMsgToItem( IDC_FINDBOX, WM_SETTEXT, 0,
 				reinterpret_cast<LPARAM>(str.get()) );
 		#else
-			ki::aarr<char> ab( new TCHAR[(len+1)*3] );
+			char *ab = new TCHAR[(len+1)*3];
 			::WideCharToMultiByte( CP_ACP, 0, str.get(), -1,
-				ab.get(), (len+1)*3, NULL, NULL );
+				ab, (len+1)*3, NULL, NULL );
 			SendMsgToItem( IDC_FINDBOX, WM_SETTEXT, 0,
-				reinterpret_cast<LPARAM>(ab.get()) );
+				reinterpret_cast<LPARAM>(ab) );
+			delete [] ab;
 		#endif
 		}
 	}
@@ -339,14 +340,14 @@ void SearchManager::FindNextImpl(bool redo)
 
 void SearchManager::NotFound(bool GoingDown)
 {
-	//MsgBox( String(IDS_NOTFOUND).c_str() );
+	//MsgBox( RzsString(IDS_NOTFOUND).c_str() );
 	if (GoingDown) {
-		if (IDOK == MsgBox( String(IDS_NOTFOUNDDOWN).c_str(), NULL, MB_OKCANCEL )) {
+		if (IDOK == MsgBox( RzsString(IDS_NOTFOUNDDOWN).c_str(), NULL, MB_OKCANCEL )) {
 			edit_.getCursor().MoveCur( DPos(0,0), false );
 			FindNextImpl(true);
 		}
 	} else {
-	    MsgBox(String(IDS_NOTFOUND).c_str(), NULL, MB_OK);
+	    MsgBox(RzsString(IDS_NOTFOUND).c_str(), NULL, MB_OK);
 	}
 }
 
@@ -517,8 +518,8 @@ void SearchManager::ReplaceAllImpl()
 	}
 
 	TCHAR str[255];
-	::wsprintf( str, String(IDS_REPLACEALLDONE).c_str(), mcr.size() );
-	MsgBox( str, String(IDS_APPNAME).c_str(), MB_ICONINFORMATION );
+	::wsprintf( str, RzsString(IDS_REPLACEALLDONE).c_str(), mcr.size() );
+	MsgBox( str, RzsString(IDS_APPNAME).c_str(), MB_ICONINFORMATION );
 
 	replStr_.FreeWCMem( ustr );
 }
