@@ -445,3 +445,12 @@ const char* String::ConvToChar() const
 	return c_str();
 #endif
 }
+
+//=========================================================================
+
+RzsString::RzsString( UINT rsrcID )
+{
+	str_[0] = TEXT('\0');
+	app().LoadString( rsrcID, str_, countof(str_) );
+}
+

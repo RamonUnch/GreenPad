@@ -464,6 +464,24 @@ struct RawString : public String
 
 }      // namespace ki
 
+//=========================================================================
+//@{
+//	Short stack string
+//
+//	Only used for short string resources loading without going to the heap.
+//	The 256 chars should be enough for our application.
+//@}
+//=========================================================================
+
+class RzsString
+{
+public:
+	RzsString( UINT rsrcID );
+	const TCHAR *c_str() const { return &str_[0]; }
+
+private:
+	TCHAR str_[256];
+};
 
 //=========================================================================
 
