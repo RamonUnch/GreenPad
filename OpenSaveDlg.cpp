@@ -431,7 +431,7 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 		{	// Failed, display LastError.
 			//TCHAR tmp[64]; tmp[0] = TEXT('\0');
 			//::wsprintf(tmp,TEXT("GetOpenFileName LastError #%d, dlgEverOpened_=%d"), ErrCode, (int)pThis->dlgEverOpened_);
-			//::MessageBox( NULL, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+			//::MessageBox( NULL, tmp, RzsString(IDS_APPNAME).c_str(), MB_OK );
 			LOGGERF( TEXT("OpenFileDlg::DoModal FAILED end, dlgEverOpened_=%d"), (int)pThis->dlgEverOpened_ );
 		}
 	}
@@ -584,7 +584,7 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 		{	// Failed, display LastError.
 			//TCHAR tmp[64]; tmp[0] = TEXT('\0');
 			//::wsprintf(tmp,TEXT("GetSaveFileName LastError #%d"), ErrCode);
-			//::MessageBox( wnd, tmp, String(IDS_APPNAME).c_str(), MB_OK );
+			//::MessageBox( wnd, tmp, RzsString(IDS_APPNAME).c_str(), MB_OK );
 			LOGGERF( TEXT("SaveFileDlg::DoModal FAILED end, dlgEverOpened_=%d"), (int)pThis->dlgEverOpened_ );
 		}
 	}
