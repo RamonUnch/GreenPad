@@ -939,7 +939,7 @@ void GreenPadWnd::on_jump()
 		bool on_ok() override {
 			TCHAR str[100];
 			::GetWindowText( item(IDC_LINEBOX), str, countof(str) );
-			LineNo = String(str).GetInt();
+			LineNo = String::GetInt(str);
 			return true;
 		}
 		int LineNo; HWND w_;
@@ -1266,14 +1266,18 @@ void GreenPadWnd::UpdateWindowName()
 {
 	// タイトルバーに表示される文字列の調整
 	// [FileName *] - GreenPad
-	String name;
-	name += TEXT('[');
-	name += isUntitled() ? TEXT("untitled") : filename_.name();
-	if( edit_.getDoc().isModified() ) name += TEXT(" *");
-	name += TEXT("] - ");
-	name += RzsString(IDS_APPNAME).c_str();
+	{
+		TCHAR name[1+MAX_PATH+6+32+1], *end = name+1;
+		name[0] = TEXT('[');
+		name[1] = TEXT('\0');
+		end = my_lstrkpy( end, isUntitled() ? TEXT("untitled") : filename_.name() );
+		if( edit_.getDoc().isModified() )
+			end = my_lstrkpy( end, TEXT(" *") );
+		end = my_lstrkpy( end, TEXT("] - ") );
+		app().LoadString(IDS_APPNAME, end, 32);
+		SetText( name );
+	}
 
-	SetText( name.c_str() );
 	// Try to show CP number in the StBar
 	static TCHAR cpname[32];
 	TCHAR tmp[INT_DIGITS+1];
