@@ -579,7 +579,7 @@ Insert::Insert( const DPos& s, const unicode* str, ulong len, bool del )
 Insert::~Insert()
 {
 	if( del_ )
-		delete const_cast<unicode*>(buf_);
+		delete [] const_cast<unicode*>(buf_);
 }
 
 Command* Insert::operator()( Document& d ) const
