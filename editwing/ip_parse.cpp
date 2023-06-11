@@ -170,21 +170,25 @@ const int CommentDFA::tr_table[5][5] = {
 //-------------------------------------------------------------------------
 // 単純な、キーワード格納構造体。
 // ChainHashの要素にするためnextポインタがつけてあります。
+// DO NOT USE new/delete for Keyword, stick to Keyword::New/Delete
 //-------------------------------------------------------------------------
 struct Keyword : public Object
 {
-	unicode     *str;
-	const ulong len;
 	Keyword*    next;
+	ulong len;
+	unicode     str[1];
 
-	Keyword( const unicode* s, ulong l )
-		: str( new unicode[l+1] )
-		, len( l )
-		, next( NULL )
-		{ memmove( str, s, l*sizeof(unicode) ); str[l] = L'\0'; }
-
-	~Keyword()
-		{ delete [] str; }
+	static Keyword *New( const unicode *s, ulong l )
+	{
+		Keyword *x = (Keyword *)new BYTE[sizeof(Keyword) + l * sizeof(unicode)];
+		x->next = NULL;
+		x->len  = l;
+		memmove(x->str, s, l*sizeof(unicode));
+		x->str[l] = L'\0';
+		return x;
+	}
+	static void Delete( Keyword *x )
+		{ delete [] (BYTE*)x; }
 };
 
 
@@ -242,17 +246,17 @@ public:
 		map_[L'\''] = q1;
 		map_[L'\"'] = q2;
 		map_[L'\\'] = esc;
-		if( celen!=0 ){ map_[*ce]=true; tag_[0]=new Keyword(ce,celen); }
-		if( cblen!=0 ){ map_[*cb]=true; tag_[1]=new Keyword(cb,cblen); }
-		if( lblen!=0 ){ map_[*lb]=true; tag_[2]=new Keyword(lb,lblen); }
+		if( celen!=0 ){ map_[*ce]=true; tag_[0]=Keyword::New(ce,celen); }
+		if( cblen!=0 ){ map_[*cb]=true; tag_[1]=Keyword::New(cb,cblen); }
+		if( lblen!=0 ){ map_[*lb]=true; tag_[2]=Keyword::New(lb,lblen); }
 	}
 
 	~TagMap()
 	{
 		// キーワード解放,
-		delete tag_[0];
-		delete tag_[1];
-		delete tag_[2];
+		Keyword::Delete( tag_[0] );
+		Keyword::Delete( tag_[1] );
+		Keyword::Delete( tag_[2] );
 	}
 
 	bool does_esc()
@@ -326,7 +330,7 @@ public:
 //-------------------------------------------------------------------------
 // Should be a power of two!
 #define HTABLE_SIZE 4096
-class KeywordMap
+class KeywordMap: public Object
 {
 	Keyword*          backet_[HTABLE_SIZE];
 	storage<Keyword*> dustbox_;
@@ -346,13 +350,13 @@ public:
 	{
 		// 解放
 		for( ulong i=0; i<dustbox_.size(); ++i )
-			delete dustbox_[i];
+			Keyword::Delete( dustbox_[i] );
 	}
 
 	void AddKeyword( const unicode* str, ulong len )
 	{
 		// データ登録
-		Keyword* x = new Keyword(str,len);
+		Keyword* x = Keyword::New(str,len);
 		int      h = hash(str,len);
 
 		if( backet_[h] == NULL )
