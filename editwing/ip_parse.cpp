@@ -330,7 +330,7 @@ public:
 //-------------------------------------------------------------------------
 // Should be a power of two!
 #define HTABLE_SIZE 4096
-class KeywordMap: public Object
+class KeywordMap
 {
 	Keyword*          backet_[HTABLE_SIZE];
 	storage<Keyword*> dustbox_;
