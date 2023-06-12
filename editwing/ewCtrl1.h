@@ -29,7 +29,7 @@ public:
 public:
 
 	//@{ 文書データ操作 //@}
-	doc::Document& getDoc() { return *doc_; }
+	doc::Document& getDoc() { return doc_; }
 
 	//@{ 表示機能操作 //@}
 	view::View& getView() { return *view_; }
@@ -39,7 +39,7 @@ public:
 
 private:
 
-	doc::Document*     doc_;
+	doc::Document      doc_;
 	view::View*        view_;
 	static ClsName     className_;
 
