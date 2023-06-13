@@ -22,10 +22,10 @@ class IniFile : public Object
 public:
 
 	//@{ コンストラクタ //@}
-	IniFile( const TCHAR* ini=NULL, bool exeppath=true );
+	IniFile( /*const TCHAR* ini=NULL, bool exeppath=true */ );
 
 	//@{ iniファイル名を設定 //@}
-	void SetFileName( const TCHAR* ini=NULL, bool exepath=true );
+	void SetFileName( /*const TCHAR* ini=NULL, bool exepath=true*/ );
 
 	//@{ セクション名を設定 //@}
 	void SetSection( const TCHAR* section );
@@ -35,6 +35,7 @@ public:
 
 	//@{ セクション名をユーザー名に設定 //@}
 	void SetSectionAsUserName();
+	bool SetSectionAsUserNameIfNotShared( const TCHAR *section);
 
 	//@{ ある特定の名前のセクションがあるかどうか？ //@}
 	bool HasSectionEnabled( const TCHAR* section ) const;
@@ -44,11 +45,13 @@ public:
 	//@{ 真偽値読み込み //@}
 	bool   GetBool( const TCHAR* key, bool  defval ) const;
 	//@{ Get rect from ini file//@}
-	void GetRect (const TCHAR* key, RECT *rc, const RECT *defrc) const;
+	void GetRect ( const TCHAR* key, RECT *rc, const RECT *defrc) const;
 	//@{ 文字列読み込み //@}
-	String GetStr ( const TCHAR* key, const String& defval ) const;
+	String GetStr ( const TCHAR* key, const TCHAR *defval ) const;
 	//@{ パス文字列読み込み //@}
-	Path  GetPath ( const TCHAR* key, const Path& defval ) const;
+	Path  GetPath ( const TCHAR* key, const TCHAR *defval ) const;
+	//@{ Get String in section //@}
+	String GetStrinSect( const TCHAR* key, const TCHAR* sect, const TCHAR *defval ) const;
 
 	//@{ 整数値書き込み //@}
 	bool PutInt ( const TCHAR* key, int val );
@@ -60,23 +63,23 @@ public:
 	bool PutStr ( const TCHAR* key, const TCHAR* val );
 	//@{ パス書き込み //@}
 	bool PutPath( const TCHAR* key, const Path& val );
+	//@{ Put string in section //@}
+	bool PutStrinSect( const TCHAR* key, const TCHAR *sect, const TCHAR* val );
+
+	const TCHAR *getName() const { return iniName_; };
 
 private:
 
-	Path   iniName_;
+	TCHAR  iniName_[MAX_PATH];
 	String section_;
-#ifdef INI_CACHESECTION
-	TCHAR *fullsection_;
-	TCHAR m_StrBuf[1700];
-#endif
 };
 
 
 
 //-------------------------------------------------------------------------
 
-inline IniFile::IniFile( const TCHAR* ini, bool exepath )
-	{ SetFileName( ini, exepath ); }
+inline IniFile::IniFile( /*const TCHAR* ini, bool exepath*/ )
+	{ SetFileName( /*ini, exepath*/ ); }
 
 inline void IniFile::SetSection( const TCHAR* section )
 	{ section_ = section; }
