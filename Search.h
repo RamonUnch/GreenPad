@@ -5,6 +5,7 @@
 #include "kilib/memory.h"
 #include "kilib/ktlaptr.h"
 #include "kilib/kstring.h"
+#include "kilib/registry.h"
 
 
 
