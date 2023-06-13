@@ -32,9 +32,9 @@ Path& Path::BeSpecialPath( int nPATH, bool bs )
 
 	switch( nPATH )
 	{
-	case Win:     ::GetWindowsDirectory( buf, MAX_PATH );     break;
-	case Sys:     ::GetSystemDirectory( buf, MAX_PATH );      break;
-	case Tmp:     ::GetTempPath( MAX_PATH, buf );             break;
+//	case Win:     ::GetWindowsDirectory( buf, MAX_PATH );     break;
+//	case Sys:     ::GetSystemDirectory( buf, MAX_PATH );      break;
+//	case Tmp:     ::GetTempPath( MAX_PATH, buf );             break;
 	case Cur:     ::GetCurrentDirectory( MAX_PATH, buf );     break;
 	case Exe:
 	case ExeName: ::GetModuleFileName( NULL, buf, MAX_PATH ); break;
@@ -164,27 +164,25 @@ Path& Path::BeShortLongStyle()
 	return *this;
 }
 
-String Path::CompactIfPossible( unsigned Mx )
+const TCHAR *Path::CompactIfPossible( TCHAR *buf, unsigned Mx )
 {
 	if(this->len() <= Mx)
-		return *this; // Nothing to do
+		return this->c_str(); // Nothing to do
 
-	TCHAR buf[256];
 	const TCHAR *fn = name();
 	int fnlen = my_lstrlen(fn);
 	int remaining = Mx - fnlen; // what remains
 	int premaining = Max(remaining-3, 3); // what w will use for the path.
 	my_lstrcpyn(buf, c_str(), premaining);
-	my_lstrcpyn( buf+premaining, TEXT("...\\"), 4); // Add ... after the truncated path
+	my_lstrcpyn( buf+premaining, TEXT("..."), 3); // Add ... after the truncated path
 	if (remaining >= 3)
 		my_lstrcpy(buf+remaining, fn); // copy fn to the end of buf
 	else // remaining < 4
 		my_lstrcpyn( buf+6, fn-remaining+6, Mx-6 ); // copy end fn to the end of buf
 
 	buf[Mx] = '\0'; // In case
-	String ans = buf;
 
-	return ans;
+	return buf;
 }
 
 const TCHAR* Path::name( const TCHAR* str )

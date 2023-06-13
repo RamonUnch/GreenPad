@@ -241,6 +241,7 @@ public:
 		, m_nNumFormats ( nNumFormats )
 	{
 		m_pFormatEtc = new FORMATETC[nNumFormats];
+		if( !m_pFormatEtc ) return;
 
 		// copy the FORMATETC structures
 		for(int i = 0; i < nNumFormats; i++)
@@ -249,23 +250,18 @@ public:
 		}
 	}
 
-	~CEnumFormatEtc()
+	virtual ~CEnumFormatEtc()
 	{
 		if(m_pFormatEtc)
 		{
-//			for(ULONG i = 0; i < m_nNumFormats; i++)
-//			{
-//				if(m_pFormatEtc[i].ptd)
-//					CoTaskMemFree(m_pFormatEtc[i].ptd);
-//			}
-			delete[] m_pFormatEtc;
+			delete [] m_pFormatEtc;
 		}
 	}
 
 };
 static HRESULT CreateEnumFormatEtc(UINT nNumFormats, const FORMATETC *pFormatEtc, IEnumFORMATETC **ppEnumFormatEtc)
 {
-	if(nNumFormats == 0 || pFormatEtc == 0 || ppEnumFormatEtc == 0)
+	if(nNumFormats == 0 || pFormatEtc == NULL || ppEnumFormatEtc == NULL)
 		return E_INVALIDARG;
 
 	*ppEnumFormatEtc = new CEnumFormatEtc(pFormatEtc, nNumFormats);
@@ -286,7 +282,7 @@ public:
 			SetFORMATETC(&m_rgfe[DATA_TEXT],         CF_TEXT);
 			SetFORMATETC(&m_rgfe[DATA_HDROP],        CF_HDROP);
 		}
-	~IDataObjectTxt(){}
+	virtual ~IDataObjectTxt(){}
 
 private:
 	void SetFORMATETC(FORMATETC* pfe, UINT cf, TYMED tymed = TYMED_HGLOBAL, LONG lindex = -1,

@@ -165,7 +165,7 @@ struct RegNode: public Object
 //@}
 //=========================================================================
 
-class RegParser
+class RegParser: public Object
 {
 public:
 	RegParser( const unicode* pat );
@@ -448,7 +448,7 @@ struct RegTrans
 //@}
 //=========================================================================
 
-class RegNFA
+class RegNFA: public Object
 {
 public:
 	RegNFA( const wchar_t* pat );

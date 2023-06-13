@@ -1635,7 +1635,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 
 	// On Win32s we must check if CHARDET.DLL exist before trying LoadLibrary()
 	// Otherwise we would get a system  message
-	Path chardet_in_gp_dir = Path(Path::ExeName).BeDirOnly() + String(TEXT(CHARDET_DLL));
+	Path chardet_in_gp_dir = Path(Path::ExeName).BeDirOnly() + TEXT(CHARDET_DLL);
 	if( !chardet_in_gp_dir.exist() )
 		return 0;
 
