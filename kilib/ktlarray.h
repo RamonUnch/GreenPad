@@ -45,7 +45,7 @@ public:
 	void Add( const T& obj )
 		{
 			if( len_ >= alen_ )
-				ReAllocate( alen_<<2 );
+				ReAllocate( alen_<<1 );
 			buf_[ len_++ ] = obj;
 		}
 
@@ -204,11 +204,12 @@ public:
 				else
 				{
 					Node *p=top_, *q=NULL;
-					for( ; p!=NULL; q=p,p=p->next_ )
+					for( ; p!=NULL; q=p, p=p->next_ )
 						if( &p->obj_ == &*d )
 							break;
 					delete p;
-					q->next_ = NULL;
+					if( q )
+						q->next_ = NULL;
 				}
 			}
 		}
