@@ -78,7 +78,7 @@ public:
 	Path& BeShortLongStyle();
 
 	//@{ ...とかを入れて短く //@}
-	String CompactIfPossible(unsigned Mx);
+	const TCHAR *CompactIfPossible(TCHAR *buf, unsigned Mx);
 
 	//@{ ディレクトリ情報以外 //@}
 	const TCHAR* name() const;
@@ -102,12 +102,15 @@ public:
 
 	//@{ ディレクトリかどうか //@}
 	bool isDirectory() const;
+	static bool isDirectory( const TCHAR *fn );
 
 	//@{ 存在するかどうか。isFile() || isDirectory() //@}
 	bool exist() const;
+	static bool exist( const TCHAR *fn );
 
 	//@{ 読み取り専用かどうか //@}
 	bool isReadOnly() const;
+	static bool isReadOnly( const TCHAR *fn );
 
 public:
 
@@ -125,14 +128,23 @@ inline bool Path::isFile() const
 	      && 0==(GetFileAttributesUNC(c_str())&FILE_ATTRIBUTE_DIRECTORY); }
 
 inline bool Path::isDirectory() const
-	{ DWORD x=GetFileAttributesUNC(c_str());
+	{ return isDirectory( c_str() ); }
+
+inline bool Path::isDirectory( const TCHAR *fn ) // static
+	{ DWORD x=GetFileAttributesUNC( fn );
 	  return x!=0xffffffff && (x&FILE_ATTRIBUTE_DIRECTORY)!=0; }
 
 inline bool Path::exist() const
-	{ return 0xffffffff != GetFileAttributesUNC(c_str()); }
+	{ return exist( c_str() ); }
+
+inline bool Path::exist( const TCHAR *fn ) // static
+	{ return 0xffffffff != GetFileAttributesUNC(fn); }
 
 inline bool Path::isReadOnly() const
-	{ DWORD x=GetFileAttributesUNC(c_str());
+	{ return isReadOnly( c_str() ); }
+
+inline bool Path::isReadOnly( const TCHAR *fn ) // Static
+	{ DWORD x = GetFileAttributesUNC( fn );
 	  return x!=0xffffffff && (x&FILE_ATTRIBUTE_READONLY)!=0; }
 
 inline const TCHAR* Path::name() const
