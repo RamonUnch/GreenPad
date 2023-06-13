@@ -62,7 +62,7 @@ public:
 			{
 				// バッファ拡張
 				ulong psiz = (alen_+1)*2+alen_;
-				alen_ = len_+siz; // Max( alen_<<1, len_+siz );
+				alen_ = Max( alen_+(alen_>>1), len_+siz ); // len_+siz; 
 				unicode* tmpS =
 					static_cast<unicode*>( mem().Alloc((alen_+1)*2+alen_) );
 				uchar*   tmpF =
