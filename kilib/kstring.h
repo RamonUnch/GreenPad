@@ -39,8 +39,8 @@ wchar_t my_CharUpperSingleW(wchar_t c);
 wchar_t my_CharLowerSingleW(wchar_t c);
 BOOL my_IsCharLowerW(wchar_t c);
 
-const TCHAR *Int2lStr(TCHAR str[INT_DIGITS+1], int n);
-const TCHAR *Ulong2lStr(TCHAR str[ULONG_DIGITS+1], ulong n);
+const TCHAR *Int2lStr(TCHAR str[INT_DIGITS+1], int n) A_NONNULL;
+const TCHAR *Ulong2lStr(TCHAR str[ULONG_DIGITS+1], ulong n) A_NONNULL;
 
 inline static
 const char *my_lstrcatA(char *dest, const char * restrict src)
@@ -93,7 +93,7 @@ const unicode *my_lstrchrW(const unicode *str, unicode c)
     return str;
 }
 
-inline static
+static inline
 unicode* my_lstrcpyW( unicode* const d, const unicode* restrict s )
 {
 	for(unicode* n=d; (*n++ = *s++););
@@ -481,6 +481,30 @@ public:
 
 private:
 	TCHAR str_[256];
+};
+
+//=========================================================================
+//@{
+//	Short stack string helper for digits
+//@}
+//=========================================================================
+
+class SInt2Str
+{
+public:
+	SInt2Str( int num )   : str_ ( Int2lStr(buf_, num)   ) {}
+#ifdef WIN64
+	SInt2Str( unsigned long long num ) : str_ ( Ulong2lStr(buf_, num) ) {}
+#endif
+	SInt2Str( DWORD num ) : str_ ( Ulong2lStr(buf_, num) ) {}
+	SInt2Str( UINT num )  : str_ ( Ulong2lStr(buf_, num) ) {}
+	SInt2Str( WORD num )  : str_ ( Ulong2lStr(buf_, num) ) {}
+	SInt2Str( BYTE num )  : str_ ( Ulong2lStr(buf_, num) ) {}
+	const TCHAR *c_str() const { return str_; }
+
+private:
+	TCHAR buf_[ULONG_DIGITS+4];
+	const TCHAR *str_; // points to the begining of the number
 };
 
 //=========================================================================
