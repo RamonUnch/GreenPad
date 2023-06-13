@@ -2,6 +2,7 @@
 #define AFX_ONFIGMANAGER_H__9243DE9D_0F70_40F8_8F90_55436B952B37__INCLUDED_
 #include "editwing/editwing.h"
 #include "OpenSaveDlg.h"
+#include "kilib/registry.h"
 
 void SetFontSize(LOGFONT *font, HDC hDC, int fsiz, int fx);
 
@@ -18,7 +19,7 @@ void SetFontSize(LOGFONT *font, HDC hDC, int fsiz, int fx);
 //@}
 //=========================================================================
 
-class ConfigManager A_FINAL: public ki::Object
+class ConfigManager : public ki::Object
 {
 public:
 
@@ -225,7 +226,7 @@ inline const editwing::VConfig& ConfigManager::vConfig() const
 	{ return curDt_->vc; }
 
 inline ki::Path ConfigManager::kwdFile() const
-	{ 
+	{
 	ki::Path p = ki::Path(ki::Path::Exe);
 	p += TEXT("type\\");
 	p += curDt_->kwdfile;
@@ -280,7 +281,7 @@ inline bool ConfigManager::GetWndM() const
 inline const RECT *ConfigManager::PMargins() const
 	{ return &rcPMargins_; }
 
-inline void ConfigManager::SetPrintMargins(const RECT *rc) 
+inline void ConfigManager::SetPrintMargins(const RECT *rc)
 	{ CopyRect(&rcPMargins_, rc); inichanged_=1; SaveIni(); }
 
 inline bool ConfigManager::useQuickExit() const

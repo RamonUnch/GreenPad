@@ -20,9 +20,9 @@ ConfigManager::ConfigManager()
 {
 	// デフォルトのレイアウト設定は何よりも先に読んでおく
 	DocType d;
-	d.name.Load( IDS_DEFAULT );
-	d.layfile   = TEXT("default.lay");
-	d.loaded = false; // set unloaded flag.
+	d.name    = RzsString(IDS_DEFAULT).c_str();
+	d.layfile = TEXT("default.lay");
+	d.loaded  = false; // set unloaded flag.
 	LoadLayout( &d );
 	dtList_.Add( d );
 	curDt_ = dtList_.begin();
@@ -608,10 +608,7 @@ void ConfigManager::LoadIni()
 	inichanged_=0;
 	{
 		FileW fp;
-		Path inipath(Path::Exe);
-		inipath+=Path(Path::ExeName).body();
-		inipath+=TEXT(".ini");
-		if( !inipath.exist() && fp.Open(inipath.c_str()) )
+		if( !Path::exist(ini_.getName()) && fp.Open(ini_.getName()) )
 		{
 			static const char s_defaultIni[] =
 			"[DocType]\r\n"
@@ -744,13 +741,7 @@ void ConfigManager::LoadIni()
 	}
 
 	// 共通の設定の読み取りセクション
-	sharedConfigMode_ = ini_.HasSectionEnabled( s_sharedConfigSection );
-	if( sharedConfigMode_ )
-		ini_.SetSection( s_sharedConfigSection );
-	else
-		ini_.SetSectionAsUserName();
-
-	ini_.CacheSection();
+	sharedConfigMode_ = ini_.SetSectionAsUserNameIfNotShared( s_sharedConfigSection );
 
 	// 共通の設定
 	undoLimit_ = ini_.GetInt( TEXT("UndoLimit"), -1 );
@@ -810,26 +801,23 @@ void ConfigManager::LoadIni()
 
 	String s, r;
 
-	ini_.SetSection( TEXT("DocType") );
-	ini_.CacheSection();
 	for( int i=1; true; ++i )
 	{
 		// 文書タイプ名を読み込み
 		TCHAR tmp[INT_DIGITS+1] ;
-		r = ini_.GetStr( Int2lStr(tmp, i), String() );
+		// ini_.SetSection( TEXT("DocType") );
+		r = ini_.GetStrinSect( Int2lStr(tmp, i), TEXT("DocType"), TEXT("") );
 		if( r.len() == 0 )
 			break;
 
 		// その文書タイプを実際に読み込み
-		ki::IniFile tmp_ini;
-		tmp_ini.SetSection( r.c_str() );
+		//ini_.SetSection( r.c_str() );
 		{
-			tmp_ini.CacheSection();
 			DocType d;
 			d.name      = r;
-			d.layfile   = tmp_ini.GetStr( TEXT("Layout"),TEXT("default.lay"));
-			d.kwdfile   = tmp_ini.GetStr( TEXT("Keyword"), String() );
-			d.pattern   = tmp_ini.GetStr( TEXT("Pattern"), String() );
+			d.layfile   = ini_.GetStrinSect( TEXT("Layout"),  r.c_str(), TEXT("default.lay"));
+			d.kwdfile   = ini_.GetStrinSect( TEXT("Keyword"), r.c_str(), TEXT("") );
+			d.pattern   = ini_.GetStrinSect( TEXT("Pattern"), r.c_str(), TEXT("") );
 			dtList_.Add( d );
 		}
 	}
@@ -842,17 +830,11 @@ void ConfigManager::SaveIni()
 		return;
 	inichanged_=0;
 
-	Path inipath(Path::Exe);
-	inipath+=Path(Path::ExeName).body();
-	inipath+=TEXT(".ini");
-	if( inipath.isReadOnly() )
+	if( Path::isReadOnly( ini_.getName() ) )
 		return;
 
 	// 共通の設定の書き込みセクション
-	if( sharedConfigMode_ )
-		ini_.SetSection( s_sharedConfigSection );
-	else
-		ini_.SetSectionAsUserName();
+	ini_.SetSectionAsUserNameIfNotShared( s_sharedConfigSection );
 
 	// 共通の設定
 	ini_.PutInt( TEXT("UndoLimit"), undoLimit_ );
@@ -894,18 +876,17 @@ void ConfigManager::SaveIni()
 	// DocType
 	for(DtList::iterator i=++dtList_.begin(); i!=dtList_.end(); ++i )
 	{
-		ini_.SetSection( i->name.c_str() );
-		ini_.PutStr( TEXT("Pattern"), i->pattern.c_str() );
-		ini_.PutStr( TEXT("Keyword"), i->kwdfile.c_str() );
-		ini_.PutStr( TEXT("Layout"), i->layfile.c_str() );
+		//ini_.SetSection( i->name.c_str() );
+		ini_.PutStrinSect( TEXT("Pattern"), i->name.c_str(), i->pattern.c_str() );
+		ini_.PutStrinSect( TEXT("Keyword"), i->name.c_str(), i->kwdfile.c_str() );
+		ini_.PutStrinSect( TEXT("Layout"),  i->name.c_str(), i->layfile.c_str() );
 	}
 
+	TCHAR strnum[ULONG_DIGITS+1];
 	ulong ct=1;
-	ini_.SetSection( TEXT("DocType") );
 	for(DtList::iterator i=++dtList_.begin(); i!=dtList_.end(); ++i,++ct)
-		ini_.PutStr( String().SetInt(ct).c_str(), i->name.c_str() );
-	ini_.PutStr( String().SetInt(ct).c_str(), TEXT("") );
-
+		ini_.PutStrinSect( Ulong2lStr(strnum, ct), TEXT("DocType"), i->name.c_str() );
+	ini_.PutStrinSect( Ulong2lStr(strnum, ct), TEXT("DocType"), TEXT("") );
 }
 
 
@@ -937,12 +918,16 @@ bool ConfigManager::AddMRU( const ki::Path& fname )
 	// iniへ保存
 	{ // Restrict Mutex context
 		Mutex mx(s_mrulock);
-		if( mx.isLocked() ) {
+		if( mx.isLocked() )
+		{
 			ini_.SetSectionAsUserName();
-			const String key = TEXT("MRU");
-			for( int i=0; i<mrus_; ++i ) //countof(mru_)
-				ini_.PutPath(
-					(key+String().SetInt(i+1)).c_str(), mru_[i] );
+			TCHAR key[3+INT_DIGITS+1];
+			my_lstrcpy( key, TEXT("MRU") );
+			for( int i=0; i<mrus_; ++i )
+			{
+				my_lstrcpy( key+3, SInt2Str(i+1).c_str() );
+				ini_.PutPath( key, mru_[i] );
+			}
 		}
 	}
 
@@ -956,12 +941,16 @@ int ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 	// iniから読み込み
 	{ // Restrict Mutex context
 		Mutex mx(s_mrulock);
-		if( mx.isLocked() ) {
+		if( mx.isLocked() )
+		{
 			ini_.SetSectionAsUserName();
-			const String key = TEXT("MRU");
+			TCHAR key[3+INT_DIGITS+1];
+			my_lstrcpy( key, TEXT("MRU") );
 			for( int i=0; i<mrus_; ++i )
-				mru_[i] = ini_.GetPath(
-					(key+String().SetInt(i+1)).c_str(), Path() );
+			{
+				my_lstrcpy( key+3, SInt2Str(i+1).c_str() );
+				mru_[i] = ini_.GetPath(key, TEXT("") );
+			}
 		}
 	}
 
@@ -969,6 +958,9 @@ int ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 	while( ::DeleteMenu( m, 0, MF_BYPOSITION ) );
 
 	// メニュー構築
+	TCHAR tmp[61];
+	TCHAR cpt[61+INT_DIGITS+3], *end;
+	cpt[0] = TEXT('&');
 	for( int i=0; i<mrus_; ++i )
 	{
 		if( i>=mrus_ || mru_[i].len()==0 )
@@ -979,9 +971,10 @@ int ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 			}
 			break;
 		}
-		String cpt = (String)TEXT("&") + String().SetInt(i+1).c_str() + (String)TEXT(" ");
-		cpt += mru_[i].CompactIfPossible(60);
-		::InsertMenu( m, i, MF_BYPOSITION, id + i, const_cast<TCHAR*>(cpt.c_str()) );
+		end = my_lstrkpy( cpt+1, SInt2Str(i+1).c_str() );
+		*end++ = TEXT(' ');
+		my_lstrkpy( end, mru_[i].CompactIfPossible(tmp, countof(tmp)-1) );
+		::InsertMenu( m, i, MF_BYPOSITION, id + i, cpt );
 	}
 	return mrus_;
 }

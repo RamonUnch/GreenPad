@@ -88,11 +88,17 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 		if( h != NULL )
 		{
 			char* cstr = static_cast<char*>( ::GlobalLock( h ) );
-			int Lu = my_lstrlenA( cstr ) * 3;
-			unicode* ustr = new unicode[Lu];
-			::MultiByteToWideChar( CP_ACP, 0, cstr, -1, ustr, Lu );
-			::GlobalUnlock( h );
-			return Text( ustr, Text::NEW );
+			if( cstr )
+			{
+				int Lu = my_lstrlenA( cstr ) * 3;
+				unicode* ustr = new unicode[Lu];
+				if( ustr )
+				{
+					::MultiByteToWideChar( CP_ACP, 0, cstr, -1, ustr, Lu );
+					::GlobalUnlock( h );
+					return Text( ustr, Text::NEW );
+				}
+			}
 		}
 	}
 	#endif
@@ -110,6 +116,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 				UINT nf = myDragQueryFile(h, 0xFFFFFFFF, NULL, 0);
 				size_t totstrlen=0;
 				UINT *lenmap = new UINT[nf];
+				if (!lenmap) return Text( NULL, Text::NEW );
 				for( uint i=0; i < nf; i++ )
 				{	// On Windows NT3.1 DragQueryFile() does not return
 					// The required buffer length hence the Min()...
@@ -117,6 +124,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 					totstrlen += lenmap[i];
 				}
 				unicode* ustr = new unicode[totstrlen+2*nf+1];
+				if(!ustr) return Text( NULL, Text::NEW ); 
 				//mem00( ustr, (totstrlen+2*nf+1) * sizeof(unicode) );
 				unicode* ptr=ustr; *ptr = L'\0';
 				for( UINT i=0; i < nf; i++ )
@@ -222,6 +230,7 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM 
 
 			// Convert multi line in multi file paths
 			unicode *flst = new unicode[len_];
+			if( !flst ) return E_OUTOFMEMORY;
 			size_t flen = convCRLFtoNULLS(flst, str_, len_);
 
 			// Destination length in BYTES!

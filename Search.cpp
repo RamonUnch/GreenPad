@@ -517,7 +517,7 @@ void SearchManager::ReplaceAllImpl()
 		End( IDOK );
 	}
 
-	TCHAR str[255];
+	TCHAR str[256+INT_DIGITS+1];
 	::wsprintf( str, RzsString(IDS_REPLACEALLDONE).c_str(), mcr.size() );
 	MsgBox( str, RzsString(IDS_APPNAME).c_str(), MB_ICONINFORMATION );
 

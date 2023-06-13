@@ -100,7 +100,7 @@ int GpStBar::AutoResize( bool maximized )
 {
 	// 文字コード表示領域を確保しつつリサイズ
 	int h = StatusBar::AutoResize( maximized );
-	int w[] = { width()-5, width()-5, width()-5 };
+	int w[] = { width()-150, width()-50, width()-5 };
 
 	HDC dc = ::GetDC( hwnd() );
 	SIZE s;
@@ -433,7 +433,7 @@ void GreenPadWnd::on_helpabout()
 		#define COMPILER TEXT( "GNU C Compiler - " __VERSION__ "\n" )
 	#elif defined(_MSC_VER)
 //		#define COMPILER TEXT("Visual C++ - ")  TEXT(STR(_MSC_VER))
-		#define COMPILER TEXT("Visual C++ - ")  + String().SetInt((_MSC_VER-600)/100) + TEXT(".") + String().SetInt(_MSC_VER%100) +
+		#define COMPILER TEXT("Visual C++ - ")  + (String)SInt2Str((_MSC_VER-600)/100).c_str() + TEXT(".") + SInt2Str(_MSC_VER%100).c_str() +
 	#elif defined(__WATCOMC__)
 		#define COMPILER TEXT("Open Watcom - ") TEXT(STR(__WATCOMC__))
 	#elif defined(__BORLANDC__)
@@ -530,9 +530,10 @@ void GreenPadWnd::on_helpabout()
 			else
 				s+= TEXT("Windows ");
 			WORD osver = app().getOSVer();
-			s += String().SetInt( HIBYTE(osver) ) + TEXT(".")
-			   + String().SetInt( LOBYTE(osver) ) + TEXT(".")
-			   + String().SetInt( app().getOSBuild() );
+			WORD osbuild = app().getOSBuild();
+			s += SInt2Str( HIBYTE(osver) ).c_str(); s += TEXT(".");
+			s += SInt2Str( LOBYTE(osver) ).c_str(); s += TEXT(".");
+			s += SInt2Str( osbuild ).c_str();
 
 			SendMsgToItem(IDC_ABOUTSTR, WM_SETTEXT, s.c_str());
 			SendMsgToItem(IDC_ABOUTURL, WM_SETTEXT, TEXT("https://github.com/RamonUnch/GreenPad"));
@@ -587,9 +588,9 @@ void GreenPadWnd::on_openelevated(const ki::Path& fn)
 	edit_.getCursor().getCurPosUnordered(&cur, &sel);
 	int cp = resolveCSI(csi_);
 
-	String cmdl = TEXT( "-c") + String().SetInt(cp)
-	            + TEXT(" -l") + String().SetInt(cur->tl+1)
-	            + TEXT(" \"") + fn + TEXT("\"");
+	String cmdl  = TEXT( "-c"); cmdl += SInt2Str(cp).c_str();
+	       cmdl += TEXT(" -l"); cmdl += SInt2Str(cur->tl+1).c_str();
+	       cmdl += TEXT(" \"") + fn + TEXT("\"");
 //	MsgBox( cmdl.c_str(), Path(Path::ExeName).c_str() );
 	HINSTANCE ret = ShellExecute(NULL, TEXT("runas"), Path(Path::ExeName).c_str(), cmdl.c_str(), NULL, SW_SHOWNORMAL);
 	if( (LONG_PTR)ret > 32 )
@@ -1407,7 +1408,7 @@ bool GreenPadWnd::Open( const ki::Path& fn, int cs, bool always )
 		// そうでなければ他へ回す
 		String
 			cmd  = TEXT("-c");
-			cmd += String().SetInt( cs );
+			cmd += SInt2Str( cs ).c_str();
 			cmd += TEXT(" \"");
 			cmd += fn;
 			cmd += TEXT('\"');
@@ -1442,7 +1443,8 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 		// ERROR!
 		int err = GetLastError();
 		RzsString ids_oerr(IDS_OPENERROR);
-		String fnerror = fn + ids_oerr.c_str() + String().SetInt(err);
+		String fnerror = fn + ids_oerr.c_str();
+		fnerror += SInt2Str(err).c_str();
 		if( err == ERROR_ACCESS_DENIED )
 		{
 			if ( fn.isDirectory() )
@@ -1677,7 +1679,8 @@ bool GreenPadWnd::Save()
 
 	// Error!
 	DWORD err = GetLastError();
-	String fnerror = filename_ + TEXT("\n\nError #") + String().SetInt(err);
+	String fnerror = filename_ + TEXT("\n\nError #");
+	fnerror += SInt2Str(err).c_str();
 	MsgBox( fnerror.c_str(), RzsString(IDS_SAVEERROR).c_str() );
 	return false;
 }

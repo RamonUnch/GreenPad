@@ -15,7 +15,6 @@
 #include "textfile.h"
 #include "winutil.h"
 #include "find.h"
-#include "registry.h"
 #include "log.h"
 
 #include "ktlaptr.h"

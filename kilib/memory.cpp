@@ -50,12 +50,19 @@ using namespace ki;
 		static int allocCounter = 0;
 		void* __cdecl operator new( size_t siz )
 		{
+			void *ret;
 			++allocCounter;
 			#ifdef USE_LOCALALLOC
-			return ::LocalAlloc( LMEM_FIXED, siz );
+			ret = ::LocalAlloc( LMEM_FIXED, siz );
 			#else
-			return ::HeapAlloc( g_heap, HEAP_GENERATE_EXCEPTIONS, siz );
+			ret = ::HeapAlloc( g_heap, 0, siz );
 			#endif
+			if( !ret )
+			{
+				MessageBox(GetActiveWindow(), TEXT("Unable to allocate memory!\nEXITTING!"), NULL, MB_OK);
+				ExitProcess(1);
+			}
+			return ret;
 		}
 		void __cdecl operator delete( void* ptr )
 		{
