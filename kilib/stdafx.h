@@ -21,6 +21,10 @@
 #define A_PURE __attribute__((pure))
 #define A_XPURE __attribute__((const))
 #define A_FLATTEN __attribute__((flatten))
+#define A_NONNULL __attribute__((nonnull))
+#define A_NONNULL1(x) __attribute__((nonnull(x)))
+#define A_NONNULL2(x, y) __attribute__((nonnull(x, y)))
+#define A_NONNULL3(x, y, z) __attribute__((nonnull(x, y, z)))
 #define ASSUME(x) do { if (!(x)) __builtin_unreachable(); } while (0)
 #define restrict __restrict
 #else //__GNUC__
@@ -31,6 +35,10 @@
 #define A_XPURE
 #define A_FLATTEN
 #define restrict
+#define A_NONNULL
+#define A_NONNULL1(x)
+#define A_NONNULL2(x, y)
+#define A_NONNULL3(x, y, z)
 #endif
 
 #if defined (__cplusplus) && __cplusplus >= 201103L
