@@ -77,10 +77,8 @@ bool SearchManager::TrapMsg(MSG* msg)
 
 void SearchManager::on_init()
 {
-	if( bIgnoreCase_ )
-		SendMsgToItem( IDC_IGNORECASE, BM_SETCHECK, BST_CHECKED );
-	if( bRegExp_ )
-		SendMsgToItem( IDC_REGEXP, BM_SETCHECK, BST_CHECKED );
+	if( bIgnoreCase_ ) CheckItem( IDC_IGNORECASE );
+	if( bRegExp_ )     CheckItem( IDC_REGEXP );
 
 	const VPos *stt, *end;
 	edit_.getCursor().getCurPos( &stt, &end );
@@ -211,10 +209,8 @@ void SearchManager::on_replaceall()
 void SearchManager::UpdateData()
 {
 	// ダイアログから変更点を取り込み
-	bool IgnoreCase =
-		(BST_CHECKED==SendMsgToItem( IDC_IGNORECASE, BM_GETCHECK ));
-	bool RegExp =
-		(BST_CHECKED==SendMsgToItem( IDC_REGEXP, BM_GETCHECK ));
+	bool IgnoreCase = isItemChecked( IDC_IGNORECASE );
+	bool RegExp     = isItemChecked( IDC_REGEXP );
 
 	// Must we save save to ini?
 	inichanged_ = bIgnoreCase_ != IgnoreCase || RegExp != bRegExp_;
