@@ -214,36 +214,34 @@ private:
 		SendMsgToItem( IDC_LATEST_NUM, WM_SETTEXT, Int2lStr(tmp, cfg_.mrus_) );
 		if( cfg_.undoLimit() == -1 )
 		{
-			SendMsgToItem(IDC_UNDOLIM1, BM_SETCHECK, BST_CHECKED);
+			CheckItem(IDC_UNDOLIM1);
 			SendMsgToItem(IDC_UNDO_CT, WM_SETTEXT, TEXT("20") );
 		}
 		else
 		{
-			SendMsgToItem(IDC_UNDOLIM2, BM_SETCHECK, BST_CHECKED);
+			CheckItem(IDC_UNDOLIM2);
 			SendMsgToItem(IDC_UNDO_CT, WM_SETTEXT, Int2lStr(tmp, cfg_.undoLimit()) );
 		}
 		if( cfg_.countByUnicode() )
 		{
-			SendMsgToItem(IDC_COUNTBYLETTER,  BM_SETCHECK, BST_CHECKED);
-			SendMsgToItem(IDC_COUNTBYLETTER2, BM_SETCHECK);
+			CheckItem(IDC_COUNTBYLETTER);
+			UncheckItem(IDC_COUNTBYLETTER2);
 		}
 		else
 		{
-			SendMsgToItem(IDC_COUNTBYLETTER,  BM_SETCHECK);
-			SendMsgToItem(IDC_COUNTBYLETTER2, BM_SETCHECK, BST_CHECKED);
+			UncheckItem(IDC_COUNTBYLETTER);
+			CheckItem(IDC_COUNTBYLETTER2);
 		}
 
-		SendMsgToItem(IDC_TXTFILT, WM_SETTEXT,
-			cfg_.txtFileFilter().c_str() );
-		SendMsgToItem(IDC_EXTGREP, WM_SETTEXT,
-			cfg_.grepExe().c_str() );
+		SendMsgToItem(IDC_TXTFILT, WM_SETTEXT, cfg_.txtFileFilter().c_str() );
+		SendMsgToItem(IDC_EXTGREP, WM_SETTEXT, cfg_.grepExe().c_str() );
 
 		if( cfg_.openSame() )
-			SendMsgToItem(IDC_OPENSAME, BM_SETCHECK, BST_CHECKED);
+			CheckItem(IDC_OPENSAME);
 		if( cfg_.rememberWindowSize_ )
-			SendMsgToItem(IDC_REMSIZE, BM_SETCHECK, BST_CHECKED);
+			CheckItem(IDC_REMSIZE);
 		if( cfg_.rememberWindowPlace_ )
-			SendMsgToItem(IDC_REMPLACE, BM_SETCHECK, BST_CHECKED);
+			CheckItem(IDC_REMPLACE);
 
 		CharSetList& csl = cfg_.GetCharSetList();
 		for(ulong i=1; i<csl.size(); ++i)
@@ -344,7 +342,7 @@ private:
 		cfg_.mrus_ = String::GetInt(buf);
 		cfg_.mrus_ = Min(Max(0, cfg_.mrus_), 20);
 
-		if( BST_CHECKED == SendMsgToItem(IDC_UNDOLIM1, BM_GETCHECK) )
+		if( isItemChecked(IDC_UNDOLIM1) )
 		{
 			cfg_.undoLimit_ = -1;
 		}
@@ -363,16 +361,11 @@ private:
 			countof(buf),reinterpret_cast<LPARAM>(buf));
 		cfg_.grepExe_ = buf;
 
-		cfg_.openSame_ =
-			( BST_CHECKED==SendMsgToItem(IDC_OPENSAME, BM_GETCHECK) );
-		cfg_.rememberWindowSize_ =
-			( BST_CHECKED==SendMsgToItem(IDC_REMSIZE, BM_GETCHECK) );
-		cfg_.rememberWindowPlace_ =
-			( BST_CHECKED==SendMsgToItem(IDC_REMPLACE, BM_GETCHECK) );
+		cfg_.openSame_            = isItemChecked(IDC_OPENSAME);
+		cfg_.rememberWindowSize_  = isItemChecked(IDC_REMSIZE);
+		cfg_.rememberWindowPlace_ = isItemChecked(IDC_REMPLACE);
 
-		cfg_.countbyunicode_ =
-			( BST_CHECKED==SendMsgToItem(IDC_COUNTBYLETTER, BM_GETCHECK) );
-
+		cfg_.countbyunicode_ = isItemChecked(IDC_COUNTBYLETTER);
 		cfg_.newfileCharset_ = cfg_.GetCharSetList()[1+SendMsgToItem(IDC_NEWCS, CB_GETCURSEL)].ID;
 		cfg_.newfileLB_ = (lbcode) SendMsgToItem(IDC_NEWLB, CB_GETCURSEL);
 		size_t nfd_idx=SendMsgToItem(IDC_NEWDT, CB_GETCURSEL), nfd_cnt=1;

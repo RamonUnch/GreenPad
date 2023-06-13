@@ -392,7 +392,13 @@ protected:
 
 	//@{ アイテムに対してメッセージ送信（文字列送る版） //@}
 	LRESULT SendMsgToItem( UINT id, UINT msg, const TCHAR* lp );
-
+	
+	bool isItemChecked( UINT id ) const;
+	void setItemCheck( UINT id, WPARAM state);
+	void CheckItem( UINT id);
+	void UncheckItem( UINT id);
+	void GrayCheckItem( UINT id);
+	
 	// てけとーに実装して反応してください。
 	// on_ok/on_cancelは、終了して良いならtrueを返すこと。
 	// on_cmd/on_msgは、処理済みならtrueを返すこと。
@@ -440,6 +446,20 @@ inline LRESULT DlgImpl::SendMsgToItem( UINT id, UINT msg, void* lp )
 inline LRESULT DlgImpl::SendMsgToItem( UINT id, UINT msg, const TCHAR* lp )
 	{ return ::SendDlgItemMessage( hwnd(), id, msg, 0,
 	                            reinterpret_cast<LPARAM>(lp) ); }
+inline bool DlgImpl::isItemChecked( UINT id ) const
+	{ return BST_CHECKED == ::SendDlgItemMessage(hwnd(), id, BM_GETCHECK, 0, 0); }
+
+inline void DlgImpl::setItemCheck( UINT id, WPARAM state )
+	{ ::SendDlgItemMessage(hwnd(), id, BM_SETCHECK, state, 0); }
+
+inline void DlgImpl::CheckItem( UINT id)
+	{ setItemCheck(id, BST_CHECKED); }
+
+inline void DlgImpl::UncheckItem( UINT id)
+	{ setItemCheck(id, BST_UNCHECKED); }
+
+inline void DlgImpl::GrayCheckItem( UINT id)
+	{ setItemCheck(id, BST_INDETERMINATE); }
 
 
 
