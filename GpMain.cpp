@@ -535,8 +535,8 @@ void GreenPadWnd::on_helpabout()
 			s += SInt2Str( LOBYTE(osver) ).c_str(); s += TEXT(".");
 			s += SInt2Str( osbuild ).c_str();
 
-			SendMsgToItem(IDC_ABOUTSTR, WM_SETTEXT, s.c_str());
-			SendMsgToItem(IDC_ABOUTURL, WM_SETTEXT, TEXT("https://github.com/RamonUnch/GreenPad"));
+			SetItemText(IDC_ABOUTSTR, s.c_str());
+			SetItemText(IDC_ABOUTURL, TEXT("https://github.com/RamonUnch/GreenPad"));
 			SetCenter(hwnd(), parent_);
 		}
 		HWND parent_;

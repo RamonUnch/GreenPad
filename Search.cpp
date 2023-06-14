@@ -96,32 +96,27 @@ void SearchManager::on_init()
 		if( searcher_ &&
 		    searcher_->Search( str.get(), len, 0, &dmy, &dmy ) )
 		{
-			SendMsgToItem( IDC_FINDBOX, WM_SETTEXT, 0,
-				reinterpret_cast<LPARAM>(findStr_.c_str()) );
+			SetItemText( IDC_FINDBOX, findStr_.c_str() );
 		}
 		else
 		{
 		#ifdef _UNICODE
-			SendMsgToItem( IDC_FINDBOX, WM_SETTEXT, 0,
-				reinterpret_cast<LPARAM>(str.get()) );
+			SetItemText( IDC_FINDBOX, str.get() );
 		#else
 			char *ab = new TCHAR[(len+1)*3];
 			::WideCharToMultiByte( CP_ACP, 0, str.get(), -1,
 				ab, (len+1)*3, NULL, NULL );
-			SendMsgToItem( IDC_FINDBOX, WM_SETTEXT, 0,
-				reinterpret_cast<LPARAM>(ab) );
+			SetItemText( IDC_FINDBOX, ab );
 			delete [] ab;
 		#endif
 		}
 	}
 	else
 	{
-		SendMsgToItem( IDC_FINDBOX, WM_SETTEXT, 0,
-			reinterpret_cast<LPARAM>(findStr_.c_str()) );
+		SetItemText( IDC_FINDBOX, findStr_.c_str() );
 	}
 
-	SendMsgToItem( IDC_REPLACEBOX, WM_SETTEXT, 0,
-		reinterpret_cast<LPARAM>(replStr_.c_str()) );
+	SetItemText( IDC_REPLACEBOX, replStr_.c_str() );
 
 	::SetFocus( item(IDC_FINDBOX) );
 	SendMsgToItem( IDC_FINDBOX, EM_SETSEL, 0,
@@ -220,15 +215,13 @@ void SearchManager::UpdateData()
 	TCHAR* str;
 	LRESULT n = SendMsgToItem( IDC_FINDBOX, WM_GETTEXTLENGTH );
 	str = new TCHAR[n+1];
-	SendMsgToItem( IDC_FINDBOX, WM_GETTEXT,
-		n+1, reinterpret_cast<LPARAM>(str) );
+	GetItemText( IDC_FINDBOX, n+1, str );
 	findStr_ = str;
 	delete [] str;
 
 	n = SendMsgToItem( IDC_REPLACEBOX, WM_GETTEXTLENGTH );
 	str = new TCHAR[n+1];
-	SendMsgToItem( IDC_REPLACEBOX, WM_GETTEXT,
-		n+1, reinterpret_cast<LPARAM>(str) );
+	GetItemText( IDC_REPLACEBOX, n+1, str );
 	replStr_ = str;
 	delete [] str;
 }
