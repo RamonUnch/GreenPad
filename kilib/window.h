@@ -392,13 +392,16 @@ protected:
 
 	//@{ アイテムに対してメッセージ送信（文字列送る版） //@}
 	LRESULT SendMsgToItem( UINT id, UINT msg, const TCHAR* lp );
-	
+
 	bool isItemChecked( UINT id ) const;
 	void setItemCheck( UINT id, WPARAM state);
 	void CheckItem( UINT id);
 	void UncheckItem( UINT id);
 	void GrayCheckItem( UINT id);
-	
+
+	LRESULT SetItemText( UINT id, const TCHAR *str );
+	LRESULT GetItemText( UINT id, size_t len, TCHAR *str ) const;
+
 	// てけとーに実装して反応してください。
 	// on_ok/on_cancelは、終了して良いならtrueを返すこと。
 	// on_cmd/on_msgは、処理済みならtrueを返すこと。
@@ -460,6 +463,12 @@ inline void DlgImpl::UncheckItem( UINT id)
 
 inline void DlgImpl::GrayCheckItem( UINT id)
 	{ setItemCheck(id, BST_INDETERMINATE); }
+
+inline LRESULT DlgImpl::SetItemText( UINT id, const TCHAR *str )
+	{ return ::SendDlgItemMessage(hwnd(), id, WM_SETTEXT, 0, (LPARAM)str ); }
+
+inline LRESULT DlgImpl::GetItemText( UINT id, size_t len, TCHAR *str ) const
+	{ return ::SendDlgItemMessage(hwnd(), id, WM_GETTEXT, (WPARAM)len, (LPARAM)str ); }
 
 
 
