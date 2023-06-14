@@ -112,8 +112,7 @@ private:
 		if( p==e ) return;
 
 		TCHAR buf[MAX_PATH];
-		SendMsgToItem(IDC_DT_PAT, WM_GETTEXT,
-			countof(buf),reinterpret_cast<LPARAM>(buf));
+		GetItemText(IDC_DT_PAT, countof(buf), buf);
 		p->pattern = buf;
 
 		getComboBoxText(IDC_PAT_KWD, buf);
@@ -129,7 +128,7 @@ private:
 		if( p==e ) return;
 
 		curSel_ = i;
-		SendMsgToItem(IDC_DT_PAT, WM_SETTEXT, p->pattern.c_str());
+		SetItemText(IDC_DT_PAT, p->pattern.c_str());
 		if( p->kwdfile.len()==0 )
 			SendMsgToItem(IDC_PAT_KWD, CB_SETCURSEL);
 		else
@@ -165,11 +164,9 @@ private:
 			bool on_ok() override
 			{
 				TCHAR buf[MAX_PATH];
-				SendMsgToItem(IDC_NAME, WM_GETTEXT,
-					countof(buf),reinterpret_cast<LPARAM>(buf));
+				GetItemText(IDC_NAME, countof(buf), buf);
 				name = buf;
-				SendMsgToItem(IDC_EXT, WM_GETTEXT,
-					countof(buf),reinterpret_cast<LPARAM>(buf));
+				GetItemText(IDC_EXT, countof(buf), buf);
 				ext=buf;
 				return true;
 			}
@@ -211,16 +208,16 @@ private:
 	void on_init() override
 	{
 		TCHAR tmp[INT_DIGITS+1];
-		SendMsgToItem( IDC_LATEST_NUM, WM_SETTEXT, Int2lStr(tmp, cfg_.mrus_) );
+		SetItemText( IDC_LATEST_NUM, Int2lStr(tmp, cfg_.mrus_) );
 		if( cfg_.undoLimit() == -1 )
 		{
 			CheckItem(IDC_UNDOLIM1);
-			SendMsgToItem(IDC_UNDO_CT, WM_SETTEXT, TEXT("20") );
+			SetItemText(IDC_UNDO_CT, TEXT("20") );
 		}
 		else
 		{
 			CheckItem(IDC_UNDOLIM2);
-			SendMsgToItem(IDC_UNDO_CT, WM_SETTEXT, Int2lStr(tmp, cfg_.undoLimit()) );
+			SetItemText(IDC_UNDO_CT, Int2lStr(tmp, cfg_.undoLimit()) );
 		}
 		if( cfg_.countByUnicode() )
 		{
@@ -233,8 +230,8 @@ private:
 			CheckItem(IDC_COUNTBYLETTER2);
 		}
 
-		SendMsgToItem(IDC_TXTFILT, WM_SETTEXT, cfg_.txtFileFilter().c_str() );
-		SendMsgToItem(IDC_EXTGREP, WM_SETTEXT, cfg_.grepExe().c_str() );
+		SetItemText(IDC_TXTFILT, cfg_.txtFileFilter().c_str() );
+		SetItemText(IDC_EXTGREP, cfg_.grepExe().c_str() );
 
 		if( cfg_.openSame() )
 			CheckItem(IDC_OPENSAME);
@@ -337,8 +334,7 @@ private:
 	bool on_ok() override
 	{
 		TCHAR buf[100];
-		SendMsgToItem(IDC_LATEST_NUM, WM_GETTEXT,
-			countof(buf),reinterpret_cast<LPARAM>(buf));
+		GetItemText(IDC_LATEST_NUM, countof(buf), buf);
 		cfg_.mrus_ = String::GetInt(buf);
 		cfg_.mrus_ = Min(Max(0, cfg_.mrus_), 20);
 
@@ -348,17 +344,14 @@ private:
 		}
 		else
 		{
-			SendMsgToItem(IDC_UNDO_CT, WM_GETTEXT,
-				countof(buf),reinterpret_cast<LPARAM>(buf));
+			GetItemText(IDC_UNDO_CT, countof(buf), buf);
 			cfg_.undoLimit_ = String::GetInt(buf);
 		}
 
-		SendMsgToItem(IDC_TXTFILT, WM_GETTEXT,
-			countof(buf),reinterpret_cast<LPARAM>(buf));
+		GetItemText(IDC_TXTFILT, countof(buf), buf);
 		cfg_.txtFilter_ = buf;
 
-		SendMsgToItem(IDC_EXTGREP, WM_GETTEXT,
-			countof(buf),reinterpret_cast<LPARAM>(buf));
+		GetItemText(IDC_EXTGREP, countof(buf), buf);
 		cfg_.grepExe_ = buf;
 
 		cfg_.openSame_            = isItemChecked(IDC_OPENSAME);
