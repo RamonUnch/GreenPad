@@ -6,15 +6,6 @@
 #include "path.h"
 using namespace ki;
 
-#ifndef NO_CHARDET
-
-#define CHARDET_RESULT_OK		    0
-#define CHARDET_RESULT_NOMEMORY		    (-1)
-#define CHARDET_RESULT_INVALID_DETECTOR	    (-2)
-
-typedef void* chardet_t;
-
-#endif //NO_CHARDET
 
 //=========================================================================
 // テキストファイル読み出し共通インターフェイス
@@ -28,9 +19,11 @@ struct ki::TextFileRPimpl: public Object
 	virtual size_t ReadBuf( unicode* buf, ulong siz )
 		= 0;
 
+	virtual void SkipBOMIfNeeded() {}
+
 	enum { EOF=0, EOL=1, EOB=2 } state;
 
-	virtual ~TextFileRPimpl() {};
+	virtual ~TextFileRPimpl() {}
 };
 
 
@@ -42,13 +35,21 @@ struct ki::TextFileRPimpl: public Object
 
 struct rBasicUTF : public ki::TextFileRPimpl
 {
-	inline rBasicUTF() : BOF(true) {}
+	inline rBasicUTF() {}
 	virtual unicode PeekC() = 0;
-	virtual unicode GetC() A_FINAL {unicode ch=PeekC(); Skip(); return ch;}
+	inline unicode GetC() {unicode ch=PeekC(); Skip(); return ch;}
 	virtual void Skip() = 0;
 	virtual bool Eof() = 0;
+	virtual void SkipBOMIfNeeded() override A_FINAL
+	{
+		if( !Eof() )
+		{
+			// U+FEFF -> ZERO WIDTH NO-BREAK SPACE
+			// Also used as BOM at the start of a file.
+			if(PeekC() == 0xfeff) Skip();
+		}
+	}
 
-	bool BOF;
 
 	size_t ReadBuf( unicode* buf, ulong siz ) override A_FINAL
 	{
@@ -56,24 +57,22 @@ struct rBasicUTF : public ki::TextFileRPimpl
 
 		// 改行が出るまで読む
 		unicode *w=buf, *e=buf+siz-1;
+
 		while( !Eof() )
 		{
 			*w = GetC();
-			if(BOF && *w!=0xfeff) BOF = false;
 
-			if( !BOF && ++w==e )
+			if( ++w==e )
 			{
 				state = EOB;
 				break;
 			}
-			if(BOF) BOF = false;
 		}
 
 		// If the end of the buffer contains half a DOS CRLF
 		if( *(w-1)==L'\r' && PeekC() == L'\n' )
 			Skip();
 
-		if(BOF) BOF = false;
 		// 読んだ文字数
 		return w-buf;
 	}
@@ -86,75 +85,57 @@ struct rBasicUTF : public ki::TextFileRPimpl
 // ついでに同じtemplateで、ISO-8859-1も処理してしまう。^^;
 //-------------------------------------------------------------------------
 
-template<typename T>
-struct rUCS : public rBasicUTF
+
+template<typename T, bool be>
+struct rUCS A_FINAL : public rBasicUTF
 {
-	rUCS( const uchar* b, ulong s, bool bigendian )
+	rUCS( const uchar* b, ulong s )
 		: fb( reinterpret_cast<const T*>(b) )
 		, fe( reinterpret_cast<const T*>(b+(s/sizeof(T))*sizeof(T)) )
-		, be( bigendian ) {}
+		{}
 
 	const T *fb, *fe;
-	const bool be;
 
 	// エンディアン変換
 	inline  byte swap(  byte val ) { return val; }
 	inline dbyte swap( dbyte val ) { return (val<<8) |(val>>8); }
-	inline qbyte swap( qbyte val ) { return ((val>>24)&0xff |
-	                                         (val>>8)&0xff00 |
-											 (val<<8)&0xff0000|
-											 (val<<24)); }
 
 	virtual void Skip() override { ++fb; }
 	virtual bool Eof() override { return fb>=fe; }
 	virtual unicode PeekC() override { return (unicode)(be ? swap(*fb) : *fb); }
+
 };
 
-typedef rUCS< byte> rWestISO88591;
-//struct rWest1ISO : public rUCS<byte>
-//{
-//	rWest1ISO( const uchar* b, ulong s, bool bigendian )
-//		: rUCS<byte>(b,s,bigendian) {}
-//
-//	virtual unicode PeekC()
-//	{
-//		static const unicode cp1252map[256] = {
-//		0,    1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-//		16,  17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-//		32,  33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
-//		48,  49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
-//		64,  65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
-//		80,  81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
-//		96,  97, 98, 99,100,101,102,103,104,105,106,107,108,109,110,111,
-//		112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,
-//
-//		0x20ac,129,0x201a,0x0192,0x201E,0x2026,0x2020,0x2021,0x02C6,0x2030,0x0160,0x2039,0x0152,141,0x017D,143,
-//		144,0x2018,0x2019,0x201C,0x201D,0x2022,0x2013,0x2014,0x02DC,0x2122,0x0161,0x203A,0x0153,157,0x017E,0x0178,
-//
-//		160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,
-//		176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
-//		192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
-//		208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,
-//		224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,
-//		240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,
-//		};
-//		byte c = *fb;
-//		return cp1252map[c];
-//	}
-//};
-typedef rUCS<dbyte> rUtf16;
+typedef rUCS<byte, false> rWestISO88591;
+typedef rUCS<dbyte, false> rUtf16LE;
+typedef rUCS<dbyte, true> rUtf16BE;
+
 
 // UTF-32読み込み
-struct rUtf32 A_FINAL : public rUCS<qbyte>
+template<bool be>
+struct rUtf32 A_FINAL: public rBasicUTF
 {
-	rUtf32( const uchar* b, ulong s, bool bigendian )
-		: rUCS<qbyte>(b,s,bigendian)
+	rUtf32( const uchar* b, ulong s )
+		: fb( reinterpret_cast<const qbyte*>(b) )
+		, fe( reinterpret_cast<const qbyte*>(b+(s/sizeof(qbyte))*sizeof(qbyte)) )
 		, state(0) {}
 
+	const qbyte *fb, *fe;
 	int state;
+
 	qbyte curChar() { return be ? swap(*fb) : *fb; }
 	bool inBMP(qbyte c) { return c<0x10000; }
 
+	// エンディアン変換
+	inline qbyte swap( qbyte val )
+	{
+		return ((val>>24)&0xff |
+		        (val>>8)&0xff00 |
+		        (val<<8)&0xff0000|
+		        (val<<24));
+	}
+
+	virtual bool Eof() override { return fb>=fe; }
 	virtual unicode PeekC() override
 	{
 		qbyte c = curChar();
@@ -175,6 +156,8 @@ struct rUtf32 A_FINAL : public rUCS<qbyte>
 	}
 };
 
+typedef rUtf32<true> rUtf32BE;
+typedef rUtf32<false> rUtf32LE;
 
 //-------------------------------------------------------------------------
 // UTF-1
@@ -1048,8 +1031,8 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 	// ファイルポインタ
 	const uchar* fb;
 	const uchar* fe;
-	bool      fixed; // ESCによる切り替えを行わないならtrue
-	bool    mode_hz; // HZの場合。
+	const bool fixed; // ESCによる切り替えを行わないならtrue
+	const bool mode_hz; // HZの場合。
 
 	// 作業変数
 	const CodeSet *GL;
@@ -1295,15 +1278,15 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	// 対応するデコーダを作成
 	switch( cs_ )
 	{
-	case 28591:   impl_ = new rWestISO88591(buf,siz,true); break; // ISO-8859-1
+	case 28591:   impl_ = new rWestISO88591(buf,siz); break; // ISO-8859-1
 	case UTF16b:
-	case UTF16BE: impl_ = new rUtf16(buf,siz,true); break;
+	case UTF16BE: impl_ = new rUtf16BE(buf,siz); break;
 	case UTF16l:
-	case UTF16LE: impl_ = new rUtf16(buf,siz,false); break;
+	case UTF16LE: impl_ = new rUtf16LE(buf,siz); break;
 	case UTF32b:
-	case UTF32BE: impl_ = new rUtf32(buf,siz,true); break;
+	case UTF32BE: impl_ = new rUtf32BE(buf,siz); break;
 	case UTF32l:
-	case UTF32LE: impl_ = new rUtf32(buf,siz,false); break;
+	case UTF32LE: impl_ = new rUtf32LE(buf,siz); break;
 	case UTF1Y:
 	case UTF1:    impl_ = new rUtf1(buf,siz); break;
 	case UTF5:    impl_ = new rUtf5(buf,siz); break;
@@ -1321,6 +1304,9 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	case HZ:      impl_ = new rIso2022(buf,siz,true,true, ASCII,GB); break;
 	default:      impl_ = new rMBCS(buf,siz,cs_); break;
 	}
+
+	if( impl_ )
+		impl_->SkipBOMIfNeeded();
 
 	return impl_ != NULL;
 }
@@ -1603,6 +1589,13 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 {
 	int cs = 0;
 #ifndef NO_CHARDET
+
+#define CHARDET_RESULT_OK               ( 0)
+#define CHARDET_RESULT_NOMEMORY         (-1)
+#define CHARDET_RESULT_INVALID_DETECTOR (-2)
+
+	typedef void* chardet_t;
+
 	// function calls
 	int (__cdecl*chardet_create)(chardet_t*);
 	void (__cdecl*chardet_destroy)(chardet_t);
@@ -1635,7 +1628,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 
 	// On Win32s we must check if CHARDET.DLL exist before trying LoadLibrary()
 	// Otherwise we would get a system  message
-	Path chardet_in_gp_dir = Path(Path::ExeName).BeDirOnly() + TEXT(CHARDET_DLL);
+	Path chardet_in_gp_dir = Path(Path::Exe) + TEXT(CHARDET_DLL);
 	if( !chardet_in_gp_dir.exist() )
 		return 0;
 
