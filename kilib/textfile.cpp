@@ -5,7 +5,7 @@
 #include "kstring.h"
 #include "path.h"
 using namespace ki;
-
+#define ISHIGHSURROGATE( ch ) ( ( 0xD800 <= (unicode)(ch) && (unicode)(ch) <= 0xDBFF ) )
 
 //=========================================================================
 // テキストファイル読み出し共通インターフェイス
@@ -2187,7 +2187,7 @@ protected:
 };
 
 //#define WBUF_SIZE 16 // Test with a super small buffer for debugging.
-#define WBUF_SIZE 65536
+#define WBUF_SIZE 32768
 struct TextFileWPimplWithBuf: public ki::TextFileWPimpl
 {
 	TextFileWPimplWithBuf( FileW& w )
@@ -2210,8 +2210,8 @@ struct TextFileWPimplWithBuf: public ki::TextFileWPimpl
 		while( len > bstep_ )
 		{
 			// If we meet a High surrogate we must make a 1 unicode char smaller step.
-			// So that we do not split surrogate pairs in their middle.
-			ulong step = bstep_ - ( 0xD800 <= str[bstep_-1] && str[bstep_-1] <= 0xDBFF );
+			// So that we do not split surrogate pairs in their middle before decoding.
+			ulong step = bstep_ - ISHIGHSURROGATE( str[bstep_-1] );
 
 			// Actually write buffer to the file!
 			WriteBuf( str, step );
@@ -2883,10 +2883,10 @@ struct wUTF7 A_FINAL: public TextFileWPimpl
 // Windows頼りの変換
 //-------------------------------------------------------------------------
 
-struct wMBCS A_FINAL: public TextFileWPimplWithBuf
+struct wMBCS A_FINAL: public TextFileWPimpl
 {
 	wMBCS( FileW& w, int cp )
-		: TextFileWPimplWithBuf(w), cp_(cp)
+		: TextFileWPimpl(w), cp_(cp)
 	{
 		if( cp == UTF8 )
 		{
@@ -2896,14 +2896,14 @@ struct wMBCS A_FINAL: public TextFileWPimplWithBuf
 		}
 	}
 
-	void WriteBuf( const unicode* str, ulong len ) override
+	// Directly write into the FileW buffer (lower mem usage).
+	void WriteLine( const unicode* str, ulong len ) override
 	{
 		// WideCharToMultiByte API を利用した変換
-		int r = ::WideCharToMultiByte(cp_, 0, str, len, buf_, bsiz_, NULL, NULL);
-		// ファイルへ書き込み
-		fp_.Write( buf_, r );
+		fp_.WriteInCodepageFromUnicode( cp_, str, len );
 	}
 
+private:
 	int cp_;
 };
 
