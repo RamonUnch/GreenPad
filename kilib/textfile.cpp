@@ -5,7 +5,7 @@
 #include "kstring.h"
 #include "path.h"
 using namespace ki;
-
+#define ISHIGHSURROGATE( ch ) ( ( 0xD800 <= (unicode)(ch) && (unicode)(ch) <= 0xDBFF ) )
 
 //=========================================================================
 // テキストファイル読み出し共通インターフェイス
@@ -1570,9 +1570,7 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 		}
 
 	# ifdef MLANG_DEBUG
-		TCHAR tmp[10];
-		::wsprintf(tmp,TEXT("%d"),cs);
-		::MessageBox(NULL,tmp,TEXT("MLangDetect"),0);
+		::MessageBox(NULL, SInt2Str(cs),TEXT("MLangDetect"),0);
 	# endif
 
 //		if (cs == 20127) cs = 0; // 20127 == ASCII, 0 = unknown
@@ -1725,7 +1723,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 	::FreeLibrary(hIL);
 
 	#ifdef MLANG_DEBUG
-	::MessageBox(NULL,cs? TEXT("Chardet sucess!"): TEXT("Detection failed") ,TEXT("CHARDET"),0);
+	::MessageBox(NULL, SInt2Str(cs), TEXT("CHARDET"),0);
 	#endif
 
 #endif //NO_CHARDET
@@ -2165,7 +2163,6 @@ bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uCh
 //=========================================================================
 // テキストファイル出力共通インターフェイス
 //=========================================================================
-
 struct ki::TextFileWPimpl : public Object
 {
 	virtual void WriteLine( const unicode* buf, ulong siz )
@@ -2177,34 +2174,58 @@ struct ki::TextFileWPimpl : public Object
 	virtual void WriteChar( unicode ch )
 		{}
 
-	virtual ~TextFileWPimpl()
-		{ delete [] buf_; }
+	virtual ~TextFileWPimpl() {}
 
 protected:
 
 	TextFileWPimpl( FileW& w )
-		: fp_   (w)
-		, bsiz_ (65536)
-		, buf_  (new char[bsiz_]) {}
-
-	void ReserveMoreBuffer()
-		{
-//			char *ob=buf_;
-//			char* nb = new char[bsiz_<<=1];
-//			buf_ = nb;
-//			delete [] ob;
-
-			delete [] buf_;
-			buf_ = new char[bsiz_<<=1];
-		}
+		: fp_   (w) {}
 
 	FileW& fp_;
-	ulong  bsiz_;
-	char*  buf_;
 };
 
+//#define WBUF_SIZE 16 // Test with a super small buffer for debugging.
+#define WBUF_SIZE 8192
+struct TextFileWPimplWithBuf: public ki::TextFileWPimpl
+{
+	TextFileWPimplWithBuf( FileW& w )
+		: ki::TextFileWPimpl( w )
+		, bsiz_  ( WBUF_SIZE )
+		, bstep_ ( bsiz_ >> 2 ) // Quarter of allocated bufer
+		, buf_   ( new char[bsiz_] )
+		{}
 
+	~TextFileWPimplWithBuf( )
+		{ delete [] buf_; };
 
+	// This function should assume it will have enough room in buf_
+	virtual void WriteBuf( const unicode* str, ulong len ) = 0;
+
+	void WriteLine( const unicode* str, ulong len ) override A_FINAL
+	{
+		// Write by blocks,
+		// in case the line is larger than the temporary buffer.
+		while( len > bstep_ )
+		{
+			// If we meet a High surrogate we must make a 1 unicode char smaller step.
+			// So that we do not split surrogate pairs in their middle before decoding.
+			ulong step = bstep_ - ISHIGHSURROGATE( str[bstep_-1] );
+
+			// Actually write buffer to the file!
+			WriteBuf( str, step );
+			len -= step;
+			str += step;
+		}
+		// Remaining
+		if( len )
+			WriteBuf( str, len );
+	}
+
+protected:
+	const ulong bsiz_;
+	const ulong bstep_;
+	char  *buf_;
+};
 //-------------------------------------------------------------------------
 // Unicodeテキスト
 //-------------------------------------------------------------------------
@@ -2873,19 +2894,14 @@ struct wMBCS A_FINAL: public TextFileWPimpl
 		}
 	}
 
+	// Directly write into the FileW buffer (lower mem usage).
 	void WriteLine( const unicode* str, ulong len ) override
 	{
 		// WideCharToMultiByte API を利用した変換
-		int r;
-		while(
-			0==(r=::WideCharToMultiByte(cp_,0,str,len,buf_,bsiz_,NULL,NULL))
-		 && ::GetLastError()==ERROR_INSUFFICIENT_BUFFER )
-			ReserveMoreBuffer();
-
-		// ファイルへ書き込み
-		fp_.Write( buf_, r );
+		fp_.WriteInCodepageFromUnicode( cp_, str, len );
 	}
 
+private:
 	int cp_;
 };
 
@@ -2896,10 +2912,10 @@ struct wMBCS A_FINAL: public TextFileWPimpl
 // ASCIIともう一つしか文字集合を使わないもの
 //-------------------------------------------------------------------------
 
-struct wIso2022 A_FINAL: public TextFileWPimpl
+struct wIso2022 A_FINAL: public TextFileWPimplWithBuf
 {
 	wIso2022( FileW& w, int cp )
-		: TextFileWPimpl(w), hz_(cp==HZ)
+		: TextFileWPimplWithBuf(w), hz_(cp==HZ)
 	{
 		switch( cp )
 		{
@@ -2917,14 +2933,10 @@ struct wIso2022 A_FINAL: public TextFileWPimpl
 		}
 	}
 
-	void WriteLine( const unicode* str, ulong len ) override
+	void WriteBuf( const unicode* str, ulong len ) override
 	{
 		// まず WideCharToMultiByte API を利用して変換
-		int r;
-		while(
-			0==(r=::WideCharToMultiByte(cp_,0,str,len,buf_,bsiz_,NULL,NULL))
-		 && ::GetLastError()==ERROR_INSUFFICIENT_BUFFER )
-			ReserveMoreBuffer();
+		int r=::WideCharToMultiByte(cp_, 0, str, len, buf_, bsiz_,NULL,NULL);
 
 		bool ascii = true;
 		for( int i=0; i<r; ++i )
@@ -3040,19 +3052,15 @@ static const WORD IBM_sjis2kuten[] = {
 	k[1] += 0x20;
 }
 
-struct wEucJp A_FINAL: public TextFileWPimpl
+struct wEucJp A_FINAL: public TextFileWPimplWithBuf
 {
 	wEucJp( FileW& w )
-		: TextFileWPimpl(w) {}
+		: TextFileWPimplWithBuf(w) {}
 
-	void WriteLine( const unicode* str, ulong len ) override
+	void WriteBuf( const unicode* str, ulong len ) override
 	{
 		// まず WideCharToMultiByte API を利用して変換
-		int r;
-		while(
-			0==(r=::WideCharToMultiByte(932,0,str,len,buf_,bsiz_,NULL,NULL))
-		 && ::GetLastError()==ERROR_INSUFFICIENT_BUFFER )
-			ReserveMoreBuffer();
+		int r = ::WideCharToMultiByte(932,0,str,len,buf_,bsiz_,NULL,NULL);
 
 		for( int i=0; i<r; ++i )
 			if( buf_[i] & 0x80 )
@@ -3085,22 +3093,18 @@ struct wEucJp A_FINAL: public TextFileWPimpl
 // ISO-2022 サブセットその３。ISO-2022-JP
 //-------------------------------------------------------------------------
 
-struct wIsoJp A_FINAL: public TextFileWPimpl
+struct wIsoJp A_FINAL: public TextFileWPimplWithBuf
 {
 	wIsoJp( FileW& w )
-		: TextFileWPimpl(w)
+		: TextFileWPimplWithBuf(w)
 	{
 		fp_.Write( "\x1b\x28\x42", 3 );
 	}
 
-	void WriteLine( const unicode* str, ulong len ) override
+	void WriteBuf( const unicode* str, ulong len ) override
 	{
 		// まず WideCharToMultiByte API を利用して変換
-		int r;
-		while(
-			0==(r=::WideCharToMultiByte(932,0,str,len,buf_,bsiz_,NULL,NULL))
-		 && ::GetLastError()==ERROR_INSUFFICIENT_BUFFER )
-			ReserveMoreBuffer();
+		int r = ::WideCharToMultiByte(932,0,str,len,buf_,bsiz_,NULL,NULL);
 
 		enum { ROMA, KANJI, KANA } state = ROMA;
 		for( int i=0; i<r; ++i )

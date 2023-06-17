@@ -245,7 +245,7 @@ void FileR::Close()
 //=========================================================================
 
 FileW::FileW()
-	: BUFSIZE( 65536 )
+	: BUFSIZE( 32768 )
 	, handle_( INVALID_HANDLE_VALUE )
 	, buf_   ( new uchar[BUFSIZE] )
 {
@@ -348,3 +348,22 @@ void FileW::WriteC( const uchar ch )
 	buf_[bPos_++] = ch;
 }
 
+void FileW::WriteInCodepageFromUnicode( int cp, const unicode* str, ulong len )
+{
+	ulong bremain;
+	while( (bremain = BUFSIZE-bPos_) <= len<<2 )
+	{	// While the remaining number of bytes is less than 4x len
+
+		ulong uniwrite = (bremain>>2) - (0xD800 <= str[(bremain>>2)-1] && str[(bremain>>2)-1] <= 0xDBFF);
+
+		// Fill the buffer to the end (kinda).
+		bPos_ += ::WideCharToMultiByte( cp, 0, str, uniwrite, (char*)(buf_+bPos_), bremain, NULL, NULL ) ;
+		len  -= uniwrite;
+		str  += uniwrite;
+
+		Flush();
+	}
+
+	// We have room to write len bytes directly to the tail of the buffer.
+	bPos_ += ::WideCharToMultiByte( cp, 0, str, len, (char*)(buf_+bPos_), bremain, NULL, NULL ) ;
+}

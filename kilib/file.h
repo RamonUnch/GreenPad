@@ -96,6 +96,9 @@ public:
 	//@{ ˆê•¶š‘‚­ //@}
 	void WriteC( const uchar ch );
 
+	//@{ Writes to the file using a specific output codepage //@}
+	void WriteInCodepageFromUnicode( int cp, const unicode* str, ulong len );
+
 public:
 
 	void Flush();
