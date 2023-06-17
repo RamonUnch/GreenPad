@@ -1570,9 +1570,7 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 		}
 
 	# ifdef MLANG_DEBUG
-		TCHAR tmp[10];
-		::wsprintf(tmp,TEXT("%d"),cs);
-		::MessageBox(NULL,tmp,TEXT("MLangDetect"),0);
+		::MessageBox(NULL, SInt2Str(cs),TEXT("MLangDetect"),0);
 	# endif
 
 //		if (cs == 20127) cs = 0; // 20127 == ASCII, 0 = unknown
@@ -1725,7 +1723,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 	::FreeLibrary(hIL);
 
 	#ifdef MLANG_DEBUG
-	::MessageBox(NULL,cs? TEXT("Chardet sucess!"): TEXT("Detection failed") ,TEXT("CHARDET"),0);
+	::MessageBox(NULL, SInt2Str(cs), TEXT("CHARDET"),0);
 	#endif
 
 #endif //NO_CHARDET
@@ -2187,7 +2185,7 @@ protected:
 };
 
 //#define WBUF_SIZE 16 // Test with a super small buffer for debugging.
-#define WBUF_SIZE 32768
+#define WBUF_SIZE 8192
 struct TextFileWPimplWithBuf: public ki::TextFileWPimpl
 {
 	TextFileWPimplWithBuf( FileW& w )
