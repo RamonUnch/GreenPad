@@ -748,16 +748,6 @@ namespace
 {
 	typedef char* (WINAPI * uNextFunc)(WORD,const char*,DWORD);
 
-	static inline int GetMaskIndex(uchar n)
-	{
-		if( uchar(n+2) < 0xc2 ) return 1; // 00～10111111, fe, ff
-		if( n          < 0xe0 ) return 2; // 110xxxxx
-		if( n          < 0xf0 ) return 3; // 1110xxxx
-		if( n          < 0xf8 ) return 4; // 11110xxx
-		if( n          < 0xfc ) return 5; // 111110xx
-		return 6; // 1111110x
-	}
-
 	// CharNextExAはGB18030の４バイト文字列を扱えないそうだ。
 	static char* WINAPI CharNextGB18030( WORD, const char* sp, DWORD )
 	{
@@ -841,10 +831,22 @@ namespace
 		return dbcscnt && (refcs>950) && (!invcnt || (invcnt < (dbcscnt >> 5)));
 	}
 
+	// UTF-8 byte sequence length
+	static inline int GetMaskIndex(uchar n)
+	{
+		if( uchar(n+2) < 0xc2 ) return 1; // 00～10111111, fe, ff
+		if( n          < 0xe0 ) return 2; // 110xxxxx
+		if( n          < 0xf0 ) return 3; // 1110xxxx
+		if( n          < 0xf8 ) return 4; // 11110xxx
+		if( n          < 0xfc ) return 5; // 111110xx
+		return 6; // 1111110x
+	}
+
 	// Win95対策。
 	//   http://support.microsoft.com/default.aspx?scid=%2Fisapi%2Fgomscom%2Easp%3Ftarget%3D%2Fjapan%2Fsupport%2Fkb%2Farticles%2Fjp175%2F3%2F92%2Easp&LN=JA
 	// MSDNにはWin95以降でサポートと書いてあるのにCP_UTF8は
 	// 使えないらしいので、自前の変換関数で。
+	static uchar next_LUT[256]; // Filled by GetCharNextExA()
 	typedef int (WINAPI * uConvFunc)(UINT,DWORD,const char*,int,wchar_t*,int);
 	static int WINAPI Utf8ToWideChar( UINT, DWORD, const char* sb, int ss, wchar_t* wb, int ws )
 	{
@@ -856,7 +858,7 @@ namespace
 
 		for( int t; p<e; ++w )
 		{
-			t  = GetMaskIndex(*p);
+			t = next_LUT[(uchar)*p];
 			qbyte qch = (*p++ & mask[t]);
 			while( p<e && --t )
 				qch<<=6, qch|=(*p++)&0x3f;
@@ -872,12 +874,12 @@ namespace
 struct rMBCS A_FINAL: public TextFileRPimpl
 {
 	// ファイルポインタ＆コードページ, File Pointer & Code Page
-    uchar next_LUT[256];
 	const char* fb;
 	const char* fe;
 	const int   cp;
 	const uNextFunc next;
 	const uConvFunc conv;
+	enum { ANSIMODE=0, UTF8MODE=1, DBCSMODE=2 };
 
 	// 初期設定, Initialization
 	rMBCS( const uchar* b, ulong s, int c )
@@ -885,7 +887,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		, fe( reinterpret_cast<const char*>(b+s) )
 		, cp( c==UTF8 ? UTF8N : c )
 		, next( GetCharNextExA( cp ) )
-		, conv( cp==UTF8N && (app().isWin95()||!::IsValidCodePage(65001))
+		, conv( cp==UTF8N /*&& (app().isWin95()||!::IsValidCodePage(65001)) */
 		                  ? Utf8ToWideChar : MultiByteToWideChar )
 	{
 		if( cp==UTF8N && fe-fb>=3
@@ -901,23 +903,30 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		state = (end==fe ? EOF : EOB);
 
 		// 改行が出るまで進む
+		p=fb;
 		switch( (UINT_PTR)next )
 		{
-		case 0:
+		case ANSIMODE:
 			// Simple ANSI mode, no need to pre-parse
 			// because we only have 1byte per character.
 			p = end;
 			break;
 
-		case 1:
+		case UTF8MODE:
+			// In UTF-8 mode, we can skip to almost the end of the
+			// Buffer because it is self synchronising.
+			// 6 should be enough but I put 8 for safety.
+			p = Max(end-8, fb);
+			// Fall through!
+		case DBCSMODE:
 			// We can use the internal next_LUT[]
-			for( p=fb; p<end; )
+			for( ; p<end; )
 				p += (*p)&0x80? next_LUT[(uchar)(*p)]: 1;
 			break;
 
 		default:
 			// Complex MultyByte encoding.
-			for( p=fb; p<end; )
+			for( ; p<end; )
 			{
 				if( (*p) & 0x80 && p+1<fe )
 					p = next(cp,p,0);
@@ -953,7 +962,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		{
 			for( int i=0; i<= 0xff; i++ )
 				next_LUT[i] = GetMaskIndex( i );
-			return (uNextFunc)1; // Use the LUT
+			return (uNextFunc)UTF8MODE; // UTF-8 mode
 		}
 
 		CPINFO cpnfo;
@@ -963,7 +972,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 			if( cpnfo.MaxCharSize == 1 && cpnfo.LeadByte[0] == 0 )
 			{
 				// Simple ANSI codepage, no double byte sequences.
-				return (uNextFunc)0;
+				return (uNextFunc)ANSIMODE;
 			}
 
 			// Double byte character set
@@ -984,7 +993,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 					for( int j=s; j <= e; ++j )
 						next_LUT[j] = 2;
 				}
-				return (uNextFunc)1; // Use the LUT
+				return (uNextFunc)DBCSMODE; // Use the LUT
 			}
 		}
 
@@ -1012,7 +1021,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 			}
 		}
 		// Fallback to ANSI mode if nothing could be done...
-		return (uNextFunc)0;
+		return (uNextFunc)ANSIMODE;
 	}
 };
 
