@@ -2830,6 +2830,8 @@ struct wUTF8 A_FINAL: public TextFileWPimpl
 
 	void WriteLine( const unicode* str, ulong len ) override
 	{
+		// Because we start from UTF-16 we are limited to 4 byte UTF-8 sequence
+		// BOM + surrog pair = 65536-2048 + 1024*1024  = 1 112 064 codepoints
 		//        0000-0000-0xxx-xxxx | 0xxxxxxx
 		//        0000-0xxx-xxyy-yyyy | 110xxxxx 10yyyyyy
 		//        xxxx-yyyy-yyzz-zzzz | 1110xxxx 10yyyyyy 10zzzzzz
@@ -2838,36 +2840,44 @@ struct wUTF8 A_FINAL: public TextFileWPimpl
 		while( len-- )
 		{
 			qbyte ch = *str;
-			if( (0xD800<=ch&&ch<=0xDBFF) && len )
-				ch = 0x10000 + (((ch-0xD800)&0x3ff)<<10) + ((*++str-0xDC00)&0x3ff), len--;
 
 			if( ch <= 0x7f )
 				fp_.WriteC( static_cast<uchar>(ch) );
 			else if( ch <= 0x7ff )
 				fp_.WriteC( 0xc0 | static_cast<uchar>(ch>>6) ),
 				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
-			else if( ch<= 0xffff )
+			else if( ch < 0xD800 ) // 3 byte sequence before surrogate.
 				fp_.WriteC( 0xe0 | static_cast<uchar>(ch>>12) ),
 				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
 				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
-			else if( ch<= 0x1fffff )
-				fp_.WriteC( 0xf0 | static_cast<uchar>(ch>>18) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
-			else if( ch<= 0x3ffffff )
-				fp_.WriteC( 0xf8 | static_cast<uchar>(ch>>24) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>18)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
-			else
-				fp_.WriteC( 0xfc | static_cast<uchar>(ch>>30) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>24)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>18)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+			else // ( ch >= 0xD800 )
+			{
+				if( ch <= 0xDBFF && len )
+					ch = 0x10000 + (((ch-0xD800)&0x3ff)<<10) + ((*++str-0xDC00)&0x3ff), len--;
+
+				if( ch<= 0xffff ) // 3 byte sequence after surrogate.
+					fp_.WriteC( 0xe0 | static_cast<uchar>(ch>>12) ),
+					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
+					fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+				else // if( ch<= 0x1fffff )
+					fp_.WriteC( 0xf0 | static_cast<uchar>(ch>>18) ),
+					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
+					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
+					fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+//				else if( ch<= 0x3ffffff )
+//					fp_.WriteC( 0xf8 | static_cast<uchar>(ch>>24) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>18)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+//				else
+//					fp_.WriteC( 0xfc | static_cast<uchar>(ch>>30) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>24)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>18)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+			}
 			++str;
 		}
 	}
