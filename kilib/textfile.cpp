@@ -748,7 +748,6 @@ namespace
 {
 	typedef char* (WINAPI * uNextFunc)(WORD,const char*,DWORD);
 
-	static const byte mask[] = { 0, 0xff, 0x1f, 0x0f, 0x07, 0x03, 0x01 };
 	static inline int GetMaskIndex(uchar n)
 	{
 		if( uchar(n+2) < 0xc2 ) return 1; // 00～10111111, fe, ff
@@ -757,11 +756,6 @@ namespace
 		if( n          < 0xf8 ) return 4; // 11110xxx
 		if( n          < 0xfc ) return 5; // 111110xx
 		return 6; // 1111110x
-	}
-
-	static char* WINAPI CharNextUtf8( WORD, const char* p, DWORD )
-	{
-		return const_cast<char*>( p+GetMaskIndex(uchar(*p)) );
 	}
 
 	// CharNextExAはGB18030の４バイト文字列を扱えないそうだ。
@@ -785,42 +779,6 @@ namespace
 		else // DBCS
 			q = p+2;
 		return (char *)( q );
-	}
-
-	static char* WINAPI IncCharNextExA(WORD cp, const char *p, DWORD flags)
-	{
-		return (char *)++p;
-	}
-	static uNextFunc GetCharNextExA(WORD cp)
-	{
-		if( cp==UTF8N)   return CharNextUtf8;
-		if( cp==GB18030) return CharNextGB18030;
-
-		// CharNextExA is not here on NT3.1 and is a stub on NT3.5
-		// According to the MSDN DOC CharNextExA is available since NT4/95
-		// It seems that it works fine on NT3.51 build 1057
-		// It seems CharNextExA can crash
-		// so we exclude NT versions between 3.51.1057 and  and 4.00.1381
-		uNextFunc Window_CharNextExA = (uNextFunc)NULL ;
-		if(!app().isNT()
-		||  app().isNTOSVerEqual( MKVER(3,51,1057) )
-		||  app().isNTOSVerLarger( MKVER(4,00,1381) ) )
-		{
-			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "CharNextExA");
-			if (Window_CharNextExA)
-			{ // We got the function!
-			  // Double check that it actually works, Just in case
-				const char *test = "ts";
-				char *t = Window_CharNextExA(CP_ACP, test, 0);
-				if( t == &test[1] ) // Olny valid answer for any CP
-				{ // CharNextExA Works!
-					//MessageBox(NULL, TEXT("CharNextExA Works!"), NULL, 0);
-					return Window_CharNextExA;
-				}
-			}
-		}
-		// Fallback for WinNT3.x / Win32s / Win95 betas?
-		return IncCharNextExA;
 	}
 
 	// IMultiLanguage2::DetectInputCodepageはGB18030のことを認識できません。
@@ -890,6 +848,8 @@ namespace
 	typedef int (WINAPI * uConvFunc)(UINT,DWORD,const char*,int,wchar_t*,int);
 	static int WINAPI Utf8ToWideChar( UINT, DWORD, const char* sb, int ss, wchar_t* wb, int ws )
 	{
+		static const byte mask[] = { 0, 0xff, 0x1f, 0x0f, 0x07, 0x03, 0x01 };
+
 		const uchar *p = reinterpret_cast<const uchar*>(sb);
 		const uchar *e = reinterpret_cast<const uchar*>(sb+ss);
 		wchar_t     *w = wb; // バッファサイズチェック無し（仕様）
@@ -909,15 +869,15 @@ namespace
 		return int(w-wb);
 	}
 }
-
 struct rMBCS A_FINAL: public TextFileRPimpl
 {
 	// ファイルポインタ＆コードページ, File Pointer & Code Page
+    uchar next_LUT[256];
 	const char* fb;
 	const char* fe;
 	const int   cp;
-	uNextFunc next;
-	uConvFunc conv;
+	const uNextFunc next;
+	const uConvFunc conv;
 
 	// 初期設定, Initialization
 	rMBCS( const uchar* b, ulong s, int c )
@@ -940,29 +900,119 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		const char *p, *end = Min( fb+siz/2-2, fe );
 		state = (end==fe ? EOF : EOB);
 
-		// 改行が出るまで進む,  Proceed until the line breaks.
-		for( p=fb; p<end; )
-			if( (*p) & 0x80 && p+1<fe )
+		// 改行が出るまで進む
+		switch( (UINT_PTR)next )
+		{
+		case 0:
+			// Simple ANSI mode, no need to pre-parse
+			// because we only have 1byte per character.
+			p = end;
+			break;
+
+		case 1:
+			// We can use the internal next_LUT[]
+			for( p=fb; p<end; )
+				p += (*p)&0x80? next_LUT[(uchar)(*p)]: 1;
+			break;
+
+		default:
+			// Complex MultyByte encoding.
+			for( p=fb; p<end; )
 			{
-				p = next(cp,p,0);
+				if( (*p) & 0x80 && p+1<fe )
+					p = next(cp,p,0);
+				else
+					++p;
 			}
-			else
-			{
-				++p;
-			}
+		}
+
+		// Guard for invalid UTF8/GB18030 sequences.
+		// because next() can make a large step
+		if( p > fe )
+			p=fe;
 
 		// If the end of the buffer contains half a DOS CRLF
-		if( *(p-1)=='\r' && *(p) =='\n' )
-			++p;
+		// we do not translate it.
+		const char *pp = p - ( p < fe && *(p-1)=='\r' && *(p) =='\n' );
 
 		// Unicodeへ変換, convertion to Unicode
 		ulong len;
-		len = conv( cp, 0, fb, p-fb, buf, siz );
+		len = conv( cp, 0, fb, pp-fb, buf, siz );
 
 		fb = p;
 
 		// 終了
 		return len;
+	}
+
+
+	uNextFunc GetCharNextExA(WORD cp)
+	{
+		if( cp==GB18030 ) return CharNextGB18030;
+		if( cp==UTF8N )
+		{
+			for( int i=0; i<= 0xff; i++ )
+				next_LUT[i] = GetMaskIndex( i );
+			return (uNextFunc)1; // Use the LUT
+		}
+
+		CPINFO cpnfo;
+		if( GetCPInfo(cp, &cpnfo) )
+		{
+			//MessageBox(NULL, SInt2Str(cpnfo.MaxCharSize).c_str(), SInt2Str(cpnfo.LeadByte[0]).c_str(),0 );
+			if( cpnfo.MaxCharSize == 1 && cpnfo.LeadByte[0] == 0 )
+			{
+				// Simple ANSI codepage, no double byte sequences.
+				return (uNextFunc)0;
+			}
+
+			// Double byte character set
+			if (cpnfo.MaxCharSize == 2 && cpnfo.LeadByte[0] != 0 )
+			{
+				int i;
+				for( i=0; i <= 0xff; ++i )
+					next_LUT[i] = 1;
+				i=0;
+				// Fill next_LUT from the double NULL terminated ranges.
+				// s1 e1 s2 e2 s3 e3... 0 0 (Maximum is 5 ranges + 0 0)
+				while( cpnfo.LeadByte[i] && i < MAX_LEADBYTES)
+				{
+					uchar s = cpnfo.LeadByte[i++];
+					uchar e = cpnfo.LeadByte[i++];
+					//String str = SInt2Str(s).c_str(); str += TEXT(" - "); str += SInt2Str(e).c_str();
+					//MessageBox(NULL, str.c_str(), TEXT("LeadByte range"), 0 );
+					for( int j=s; j <= e; ++j )
+						next_LUT[j] = 2;
+				}
+				return (uNextFunc)1; // Use the LUT
+			}
+		}
+
+		// CharNextExA is not here on NT3.1 and is a stub on NT3.5
+		// According to the MSDN DOC CharNextExA is available since NT4/95
+		// It seems that it works fine on NT3.51 build 1057
+		// It seems CharNextExA can crash
+		// so we exclude NT versions between 3.51.1057 and  and 4.00.1381
+		uNextFunc Window_CharNextExA = (uNextFunc)NULL ;
+		if(!app().isNT()
+		||  app().isNTOSVerEqual( MKVER(3,51,1057) )
+		||  app().isNTOSVerLarger( MKVER(4,00,1381) ) )
+		{
+			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "CharNextExA");
+			if (Window_CharNextExA)
+			{ // We got the function!
+			  // Double check that it actually works, Just in case
+				const char *test = "ts";
+				char *t = Window_CharNextExA(CP_ACP, test, 0);
+				if( t == &test[1] ) // Olny valid answer for any CP
+				{ // CharNextExA Works!
+					//MessageBox(NULL, TEXT("CharNextExA Works!"), NULL, 0);
+					return Window_CharNextExA;
+				}
+			}
+		}
+		// Fallback to ANSI mode if nothing could be done...
+		return (uNextFunc)0;
 	}
 };
 
