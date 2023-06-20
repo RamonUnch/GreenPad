@@ -887,7 +887,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		, fe( reinterpret_cast<const char*>(b+s) )
 		, cp( c==UTF8 ? UTF8N : c )
 		, next( GetCharNextExA( cp ) )
-		, conv( cp==UTF8N /*&& (app().isWin95()||!::IsValidCodePage(65001)) */
+		, conv( cp==UTF8N && (app().isWin95()||!::IsValidCodePage(65001))
 		                  ? Utf8ToWideChar : MultiByteToWideChar )
 	{
 		if( cp==UTF8N && fe-fb>=3
