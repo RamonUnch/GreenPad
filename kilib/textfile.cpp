@@ -748,22 +748,6 @@ namespace
 {
 	typedef char* (WINAPI * uNextFunc)(WORD,const char*,DWORD);
 
-	static const byte mask[] = { 0, 0xff, 0x1f, 0x0f, 0x07, 0x03, 0x01 };
-	static inline int GetMaskIndex(uchar n)
-	{
-		if( uchar(n+2) < 0xc2 ) return 1; // 00～10111111, fe, ff
-		if( n          < 0xe0 ) return 2; // 110xxxxx
-		if( n          < 0xf0 ) return 3; // 1110xxxx
-		if( n          < 0xf8 ) return 4; // 11110xxx
-		if( n          < 0xfc ) return 5; // 111110xx
-		return 6; // 1111110x
-	}
-
-	static char* WINAPI CharNextUtf8( WORD, const char* p, DWORD )
-	{
-		return const_cast<char*>( p+GetMaskIndex(uchar(*p)) );
-	}
-
 	// CharNextExAはGB18030の４バイト文字列を扱えないそうだ。
 	static char* WINAPI CharNextGB18030( WORD, const char* sp, DWORD )
 	{
@@ -785,42 +769,6 @@ namespace
 		else // DBCS
 			q = p+2;
 		return (char *)( q );
-	}
-
-	static char* WINAPI IncCharNextExA(WORD cp, const char *p, DWORD flags)
-	{
-		return (char *)++p;
-	}
-	static uNextFunc GetCharNextExA(WORD cp)
-	{
-		if( cp==UTF8N)   return CharNextUtf8;
-		if( cp==GB18030) return CharNextGB18030;
-
-		// CharNextExA is not here on NT3.1 and is a stub on NT3.5
-		// According to the MSDN DOC CharNextExA is available since NT4/95
-		// It seems that it works fine on NT3.51 build 1057
-		// It seems CharNextExA can crash
-		// so we exclude NT versions between 3.51.1057 and  and 4.00.1381
-		uNextFunc Window_CharNextExA = (uNextFunc)NULL ;
-		if(!app().isNT()
-		||  app().isNTOSVerEqual( MKVER(3,51,1057) )
-		||  app().isNTOSVerLarger( MKVER(4,00,1381) ) )
-		{
-			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "CharNextExA");
-			if (Window_CharNextExA)
-			{ // We got the function!
-			  // Double check that it actually works, Just in case
-				const char *test = "ts";
-				char *t = Window_CharNextExA(CP_ACP, test, 0);
-				if( t == &test[1] ) // Olny valid answer for any CP
-				{ // CharNextExA Works!
-					//MessageBox(NULL, TEXT("CharNextExA Works!"), NULL, 0);
-					return Window_CharNextExA;
-				}
-			}
-		}
-		// Fallback for WinNT3.x / Win32s / Win95 betas?
-		return IncCharNextExA;
 	}
 
 	// IMultiLanguage2::DetectInputCodepageはGB18030のことを認識できません。
@@ -883,20 +831,34 @@ namespace
 		return dbcscnt && (refcs>950) && (!invcnt || (invcnt < (dbcscnt >> 5)));
 	}
 
+	// UTF-8 byte sequence length
+	static inline int GetMaskIndex(uchar n)
+	{
+		if( uchar(n+2) < 0xc2 ) return 1; // 00～10111111, fe, ff
+		if( n          < 0xe0 ) return 2; // 110xxxxx
+		if( n          < 0xf0 ) return 3; // 1110xxxx
+		if( n          < 0xf8 ) return 4; // 11110xxx
+		if( n          < 0xfc ) return 5; // 111110xx
+		return 6; // 1111110x
+	}
+
 	// Win95対策。
 	//   http://support.microsoft.com/default.aspx?scid=%2Fisapi%2Fgomscom%2Easp%3Ftarget%3D%2Fjapan%2Fsupport%2Fkb%2Farticles%2Fjp175%2F3%2F92%2Easp&LN=JA
 	// MSDNにはWin95以降でサポートと書いてあるのにCP_UTF8は
 	// 使えないらしいので、自前の変換関数で。
+	static uchar next_LUT[256]; // Filled by GetCharNextExA()
 	typedef int (WINAPI * uConvFunc)(UINT,DWORD,const char*,int,wchar_t*,int);
 	static int WINAPI Utf8ToWideChar( UINT, DWORD, const char* sb, int ss, wchar_t* wb, int ws )
 	{
+		static const byte mask[] = { 0, 0xff, 0x1f, 0x0f, 0x07, 0x03, 0x01 };
+
 		const uchar *p = reinterpret_cast<const uchar*>(sb);
 		const uchar *e = reinterpret_cast<const uchar*>(sb+ss);
 		wchar_t     *w = wb; // バッファサイズチェック無し（仕様）
 
 		for( int t; p<e; ++w )
 		{
-			t  = GetMaskIndex(*p);
+			t = next_LUT[(uchar)*p];
 			qbyte qch = (*p++ & mask[t]);
 			while( p<e && --t )
 				qch<<=6, qch|=(*p++)&0x3f;
@@ -909,15 +871,15 @@ namespace
 		return int(w-wb);
 	}
 }
-
 struct rMBCS A_FINAL: public TextFileRPimpl
 {
 	// ファイルポインタ＆コードページ, File Pointer & Code Page
 	const char* fb;
 	const char* fe;
 	const int   cp;
-	uNextFunc next;
-	uConvFunc conv;
+	const uNextFunc next;
+	const uConvFunc conv;
+	enum { ANSIMODE=0, UTF8MODE=1, DBCSMODE=2 };
 
 	// 初期設定, Initialization
 	rMBCS( const uchar* b, ulong s, int c )
@@ -940,29 +902,126 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		const char *p, *end = Min( fb+siz/2-2, fe );
 		state = (end==fe ? EOF : EOB);
 
-		// 改行が出るまで進む,  Proceed until the line breaks.
-		for( p=fb; p<end; )
-			if( (*p) & 0x80 && p+1<fe )
+		// 改行が出るまで進む
+		p=fb;
+		switch( (UINT_PTR)next )
+		{
+		case ANSIMODE:
+			// Simple ANSI mode, no need to pre-parse
+			// because we only have 1byte per character.
+			p = end;
+			break;
+
+		case UTF8MODE:
+			// In UTF-8 mode, we can skip to almost the end of the
+			// Buffer because it is self synchronising.
+			// 6 should be enough but I put 8 for safety.
+			p = Max(end-8, fb);
+			// Fall through!
+		case DBCSMODE:
+			// We can use the internal next_LUT[]
+			for( ; p<end; )
+				p += (*p)&0x80? next_LUT[(uchar)(*p)]: 1;
+			break;
+
+		default:
+			// Complex MultyByte encoding.
+			for( ; p<end; )
 			{
-				p = next(cp,p,0);
+				if( (*p) & 0x80 && p+1<fe )
+					p = next(cp,p,0);
+				else
+					++p;
 			}
-			else
-			{
-				++p;
-			}
+		}
+
+		// Guard for invalid UTF8/GB18030 sequences.
+		// because next() can make a large step
+		if( p > fe )
+			p=fe;
 
 		// If the end of the buffer contains half a DOS CRLF
-		if( *(p-1)=='\r' && *(p) =='\n' )
-			++p;
+		// we do not translate it.
+		const char *pp = p - ( p < fe && *(p-1)=='\r' && *(p) =='\n' );
 
 		// Unicodeへ変換, convertion to Unicode
 		ulong len;
-		len = conv( cp, 0, fb, p-fb, buf, siz );
+		len = conv( cp, 0, fb, pp-fb, buf, siz );
 
 		fb = p;
 
 		// 終了
 		return len;
+	}
+
+
+	uNextFunc GetCharNextExA(WORD cp)
+	{
+		if( cp==GB18030 ) return CharNextGB18030;
+		if( cp==UTF8N )
+		{
+			for( int i=0; i<= 0xff; i++ )
+				next_LUT[i] = GetMaskIndex( i );
+			return (uNextFunc)UTF8MODE; // UTF-8 mode
+		}
+
+		CPINFO cpnfo;
+		if( GetCPInfo(cp, &cpnfo) )
+		{
+			//MessageBox(NULL, SInt2Str(cpnfo.MaxCharSize).c_str(), SInt2Str(cpnfo.LeadByte[0]).c_str(),0 );
+			if( cpnfo.MaxCharSize == 1 && cpnfo.LeadByte[0] == 0 )
+			{
+				// Simple ANSI codepage, no double byte sequences.
+				return (uNextFunc)ANSIMODE;
+			}
+
+			// Double byte character set
+			if (cpnfo.MaxCharSize == 2 && cpnfo.LeadByte[0] != 0 )
+			{
+				int i;
+				for( i=0; i <= 0xff; ++i )
+					next_LUT[i] = 1;
+				i=0;
+				// Fill next_LUT from the double NULL terminated ranges.
+				// s1 e1 s2 e2 s3 e3... 0 0 (Maximum is 5 ranges + 0 0)
+				while( cpnfo.LeadByte[i] && i < MAX_LEADBYTES)
+				{
+					uchar s = cpnfo.LeadByte[i++];
+					uchar e = cpnfo.LeadByte[i++];
+					//String str = SInt2Str(s).c_str(); str += TEXT(" - "); str += SInt2Str(e).c_str();
+					//MessageBox(NULL, str.c_str(), TEXT("LeadByte range"), 0 );
+					for( int j=s; j <= e; ++j )
+						next_LUT[j] = 2;
+				}
+				return (uNextFunc)DBCSMODE; // Use the LUT
+			}
+		}
+
+		// CharNextExA is not here on NT3.1 and is a stub on NT3.5
+		// According to the MSDN DOC CharNextExA is available since NT4/95
+		// It seems that it works fine on NT3.51 build 1057
+		// It seems CharNextExA can crash
+		// so we exclude NT versions between 3.51.1057 and  and 4.00.1381
+		uNextFunc Window_CharNextExA = (uNextFunc)NULL ;
+		if(!app().isNT()
+		||  app().isNTOSVerEqual( MKVER(3,51,1057) )
+		||  app().isNTOSVerLarger( MKVER(4,00,1381) ) )
+		{
+			Window_CharNextExA = (uNextFunc)GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "CharNextExA");
+			if (Window_CharNextExA)
+			{ // We got the function!
+			  // Double check that it actually works, Just in case
+				const char *test = "ts";
+				char *t = Window_CharNextExA(CP_ACP, test, 0);
+				if( t == &test[1] ) // Olny valid answer for any CP
+				{ // CharNextExA Works!
+					//MessageBox(NULL, TEXT("CharNextExA Works!"), NULL, 0);
+					return Window_CharNextExA;
+				}
+			}
+		}
+		// Fallback to ANSI mode if nothing could be done...
+		return (uNextFunc)ANSIMODE;
 	}
 };
 
@@ -2771,6 +2830,8 @@ struct wUTF8 A_FINAL: public TextFileWPimpl
 
 	void WriteLine( const unicode* str, ulong len ) override
 	{
+		// Because we start from UTF-16 we are limited to 4 byte UTF-8 sequence
+		// BOM + surrog pair = 65536-2048 + 1024*1024  = 1 112 064 codepoints
 		//        0000-0000-0xxx-xxxx | 0xxxxxxx
 		//        0000-0xxx-xxyy-yyyy | 110xxxxx 10yyyyyy
 		//        xxxx-yyyy-yyzz-zzzz | 1110xxxx 10yyyyyy 10zzzzzz
@@ -2779,36 +2840,44 @@ struct wUTF8 A_FINAL: public TextFileWPimpl
 		while( len-- )
 		{
 			qbyte ch = *str;
-			if( (0xD800<=ch&&ch<=0xDBFF) && len )
-				ch = 0x10000 + (((ch-0xD800)&0x3ff)<<10) + ((*++str-0xDC00)&0x3ff), len--;
 
 			if( ch <= 0x7f )
 				fp_.WriteC( static_cast<uchar>(ch) );
 			else if( ch <= 0x7ff )
 				fp_.WriteC( 0xc0 | static_cast<uchar>(ch>>6) ),
 				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
-			else if( ch<= 0xffff )
+			else if( ch < 0xD800 ) // 3 byte sequence before surrogate.
 				fp_.WriteC( 0xe0 | static_cast<uchar>(ch>>12) ),
 				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
 				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
-			else if( ch<= 0x1fffff )
-				fp_.WriteC( 0xf0 | static_cast<uchar>(ch>>18) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
-			else if( ch<= 0x3ffffff )
-				fp_.WriteC( 0xf8 | static_cast<uchar>(ch>>24) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>18)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
-			else
-				fp_.WriteC( 0xfc | static_cast<uchar>(ch>>30) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>24)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>18)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+			else // ( ch >= 0xD800 )
+			{
+				if( ch <= 0xDBFF && len )
+					ch = 0x10000 + (((ch-0xD800)&0x3ff)<<10) + ((*++str-0xDC00)&0x3ff), len--;
+
+				if( ch<= 0xffff ) // 3 byte sequence after surrogate.
+					fp_.WriteC( 0xe0 | static_cast<uchar>(ch>>12) ),
+					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
+					fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+				else // if( ch<= 0x1fffff )
+					fp_.WriteC( 0xf0 | static_cast<uchar>(ch>>18) ),
+					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
+					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
+					fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+//				else if( ch<= 0x3ffffff )
+//					fp_.WriteC( 0xf8 | static_cast<uchar>(ch>>24) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>18)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+//				else
+//					fp_.WriteC( 0xfc | static_cast<uchar>(ch>>30) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>24)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>18)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
+//					fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+			}
 			++str;
 		}
 	}
