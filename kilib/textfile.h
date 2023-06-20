@@ -214,6 +214,7 @@ private:
 	bool IsAscii(uchar c) const A_XPURE;
 	bool IsSurrogateLead(qbyte w) const A_XPURE;
 	bool CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uChrSize, bool LE) const A_XPURE;
+	bool IsValidUTF8( const uchar* ptr, ulong siz ) const A_XPURE;
 
 private:
 

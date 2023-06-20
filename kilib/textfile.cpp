@@ -1521,7 +1521,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 	// 改行コードがLFか、ある程度の大きさか、でないと
 	// 無条件で ANSI-CP と見なしてしまう。
 	if( bit8 && (siz>4096 || lb_==1
-	 || freq[0xfd]>0 || freq[0xfe]>0 || freq[0xff]>0 || freq[0x80]>0) )
+	 || freq[0xfd] || freq[0xfe] || freq[0xff] || freq[0x80] || freq[0xC3] ) )
 	{
 		// UHCやGBKはEUC-JPと非常に混同しやすいので、そっちがデフォルトの場合は
 		// EUC-JP自動判定を切る
@@ -1534,29 +1534,9 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 			if( be )
 				return EucJP;
 		}
-		{
-			// UTF8として読めるかどうかチェック
-			bool b8=true;
-			int mi=1;
-			for( ulong i=0; i<siz && b8; ++i )
-				if( --mi )
-				{
-					if( ptr[i]<0x80 || ptr[i]>=0xc0 )
-						b8 = false;
-				}
-				else
-				{
-					mi = 1;
-					if( ptr[i] > 0x7f )
-					{
-						mi = GetMaskIndex( ptr[i] );
-						if( mi == 1 )//ptr[i] >= 0xfe )
-							b8 = false;
-					}
-				}
-			if( b8 )
-				return UTF8N;
-		}
+
+		if( IsValidUTF8(ptr, siz) )
+			return UTF8N;
 	}
 
 
@@ -1564,6 +1544,31 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 
 	return cs ? cs : defCs;
 }
+
+bool TextFileR::IsValidUTF8( const uchar* ptr, ulong siz ) const
+{
+	// UTF8として読めるかどうかチェック
+	int mi=1; // mask index
+	for( ulong i=0; i<siz ; ++i )
+		if( --mi )
+		{	// remaining bytes must be 10xxxxxx
+			if( ptr[i]<0x80 || ptr[i]>=0xc0 )
+				return false;
+		}
+		else
+		{
+			mi = 1;
+			if( ptr[i] > 0x7f )
+			{
+				mi = GetMaskIndex( ptr[i] );
+				if( mi == 1 )//ptr[i] >= 0xfe )
+					return false;
+			}
+		}
+
+	return true;
+}
+
 int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 {
 	int cs = 0;
@@ -1782,7 +1787,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 	::FreeLibrary(hIL);
 
 	#ifdef MLANG_DEBUG
-	::MessageBox(NULL, SInt2Str(cs), TEXT("CHARDET"),0);
+	::MessageBox(NULL, SInt2Str(cs).c_str(), TEXT("CHARDET"),0);
 	#endif
 
 #endif //NO_CHARDET
