@@ -102,7 +102,7 @@ private:
 
 private:
 
-	NOCOPY(storage<T>);
+	NOCOPY(storage);
 };
 
 
@@ -217,7 +217,7 @@ public:
 private:
 
 	Node* top_;
-	NOCOPY(olist<T>);
+	NOCOPY(olist);
 };
 
 

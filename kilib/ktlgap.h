@@ -188,7 +188,7 @@ protected:
 
 private:
 
-	NOCOPY(gapbuf<T>);
+	NOCOPY(gapbuf);
 };
 
 
@@ -257,7 +257,7 @@ public:
 
 private:
 
-	NOCOPY(gapbufobj<T>);
+	NOCOPY(gapbufobj);
 };
 
 

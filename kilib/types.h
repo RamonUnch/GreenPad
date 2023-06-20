@@ -53,7 +53,12 @@ inline bool isSDigit(TCHAR x) { return isUDigit(x) || x == TEXT('-'); }
 #endif
 
 // コピー禁止オブジェクト
+#if __cplusplus >= 201103L
+// In C++ 2011 we can use the = delete initializers.
+#define NOCOPY(T) T( const T& )=delete; T& operator=( const T& )=delete
+#else // C++ 98/05
 #define NOCOPY(T) T( const T& ); T& operator=( const T& )
+#endif
 
 #ifndef GS_8BIT_INDICES
 #define GS_8BIT_INDICES 0x00000001
