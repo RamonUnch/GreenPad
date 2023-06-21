@@ -2298,14 +2298,28 @@ struct wUtf16LE A_FINAL: public TextFileWPimpl
 {
 	wUtf16LE( FileW& w, bool bom ) : TextFileWPimpl(w)
 		{ if(bom){ unicode ch=0xfeff; fp_.Write(&ch,2); } }
-	void WriteLine( const unicode* buf, ulong siz ) override {fp_.Write(buf,siz*2);}
+	void WriteLine( const unicode* buf, ulong siz ) override
+		{ fp_.Write(buf, siz*2); }
 };
 
 struct wUtf16BE A_FINAL: public TextFileWPimpl
 {
 	wUtf16BE( FileW& w, bool bom ) : TextFileWPimpl(w)
 		{ if(bom) WriteChar(0xfeff); }
-	void WriteChar( unicode ch ) override { fp_.WriteC(ch>>8), fp_.WriteC(ch&0xff); }
+	void WriteChar( unicode ch ) override
+		{ fp_.NeedSpace(2), fp_.WriteCN(ch>>8), fp_.WriteCN(ch&0xff); }
+	void WriteLine( const unicode* buf, ulong siz ) override
+	{
+		while( siz >= 2 )
+		{
+			siz-=2;
+			fp_.NeedSpace(4);
+			fp_.WriteCN( (*buf)>>8 ), fp_.WriteCN( (*buf)&0xff ), buf++;
+			fp_.WriteCN( (*buf)>>8 ), fp_.WriteCN( (*buf)&0xff ), buf++;
+		}
+		if( siz ) // Last char
+			fp_.NeedSpace(2), fp_.WriteCN( (*buf)>>8 ), fp_.WriteCN( (*buf)&0xff  );
+	}
 };
 
 struct wUtf32LE A_FINAL: public TextFileWPimpl
@@ -2325,8 +2339,11 @@ struct wUtf32LE A_FINAL: public TextFileWPimpl
 				unicode c2 = *buf++; siz--;
 				cc = 0x10000 + (((c-0xD800)&0x3ff)<<10) + ((c2-0xDC00)&0x3ff);
 			}
-			for(int i=0; i<=3; ++i)
-				fp_.WriteC( (uchar)(cc>>(8*i)) );
+			fp_.NeedSpace(4);
+			fp_.WriteCN( (uchar)(cc>>(8*0)) );
+			fp_.WriteCN( (uchar)(cc>>(8*1)) );
+			fp_.WriteCN( (uchar)(cc>>(8*2)) );
+			fp_.WriteCN( (uchar)(cc>>(8*3)) );
 		}
 	}
 };
@@ -2348,8 +2365,11 @@ struct wUtf32BE A_FINAL: public TextFileWPimpl
 				unicode c2 = *buf++; siz--;
 				cc = 0x10000 + (((c-0xD800)&0x3ff)<<10) + ((c2-0xDC00)&0x3ff);
 			}
-			for(int i=3; i>=0; --i)
-				fp_.WriteC( (uchar)(cc>>(8*i)) );
+			fp_.NeedSpace(4);
+			fp_.WriteCN( (uchar)(cc>>(8*3)) );
+			fp_.WriteCN( (uchar)(cc>>(8*2)) );
+			fp_.WriteCN( (uchar)(cc>>(8*1)) );
+			fp_.WriteCN( (uchar)(cc>>(8*0)) );
 		}
 	}
 };
@@ -2358,6 +2378,22 @@ struct wWestISO88591 A_FINAL: public TextFileWPimpl
 {
 	wWestISO88591( FileW& w ) : TextFileWPimpl(w) {}
 	void WriteChar( unicode ch ) override { fp_.WriteC(ch>0xff ? '?' : (uchar)ch); }
+	virtual void WriteLine( const unicode* buf, ulong siz ) override
+	{
+		#define SHORTEN(ch) (ch)>0xff ? '?' : (uchar)(ch)
+		while( siz >= 4 )
+		{
+			siz-=4;
+			fp_.NeedSpace(4);
+			fp_.WriteCN(SHORTEN(*buf)), buf++;
+			fp_.WriteCN(SHORTEN(*buf)), buf++;
+			fp_.WriteCN(SHORTEN(*buf)), buf++;
+			fp_.WriteCN(SHORTEN(*buf)), buf++;
+		}
+		fp_.NeedSpace(3);
+		while( siz-- )
+			fp_.WriteCN(SHORTEN(*buf)), buf++;
+	}
 };
 
 struct wUtf1 A_FINAL: public TextFileWPimpl
@@ -2380,35 +2416,49 @@ struct wUtf1 A_FINAL: public TextFileWPimpl
 	void WriteChar( unicode ch ) override
 	{
 		qbyte c = ch;
-		if( 0xD800<=ch&&ch<=0xDBFF )
-		{
-			SurrogateHi = c; return;
-		}
-		else if( 0xDC00<=ch&&ch<=0xDFFF )
-			if( SurrogateHi )
-				c = 0x10000 + (((SurrogateHi-0xD800)&0x3ff)<<10) + ((c-0xDC00)&0x3ff), SurrogateHi = 0;
-			else return; // find Surrogate Low part only, discard it
-		else // find Surrogate Hi part only, discard it
-			SurrogateHi = 0;
 
 		if( c <= 0x9f )
-			fp_.WriteC( static_cast<uchar>(c) );
+			fp_.NeedSpace(1),
+			fp_.WriteCN( static_cast<uchar>(c) );
 		else if( c <= 0xff )
-			fp_.WriteC( 0xA0 ),
-			fp_.WriteC( static_cast<uchar>(c) );
+			fp_.NeedSpace(2),
+			fp_.WriteCN( 0xA0 ),
+			fp_.WriteCN( static_cast<uchar>(c) );
 		else if( c <= 0x4015 )
-			fp_.WriteC( static_cast<uchar>(0xA1 + (c - 0x100) / 0xBE) ),
-			fp_.WriteC( static_cast<uchar>(conv((c - 0x100) % 0xBE)) );
-		else if( c <= 0x38E2D )
-			fp_.WriteC( static_cast<uchar>(0xF6 + (c - 0x4016) / (0xBE*0xBE))  ),
-			fp_.WriteC( static_cast<uchar>(conv((c - 0x4016) / 0xBE % 0xBE)) ),
-			fp_.WriteC( static_cast<uchar>(conv((c - 0x4016) % 0xBE)) );
-		else
-			fp_.WriteC( static_cast<uchar>(0xFC + (c - 0x38E2E) / (0xBE*0xBE*0xBE*0xBE))  ),
-			fp_.WriteC( static_cast<uchar>(conv((c - 0x38E2E) / (0xBE*0xBE*0xBE) % 0xBE)) ),
-			fp_.WriteC( static_cast<uchar>(conv((c - 0x38E2E) / (0xBE*0xBE) % 0xBE)) ),
-			fp_.WriteC( static_cast<uchar>(conv((c - 0x38E2E) / 0xBE % 0xBE)) ),
-			fp_.WriteC( static_cast<uchar>(conv((c - 0x38E2E) % 0xBE)) );
+			fp_.NeedSpace(2),
+			fp_.WriteCN( static_cast<uchar>(0xA1 + (c - 0x100) / 0xBE) ),
+			fp_.WriteCN( static_cast<uchar>(conv((c - 0x100) % 0xBE)) );
+		else if( c < 0xD800 )
+			fp_.NeedSpace(3),
+			fp_.WriteCN( static_cast<uchar>(0xF6 + (c - 0x4016) / (0xBE*0xBE))  ),
+			fp_.WriteCN( static_cast<uchar>(conv((c - 0x4016) / 0xBE % 0xBE)) ),
+			fp_.WriteCN( static_cast<uchar>(conv((c - 0x4016) % 0xBE)) );
+		else // c >= 0xD800
+		{
+			if( ch<=0xDBFF )
+			{
+				SurrogateHi = c; return;
+			}
+			else if( ch<=0xDFFF )
+				if( SurrogateHi )
+					c = 0x10000 + (((SurrogateHi-0xD800)&0x3ff)<<10) + ((c-0xDC00)&0x3ff), SurrogateHi = 0;
+				else return; // find Surrogate Low part only, discard it
+			else // find Surrogate Hi part only, discard it
+				SurrogateHi = 0;
+
+			if( c <= 0x38E2D )
+				fp_.NeedSpace(3),
+				fp_.WriteCN( static_cast<uchar>(0xF6 + (c - 0x4016) / (0xBE*0xBE))  ),
+				fp_.WriteCN( static_cast<uchar>(conv((c - 0x4016) / 0xBE % 0xBE)) ),
+				fp_.WriteCN( static_cast<uchar>(conv((c - 0x4016) % 0xBE)) );
+			else
+				fp_.NeedSpace(5),
+				fp_.WriteCN( static_cast<uchar>(0xFC + (c - 0x38E2E) / (0xBE*0xBE*0xBE*0xBE))  ),
+				fp_.WriteCN( static_cast<uchar>(conv((c - 0x38E2E) / (0xBE*0xBE*0xBE) % 0xBE)) ),
+				fp_.WriteCN( static_cast<uchar>(conv((c - 0x38E2E) / (0xBE*0xBE) % 0xBE)) ),
+				fp_.WriteCN( static_cast<uchar>(conv((c - 0x38E2E) / 0xBE % 0xBE)) ),
+				fp_.WriteCN( static_cast<uchar>(conv((c - 0x38E2E) % 0xBE)) );
+		}
 	}
 };
 
@@ -2425,37 +2475,50 @@ struct wUtf9 A_FINAL: public TextFileWPimpl
 	void WriteChar( unicode ch ) override
 	{
 		qbyte c = ch;
-		if( 0xD800<=ch&&ch<=0xDBFF )
-		{
-			SurrogateHi = c; return;
-		}
-		else if( 0xDC00<=ch&&ch<=0xDFFF )
-			if( SurrogateHi )
-				c = 0x10000 + (((SurrogateHi-0xD800)&0x3ff)<<10) + ((c-0xDC00)&0x3ff), SurrogateHi = 0;
-			else return; // find Surrogate Low part only, discard it
-		else // find Surrogate Hi part only, discard it
-			SurrogateHi = 0;
-
 		if( c <= 0x7F || (c >= 0xA0 && c <= 0xFF ))
-			fp_.WriteC( static_cast<uchar>(c) );
+			fp_.NeedSpace(1),
+			fp_.WriteCN( static_cast<uchar>(c) );
 		else if( c <= 0x07FF )
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7)        ) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
-		else if( c <= 0xFFFF )
-			fp_.WriteC( static_cast<uchar>(0x90 | (c >> 14)       ) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
-		else if( c <= 0x7FFFFF )
-			fp_.WriteC( static_cast<uchar>(0x94 | (c >> 21)       ) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
-		else
-			fp_.WriteC( static_cast<uchar>(0x98 | (c >> 28) & 0x07) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 21) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
+			fp_.NeedSpace(2),
+			fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7)        ) ),
+			fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
+		else if( c < 0xD800 ) // Before high surrogate
+			fp_.NeedSpace(3),
+			fp_.WriteCN( static_cast<uchar>(0x90 | (c >> 14)       ) ),
+			fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
+			fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
+		else // ch >= 0xD800 (High surrog or higher)
+		{
+			if( ch<=0xDBFF )
+			{
+				SurrogateHi = c; return;
+			}
+			else if( ch<=0xDFFF )
+				if( SurrogateHi )
+					c = 0x10000 + (((SurrogateHi-0xD800)&0x3ff)<<10) + ((c-0xDC00)&0x3ff), SurrogateHi = 0;
+				else return; // find Surrogate Low part only, discard it
+			else // find Surrogate Hi part only, discard it
+				SurrogateHi = 0;
+
+			if( c <= 0xFFFF )
+				fp_.NeedSpace(3),
+				fp_.WriteCN( static_cast<uchar>(0x90 | (c >> 14)       ) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
+			else if( c <= 0x7FFFFF )
+				fp_.NeedSpace(4),
+				fp_.WriteCN( static_cast<uchar>(0x94 | (c >> 21)       ) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
+			else
+				fp_.NeedSpace(5),
+				fp_.WriteCN( static_cast<uchar>(0x98 | (c >> 28) & 0x07) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 21) & 0x7F) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
+		}
 	}
 };
 
@@ -2472,41 +2535,48 @@ struct wUtfOFSS A_FINAL: public TextFileWPimpl
 	void WriteChar( unicode ch ) override
 	{
 		qbyte c = ch;
-		if( 0xD800<=ch&&ch<=0xDBFF )
-		{
-			SurrogateHi = c; return;
-		}
-		else if( 0xDC00<=ch&&ch<=0xDFFF )
-			if( SurrogateHi )
-				c = 0x10000 + (((SurrogateHi-0xD800)&0x3ff)<<10) + ((c-0xDC00)&0x3ff), SurrogateHi = 0;
-			else return; // find Surrogate Low part only, discard it
-		else // find Surrogate Hi part only, discard it
-			SurrogateHi = 0;
 
 		if( c <= 0x7F )
-			fp_.WriteC( static_cast<uchar>(c) );
+			fp_.NeedSpace(1),
+			fp_.WriteCN( static_cast<uchar>(c) );
 		else if( c <= 0x1fff + 0x0000080 )
 			c -= 0x0000080,
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7)) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
-		else if( c <= 0x7ffff + 0x0002080 )
-			c -= 0x0002080,
-			fp_.WriteC( static_cast<uchar>(0xc0 | (c >> 14)) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
-		else if( c <= 0x1ffffff + 0x0082080 )
-			c -= 0x0082080,
-			fp_.WriteC( static_cast<uchar>(0xe0 | (c >> 21)) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
+			fp_.NeedSpace(2),
+			fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7)) ),
+			fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)) );
 		else
-			c -= 0x2082080,
-			fp_.WriteC( static_cast<uchar>(0xf0 | (c >> 28) & 0x07) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 21) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
-			fp_.WriteC( static_cast<uchar>(0x80 | (c & 0x7F)) );
+		{
+			if( 0xD800<=ch&&ch<=0xDBFF )
+			{
+				SurrogateHi = c; return;
+			}
+			else if( 0xDC00<=ch&&ch<=0xDFFF )
+				if( SurrogateHi )
+					c = 0x10000 + (((SurrogateHi-0xD800)&0x3ff)<<10) + ((c-0xDC00)&0x3ff), SurrogateHi = 0;
+				else return; // find Surrogate Low part only, discard it
+			else // find Surrogate Hi part only, discard it
+				SurrogateHi = 0;
+
+			fp_.NeedSpace(4);
+			if( c <= 0x7ffff + 0x0002080 )
+				c -= 0x0002080,
+				fp_.WriteCN( static_cast<uchar>(0xc0 | (c >> 14)) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)) );
+			else // if( c <= 0x1ffffff + 0x0082080 )
+				c -= 0x0082080,
+				fp_.WriteCN( static_cast<uchar>(0xe0 | (c >> 21)) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
+				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)) );
+//			else // Uncrachable if we start from UTF-16
+//				c -= 0x2082080,
+//				fp_.WriteCN( static_cast<uchar>(0xf0 | (c >> 28) & 0x07) ),
+//				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 21) & 0x7F) ),
+//				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
+//				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F) ),
+//				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)) );
+		}
 	}
 };
 
@@ -2515,30 +2585,31 @@ struct wUtf5 A_FINAL: public TextFileWPimpl
 	wUtf5( FileW& w ) : TextFileWPimpl(w) {}
 	void WriteChar( unicode ch ) override
 	{
+		fp_.NeedSpace(4);
 		static const char conv[] = {
 			'0','1','2','3','4','5','6','7',
 				'8','9','A','B','C','D','E','F' };
 		if(ch<0x10)
 		{
-			fp_.WriteC(ch+'G');
+			fp_.WriteCN(ch+'G');
 		}
 		else if(ch<0x100)
 		{
-			fp_.WriteC((ch>>4)+'G');
-			fp_.WriteC(conv[ch&0xf]);
+			fp_.WriteCN((ch>>4)+'G');
+			fp_.WriteCN(conv[ch&0xf]);
 		}
 		else if(ch<0x1000)
 		{
-			fp_.WriteC((ch>>8)+'G');
-			fp_.WriteC(conv[(ch>>4)&0xf]);
-			fp_.WriteC(conv[ch&0xf]);
+			fp_.WriteCN((ch>>8)+'G');
+			fp_.WriteCN(conv[(ch>>4)&0xf]);
+			fp_.WriteCN(conv[ch&0xf]);
 		}
 		else
 		{
-			fp_.WriteC((ch>>12)+'G');
-			fp_.WriteC(conv[(ch>>8)&0xf]);
-			fp_.WriteC(conv[(ch>>4)&0xf]);
-			fp_.WriteC(conv[ch&0xf]);
+			fp_.WriteCN((ch>>12)+'G');
+			fp_.WriteCN(conv[(ch>>8)&0xf]);
+			fp_.WriteCN(conv[(ch>>4)&0xf]);
+			fp_.WriteCN(conv[ch&0xf]);
 		}
 	}
 };
@@ -2739,9 +2810,7 @@ struct wBOCU1 A_FINAL: public TextFileWPimpl
 {
 	wBOCU1( FileW& w ) : TextFileWPimpl(w), cp ( 0 ) , pc ( 0x40 ), diff( 0 )
 	{ // write BOM
-		fp_.WriteC( static_cast<uchar>(0xfb) );
-		fp_.WriteC( static_cast<uchar>(0xee) );
-		fp_.WriteC( static_cast<uchar>(0x28) );
+		fp_.Write( "\xFB\xEE\x28", 3 );
 	}
 
 	unicode cp, pc;
@@ -2753,54 +2822,56 @@ struct wBOCU1 A_FINAL: public TextFileWPimpl
 
 		if (ch <= 0x20) {
 			if(ch != 0x20) pc = 0x40;
-			fp_.WriteC( static_cast<uchar>(ch) );
+			fp_.NeedSpace(1);
+			fp_.WriteCN( static_cast<uchar>(ch) );
 		} else {
+			fp_.NeedSpace(4);
 			diff = ch - pc;
 			if (diff < -187660) { // [...,-187660) : 21
 				diff -= -14536567;
 				t3 = (uchar)(diff % 243); diff/=243;
 				t2 = (uchar)(diff % 243); diff/=243;
 				t1 = (uchar)(diff % 243); diff/=243;
-				fp_.WriteC( static_cast<uchar>(0x21) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t2 ]) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t3 ]) );
+				fp_.WriteCN( static_cast<uchar>(0x21) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t2 ]) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t3 ]) );
 			} else if (diff < -10513) { // [-187660,-10513) : 22-24
 				diff -= -187660;
 				t2 = (uchar)(diff % 243); diff/=243;
 				t1 = (uchar)(diff % 243); diff/=243;
-				fp_.WriteC( static_cast<uchar>(0x22 + diff) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t2 ]) );
+				fp_.WriteCN( static_cast<uchar>(0x22 + diff) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t2 ]) );
 			} else if (diff < -64) { // [-10513,-64) : 25-4F
 				diff -= -10513;
 				t1 = (uchar)(diff % 243); diff/=243;
-				fp_.WriteC( static_cast<uchar>(0x25 + diff) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
+				fp_.WriteCN( static_cast<uchar>(0x25 + diff) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
 			} else if (diff < 64) { // [-64,63) : 50-CF
 				diff -= -64;
-				fp_.WriteC( static_cast<uchar>(0x50 + diff) );
+				fp_.WriteCN( static_cast<uchar>(0x50 + diff) );
 			} else if (diff < 10513) { // [64,10513) : D0-FA
 				diff -= 64;
 				t1 = (uchar)(diff % 243); diff/=243;
-				fp_.WriteC( static_cast<uchar>(0xd0 + diff) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
+				fp_.WriteCN( static_cast<uchar>(0xd0 + diff) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
 			} else if (diff < 187660) { // [10513,187660) : FB-FD
 				diff -= 10513;
 				t2 = (uchar)(diff % 243); diff/=243;
 				t1 = (uchar)(diff % 243); diff/=243;
-				fp_.WriteC( static_cast<uchar>(0xfb + diff) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t2 ]) );
+				fp_.WriteCN( static_cast<uchar>(0xfb + diff) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t2 ]) );
 			} else { // [187660,...) : FE
 				diff -= 187660;
 				t3 = (uchar)(diff % 243); diff/=243;
 				t2 = (uchar)(diff % 243); diff/=243;
 				t1 = (uchar)(diff % 243); diff/=243;
-				fp_.WriteC( static_cast<uchar>(0xfe) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t2 ]) );
-				fp_.WriteC( static_cast<uchar>(bocu1_trail_to_byte[ t3 ]) );
+				fp_.WriteCN( static_cast<uchar>(0xfe) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t1 ]) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t2 ]) );
+				fp_.WriteCN( static_cast<uchar>(bocu1_trail_to_byte[ t3 ]) );
 			}
 
 			// next pc
@@ -2846,29 +2917,31 @@ struct wUTF8 A_FINAL: public TextFileWPimpl
 		{
 			qbyte ch = *str;
 
+			fp_.NeedSpace(4);
+
 			if( ch <= 0x7f )
-				fp_.WriteC( static_cast<uchar>(ch) );
+				fp_.WriteCN( static_cast<uchar>(ch) );
 			else if( ch <= 0x7ff )
-				fp_.WriteC( 0xc0 | static_cast<uchar>(ch>>6) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+				fp_.WriteCN( 0xc0 | static_cast<uchar>(ch>>6) ),
+				fp_.WriteCN( 0x80 | static_cast<uchar>(ch&0x3f) );
 			else if( ch < 0xD800 ) // 3 byte sequence before surrogate.
-				fp_.WriteC( 0xe0 | static_cast<uchar>(ch>>12) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
-				fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+				fp_.WriteCN( 0xe0 | static_cast<uchar>(ch>>12) ),
+				fp_.WriteCN( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
+				fp_.WriteCN( 0x80 | static_cast<uchar>(ch&0x3f) );
 			else // ( ch >= 0xD800 )
 			{
 				if( ch <= 0xDBFF && len )
 					ch = 0x10000 + (((ch-0xD800)&0x3ff)<<10) + ((*++str-0xDC00)&0x3ff), len--;
 
 				if( ch<= 0xffff ) // 3 byte sequence after surrogate.
-					fp_.WriteC( 0xe0 | static_cast<uchar>(ch>>12) ),
-					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
-					fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+					fp_.WriteCN( 0xe0 | static_cast<uchar>(ch>>12) ),
+					fp_.WriteCN( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
+					fp_.WriteCN( 0x80 | static_cast<uchar>(ch&0x3f) );
 				else // if( ch<= 0x1fffff )
-					fp_.WriteC( 0xf0 | static_cast<uchar>(ch>>18) ),
-					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
-					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
-					fp_.WriteC( 0x80 | static_cast<uchar>(ch&0x3f) );
+					fp_.WriteCN( 0xf0 | static_cast<uchar>(ch>>18) ),
+					fp_.WriteCN( 0x80 | static_cast<uchar>((ch>>12)&0x3f) ),
+					fp_.WriteCN( 0x80 | static_cast<uchar>((ch>>6)&0x3f) ),
+					fp_.WriteCN( 0x80 | static_cast<uchar>(ch&0x3f) );
 //				else if( ch<= 0x3ffffff )
 //					fp_.WriteC( 0xf8 | static_cast<uchar>(ch>>24) ),
 //					fp_.WriteC( 0x80 | static_cast<uchar>((ch>>18)&0x3f) ),
@@ -2908,14 +2981,16 @@ struct wUTF7 A_FINAL: public TextFileWPimpl
 		{
 			if( *str <= 0x7f )
 			{
-				fp_.WriteC( static_cast<uchar>(*str) );
+				fp_.NeedSpace(2);
+				fp_.WriteCN( static_cast<uchar>(*str) );
 				if( *str == L'+' )
-					fp_.WriteC( '-' );
+					fp_.WriteCN( '-' );
 				++str, --len;
 			}
 			else
 			{
-				if(!mode_m) fp_.WriteC( '+' ), mode_m=true;
+				fp_.NeedSpace(10);
+				if(!mode_m) fp_.WriteCN( '+' ), mode_m=true;
 				unicode tx[3] = {0,0,0};
 				int n=0;
 				tx[0] = *str, ++str, --len, ++n;
@@ -2926,23 +3001,23 @@ struct wUTF7 A_FINAL: public TextFileWPimpl
 						tx[2] = *str, ++str, --len, ++n;
 				}
 				{
-					fp_.WriteC( mime[ tx[0]>>10 ] );
-					fp_.WriteC( mime[ (tx[0]>>4)&0x3f ] );
-					fp_.WriteC( mime[ (tx[0]<<2|tx[1]>>14)&0x3f ] );
+					fp_.WriteCN( mime[ tx[0]>>10 ] );
+					fp_.WriteCN( mime[ (tx[0]>>4)&0x3f ] );
+					fp_.WriteCN( mime[ (tx[0]<<2|tx[1]>>14)&0x3f ] );
 					if( n>=2 )
 					{
-						fp_.WriteC( mime[ (tx[1]>>8)&0x3f ] );
-						fp_.WriteC( mime[ (tx[1]>>2)&0x3f ] );
-						fp_.WriteC( mime[ (tx[1]<<4|tx[2]>>12)&0x3f ] );
+						fp_.WriteCN( mime[ (tx[1]>>8)&0x3f ] );
+						fp_.WriteCN( mime[ (tx[1]>>2)&0x3f ] );
+						fp_.WriteCN( mime[ (tx[1]<<4|tx[2]>>12)&0x3f ] );
 						if( n>=3 )
 						{
-							fp_.WriteC( mime[ (tx[2]>>6)&0x3f ] );
-							fp_.WriteC( mime[ tx[2]&0x3f ] );
+							fp_.WriteCN( mime[ (tx[2]>>6)&0x3f ] );
+							fp_.WriteCN( mime[ tx[2]&0x3f ] );
 						}
 					}
 				}
 				if( len && *str<=0x7f )
-					fp_.WriteC( '-' ), mode_m = false;
+					fp_.WriteCN( '-' ), mode_m = false;
 			}
 		}
 	}
@@ -3014,19 +3089,21 @@ struct wIso2022 A_FINAL: public TextFileWPimplWithBuf
 
 		bool ascii = true;
 		for( int i=0; i<r; ++i )
+		{
+			fp_.NeedSpace(4);
 			if( buf_[i] & 0x80 )
 			{
 				// 非ASCII部分は最上位ビットを落としてから出力
 				if( ascii )
 				{
 					if( hz_ )
-						fp_.WriteC( 0x7E ), fp_.WriteC( 0x7B );
+						fp_.WriteCN( 0x7E ), fp_.WriteCN( 0x7B );
 					else
-						fp_.WriteC( 0x0E );
+						fp_.WriteCN( 0x0E );
 					ascii = false;
 				}
-				fp_.WriteC( buf_[i++] & 0x7F );
-				fp_.WriteC( buf_[i]   & 0x7F );
+				fp_.WriteCN( buf_[i++] & 0x7F );
+				fp_.WriteCN( buf_[i]   & 0x7F );
 			}
 			else
 			{
@@ -3034,25 +3111,27 @@ struct wIso2022 A_FINAL: public TextFileWPimplWithBuf
 				if( !ascii )
 				{
 					if( hz_ )
-						fp_.WriteC( 0x7E ), fp_.WriteC( 0x7D );
+						fp_.WriteCN( 0x7E ), fp_.WriteCN( 0x7D );
 					else
-						fp_.WriteC( 0x0F );
+						fp_.WriteCN( 0x0F );
 					ascii = true;
 				}
-				fp_.WriteC( buf_[i] );
+				fp_.WriteCN( buf_[i] );
 
 				// ただしHZの場合、0x7E は 0x7E 0x7E と表す
 				if( hz_ && buf_[i]==0x7E )
-					fp_.WriteC( 0x7E );
+					fp_.WriteCN( 0x7E );
 			}
+		}
 
 		// 最後は確実にASCIIに戻す
 		if( !ascii )
 		{
+			fp_.NeedSpace(2);
 			if( hz_ )
-				fp_.WriteC( 0x7E ), fp_.WriteC( 0x7D );
+				fp_.WriteCN( 0x7E ), fp_.WriteCN( 0x7D );
 			else
-				fp_.WriteC( 0x0F );
+				fp_.WriteCN( 0x0F );
 		}
 	}
 
@@ -3139,24 +3218,26 @@ struct wEucJp A_FINAL: public TextFileWPimplWithBuf
 		for( int i=0; i<r; ++i )
 			if( buf_[i] & 0x80 )
 			{
+				fp_.NeedSpace(2);
 				if( 0xA1<=(uchar)buf_[i] && (uchar)buf_[i]<=0xDF )
 				{
 					// カナ
-					fp_.WriteC( 0x8E );
-					fp_.WriteC( buf_[i] );
+					fp_.WriteCN( 0x8E );
+					fp_.WriteCN( buf_[i] );
 				}
 				else
 				{
 					// JIS X 0208
 					sjis2jis( buf_[i], buf_[i+1], buf_+i );
-					fp_.WriteC( buf_[i++] | 0x80 );
-					fp_.WriteC( buf_[i]   | 0x80 );
+					fp_.WriteCN( buf_[i++] | 0x80 );
+					fp_.WriteCN( buf_[i]   | 0x80 );
 				}
 			}
 			else
 			{
 				// ASCII部分はそのまま出力
-				fp_.WriteC( buf_[i] );
+				fp_.NeedSpace(1);
+				fp_.WriteCN( buf_[i] );
 			}
 	}
 };
@@ -3230,7 +3311,6 @@ TextFileW::~TextFileW()
 {
 	if( impl_ )
 		delete impl_;
-//	impl_ = NULL;
 	Close();
 }
 

@@ -96,6 +96,14 @@ public:
 	//@{ ˆê•¶š‘‚­ //@}
 	void WriteC( const uchar ch );
 
+	//@{ Write a character without checking bufer //@}
+	inline void WriteCN( const uchar ch )
+		{ buf_[bPos_++] = ch; }
+
+	//@{ Flush if needed to get the specified space //@}
+	inline void NeedSpace( const ulong sz )
+		{ if( (BUFSIZE-bPos_) <= sz ) Flush(); }
+
 	//@{ Writes to the file using a specific output codepage //@}
 	void WriteInCodepageFromUnicode( int cp, const unicode* str, ulong len );
 
@@ -114,7 +122,6 @@ private:
 
 	NOCOPY(FileW);
 };
-
 
 //=========================================================================
 
