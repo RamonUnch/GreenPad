@@ -2182,9 +2182,10 @@ bool TextFileR::IsSurrogateLead(qbyte w) const { return 0xD800 <= w && w <= 0xDB
 bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uChrSize, bool LE) const
 {
 	qbyte uchr = '\0';
-	ulong usize = siz / NZero(uChrSize);
+	const ulong usize = siz / NZero(uChrSize);
 	ulong unconfidence = 0, confidence = 0, x;
-	bool impossible = false, prevIsNull = false;
+	ulong impossible = 0;
+	bool prevIsNull = false;
 	for( x=0; x < usize; x++ )
 	{
 		if(uChrSize == 2 && LE == true)
@@ -2198,8 +2199,9 @@ bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uCh
 
 		if( IsNonUnicodeRange(uchr) || (uChrSize==2 && uchr==0) ) // \0\0 maybe a part of UTF-32
 		{
-			impossible = true;
-			break;
+			impossible++; // tolerate 0.1% impossible sequence
+			if( impossible > usize>>10 )
+				break;
 		}
 		if( uchr < 0x80 ) confidence+=4; // unicode ASCII
 		else if(uChrSize==2 && IsAscii(ptr[x*2]) && IsAscii(ptr[x*2+1])) // both char are ASCII
@@ -2215,13 +2217,21 @@ bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uCh
 			prevIsNull = LE ? !ptr[x*2] : !ptr[x*2+1];
 	}
 # ifdef UTF_DEBUG
-	TCHAR utfTmp[80];
-	::wsprintf(utfTmp,TEXT("uChrSize=%d,LE=%d,usize=%d, confidence=%d, unconfidence=%d, result=%d"),uChrSize,LE,usize,confidence,unconfidence,(impossible?0:(confidence-unconfidence > usize)));
-	::MessageBox(NULL,utfTmp,TEXT("UTFDetect"),0);
+	TCHAR utfTmp[128];
+	::wsprintf(utfTmp,
+		TEXT("uChrSize=%d, LE=%d, usize=%d\n"
+		     "confidence=%d, unconfidence=%d\n"
+		     "impossible=%d\n"
+		     "result=%d" )
+		, uChrSize, LE, usize
+		, confidence,unconfidence
+		, impossible
+		, impossible <= usize>>10 && confidence-unconfidence > usize
+	);
+	::MessageBox(GetActiveWindow(), utfTmp, TEXT("UTFDetect"), 0);
 # endif
 
-	if( impossible ) return false;
-	else return (confidence-unconfidence > usize);
+	return impossible <= usize>>10 && confidence-unconfidence > usize;
 }
 
 //=========================================================================
@@ -2469,7 +2479,7 @@ struct wUtf9 A_FINAL: public TextFileWPimpl
 	void WriteChar( unicode ch ) override
 	{
 		qbyte c = ch;
-		fp_.NeedSpace(5);
+		fp_.NeedSpace(4);
 		if( c <= 0x7F || (c >= 0xA0 && c <= 0xFF ))
 			fp_.WriteCN( static_cast<uchar>(c) );
 		else if( c <= 0x07FF )
@@ -2496,17 +2506,17 @@ struct wUtf9 A_FINAL: public TextFileWPimpl
 				fp_.WriteCN( static_cast<uchar>(0x90 | (c >> 14)       ) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
-			else if( c <= 0x7FFFFF )
+			else // if( c <= 0x7FFFFF )
 				fp_.WriteCN( static_cast<uchar>(0x94 | (c >> 21)       ) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
-			else
-				fp_.WriteCN( static_cast<uchar>(0x98 | (c >> 28) & 0x07) ),
-				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 21) & 0x7F) ),
-				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
-				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
-				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
+//			else // Unrecheabe because we start from UTF-16
+//				fp_.WriteCN( static_cast<uchar>(0x98 | (c >> 28) & 0x07) ),
+//				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 21) & 0x7F) ),
+//				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
+//				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
+//				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 		}
 	}
 };
