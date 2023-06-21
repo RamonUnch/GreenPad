@@ -2416,20 +2416,16 @@ struct wUtf1 A_FINAL: public TextFileWPimpl
 	void WriteChar( unicode ch ) override
 	{
 		qbyte c = ch;
-
+		fp_.NeedSpace(5);
 		if( c <= 0x9f )
-			fp_.NeedSpace(1),
 			fp_.WriteCN( static_cast<uchar>(c) );
 		else if( c <= 0xff )
-			fp_.NeedSpace(2),
 			fp_.WriteCN( 0xA0 ),
 			fp_.WriteCN( static_cast<uchar>(c) );
 		else if( c <= 0x4015 )
-			fp_.NeedSpace(2),
 			fp_.WriteCN( static_cast<uchar>(0xA1 + (c - 0x100) / 0xBE) ),
 			fp_.WriteCN( static_cast<uchar>(conv((c - 0x100) % 0xBE)) );
 		else if( c < 0xD800 )
-			fp_.NeedSpace(3),
 			fp_.WriteCN( static_cast<uchar>(0xF6 + (c - 0x4016) / (0xBE*0xBE))  ),
 			fp_.WriteCN( static_cast<uchar>(conv((c - 0x4016) / 0xBE % 0xBE)) ),
 			fp_.WriteCN( static_cast<uchar>(conv((c - 0x4016) % 0xBE)) );
@@ -2447,12 +2443,10 @@ struct wUtf1 A_FINAL: public TextFileWPimpl
 				SurrogateHi = 0;
 
 			if( c <= 0x38E2D )
-				fp_.NeedSpace(3),
 				fp_.WriteCN( static_cast<uchar>(0xF6 + (c - 0x4016) / (0xBE*0xBE))  ),
 				fp_.WriteCN( static_cast<uchar>(conv((c - 0x4016) / 0xBE % 0xBE)) ),
 				fp_.WriteCN( static_cast<uchar>(conv((c - 0x4016) % 0xBE)) );
 			else
-				fp_.NeedSpace(5),
 				fp_.WriteCN( static_cast<uchar>(0xFC + (c - 0x38E2E) / (0xBE*0xBE*0xBE*0xBE))  ),
 				fp_.WriteCN( static_cast<uchar>(conv((c - 0x38E2E) / (0xBE*0xBE*0xBE) % 0xBE)) ),
 				fp_.WriteCN( static_cast<uchar>(conv((c - 0x38E2E) / (0xBE*0xBE) % 0xBE)) ),
@@ -2475,15 +2469,13 @@ struct wUtf9 A_FINAL: public TextFileWPimpl
 	void WriteChar( unicode ch ) override
 	{
 		qbyte c = ch;
+		fp_.NeedSpace(5);
 		if( c <= 0x7F || (c >= 0xA0 && c <= 0xFF ))
-			fp_.NeedSpace(1),
 			fp_.WriteCN( static_cast<uchar>(c) );
 		else if( c <= 0x07FF )
-			fp_.NeedSpace(2),
 			fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7)        ) ),
 			fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 		else if( c < 0xD800 ) // Before high surrogate
-			fp_.NeedSpace(3),
 			fp_.WriteCN( static_cast<uchar>(0x90 | (c >> 14)       ) ),
 			fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
 			fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
@@ -2501,18 +2493,15 @@ struct wUtf9 A_FINAL: public TextFileWPimpl
 				SurrogateHi = 0;
 
 			if( c <= 0xFFFF )
-				fp_.NeedSpace(3),
 				fp_.WriteCN( static_cast<uchar>(0x90 | (c >> 14)       ) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 			else if( c <= 0x7FFFFF )
-				fp_.NeedSpace(4),
 				fp_.WriteCN( static_cast<uchar>(0x94 | (c >> 21)       ) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7) & 0x7F ) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)      ) );
 			else
-				fp_.NeedSpace(5),
 				fp_.WriteCN( static_cast<uchar>(0x98 | (c >> 28) & 0x07) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 21) & 0x7F) ),
 				fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 14) & 0x7F) ),
@@ -2536,12 +2525,11 @@ struct wUtfOFSS A_FINAL: public TextFileWPimpl
 	{
 		qbyte c = ch;
 
+		fp_.NeedSpace(4);
 		if( c <= 0x7F )
-			fp_.NeedSpace(1),
 			fp_.WriteCN( static_cast<uchar>(c) );
 		else if( c <= 0x1fff + 0x0000080 )
 			c -= 0x0000080,
-			fp_.NeedSpace(2),
 			fp_.WriteCN( static_cast<uchar>(0x80 | (c >> 7)) ),
 			fp_.WriteCN( static_cast<uchar>(0x80 | (c & 0x7F)) );
 		else
@@ -2557,7 +2545,6 @@ struct wUtfOFSS A_FINAL: public TextFileWPimpl
 			else // find Surrogate Hi part only, discard it
 				SurrogateHi = 0;
 
-			fp_.NeedSpace(4);
 			if( c <= 0x7ffff + 0x0002080 )
 				c -= 0x0002080,
 				fp_.WriteCN( static_cast<uchar>(0xc0 | (c >> 14)) ),
@@ -2820,12 +2807,11 @@ struct wBOCU1 A_FINAL: public TextFileWPimpl
 	{
 		uchar t1,t2,t3;
 
+		fp_.NeedSpace(4);
 		if (ch <= 0x20) {
 			if(ch != 0x20) pc = 0x40;
-			fp_.NeedSpace(1);
 			fp_.WriteCN( static_cast<uchar>(ch) );
 		} else {
-			fp_.NeedSpace(4);
 			diff = ch - pc;
 			if (diff < -187660) { // [...,-187660) : 21
 				diff -= -14536567;
@@ -3216,9 +3202,10 @@ struct wEucJp A_FINAL: public TextFileWPimplWithBuf
 		int r = ::WideCharToMultiByte(932,0,str,len,buf_,bsiz_,NULL,NULL);
 
 		for( int i=0; i<r; ++i )
+		{
+			fp_.NeedSpace(2);
 			if( buf_[i] & 0x80 )
 			{
-				fp_.NeedSpace(2);
 				if( 0xA1<=(uchar)buf_[i] && (uchar)buf_[i]<=0xDF )
 				{
 					// ƒJƒi
@@ -3236,9 +3223,9 @@ struct wEucJp A_FINAL: public TextFileWPimplWithBuf
 			else
 			{
 				// ASCII•”•ª‚Í‚»‚Ì‚Ü‚Üo—Í
-				fp_.NeedSpace(1);
 				fp_.WriteCN( buf_[i] );
 			}
+		}
 	}
 };
 
