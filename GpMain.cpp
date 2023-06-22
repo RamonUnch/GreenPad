@@ -590,11 +590,14 @@ void GreenPadWnd::on_openelevated(const ki::Path& fn)
 
 	String cmdl  = TEXT( "-c"); cmdl += SInt2Str(cp).c_str();
 	       cmdl += TEXT(" -l"); cmdl += SInt2Str(cur->tl+1).c_str();
-	       cmdl += TEXT(" \"") + fn + TEXT("\"");
-//	MsgBox( cmdl.c_str(), Path(Path::ExeName).c_str() );
-	HINSTANCE ret = ShellExecute(NULL, TEXT("runas"), Path(Path::ExeName).c_str(), cmdl.c_str(), NULL, SW_SHOWNORMAL);
+	       cmdl += TEXT(" \""); cmdl += fn.c_str(); cmdl += TEXT("\"");
+
+	TCHAR exename[MAX_PATH];
+	::GetModuleFileName(NULL, exename, countof(exename));
+
+//	MsgBox( cmdl.c_str(), exename );
+	HINSTANCE ret = ShellExecute(NULL, TEXT("runas"), exename, cmdl.c_str(), NULL, SW_SHOWNORMAL);
 	if( (LONG_PTR)ret > 32 )
-		//Destroy();
 		::ExitProcess(0); // Dirty quick exit.
 #endif
 }
@@ -714,16 +717,13 @@ void GreenPadWnd::on_print()
 	totalCopies = thePrintDlg.nCopies;
 
 	// タイトルに表示される文字列の調整
-	// FileName * - GreenPad
-	String name;
-	name += isUntitled() ? TEXT("untitled") : filename_.name();
-	if( edit_.getDoc().isModified() ) name += TEXT(" *");
-	name += TEXT(" - ");
-	name += RzsString(IDS_APPNAME).c_str();
+	// [FileName *] - GreenPad
+	TCHAR name[1+MAX_PATH+6+32+1];
+	GetTitleText( name );
 
 	// Set DOCINFO structure
 	DOCINFO di = { sizeof(DOCINFO) };
-	di.lpszDocName = name.c_str();
+	di.lpszDocName = name;
 	di.lpszOutput = (LPTSTR) NULL;
 	di.lpszDatatype = (LPTSTR) NULL;
 	di.fwType = 0;
@@ -739,21 +739,10 @@ void GreenPadWnd::on_print()
 	}
 	// Setup printing font.
 	LOGFONT lf;
-	lf.lfEscapement     = cfg_.vConfig().font.lfEscapement;
-	lf.lfOrientation    = cfg_.vConfig().font.lfOrientation;
-	lf.lfWeight         = cfg_.vConfig().font.lfWeight;
-	lf.lfItalic         = cfg_.vConfig().font.lfItalic;
-	lf.lfUnderline      = cfg_.vConfig().font.lfUnderline;
-	lf.lfStrikeOut      = cfg_.vConfig().font.lfStrikeOut;
-	lf.lfCharSet        = cfg_.vConfig().font.lfCharSet;
-	lf.lfOutPrecision   = cfg_.vConfig().font.lfOutPrecision;
-	lf.lfClipPrecision  = cfg_.vConfig().font.lfClipPrecision;
-	lf.lfQuality        = cfg_.vConfig().font.lfQuality;
-	lf.lfPitchAndFamily = cfg_.vConfig().font.lfPitchAndFamily;
-	my_lstrcpy(lf.lfFaceName, cfg_.vConfig().font.lfFaceName);
+	memmove( &lf, &cfg_.vConfig().font, sizeof(lf) );
 	SetFontSizeforDC(&lf, thePrintDlg.hDC, cfg_.vConfig().fontsize, cfg_.vConfig().fontwidth);
 	HFONT printfont = ::CreateFontIndirect(&lf);
-	::SelectObject( thePrintDlg.hDC, printfont );
+	HFONT oldfont = (HFONT)::SelectObject( thePrintDlg.hDC, printfont );
 
 	::StartPage(thePrintDlg.hDC);
 
@@ -765,38 +754,35 @@ void GreenPadWnd::on_print()
 	int logpxy = GetDeviceCaps(thePrintDlg.hDC, LOGPIXELSY);// px/in
 
 	// Get Line height
-	RECT rctmp;
-	rctmp.left = 0;
-	rctmp.top = 0;
-	rctmp.right = cWidthPels;
-	rctmp.bottom = cHeightPels;
+	RECT rctmp = {0, 0, cWidthPels, cHeightPels};
 	::DrawTextW(thePrintDlg.hDC, L"#", 1, &rctmp, DT_CALCRECT|DT_LEFT|DT_WORDBREAK|DT_EXPANDTABS|DT_EDITCONTROL);
 	cLineHeight = rctmp.bottom-rctmp.top;
 
-	RECT rcMargins;
 	// Convert config margins in Inches to pixels
-	rcMargins.left   = (cfg_.PMargins()->left  * logpxx)/1000;
-	rcMargins.top    = (cfg_.PMargins()->top   * logpxy)/1000;
-	rcMargins.right  = (cfg_.PMargins()->right * logpxx)/1000;
-	rcMargins.bottom = (cfg_.PMargins()->left  * logpxy)/1000;
-
-	RECT rcPrinter = { rcMargins.left
-				, rcMargins.top
-				, cWidthPels - rcMargins.left - rcMargins.right
-				, cHeightPels - rcMargins.top - rcMargins.bottom };
+	const RECT rcMargins = {
+		(cfg_.PMargins()->left  * logpxx)/1000,
+		(cfg_.PMargins()->top   * logpxy)/1000,
+		(cfg_.PMargins()->right * logpxx)/1000,
+		(cfg_.PMargins()->left  * logpxy)/1000,
+	};
+	const RECT rcFullPage = {
+		rcMargins.left , rcMargins.top,
+		cWidthPels - rcMargins.left - rcMargins.right,
+		cHeightPels - rcMargins.top - rcMargins.bottom
+	};
+	RECT rcPrinter; // Mutates in the loop
+	CopyRect(&rcPrinter, &rcFullPage);
 
 	int nThisLineHeight, nChars = 0, nHi = 0, nLo = 0;
 	const unicode* uStart;
 
 	// Process with multiple copies
+	#define myDTFLAGS DT_WORDBREAK|DT_NOCLIP|DT_EXPANDTABS|DT_NOPREFIX|DT_EDITCONTROL
 	do {
-		if(procCopies)
+		if( procCopies )
 		{
 			::StartPage(thePrintDlg.hDC);
-			rcPrinter.top = rcMargins.top;
-			rcPrinter.left = rcMargins.left;
-			rcPrinter.right = cWidthPels   - (rcMargins.left+rcMargins.right);
-			rcPrinter.bottom = cHeightPels - (rcMargins.top+rcMargins.bottom);
+			CopyRect(&rcPrinter, &rcFullPage);
 		}
 		// Print
 		for( ulong e=d.tln(), dpStart=0; dpStart<e; )
@@ -810,7 +796,7 @@ void GreenPadWnd::on_print()
 			}
 			else // non-empty line
 			{
-				rctmp = rcPrinter;
+				CopyRect(&rctmp, &rcPrinter);
 				nHi = len;
 				nLo = 0;
 				if(!nChars)
@@ -826,8 +812,7 @@ void GreenPadWnd::on_print()
 
 				while (nLo < nHi) { // Find maximum number of chars can be printed
 					rctmp.top = rcPrinter.top;
-					nThisLineHeight = ::DrawTextW(thePrintDlg.hDC, uStart, nChars, &rctmp
-											, DT_CALCRECT|DT_WORDBREAK|DT_NOCLIP|DT_EXPANDTABS|DT_NOPREFIX|DT_EDITCONTROL);
+					nThisLineHeight = ::DrawTextW(thePrintDlg.hDC, uStart, nChars, &rctmp, DT_CALCRECT|myDTFLAGS);
 					if (rcPrinter.top+nThisLineHeight < rcPrinter.bottom)
 						nLo = nChars;
 					if (rcPrinter.top+nThisLineHeight > rcPrinter.bottom)
@@ -837,7 +822,7 @@ void GreenPadWnd::on_print()
 					if (nLo < nHi)
 						nChars = nLo + (nHi - nLo)/2;
 				}
-				rcPrinter.top += ::DrawTextW(thePrintDlg.hDC, uStart, nChars, &rcPrinter, DT_WORDBREAK|DT_NOCLIP|DT_EXPANDTABS|DT_NOPREFIX|DT_EDITCONTROL);
+				rcPrinter.top += ::DrawTextW(thePrintDlg.hDC, uStart, nChars, &rcPrinter, myDTFLAGS);
 				if(uStart+nChars == buf+len) // Line end
 				{
 					nChars = 0;
@@ -845,26 +830,23 @@ void GreenPadWnd::on_print()
 				}
 			}
 
-			// turn to new page
+			// Turn to new page if needed
 			if( (dpStart<e) && (rcPrinter.top + cLineHeight + 5 > rcPrinter.bottom) )
 			{
 				::EndPage(thePrintDlg.hDC);
 				::StartPage(thePrintDlg.hDC);
-				rcPrinter.top = rcMargins.top;
-				rcPrinter.left = rcMargins.left;
-				rcPrinter.right = cWidthPels   - (rcMargins.left+rcMargins.right);
-				rcPrinter.bottom = cHeightPels - (rcMargins.top+rcMargins.bottom);
+				CopyRect(&rcPrinter, &rcFullPage);
 			}
 		}
 		// EndPage Does not reset page attributes on NT/9x
 		::EndPage(thePrintDlg.hDC);
-	} while(++procCopies < totalCopies);
-
+	} while( ++procCopies < totalCopies );
+	#undef myDTFLAGS
 	// Close Printer
+	::SelectObject(thePrintDlg.hDC, oldfont);
 	::DeleteObject(printfont);
 	::EndDoc(thePrintDlg.hDC);
 	::DeleteDC(thePrintDlg.hDC);
-
 
 	::GlobalUnlock(thePrintDlg.hDevNames);
 	::GlobalUnlock(thePrintDlg.hDevMode);
@@ -1263,19 +1245,24 @@ void GreenPadWnd::SetupSubMenu()
 	}
 }
 
+void GreenPadWnd::GetTitleText( TCHAR *name )
+{
+	TCHAR *end = name+1;
+	name[0] = TEXT('[');
+	end = my_lstrkpy( end, isUntitled() ? TEXT("untitled") : filename_.name() );
+	if( edit_.getDoc().isModified() )
+		end = my_lstrkpy( end, TEXT(" *") );
+	end = my_lstrkpy( end, TEXT("] - ") );
+	app().LoadString(IDS_APPNAME, end, 32);
+}
+
 void GreenPadWnd::UpdateWindowName()
 {
 	// タイトルバーに表示される文字列の調整
 	// [FileName *] - GreenPad
 	{
-		TCHAR name[1+MAX_PATH+6+32+1], *end = name+1;
-		name[0] = TEXT('[');
-		name[1] = TEXT('\0');
-		end = my_lstrkpy( end, isUntitled() ? TEXT("untitled") : filename_.name() );
-		if( edit_.getDoc().isModified() )
-			end = my_lstrkpy( end, TEXT(" *") );
-		end = my_lstrkpy( end, TEXT("] - ") );
-		app().LoadString(IDS_APPNAME, end, 32);
+		TCHAR name[1+MAX_PATH+6+32+1];
+		GetTitleText( name );
 		SetText( name );
 	}
 
@@ -1371,11 +1358,11 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 bool GreenPadWnd::ShowOpenDlg( Path* fn, int* cs )
 {
 	// [Open][Cancel] 開くファイル名指定ダイアログを表示
-	String flst[] = {
+	const TCHAR *flst[] = {
 		RzsString(IDS_TXTFILES).c_str(),
-		String(cfg_.txtFileFilter()),
+		cfg_.txtFileFilter().c_str(),
 		RzsString(IDS_ALLFILES).c_str(),
-		String(TEXT("*.*"))
+		TEXT("*.*")
 	};
 	aarr<TCHAR> filt = OpenFileDlg::ConnectWithNull(flst, countof(flst));
 
@@ -1421,8 +1408,8 @@ BOOL CALLBACK GreenPadWnd::PostMsgToFriendsProc(HWND hwnd, LPARAM lPmsg)
 	TCHAR classn[256];
 	if(::IsWindow(hwnd))
 	{
-		::GetClassName(hwnd, classn, countof(classn));
-		if (!my_lstrcmp(classn, className_))
+		if( ::GetClassName(hwnd, classn, countof(classn))
+		&&  !my_lstrcmp(classn, className_) )
 			::PostMessage(hwnd, (UINT)lPmsg, 0, 0);
 	}
 	return TRUE; // Next hwnd
@@ -1443,7 +1430,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 		// ERROR!
 		int err = GetLastError();
 		RzsString ids_oerr(IDS_OPENERROR);
-		String fnerror = fn + ids_oerr.c_str();
+		String fnerror = fn; fnerror += ids_oerr.c_str();
 		fnerror += SInt2Str(err).c_str();
 		if( err == ERROR_ACCESS_DENIED )
 		{
@@ -1583,9 +1570,9 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 bool GreenPadWnd::ShowSaveDlg()
 {
 	// [Save][Cancel] 保存先ファイル名指定ダイアログを表示
-	String flst[] = {
+	const TCHAR *flst[] = {
 		RzsString(IDS_ALLFILES).c_str(),
-		String(TEXT("*.*"))
+		TEXT("*.*")
 	};
 	aarr<TCHAR> filt = SaveFileDlg::ConnectWithNull( flst, countof(flst) );
 
