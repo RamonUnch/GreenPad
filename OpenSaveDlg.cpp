@@ -688,19 +688,19 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 // ユーティリティー
 //------------------------------------------------------------------------
 
-ki::aarr<TCHAR> OpenFileDlg::ConnectWithNull( String lst[], int num )
+ki::aarr<TCHAR> OpenFileDlg::ConnectWithNull( const TCHAR *lst[], int num )
 {
 	int TtlLen = 1;
 	for( int i=0; i<num; ++i )
-		TtlLen += (lst[i].len() + 1);
+		TtlLen += (my_lstrlen(lst[i]) + 1);
 
 	aarr<TCHAR> a( new TCHAR[TtlLen] );
 
 	TCHAR* p = a.get();
 	for( int i=0; i<num; ++i )
 	{
-		my_lstrcpy( p, lst[i].c_str() );
-		p += (lst[i].len() + 1);
+		my_lstrcpy( p, lst[i] );
+		p += (my_lstrlen(lst[i]) + 1);
 	}
 	*p = TEXT('\0');
 

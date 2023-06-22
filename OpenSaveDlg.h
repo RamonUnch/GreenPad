@@ -65,7 +65,7 @@ public:
 	int csi() const;
 
 public:
-	static ki::aarr<TCHAR> ConnectWithNull( ki::String lst[], int num );
+	static ki::aarr<TCHAR> ConnectWithNull( const TCHAR *lst[], int num );
 
 private:
 	const CharSetList& csl_;
@@ -117,7 +117,7 @@ public:
 	int lb() const;
 
 public:
-	static ki::aarr<TCHAR> ConnectWithNull( ki::String lst[], int num );
+	static ki::aarr<TCHAR> ConnectWithNull( const TCHAR *lst[], int num );
 
 private:
 	const CharSetList& csl_;
@@ -147,8 +147,7 @@ inline int SaveFileDlg::csi() const
 inline int SaveFileDlg::lb() const
 	{ return lb_; }
 
-inline ki::aarr<TCHAR> SaveFileDlg::ConnectWithNull
-	( ki::String lst[], int num )
+inline ki::aarr<TCHAR> SaveFileDlg::ConnectWithNull( const TCHAR *lst[], int num )
 	{ return OpenFileDlg::ConnectWithNull( lst, num ); }
 
 

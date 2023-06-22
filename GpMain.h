@@ -45,9 +45,10 @@ public:
 	GreenPadWnd();
 	bool StartUp( const ki::Path& fn, int cs, int ln );
 	void ShowUp2();
-	
+
 private:
 
+	void GetTitleText( TCHAR *name );
 	void UpdateWindowName();
 	void ReloadConfig( bool noSetDocType=false );
 
