@@ -138,10 +138,12 @@ bool FileR::Open( const TCHAR* fname, bool always)
 	Close();
 
 	// ファイルを読みとり専用で開く
+	// |FILE_FLAG_NO_BUFFERING
 	handle_ = ::CreateFileUNC(fname, GENERIC_READ,
 		FILE_SHARE_READ|FILE_SHARE_WRITE,
 		NULL, always? OPEN_ALWAYS: OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL|FILE_FLAG_SEQUENTIAL_SCAN, NULL
+		FILE_ATTRIBUTE_NORMAL|FILE_FLAG_SEQUENTIAL_SCAN,
+		NULL
 	);
 	if( handle_ == INVALID_HANDLE_VALUE )
 	{
@@ -257,7 +259,7 @@ FileW::~FileW()
 	delete [] buf_;
 }
 
-inline void FileW::Flush()
+void FileW::Flush()
 {
 	DWORD dummy;
 	::WriteFile( handle_, buf_, bPos_, &dummy, NULL );
