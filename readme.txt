@@ -1,5 +1,5 @@
-=<> GreenPad ver 1.17
-=<> RamonUnch builds 2023/03/11
+=<> GreenPad ver 1.18
+=<> RamonUnch builds 2023/06/23
 
 <<What's This?>>
 
@@ -47,6 +47,8 @@
   * Handle WS_EX_LAYOUTRTL for left to right scripts such as Hebrew.
   * Handle more complete regular expression and especially capture groups
     for proper find replace.
+  * Optimize Find/Replace so that it does not take for ever to replace
+    a word in a big file.
   * Handle binary files properly: We will need to flag each line with the
     carriage return type CRLF, LF or CR.
   * Handle per-monitor dpi awareness. This will require to reload the
@@ -58,6 +60,29 @@
   * Improve printer configuration.
   * Fix more bugs, handle low memory situations better.
   * Optimize memory usage so that larger files can be loaded.
+
+<<What's New in 1.18 (by RamonUnch, 2023/06/23)>>
+ < NEW >
+   * Display codepage number in the status bar.
+   * Allow to directly type codepage number in Save/Open/ReOpen dialogs
+   * Added Help->About dialog that displays GreenPad version and build
+     details as well as the Currently running Windows version.
+   * Optimize memmove for gcc build (significantly faster).
+   * Minor refactoring, reduces mem usage a few percents.
+   * Increase Win32s scrolling range from 8 million up to 24 million lines
+   * Various optimizations for file reading/writing code.
+
+ < FIXED >
+   * Crash when opening the Save dialog if the current codepage is outside
+     the default cs list.
+   * Avoid false UTF-16/32 detection for some files.
+   * The Tab key can now be used to navigate through the Open/Save dialog.
+   * Fixed Crash when reading invalid Iso2022 or UtfOFSS files.
+   * Directly use current local codepage when detecting a pure ASCII file.
+   * Minor code refactoring, reducing exe size.
+   * Use more stack buffers when possible instead of new/delete.
+   * Avoid excessive memory allocation when saving a file, also avoid
+     useless memmove between two intermediate buffers and improve perf.
 
 <<What's New in 1.17 (by RamonUnch, 2023/03/11)>>
  < NEW >
