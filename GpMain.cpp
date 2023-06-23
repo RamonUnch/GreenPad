@@ -593,7 +593,7 @@ void GreenPadWnd::on_openelevated(const ki::Path& fn)
 	       cmdl += TEXT(" \""); cmdl += fn.c_str(); cmdl += TEXT("\"");
 
 	TCHAR exename[MAX_PATH];
-	::GetModuleFileName(NULL, exename, countof(exename));
+	Path::GetExeName( exename );
 
 //	MsgBox( cmdl.c_str(), exename );
 	HINSTANCE ret = ShellExecute(NULL, TEXT("runas"), exename, cmdl.c_str(), NULL, SW_SHOWNORMAL);
