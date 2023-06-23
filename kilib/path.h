@@ -117,6 +117,7 @@ public:
 	static const TCHAR* name( const TCHAR* str );
 	static const TCHAR* ext( const TCHAR* str );
 	static const TCHAR* ext_all( const TCHAR* str );
+	static DWORD GetExeName( TCHAR buf[MAX_PATH] );
 };
 
 

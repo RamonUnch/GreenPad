@@ -37,7 +37,7 @@ Path& Path::BeSpecialPath( int nPATH, bool bs )
 //	case Tmp:     ::GetTempPath( MAX_PATH, buf );             break;
 	case Cur:     ::GetCurrentDirectory( MAX_PATH, buf );     break;
 	case Exe:
-	case ExeName: ::GetModuleFileName( ::GetModuleHandle(NULL), buf, MAX_PATH ); break;
+	case ExeName: GetExeName( buf ); break;
 	default:
 		*buf = TEXT('\0');
 // This part seems to never be used for now...
@@ -234,3 +234,12 @@ Path Path::body_all() const
 	return ans;
 }
 
+DWORD Path::GetExeName( TCHAR buf[MAX_PATH] )
+{
+	buf[0] = TEXT('\0');
+	// In Win32s 1.2 GetModuleFileName fails with NULL hinstance
+	DWORD len = ::GetModuleFileName( ::GetModuleHandle(NULL), buf, MAX_PATH );
+	// In Win32s 1.1 the return value includes the terminating NULL!!!
+	len -=  len > 0 && buf[len-1] == TEXT('\0');
+	return len;
+}
