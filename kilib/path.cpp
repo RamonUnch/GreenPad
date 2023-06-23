@@ -37,7 +37,7 @@ Path& Path::BeSpecialPath( int nPATH, bool bs )
 //	case Tmp:     ::GetTempPath( MAX_PATH, buf );             break;
 	case Cur:     ::GetCurrentDirectory( MAX_PATH, buf );     break;
 	case Exe:
-	case ExeName: ::GetModuleFileName( NULL, buf, MAX_PATH ); break;
+	case ExeName: ::GetModuleFileName( ::GetModuleHandle(NULL), buf, MAX_PATH ); break;
 	default:
 		*buf = TEXT('\0');
 // This part seems to never be used for now...

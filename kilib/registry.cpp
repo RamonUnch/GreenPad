@@ -8,9 +8,10 @@ using namespace ki;
 void IniFile::SetFileName( /*const TCHAR* ini, bool exepath*/ )
 {
 	iniName_[0] = TEXT('\0');
-	DWORD len = ::GetModuleFileName( NULL, iniName_, countof(iniName_) );
-	if( len )
-		my_lstrcpy( iniName_+len-3, TEXT("ini") );
+	DWORD len = ::GetModuleFileName( ::GetModuleHandle(NULL), iniName_, countof(iniName_) );
+	/// In Win32s 1.1 GetModuleFileName return value includes the NULL!!!
+	len -= ( len > 0 ) && iniName_[len-1] == TEXT('\0');
+	my_lstrcpy( iniName_+len-3, TEXT("ini") );
 }
 
 void IniFile::SetSectionAsUserName()
