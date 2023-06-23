@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "log.h"
 #include "app.h"
+#include "path.h"
 #include "kstring.h"
 using namespace ki;
 
@@ -46,15 +47,12 @@ void Logger::WriteLine( const TCHAR* str, int siz )
 	// Fileクラス自体のデバッグに使うかもしれないので、
 	// Fileクラスを使用することは出来ない。API直叩き
 	static bool st_firsttime = true;
-	DWORD dummy;
 
 	// ファイル名
 	TCHAR fname[MAX_PATH];
-	// GetModuleFileName() fails with NULL hInstance on Win32s before 1.25
-	::GetModuleFileName( ::GetModuleHandle(NULL), fname, countof(fname) );
-	dummy = my_lstrlen(fname);
-	fname[dummy-4] = 0;
-	my_lstrcpy( &fname[dummy-4], TEXT(".log") );
+	DWORD dummy = Path::GetExeName( fname );
+	if( dummy > 3 )
+		my_lstrcpy( fname+dummy-3, TEXT("log") );
 
 	// ファイルを書き込み専用で開く
 	HANDLE h = ::CreateFile( fname,
