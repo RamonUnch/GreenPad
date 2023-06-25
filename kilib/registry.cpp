@@ -129,13 +129,11 @@ bool IniFile::PutStrinSect( const TCHAR* key, const TCHAR *sect, const TCHAR* va
 		nval += TEXT('"');
 		nval += val;
 		nval += TEXT('"');
-		return (FALSE != ::WritePrivateProfileString(
-			sect, key, nval.c_str(), iniName_ ) );
+		return FALSE != ::WritePrivateProfileString(sect, key, nval.c_str(), iniName_);
 	}
 	else
 	{
-		return (FALSE != ::WritePrivateProfileString(
-			section_.c_str(), key, val, iniName_ ) );
+		return FALSE != ::WritePrivateProfileString(sect, key, val, iniName_);
 	}
 }
 
