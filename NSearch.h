@@ -41,12 +41,6 @@ struct IgnoreCase
 //	BM–@‚É‚æ‚é•’Ê‚Ì³•ûŒüŒŸõ
 //@}
 //=========================================================================
-#ifdef __GNUC__
-inline void memFF( void* ptrv, int siz )
-	{ BYTE* ptr = (BYTE*)ptrv;
-	  for(;siz>3;siz-=4,ptr+=4) *(DWORD*)ptr = 0xffffffff;
-	  for(;siz;--siz,++ptr) *ptr = 0xff; }
-#endif
 template<class ComparisonPolicy> class BMSearch
 {
 public:
@@ -54,7 +48,7 @@ public:
 		: keylen_( my_lstrlenW(key) )
 		, key_( my_lstrcpyW( new unicode[keylen_+1], key ) )
 	{
-		memFF( lastAppearance_, sizeof(lastAppearance_) );
+		ki::memFF( lastAppearance_, sizeof(lastAppearance_) );
 		for( int i=0, e=keylen_; i<e; ++i )
 			lastAppearance_[ ComparisonPolicy::map(key[i]) ] = i;
 	}
@@ -103,7 +97,7 @@ public:
 		: keylen_( my_lstrlenW(key) )
 		, key_( my_lstrcpyW( new unicode[keylen_+1], key ) )
 	{
-		memFF( firstAppearance_, sizeof(firstAppearance_) );
+		ki::memFF( firstAppearance_, sizeof(firstAppearance_) );
 		for( int i=keylen_-1; i>=0; --i )
 			firstAppearance_[ ComparisonPolicy::map(key[i]) ] = i;
 	}
