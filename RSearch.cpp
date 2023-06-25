@@ -120,7 +120,7 @@ enum RegType
 	N_Empty     // ‹ó         (--)
 };
 
-struct RegClass
+struct RegClass: public Object
 {
 	struct OneRange
 	{
@@ -388,7 +388,7 @@ RegNode* RegParser::expr()
 //@}
 //=========================================================================
 
-struct RegTrans
+struct RegTrans : public Object
 {
 	enum {
 		Epsilon,
