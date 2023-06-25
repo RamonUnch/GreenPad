@@ -175,6 +175,50 @@ struct VPos : public DPos
 };
 
 
+//-------------------------------------------------------------------------
+// Caret制御用ラッパー
+//-------------------------------------------------------------------------
+class Caret : public Object
+{
+public:
+	Caret( HWND wnd )
+		: hwnd_( wnd ), created_( false ) {}
+
+	~Caret()
+		{ Destroy(); }
+
+	void Show()
+		{ if( created_ ) ::ShowCaret( hwnd_ ); }
+
+	void Hide()
+		{ if( created_ ) ::HideCaret( hwnd_ ); }
+
+	void Destroy()
+		{ if( created_ ) ::DestroyCaret(), created_=false; }
+
+	void SetPos( int x, int y )
+		{ if( created_ ) ::SetCaretPos(x,y), ime().SetPos(hwnd_,x,y); }
+
+	void Create( int H, int W, const LOGFONT& lf )
+		{
+			if( created_ )
+				::DestroyCaret();
+			created_ = true;
+			::CreateCaret( hwnd_, NULL, W, H );
+			ime().SetFont( hwnd_, lf );
+			Show();
+		}
+	bool isAlive()
+		{ return created_; }
+
+	HWND hwnd()
+		{ return hwnd_; }
+
+private:
+	const HWND hwnd_;
+	bool    created_;
+};
+
 
 //=========================================================================
 //@{
@@ -281,7 +325,7 @@ private:
 	ViewImpl&       view_;
 	doc::DocImpl&   doc_;
 	CurEvHandler*   pEvHan_;
-	Caret*          caret_;
+	Caret           caret_;
 #ifndef NO_OLEDNDTAR
 	OleDnDTarget    dndtg_;
 #endif

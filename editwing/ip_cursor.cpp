@@ -123,54 +123,6 @@ static UINT GetInputCP()
 //=========================================================================
 
 
-//-------------------------------------------------------------------------
-// Caret制御用ラッパー
-//-------------------------------------------------------------------------
-
-class editwing::view::Caret : public Object
-{
-public:
-
-	Caret( HWND wnd )
-		: hwnd_( wnd ), created_( false ) {}
-
-	~Caret()
-		{ Destroy(); }
-
-	void Show()
-		{ if( created_ ) ::ShowCaret( hwnd_ ); }
-
-	void Hide()
-		{ if( created_ ) ::HideCaret( hwnd_ ); }
-
-	void Destroy()
-		{ if( created_ ) ::DestroyCaret(), created_=false; }
-
-	void SetPos( int x, int y )
-		{ if( created_ ) ::SetCaretPos(x,y), ime().SetPos(hwnd_,x,y); }
-
-	void Create( int H, int W, const LOGFONT& lf )
-		{
-			if( created_ )
-				::DestroyCaret();
-			created_ = true;
-			::CreateCaret( hwnd_, NULL, W, H );
-			ime().SetFont( hwnd_, lf );
-			Show();
-		}
-
-	bool isAlive()
-		{ return created_; }
-
-	HWND hwnd()
-		{ return hwnd_; }
-
-private:
-
-	const HWND hwnd_;
-	bool    created_;
-};
-
 
 
 //-------------------------------------------------------------------------
@@ -181,7 +133,7 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 	: view_   ( vw )
 	, doc_    ( dc )
 	, pEvHan_ ( &defaultHandler_ )
-	, caret_  ( new Caret(wnd) )
+	, caret_  ( wnd )
 #ifndef NO_OLEDNDTAR
 	, dndtg_  ( wnd, vw )
 #endif
@@ -202,10 +154,7 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
 	cur_.vx = cur_.rx = 0; sel_ = cur_;
 }
 
-Cursor::~Cursor()
-{
-	delete caret_;
-}
+Cursor::~Cursor() { }
 
 void Cursor::AddHandler( CurEvHandler* ev )
 {
@@ -237,7 +186,7 @@ void Cursor::UpdateCaretPos()
 		x = -view_.left();
 
 	// セット
-	caret_->SetPos( x, y );
+	caret_.SetPos( x, y );
 	pEvHan_->on_move( cur_, sel_ );
 }
 
@@ -262,23 +211,23 @@ void Cursor::Redraw( const VPos& s, const VPos& e )
 	if( sp.y == ep.y )
 	{
 		RECT rc = { Max(LFT,sp.x), sp.y, Min(RHT,ep.x), sp.y+view_.fnt().H() };
-		::InvalidateRect( caret_->hwnd(), &rc, FALSE );
+		::InvalidateRect( caret_.hwnd(), &rc, FALSE );
 	}
 	else
 	{
 		RECT rc = { Max(LFT,sp.x), Max(TOP,sp.y), RHT, Min(BTM, (long)(sp.y+view_.fnt().H())) };
-		::InvalidateRect( caret_->hwnd(), &rc, FALSE );
+		::InvalidateRect( caret_.hwnd(), &rc, FALSE );
 		RECT re = { LFT, Max(TOP,ep.y), Min(RHT,ep.x), Min(BTM, (long)(ep.y+view_.fnt().H())) };
-		::InvalidateRect( caret_->hwnd(), &re, FALSE );
+		::InvalidateRect( caret_.hwnd(), &re, FALSE );
 		RECT rd = { LFT, Max(TOP,rc.bottom), RHT, Min((long)BTM,re.top) };
-		::InvalidateRect( caret_->hwnd(), &rd, FALSE );
+		::InvalidateRect( caret_.hwnd(), &rd, FALSE );
 	}
 }
 
 bool Cursor::getCurPos( const VPos** start, const VPos** end ) const
 {
 	*start = *end = &cur_;
-	if( cur_==sel_ )//|| !caret_->isAlive() )
+	if( cur_==sel_ )//|| !caret_.isAlive() )
 		return false;
 	if( cur_ < sel_ )
 		*end = &sel_;
@@ -302,26 +251,26 @@ bool Cursor::getCurPosUnordered( const VPos** cur, const VPos** sel ) const
 
 void Cursor::on_setfocus()
 {
-	caret_->Create( view_.fnt().H(),
+	caret_.Create( view_.fnt().H(),
 		(bIns_ ? 2 : view_.fnt().W()), view_.fnt().LogFont() );
 	UpdateCaretPos();
 }
 
 void Cursor::on_killfocus()
 {
-	caret_->Destroy();
+	caret_.Destroy();
 	Redraw( cur_, sel_ );
 }
 
 void Cursor::on_scroll_begin()
 {
-	caret_->Hide();
+	caret_.Hide();
 }
 
 void Cursor::on_scroll_end()
 {
 	UpdateCaretPos();
-	caret_->Show();
+	caret_.Show();
 }
 
 void Cursor::ResetPos()
@@ -330,7 +279,7 @@ void Cursor::ResetPos()
 	view_.ConvDPosToVPos( cur_, &cur_ );
 	view_.ConvDPosToVPos( sel_, &sel_ );
 	UpdateCaretPos();
-	if( caret_->isAlive() )
+	if( caret_.isAlive() )
 		view_.ScrollTo( cur_ );
 }
 
@@ -350,7 +299,7 @@ void Cursor::on_text_update
 	else
 	{
 		Redraw( cur_, sel_ );
-		if( mCur && caret_->isAlive() )
+		if( mCur && caret_.isAlive() )
 		{
 			if( cur_ <= s )
 				search_base = &cur_;
@@ -376,7 +325,7 @@ void Cursor::on_text_update
 	{
 		view_.ConvDPosToVPos( e2, &cur_, search_base );
 		sel_ = cur_;
-		if( caret_->isAlive() )
+		if( caret_.isAlive() )
 			view_.ScrollTo( cur_ );
 	}
 	UpdateCaretPos();
@@ -475,7 +424,7 @@ void Cursor::on_ime_composition( LPARAM lp )
 	{
 		unicode* str=NULL;
 		ulong    len=0;
-		ime().GetString( caret_->hwnd(), &str, &len );
+		ime().GetString( caret_.hwnd(), &str, &len );
 		if( str )
 		{
 			pEvHan_->on_ime( *this, str, len );
@@ -804,7 +753,7 @@ void Cursor::Cut()
 
 void Cursor::Copy()
 {
-	Clipboard clp( caret_->hwnd(), false );
+	Clipboard clp( caret_.hwnd(), false );
 	if( cur_==sel_ || !clp.isOpened() )
 		return;
 
@@ -872,7 +821,7 @@ void Cursor::Copy()
 
 void Cursor::Paste()
 {
-	Clipboard clp( caret_->hwnd(), true );
+	Clipboard clp( caret_.hwnd(), true );
 	if( clp.isOpened() )
 	{
 		Clipboard::Text txt = clp.GetUnicodeText();
@@ -1245,8 +1194,8 @@ void Cursor::on_lbutton_down( short x, short y, bool shift )
 	MoveByMouse( dragX_=x, dragY_=y );
 
 	// マウス位置の追跡開始
-	timerID_ = ::SetTimer( caret_->hwnd(), 178116, keyRepTime_, NULL );
-	::SetCapture( caret_->hwnd() );
+	timerID_ = ::SetTimer( caret_.hwnd(), 178116, keyRepTime_, NULL );
+	::SetCapture( caret_.hwnd() );
 }
 
 void Cursor::on_lbutton_up( short x, short y )
@@ -1255,7 +1204,7 @@ void Cursor::on_lbutton_up( short x, short y )
 	if( timerID_ != 0 )
 	{
 		::ReleaseCapture();
-		::KillTimer( caret_->hwnd(), timerID_ );
+		::KillTimer( caret_.hwnd(), timerID_ );
 		timerID_ = 0;
 	}
 }
@@ -1325,7 +1274,7 @@ void Cursor::Reconv()
 		aarr<unicode> ub = getSelectedStr();
 		ulong len=0;
 		for(len=0; ub[len]; ++len);
-		ime().SetString( caret_->hwnd(), ub.get(), len);
+		ime().SetString( caret_.hwnd(), ub.get(), len);
 	}
 #endif
 }
@@ -1335,7 +1284,7 @@ void Cursor::ToggleIME()
 #ifndef NO_IME
 	if( ime().IsIME() )
 	{
-		ime().SetState( caret_->hwnd(), !ime().GetState( caret_->hwnd() ) );
+		ime().SetState( caret_.hwnd(), !ime().GetState( caret_.hwnd() ) );
 	}
 #endif
 }
