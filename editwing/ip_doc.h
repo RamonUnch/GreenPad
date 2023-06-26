@@ -391,6 +391,10 @@ public:
 
 	//@{ 指定位置の単語の先頭を取得 //@}
 	DPos wordStartOf( const DPos& dp ) const;
+	
+	unicode findNextBrace( DPos &dp, unicode q, unicode p ) const;
+	unicode findPrevBrace( DPos &dp, unicode q, unicode p ) const;
+	DPos findMatchingBrace( const DPos &dp ) const;
 
 	//@{ 指定位置の一つ左の位置を取得 //@}
 	DPos leftOf( const DPos& dp, bool wide=false ) const;

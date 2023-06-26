@@ -398,7 +398,92 @@ DPos DocImpl::wordStartOf( const DPos& dp ) const
 	}
 }
 
+DPos DocImpl::findMatchingBrace( const DPos &dp ) const
+{
+	// Currently selected character.
+	unicode q = text_[dp.tl].str()[dp.ad];
+	unicode p;
+	DPos np = dp;
+	bool backward = 0;
+	switch( q )
+	{
+		case '(': p=')'; backward=0; break;
+		case '[': p=']'; backward=0; break;
+		case '{': p='}'; backward=0; break;
+		case '<': p='>'; backward=0; break;
 
+		case ')': p='('; backward=1; break;
+		case ']': p='['; backward=1; break;
+		case '}': p='{'; backward=1; break;
+		case '>': p='<'; backward=1; break;
+		default:
+			// No brace to match
+			return np;
+	}
+
+	ulong match;
+	unicode b;
+	if( !backward )
+	{
+		match = 1; // We already have 1 opening parenthesis
+		while( b = findNextBrace( np, q, p ) ) // q='(' p=')'
+		{
+			if( b == q ) // (
+				match++; // extra opening parenthesis
+			else
+				match--; // closing (reduces count)
+
+			if( match == 0 ) // same amount of () => done!
+				break;
+		}
+	}
+	else
+	{
+		match = 1; // We already have 1 closing parenthesis
+		while( b = findPrevBrace( np, q, p ) ) // q=')' p='('
+		{
+			if( b == q )
+				match++; // extra cosing parenthesis
+			else
+				match--; // opening (recduces count)
+
+			if( match == 0 ) // same amount of () => done!
+				break;
+		}
+
+	}
+
+	return match==0? np: dp;
+}
+
+unicode DocImpl::findNextBrace( DPos &dp, unicode q, unicode p ) const
+{
+	// Loop forward word by word to find the next brace
+	// specified in the brace parameter.
+	DPos np;
+
+	while( (np=rightOf( dp , true )) > dp )
+	{
+		dp = np;
+		unicode ch = text_[dp.tl].str()[dp.ad];
+		if( ch == q || ch == p )
+			return ch;
+	}
+	return L'\0';
+}
+
+unicode DocImpl::findPrevBrace( DPos &dp, unicode q, unicode p ) const
+{
+	// Loop back word by word to find the previous brace,
+	// specified in the brace parameters.
+	while( (dp=leftOf( dp , true )) > DPos(0,0) )
+	{
+		unicode ch = text_[dp.tl].str()[dp.ad];
+		if( ch == q || ch == p )
+			return ch;
+	}
+	return L'\0';
+}
 
 //-------------------------------------------------------------------------
 // ‘}“üEíœ“™‚Ìì‹Æ—pŠÖ”ŒQ, A set of functions for working with ins, del, etc.
