@@ -48,9 +48,6 @@ public:
 	//@{ Set all canva stuff at once (faster) //@}
 	void SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc );
 
-	//@{ “à•”À‘• //@}
-	ViewImpl& impl() { return *impl_; }
-
 	//@{ ƒJ[ƒ\ƒ‹ //@}
 	Cursor& cur();
 
