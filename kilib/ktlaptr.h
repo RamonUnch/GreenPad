@@ -22,7 +22,7 @@ namespace ki {
 //=========================================================================
 
 template<class T>
-class aptr
+class A_WUNUSED aptr
 {
 public:
 
@@ -91,7 +91,7 @@ private:
 //=========================================================================
 
 template<class T>
-class aarr
+class A_WUNUSED aarr
 {
 public:
 

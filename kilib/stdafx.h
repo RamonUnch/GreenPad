@@ -25,8 +25,12 @@
 #define A_NONNULL1(x) __attribute__((nonnull(x)))
 #define A_NONNULL2(x, y) __attribute__((nonnull(x, y)))
 #define A_NONNULL3(x, y, z) __attribute__((nonnull(x, y, z)))
+#define A_WUNUSED  __attribute__((warn_unused))
 #define ASSUME(x) do { if (!(x)) __builtin_unreachable(); } while (0)
 #define restrict __restrict
+#define likely(x)       __builtin_expect(!!(x),1)
+#define unlikely(x)     __builtin_expect(!!(x),0)
+
 #else //__GNUC__
 #define ASSUME(x)
 #define A_HOT
@@ -39,6 +43,9 @@
 #define A_NONNULL1(x)
 #define A_NONNULL2(x, y)
 #define A_NONNULL3(x, y, z)
+#define A_WUNUSED
+#define likely(x)   (x)
+#define unlikely(x) (x)
 #endif
 
 #if defined (__cplusplus) && __cplusplus >= 201103L
