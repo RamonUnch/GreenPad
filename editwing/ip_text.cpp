@@ -401,10 +401,12 @@ DPos DocImpl::wordStartOf( const DPos& dp ) const
 DPos DocImpl::findMatchingBrace( const DPos &dp ) const
 {
 	// Currently selected character.
-	unicode q = text_[dp.tl].str()[dp.ad];
-	unicode p;
-	DPos np = dp;
-	bool backward = 0;
+	DPos np=dp;
+	bool backward, backside=0;
+	unicode q, p;
+	tryagain:
+	backward = 0;
+	q = text_[np.tl].str()[np.ad];
 	switch( q )
 	{
 		case '(': p=')'; backward=0; break;
@@ -417,8 +419,14 @@ DPos DocImpl::findMatchingBrace( const DPos &dp ) const
 		case '}': p='{'; backward=1; break;
 		case '>': p='<'; backward=1; break;
 		default:
+			if( !backside )
+			{	// Check if the parenthesis is at the backside of dp.
+				np = leftOf(dp, false);
+				backside=1;
+				goto tryagain; // Try again!
+			}
 			// No brace to match
-			return np;
+			return dp;
 	}
 
 	ulong match;
@@ -450,10 +458,16 @@ DPos DocImpl::findMatchingBrace( const DPos &dp ) const
 			if( match == 0 ) // same amount of () => done!
 				break;
 		}
-
 	}
 
-	return match==0? np: dp;
+	if( match == 0 )
+	{
+		if( !backside ) // |(abc) => (abc)| (abc|) => (|abc)
+			return rightOf(np, false);
+		return np;
+	}
+
+	return dp;
 }
 
 unicode DocImpl::findNextBrace( DPos &dp, unicode q, unicode p ) const
@@ -476,8 +490,10 @@ unicode DocImpl::findPrevBrace( DPos &dp, unicode q, unicode p ) const
 {
 	// Loop back word by word to find the previous brace,
 	// specified in the brace parameters.
-	while( (dp=leftOf( dp , true )) > DPos(0,0) )
+	DPos np;
+	while( (np=leftOf( dp , true )) < dp )
 	{
+		dp = np;
 		unicode ch = text_[dp.tl].str()[dp.ad];
 		if( ch == q || ch == p )
 			return ch;
