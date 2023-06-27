@@ -363,6 +363,7 @@ void CurEvHandler::on_key( Cursor& cur, int vk, bool sft, bool ctl )
 	case VK_BACK:	cur.DelBack( ctl );		break;
 	case VK_INSERT: cur.SetInsMode(!cur.isInsMode()); break;
 	case VK_TAB:    cur.Tabulation( sft );	break;
+	case 'B':       if(ctl) cur.GotoMatchingBrace( sft );
 	}
 }
 
@@ -1131,23 +1132,15 @@ void Cursor::Right( bool wide, bool select )
 }
 
 // Go to the matching brace
-#if 0
-void Cursor::GotoMatchingBrace()
+void Cursor::GotoMatchingBrace( bool select )
 {
-    unicode p[8];
-    VPos np;
-    static const unicode *braces=L"()[]{}<>";
-    if( cur_!=sel_ ) return;
-	DPos ssel = DPos(cur.tl, cur.ad); // only next char.
-	rightOf(&ssel, 0) // Next char
-//	ulong len = doc_.getRangeLength( cur_, ssel )+1;
-	doc_.getText( p, cur_, &ssel );
-	if (*p == '(')
-	{
+	VPos np;
+	if( cur_!=sel_ && !select )
+		np = Max( cur_, sel_ ), np.rx = np.vx;
 
-	}
+	view_.ConvDPosToVPos( doc_.findMatchingBrace( cur_ ), &np, &cur_ );
+	MoveTo( np, select );
 }
-#endif
 
 //-------------------------------------------------------------------------
 // ƒ}ƒEƒX“ü—Í‚Ö‚Ì‘Î‰ž

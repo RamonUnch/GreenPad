@@ -398,7 +398,102 @@ DPos DocImpl::wordStartOf( const DPos& dp ) const
 	}
 }
 
+DPos DocImpl::findMatchingBrace( const DPos &dp ) const
+{
+	// Currently selected character.
+	DPos np=dp;
+	bool backward, backside=0;
+	unicode q, p;
+	tryagain:
+	backward = 0;
+	q = text_[np.tl].str()[np.ad];
+	switch( q )
+	{
+		case '(': p=')'; backward=0; break;
+		case '[': p=']'; backward=0; break;
+		case '{': p='}'; backward=0; break;
+		case '<': p='>'; backward=0; break;
 
+		case ')': p='('; backward=1; break;
+		case ']': p='['; backward=1; break;
+		case '}': p='{'; backward=1; break;
+		case '>': p='<'; backward=1; break;
+		default:
+			if( !backside )
+			{	// Check if the parenthesis is at the backside of dp.
+				np = leftOf(dp, false);
+				backside=1;
+				goto tryagain; // Try again!
+			}
+			// No brace to match
+			return dp;
+	}
+
+	ulong match;
+	unicode b;
+	if( !backward )
+	{
+		match = 1; // We already have 1 opening parenthesis
+		while( b = findNextBrace( np, q, p ) ) // q='(' p=')'
+		{
+			// Keep track of opening/closing parenthesis
+			match += 2*(b==q) - 1; // b=='(' ++ else --
+			if( match == 0 ) // same amount of () => done!
+				break;
+		}
+	}
+	else
+	{
+		match = 1; // We already have 1 closing parenthesis
+		while( b = findPrevBrace( np, q, p ) ) // q=')' p='('
+		{
+			// Keep track of opening/closing parenthesis
+			match += 2*(b==q) - 1; // b==')' ++ else --
+			if( match == 0 ) // same amount of () => done!
+				break;
+		}
+	}
+
+	if( match == 0 )
+	{
+		if( !backside ) // |(abc) => (abc)| (abc|) => (|abc)
+			return rightOf(np, false);
+		return np;
+	}
+
+	return dp;
+}
+
+unicode DocImpl::findNextBrace( DPos &dp, unicode q, unicode p ) const
+{
+	// Loop forward word by word to find the next brace
+	// specified in the brace parameter.
+	DPos np;
+
+	while( (np=rightOf( dp , true )) > dp )
+	{
+		dp = np;
+		unicode ch = text_[dp.tl].str()[dp.ad];
+		if( ch == q || ch == p )
+			return ch;
+	}
+	return L'\0';
+}
+
+unicode DocImpl::findPrevBrace( DPos &dp, unicode q, unicode p ) const
+{
+	// Loop back word by word to find the previous brace,
+	// specified in the brace parameters.
+	DPos np;
+	while( (np=leftOf( dp , true )) < dp )
+	{
+		dp = np;
+		unicode ch = text_[dp.tl].str()[dp.ad];
+		if( ch == q || ch == p )
+			return ch;
+	}
+	return L'\0';
+}
 
 //-------------------------------------------------------------------------
 // ‘}“üEíœ“™‚Ìì‹Æ—pŠÖ”ŒQ, A set of functions for working with ins, del, etc.

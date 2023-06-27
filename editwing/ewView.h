@@ -245,6 +245,7 @@ public:
 	void End( bool wide, bool select );
 	void PageUp( bool select );
 	void PageDown( bool select );
+	void GotoMatchingBrace( bool select );
 
 	// テキスト書き換え
 	void Input( const unicode* str, ulong len );
