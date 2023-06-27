@@ -34,7 +34,7 @@ namespace ki {
 //=========================================================================
 
 template<class T>
-class gapbuf : public Object
+class A_WUNUSED gapbuf : public Object
 {
 public:
 
@@ -204,7 +204,7 @@ private:
 //=========================================================================
 
 template<class T>
-class gapbufobj : public gapbuf<T*>
+class A_WUNUSED gapbufobj : public gapbuf<T*>
 {
 public:
 

@@ -22,7 +22,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class Path A_FINAL: public String
+class A_WUNUSED Path A_FINAL: public String
 {
 public:
 

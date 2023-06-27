@@ -63,14 +63,14 @@ const wchar_t *my_lstrcatW(wchar_t *dest, const wchar_t * restrict src)
 inline static
 char *my_lstrkpyA(char *dest, const char * restrict src)
 {
-	for (; (*dest=*src); ++src,++dest) ;	/* then append from src */
+	for (; (*dest=*src); ++src,++dest);
 	return dest;
 }
 
 inline static
 wchar_t *my_lstrkpyW(wchar_t *dest, const wchar_t * restrict src)
 {
-	for (; (*dest=*src); ++src,++dest) ;	/* then append from src */
+	for (; (*dest=*src); ++src,++dest);
 	return dest;
 }
 
@@ -202,7 +202,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class String : public Object
+class A_WUNUSED String : public Object
 {
 public:
 
@@ -266,7 +266,7 @@ public:
 	const wchar_t* ConvToWChar() const;
 	const char* ConvToChar() const;
 
-	//@{ ConvToWCharの返値バッファの解放 //@}
+	//@{ ConvTo(W)Charの返値バッファの解放 //@}
 	void FreeWCMem( const wchar_t* wc ) const;
 	void FreeCMem( const char* str ) const;
 
@@ -473,7 +473,7 @@ struct RawString : public String
 //@}
 //=========================================================================
 
-class RzsString
+class A_WUNUSED RzsString
 {
 public:
 	RzsString( UINT rsrcID );
@@ -489,7 +489,7 @@ private:
 //@}
 //=========================================================================
 
-class SInt2Str
+class A_WUNUSED SInt2Str
 {
 public:
 	SInt2Str( int num )   : str_ ( Int2lStr(buf_, num)   ) {}

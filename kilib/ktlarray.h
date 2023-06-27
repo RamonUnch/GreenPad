@@ -21,7 +21,7 @@ namespace ki {
 //=========================================================================
 
 template <typename T>
-class storage : public Object
+class A_WUNUSED storage : public Object
 {
 public:
 
@@ -117,7 +117,7 @@ private:
 //=========================================================================
 
 template <class T>
-class olist : public Object
+class A_WUNUSED olist : public Object
 {
 private:
 
