@@ -436,11 +436,8 @@ DPos DocImpl::findMatchingBrace( const DPos &dp ) const
 		match = 1; // We already have 1 opening parenthesis
 		while( b = findNextBrace( np, q, p ) ) // q='(' p=')'
 		{
-			if( b == q ) // (
-				match++; // extra opening parenthesis
-			else
-				match--; // closing (reduces count)
-
+			// Keep track of opening/closing parenthesis
+			match += 2*(b==q) - 1; // b=='(' ++ else --
 			if( match == 0 ) // same amount of () => done!
 				break;
 		}
@@ -450,11 +447,8 @@ DPos DocImpl::findMatchingBrace( const DPos &dp ) const
 		match = 1; // We already have 1 closing parenthesis
 		while( b = findPrevBrace( np, q, p ) ) // q=')' p='('
 		{
-			if( b == q )
-				match++; // extra cosing parenthesis
-			else
-				match--; // opening (recduces count)
-
+			// Keep track of opening/closing parenthesis
+			match += 2*(b==q) - 1; // b==')' ++ else --
 			if( match == 0 ) // same amount of () => done!
 				break;
 		}
