@@ -17,7 +17,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class IniFile : public Object
+class A_WUNUSED IniFile : public Object
 {
 public:
 
@@ -52,6 +52,7 @@ public:
 	Path  GetPath ( const TCHAR* key, const TCHAR *defval ) const;
 	//@{ Get String in section //@}
 	String GetStrinSect( const TCHAR* key, const TCHAR* sect, const TCHAR *defval ) const;
+	TCHAR *GetSStrHere(const TCHAR* key, const TCHAR* sect, const TCHAR *defval, TCHAR buf[MAX_PATH]) const;
 
 	//@{ êÆêîílèëÇ´çûÇ› //@}
 	bool PutInt ( const TCHAR* key, int val );

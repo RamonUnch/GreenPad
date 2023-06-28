@@ -87,6 +87,13 @@ String IniFile::GetStrinSect( const TCHAR* key, const TCHAR* sect, const TCHAR *
 	return str;
 }
 
+TCHAR *IniFile::GetSStrHere(const TCHAR* key, const TCHAR* sect, const TCHAR *defval, TCHAR buf[MAX_PATH]) const
+{
+	buf[0] = TEXT('\0');
+	::GetPrivateProfileString( sect, key, defval, buf, MAX_PATH, iniName_ );
+	return buf;
+}
+
 Path IniFile::GetPath( const TCHAR* key, const TCHAR *defval ) const
 {
 #ifdef _UNICODE
