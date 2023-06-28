@@ -44,9 +44,6 @@ public:
 	//@{ 設定ダイアログ表示 //@}
 	bool DoDialog( const ki::Window& parent );
 
-	//@{ 生のiniファイル操作オブジェクトを取得 //@}
-	ki::IniFile& getImpl();
-
 public:
 
 	//@{ Undo回数制限値 //@}
@@ -124,7 +121,6 @@ public:
 
 private:
 
-	ki::IniFile ini_;
 	CharSetList charSets_;
 
 	// 全体的な設定
@@ -227,7 +223,7 @@ inline const editwing::VConfig& ConfigManager::vConfig() const
 
 inline ki::Path ConfigManager::kwdFile() const
 	{
-	ki::Path p = ki::Path(ki::Path::Exe);
+	ki::Path p(ki::Path::Exe);
 	p += TEXT("type\\");
 	p += curDt_->kwdfile;
 	return p;
@@ -247,9 +243,6 @@ inline void ConfigManager::ShowStatusBarSwitch()
 
 inline bool ConfigManager::countByUnicode() const
 	{ return countbyunicode_; }
-
-inline ki::IniFile& ConfigManager::getImpl()
-	{ return ini_; }
 
 inline CharSetList& ConfigManager::GetCharSetList()
 	{ return charSets_; }

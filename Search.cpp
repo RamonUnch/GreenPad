@@ -30,10 +30,11 @@ SearchManager::~SearchManager()
 		delete searcher_;
 }
 
-void SearchManager::SaveToINI( ki::IniFile& ini )
+void SearchManager::SaveToINI()
 {
 	if (inichanged_)
 	{
+		ki::IniFile ini;
 		inichanged_ = false;
 		ini.SetSectionAsUserName();
 		ini.PutBool( TEXT("SearchIgnoreCase"), bIgnoreCase_ );
@@ -41,8 +42,9 @@ void SearchManager::SaveToINI( ki::IniFile& ini )
 	}
 }
 
-void SearchManager::LoadFromINI( ki::IniFile& ini )
+void SearchManager::LoadFromINI()
 {
+	ki::IniFile ini;
 	inichanged_ = false;
 	ini.SetSectionAsUserName();
 	bIgnoreCase_ = ini.GetBool( TEXT("SearchIgnoreCase"), bIgnoreCase_ );
@@ -163,6 +165,12 @@ bool SearchManager::on_command( UINT cmd, UINT id, HWND ctrl )
 	{
 		return false;
 	}
+	return true;
+}
+
+bool SearchManager::on_cancel()
+{
+	UpdateData();
 	return true;
 }
 

@@ -74,10 +74,10 @@ public:
 		{ return searcher_ != NULL; }
 
 	//@{ ê›íËSave //@}
-	void SaveToINI( ki::IniFile& ini );
+	void SaveToINI();
 
 	//@{ ê›íËLoad //@}
-	void LoadFromINI( ki::IniFile& ini );
+	void LoadFromINI();
 
 	//@{ ãÍì˜ÇÃçÙ^^; //@}
 	bool TrapMsg(MSG* msg);
@@ -98,6 +98,7 @@ private:
 	void on_init() override;
 	void on_destroy() override;
 	bool on_command( UINT cmd, UINT id, HWND ctrl ) override;
+	bool on_cancel() override;
 
 	void on_findnext();
 	void on_findprev();

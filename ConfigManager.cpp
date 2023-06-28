@@ -254,10 +254,8 @@ private:
 			cfg_.dtList_.begin()->name.c_str() );
 		for( DTI i=myDtl_.begin(), e=myDtl_.end(); i!=e; ++i,++nfd_cnt )
 		{
-			SendMsgToItem( IDC_DOCTYPELIST, LB_ADDSTRING,
-				i->name.c_str() );
-			SendMsgToItem( IDC_NEWDT, CB_ADDSTRING,
-				i->name.c_str() );
+			SendMsgToItem( IDC_DOCTYPELIST, LB_ADDSTRING, i->name.c_str() );
+			SendMsgToItem( IDC_NEWDT, CB_ADDSTRING, i->name.c_str() );
 			if( i->name == cfg_.newfileDoctype_ )
 				nfd_idx = nfd_cnt;
 		}
@@ -265,11 +263,12 @@ private:
 
 		FindFile f;
 		WIN32_FIND_DATA fd;
-		f.Begin( (Path(Path::Exe)+=TEXT("type\\*.kwd")).c_str() );
+		Path exepath(Path::Exe);
+		f.Begin( (exepath + TEXT("type\\*.kwd")).c_str() );
 		SendMsgToItem( IDC_PAT_KWD, CB_ADDSTRING, TEXT("") );
 		while( f.Next(&fd) )
 			SendMsgToItem( IDC_PAT_KWD, CB_ADDSTRING, fd.cFileName );
-		f.Begin( (Path(Path::Exe)+=TEXT("type\\*.lay")).c_str() );
+		f.Begin( (exepath + TEXT("type\\*.lay")).c_str() );
 		while( f.Next(&fd) )
 			SendMsgToItem( IDC_PAT_LAY, CB_ADDSTRING, fd.cFileName );
 
@@ -476,7 +475,7 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
   // ２．*.layファイルからの読み込み
 	// MessageBox(NULL, dt->layfile.c_str(), TEXT("Loading"), 0);
 	TextFileR tf( UTF16LE );
-	if( tf.Open( (Path(Path::Exe)+TEXT("type\\")+dt->layfile).c_str() ) )
+	if( tf.Open( ((Path(Path::Exe)+=TEXT("type\\"))+=dt->layfile).c_str() ) )
 	{
 		String fontname;
 		int    fontsize=0;
@@ -591,6 +590,7 @@ static const TCHAR s_sharedConfigSection[] = TEXT("SharedConfig");
 
 void ConfigManager::LoadIni()
 {
+	ki::IniFile ini_;
 	inichanged_=0;
 	{
 		FileW fp;
@@ -785,27 +785,23 @@ void ConfigManager::LoadIni()
 	// 文書タイプリストの０番以外のクリア
 	dtList_.DelAfter( ++dtList_.begin() );
 
-	String s, r;
-
-	for( int i=1; true; ++i )
+	TCHAR buf[MAX_PATH];
+	TCHAR dctype[MAX_PATH];
+	DocType d;
+	for( uint i=1; i<1024; ++i )
 	{
 		// 文書タイプ名を読み込み
 		TCHAR tmp[INT_DIGITS+1] ;
-		// ini_.SetSection( TEXT("DocType") );
-		r = ini_.GetStrinSect( Int2lStr(tmp, i), TEXT("DocType"), TEXT("") );
-		if( r.len() == 0 )
+		ini_.GetSStrHere( Int2lStr(tmp, i), TEXT("DocType"), TEXT(""), dctype );
+		if( !dctype[0] )
 			break;
 
 		// その文書タイプを実際に読み込み
-		//ini_.SetSection( r.c_str() );
-		{
-			DocType d;
-			d.name      = r;
-			d.layfile   = ini_.GetStrinSect( TEXT("Layout"),  r.c_str(), TEXT("default.lay"));
-			d.kwdfile   = ini_.GetStrinSect( TEXT("Keyword"), r.c_str(), TEXT("") );
-			d.pattern   = ini_.GetStrinSect( TEXT("Pattern"), r.c_str(), TEXT("") );
-			dtList_.Add( d );
-		}
+		d.name      = dctype;
+		d.layfile   = ini_.GetSStrHere( TEXT("Layout"),  dctype, TEXT("default.lay"), buf);
+		d.kwdfile   = ini_.GetSStrHere( TEXT("Keyword"), dctype, TEXT(""), buf );
+		d.pattern   = ini_.GetSStrHere( TEXT("Pattern"), dctype, TEXT(""), buf );
+		dtList_.Add( d );
 	}
 	LOGGER( "ConfigManager::LoadIni() LOADED!" );
 }
@@ -816,6 +812,7 @@ void ConfigManager::SaveIni()
 		return;
 	inichanged_=0;
 
+	ki::IniFile ini_;
 	if( Path::isReadOnly( ini_.getName() ) )
 		return;
 
@@ -901,18 +898,19 @@ bool ConfigManager::AddMRU( const ki::Path& fname )
 		mru_[0] = fname;
 	}
 
+	ki::IniFile ini;
 	// iniへ保存
 	{ // Restrict Mutex context
 		Mutex mx(s_mrulock);
 		if( mx.isLocked() )
 		{
-			ini_.SetSectionAsUserName();
+			ini.SetSectionAsUserName();
 			TCHAR key[3+INT_DIGITS+1];
 			my_lstrcpy( key, TEXT("MRU") );
 			for( int i=0; i<mrus_; ++i )
 			{
 				my_lstrcpy( key+3, SInt2Str(i+1).c_str() );
-				ini_.PutPath( key, mru_[i] );
+				ini.PutPath( key, mru_[i] );
 			}
 		}
 	}
@@ -924,18 +922,19 @@ int ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 {
 	if (!mrus_) return 0; // Nothing to do
 
+	ki::IniFile ini;
 	// iniから読み込み
 	{ // Restrict Mutex context
 		Mutex mx(s_mrulock);
 		if( mx.isLocked() )
 		{
-			ini_.SetSectionAsUserName();
+			ini.SetSectionAsUserName();
 			TCHAR key[3+INT_DIGITS+1];
 			my_lstrcpy( key, TEXT("MRU") );
 			for( int i=0; i<mrus_; ++i )
 			{
 				my_lstrcpy( key+3, SInt2Str(i+1).c_str() );
-				mru_[i] = ini_.GetPath(key, TEXT("") );
+				mru_[i] = ini.GetPath(key, TEXT("") );
 			}
 		}
 	}
