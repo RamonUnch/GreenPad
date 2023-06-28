@@ -161,7 +161,7 @@ void Cursor::AddHandler( CurEvHandler* ev )
 	pEvHan_ = ev;
 }
 
-void Cursor::DelHandler( CurEvHandler* ev )
+void Cursor::DelHandler( const CurEvHandler* ev )
 {
 	if( ev == pEvHan_ )
 		pEvHan_ = &defaultHandler_;

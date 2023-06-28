@@ -231,7 +231,7 @@ public:
 	Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc );
 	~Cursor();
 	void AddHandler( CurEvHandler* ev );
-	void DelHandler( CurEvHandler* ev );
+	void DelHandler( const CurEvHandler* ev );
 
 	// ƒJ[ƒ\ƒ‹ˆÚ“®
 	void MoveCur( const DPos& dp, bool select );
