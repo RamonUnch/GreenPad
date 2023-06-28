@@ -227,7 +227,7 @@ inline const editwing::VConfig& ConfigManager::vConfig() const
 
 inline ki::Path ConfigManager::kwdFile() const
 	{
-	ki::Path p = ki::Path(ki::Path::Exe);
+	ki::Path p(ki::Path::Exe);
 	p += TEXT("type\\");
 	p += curDt_->kwdfile;
 	return p;
