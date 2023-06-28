@@ -859,7 +859,7 @@ void GreenPadWnd::on_print()
 
 void GreenPadWnd::on_exit()
 {
-	search_.SaveToINI( cfg_.getImpl() );
+	search_.SaveToINI();
 	if( AskToSave() )
 		Destroy();
 }
@@ -1721,7 +1721,7 @@ void GreenPadWnd::on_create( CREATESTRUCT* cs )
 
 	LOGGER("GreenPadWnd::on_create halfway");
 
-	search_.LoadFromINI( cfg_.getImpl() );
+	search_.LoadFromINI();
 	SetupSubMenu();
 	SetupMRUMenu();
 

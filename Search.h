@@ -74,10 +74,10 @@ public:
 		{ return searcher_ != NULL; }
 
 	//@{ İ’èSave //@}
-	void SaveToINI( ki::IniFile& ini );
+	void SaveToINI();
 
 	//@{ İ’èLoad //@}
-	void LoadFromINI( ki::IniFile& ini );
+	void LoadFromINI();
 
 	//@{ ‹ê“÷‚Ìô^^; //@}
 	bool TrapMsg(MSG* msg);

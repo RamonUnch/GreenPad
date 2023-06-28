@@ -590,6 +590,7 @@ static const TCHAR s_sharedConfigSection[] = TEXT("SharedConfig");
 
 void ConfigManager::LoadIni()
 {
+	ki::IniFile ini_;
 	inichanged_=0;
 	{
 		FileW fp;
@@ -811,6 +812,7 @@ void ConfigManager::SaveIni()
 		return;
 	inichanged_=0;
 
+	ki::IniFile ini_;
 	if( Path::isReadOnly( ini_.getName() ) )
 		return;
 
@@ -896,18 +898,19 @@ bool ConfigManager::AddMRU( const ki::Path& fname )
 		mru_[0] = fname;
 	}
 
+	ki::IniFile ini;
 	// ini‚Ö•Û‘¶
 	{ // Restrict Mutex context
 		Mutex mx(s_mrulock);
 		if( mx.isLocked() )
 		{
-			ini_.SetSectionAsUserName();
+			ini.SetSectionAsUserName();
 			TCHAR key[3+INT_DIGITS+1];
 			my_lstrcpy( key, TEXT("MRU") );
 			for( int i=0; i<mrus_; ++i )
 			{
 				my_lstrcpy( key+3, SInt2Str(i+1).c_str() );
-				ini_.PutPath( key, mru_[i] );
+				ini.PutPath( key, mru_[i] );
 			}
 		}
 	}
@@ -919,18 +922,19 @@ int ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 {
 	if (!mrus_) return 0; // Nothing to do
 
+	ki::IniFile ini;
 	// ini‚©‚ç“Ç‚Ýž‚Ý
 	{ // Restrict Mutex context
 		Mutex mx(s_mrulock);
 		if( mx.isLocked() )
 		{
-			ini_.SetSectionAsUserName();
+			ini.SetSectionAsUserName();
 			TCHAR key[3+INT_DIGITS+1];
 			my_lstrcpy( key, TEXT("MRU") );
 			for( int i=0; i<mrus_; ++i )
 			{
 				my_lstrcpy( key+3, SInt2Str(i+1).c_str() );
-				mru_[i] = ini_.GetPath(key, TEXT("") );
+				mru_[i] = ini.GetPath(key, TEXT("") );
 			}
 		}
 	}
