@@ -462,7 +462,7 @@ private:
 private:
 
 	void DrawLNA( const VDrawInfo& v, Painter& p );
-	void DrawTXT( const VDrawInfo v, Painter& p );
+	void DrawTXT( const VDrawInfo& v, Painter& p );
 	void Inv( int y, int xb, int xe, Painter& p );
 
 	void CalcEveryLineWidth();
