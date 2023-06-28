@@ -185,10 +185,10 @@ struct rUtf1 A_FINAL: public rBasicUTF
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
 
-		if     ( *fb >= 0xFC /*&& *fb <= 0xFF*/) { fb+=5; }
-		else if( *fb >= 0xF6 /*&& *fb <= 0xFB*/) { fb+=3; }
-		else if( *fb >= 0xA0 /*&& *fb <= 0xF5*/) { fb+=2; }
-		else /*if( *fb <= 0x9F )*/               {  ++fb; }
+		if     ( *fb <= 0x9F ) { fb += 1; } /* 00-9F */
+		else if( *fb <= 0xF5 ) { fb += 2; } /* A0-F5 */
+		else if( *fb <= 0xFB ) { fb += 3; } /* F6-FB */
+		else /*if(*fb<= 0xFF)*/{ fb += 5; } /* FC-FF */
 	}
 	unicode PeekC() override
 	{
@@ -201,11 +201,11 @@ struct rUtf1 A_FINAL: public rBasicUTF
 			return (unicode)ch;
 		}
 
-		if     ( *fb <= 0x9F )                    { ch = (*fb); }
-		else if( *fb == 0xA0 )                    { ch = (*(fb+1)); }
-		else if(/**fb >= 0xA1 &&*/ *fb <= 0xF5 )  { ch = ((*fb-0xA1) * 0xBE + conv(*(fb+1)) + 0x100); }
-		else if(/**fb >= 0xF6 &&*/ *fb <= 0xFB )  { ch = ((*fb-0xF6) * 0x8D04 + conv(*(fb+1)) * 0xBE + conv(*(fb+2)) + 0x4016); }
-		else /*if( *fb >= 0xFC && *fb <= 0xFF )*/ { ch = ((*fb-0xFC) * 0x4DAD6810 + conv(*(fb+1)) * 0x68A8F8 + conv(*(fb+2)) * 0x8D04 + conv(*(fb+3)) * 0xBE + conv(*(fb+4)) + 0x38E2E); }
+		if     ( *fb <= 0x9F ) { ch = (*fb); } /* 00-9F */
+		else if( *fb == 0xA0 ) { ch = (*(fb+1)); } /* A0 */
+		else if( *fb <= 0xF5 ) { ch = ((*fb-0xA1) * 0xBE + conv(*(fb+1)) + 0x100); }
+		else if( *fb <= 0xFB ) { ch = ((*fb-0xF6) * 0x8D04 + conv(*(fb+1)) * 0xBE + conv(*(fb+2)) + 0x4016); }
+		else/*if(*fb <= 0xFF)*/{ ch = ((*fb-0xFC) * 0x4DAD6810 + conv(*(fb+1)) * 0x68A8F8 + conv(*(fb+2)) * 0x8D04 + conv(*(fb+3)) * 0xBE + conv(*(fb+4)) + 0x38E2E); }
 
 		if( ch > 0x10000 )
 		{
