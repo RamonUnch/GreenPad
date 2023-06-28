@@ -1358,10 +1358,12 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 bool GreenPadWnd::ShowOpenDlg( Path* fn, int* cs )
 {
 	// [Open][Cancel] 開くファイル名指定ダイアログを表示
+	RzsString txtfiles(IDS_TXTFILES);
+	RzsString allfiles(IDS_ALLFILES);
 	const TCHAR *flst[] = {
-		RzsString(IDS_TXTFILES).c_str(),
+		txtfiles.c_str(),
 		cfg_.txtFileFilter().c_str(),
-		RzsString(IDS_ALLFILES).c_str(),
+		allfiles.c_str(),
 		TEXT("*.*")
 	};
 	aarr<TCHAR> filt = OpenFileDlg::ConnectWithNull(flst, countof(flst));
@@ -1499,7 +1501,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 		{
 			if( !networkpath )
 			{
-				String fnerror = fn + RzsString(IDS_NOWRITEACESS).c_str();
+				String fnerror = fn; fnerror += RzsString(IDS_NOWRITEACESS).c_str();
 				if ( IDYES == MsgBox( fnerror.c_str(), RzsString(IDS_OPENERROR).c_str(), MB_YESNO ) )
 				{
 					on_openelevated(fn);
@@ -1570,8 +1572,9 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 bool GreenPadWnd::ShowSaveDlg()
 {
 	// [Save][Cancel] 保存先ファイル名指定ダイアログを表示
+	RzsString allfiles(IDS_ALLFILES);
 	const TCHAR *flst[] = {
-		RzsString(IDS_ALLFILES).c_str(),
+		allfiles.c_str(),
 		TEXT("*.*")
 	};
 	aarr<TCHAR> filt = SaveFileDlg::ConnectWithNull( flst, countof(flst) );
