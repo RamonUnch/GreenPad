@@ -374,7 +374,7 @@ DPos DocImpl::rightOf( const DPos& dp, bool wide ) const
 		if( s >= e )
 			s = e;
 		else if( t==7 || t==0 )
-			while( (f[s]>>5)==0 && s<e )
+			while( s<e && (f[s]>>5)==0 )
 				++s;
 		return DPos( dp.tl, s );
 	}
