@@ -185,10 +185,10 @@ struct rUtf1 A_FINAL: public rBasicUTF
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
 
-		if( *fb >= 0xFC /*&& *fb <= 0xFF */ ) { fb+=5; }
-		else if( *fb >= 0xF6 && *fb <= 0xFB ) { fb+=3; }
-		else if( *fb >= 0xA0 && *fb <= 0xF5 ) { fb+=2; }
-		else /*if( *fb <= 0x9F )*/            {  ++fb; }
+		if     ( *fb >= 0xFC /*&& *fb <= 0xFF*/) { fb+=5; }
+		else if( *fb >= 0xF6 /*&& *fb <= 0xFB*/) { fb+=3; }
+		else if( *fb >= 0xA0 /*&& *fb <= 0xF5*/) { fb+=2; }
+		else /*if( *fb <= 0x9F )*/               {  ++fb; }
 	}
 	unicode PeekC() override
 	{
@@ -201,10 +201,10 @@ struct rUtf1 A_FINAL: public rBasicUTF
 			return (unicode)ch;
 		}
 
-		if( *fb <= 0x9F )                         { ch = (*fb); }
+		if     ( *fb <= 0x9F )                    { ch = (*fb); }
 		else if( *fb == 0xA0 )                    { ch = (*(fb+1)); }
-		else if( *fb >= 0xA1 && *fb <= 0xF5 )     { ch = ((*fb-0xA1) * 0xBE + conv(*(fb+1)) + 0x100); }
-		else if( *fb >= 0xF6 && *fb <= 0xFB )     { ch = ((*fb-0xF6) * 0x8D04 + conv(*(fb+1)) * 0xBE + conv(*(fb+2)) + 0x4016); }
+		else if(/**fb >= 0xA1 &&*/ *fb <= 0xF5 )  { ch = ((*fb-0xA1) * 0xBE + conv(*(fb+1)) + 0x100); }
+		else if(/**fb >= 0xF6 &&*/ *fb <= 0xFB )  { ch = ((*fb-0xF6) * 0x8D04 + conv(*(fb+1)) * 0xBE + conv(*(fb+2)) + 0x4016); }
 		else /*if( *fb >= 0xFC && *fb <= 0xFF )*/ { ch = ((*fb-0xFC) * 0x4DAD6810 + conv(*(fb+1)) * 0x68A8F8 + conv(*(fb+2)) * 0x8D04 + conv(*(fb+3)) * 0xBE + conv(*(fb+4)) + 0x38E2E); }
 
 		if( ch > 0x10000 )
@@ -578,14 +578,14 @@ struct rSCSU A_FINAL: public rBasicUTF
 				c = GetChar();
 				return (c << 8 | GetChar());
 			}
-			else if (c >= 0xE0 && c <= 0xE7) /* UCn */
+			else if (/*c >= 0xE0 &&*/ c <= 0xE7) /* UCn */
 			{
 				active = c - 0xE0; mode = 0;
 
 				Skip();
 				return PeekC();
 			}
-			else if (c >= 0xE8 && c <= 0xEF) /* UDn */
+			else if (/*c >= 0xE8 &&*/ c <= 0xEF) /* UDn */
 			{
 				SCSU_slide[active=c-0xE8] = SCSU_win[GetChar()]; mode = 0;
 
@@ -755,8 +755,10 @@ namespace
 		const unsigned char *p = (const unsigned char *)sp;
 		if (!(*p & 0x80) || *p == 0x80 || *p == 0xFF || // ASCII, Euro sign, EOF
 			!p[1] || p[1] == 0xFF || p[1] < 0x30) // invalid DBCS
+		{
 			q = p+1;
-		else if (p[1] >= 0x30 && p[1] <= 0x39) // 4BCS leading
+		}
+		else if (/*p[1] >= 0x30 &&*/ p[1] <= 0x39) // 4BCS leading
 		{
 			if (p[2] && p[3] && (p[2] & 0x80) && p[2] != 0x80 && p[2] != 0xFF
 				&& p[3] >= 0x30 && p[3] <= 0x39 &&
@@ -767,7 +769,9 @@ namespace
 				q = p+1;
 		}
 		else // DBCS
+		{
 			q = p+2;
+		}
 		return (char *)( q );
 	}
 
@@ -795,10 +799,10 @@ namespace
 					}
 					else if (i < siz-3)
 					{
-						if (ptr[i+2] > 0x80 && ptr[i+2] < 0xFF &&
-							ptr[i+3] >= 0x30 && ptr[i+3] <= 0x39 &&
-							((ptr[i] >= 0x81 && ptr[i] <= 0x84) ||
-							 (ptr[i] >= 0x90 && ptr[i] <= 0xE3)))
+						if( ptr[i+2] > 0x80 && ptr[i+2] < 0xFF
+						&&  ptr[i+3] >= 0x30 && ptr[i+3] <= 0x39
+						&&((/*ptr[i] >= 0x81 &&*/ ptr[i] <= 0x84)
+							|| (ptr[i] >= 0x90 && ptr[i] <= 0xE3)) )
 						{
 							qbcscnt++;
 							i += 4;
@@ -984,7 +988,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 				i=0;
 				// Fill next_LUT from the double NULL terminated ranges.
 				// s1 e1 s2 e2 s3 e3... 0 0 (Maximum is 5 ranges + 0 0)
-				while( cpnfo.LeadByte[i] && i < MAX_LEADBYTES)
+				while( i < MAX_LEADBYTES && cpnfo.LeadByte[i])
 				{
 					uchar s = cpnfo.LeadByte[i++];
 					uchar e = cpnfo.LeadByte[i++];
@@ -1580,7 +1584,7 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 	static const IID myIID_IMultiLanguage2 = {0xDCCFC164, 0x2B38, 0x11d2, {0xB7, 0xEC, 0x00, 0xC0, 0x4F, 0x8F, 0x5D, 0x9A}};
 	static const CLSID myCLSID_CMultiLanguage = { 0x275c23e2, 0x3747, 0x11d0, {0x9f, 0xea, 0x00,0xaa,0x00,0x3f,0x86,0x46} };
 	HRESULT ret = ::MyCoCreateInstance(myCLSID_CMultiLanguage, NULL, CLSCTX_ALL, myIID_IMultiLanguage2, (LPVOID*)&lang );
-	if( S_OK == ret )
+	if( S_OK == ret && lang != NULL )
 	{
 		int detectEncCount = 5;
 		DetectEncodingInfo detectEnc[5];
@@ -1640,8 +1644,7 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 //		if (cs == 20127) cs = 0; // 20127 == ASCII, 0 = unknown
 		if (cs == 65000) cs = ASCIICP; // 65000 == UTF-7, let's disable misdetecting as UTF-7
 
-		if (lang)
-			lang->Release();
+		lang->Release();
 	}
 #endif //NO_MLANG
 	return cs;
@@ -1797,7 +1800,13 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 // functions for detecting BOM-less UTF-16/32
 bool TextFileR::IsNonUnicodeRange(qbyte u) const
 { // Unicode 14.0 based, Updated to Unicode 15.0
-	return
+	if( u < 0x012550 ) // Quick most likely check.
+		return (0x002FE0 <= u && u < 0x002FF0); // Small exclusion range in BMP
+
+	if( u > 0x1100000 ) // Beyond max possible codepoint
+		return true;
+
+	return // All ranges (ranges smaller than 1000 are commented out)
 		//	U+0000..U+007F	Basic Latin
 		//	U+0080..U+00FF	Latin-1 Supplement
 		//	U+0100..U+017F	Latin Extended-A
@@ -1904,7 +1913,7 @@ bool TextFileR::IsNonUnicodeRange(qbyte u) const
 		//	U+2E00..U+2E7F	Supplemental Punctuation
 		//	U+2E80..U+2EFF	CJK Radicals Supplement
 		//	U+2F00..U+2FDF	Kangxi Radicals
-		(0x002FE0 <= u && u < 0x002FF0) ||
+//		(0x002FE0 <= u && u < 0x002FF0) || // 16
 		//	U+2FF0..U+2FFF	Ideographic Description Characters
 		//	U+3000..U+303F	CJK Symbols and Punctuation
 		//	U+3040..U+309F	Hiragana
@@ -1969,7 +1978,7 @@ bool TextFileR::IsNonUnicodeRange(qbyte u) const
 		//	U+10140..U+1018F	Ancient Greek Numbers
 		//	U+10190..U+101CF	Ancient Symbols
 		//	U+101D0..U+101FF	Phaistos Disc
-		(0x010200 <= u && u < 0x010280) ||
+//		(0x010200 <= u && u < 0x010280) || //128
 		//	U+10280..U+1029F	Lycian
 		//	U+102A0..U+102DF	Carian
 		//	U+102E0..U+102FF	Coptic Epact Numbers
@@ -1978,7 +1987,7 @@ bool TextFileR::IsNonUnicodeRange(qbyte u) const
 		//	U+10350..U+1037F	Old Permic
 		//	U+10380..U+1039F	Ugaritic
 		//	U+103A0..U+103DF	Old Persian
-		(0x0103E0 <= u && u < 0x010400) ||
+//		(0x0103E0 <= u && u < 0x010400) || // 32
 		//	U+10400..U+1044F	Deseret
 		//	U+10450..U+1047F	Shavian
 		//	U+10480..U+104AF	Osmanya
@@ -1986,35 +1995,35 @@ bool TextFileR::IsNonUnicodeRange(qbyte u) const
 		//	U+10500..U+1052F	Elbasan
 		//	U+10530..U+1056F	Caucasian Albanian
 		//	U+10570..U+105BF	Vithkuqi
-		(0x0105C0 <= u && u < 0x010600) ||
+//		(0x0105C0 <= u && u < 0x010600) || //64
 		//	U+10600..U+1077F	Linear A
 		//	U+10780..U+107BF	Latin Extended-F
 		//	U+10800..U+1083F	Cypriot Syllabary
 		//	U+10840..U+1085F	Imperial Aramaic
 		//	U+10860..U+1087F	Palmyrene
 		//	U+10880..U+108AF	Nabataean
-		(0x0108B0 <= u && u < 0x0108E0) ||
+//		(0x0108B0 <= u && u < 0x0108E0) || //48
 		//	U+108E0..U+108FF	Hatran
 		//	U+10900..U+1091F	Phoenician
 		//	U+10920..U+1093F	Lydian
-		(0x010940 <= u && u < 0x010980) ||
+//		(0x010940 <= u && u < 0x010980) || //64
 		//	U+10980..U+1099F	Meroitic Hieroglyphs
 		//	U+109A0..U+109FF	Meroitic Cursive
 		//	U+10A00..U+10A5F	Kharoshthi
 		//	U+10A60..U+10A7F	Old South Arabian
 		//	U+10A80..U+10A9F	Old North Arabian
-		(0x010AA0 <= u && u < 0x010AC0) ||
+//		(0x010AA0 <= u && u < 0x010AC0) || // 32
 		//	U+10AC0..U+10AFF	Manichaean
 		//	U+10B00..U+10B3F	Avestan
 		//	U+10B40..U+10B5F	Inscriptional Parthian
 		//	U+10B60..U+10B7F	Inscriptional Pahlavi
 		//	U+10B80..U+10BAF	Psalter Pahlavi
-		(0x010BB0 <= u && u < 0x010C00) ||
+//		(0x010BB0 <= u && u < 0x010C00) || // 80
 		//	U+10C00..U+10C4F	Old Turkic
-		(0x010C50 <= u && u < 0x010C80) ||
+//		(0x010C50 <= u && u < 0x010C80) || // 48
 		//	U+10C80..U+10CFF	Old Hungarian
 		//	U+10D00..U+10D3F	Hanifi Rohingya
-		(0x010D40 <= u && u < 0x010E60) ||
+//		(0x010D40 <= u && u < 0x010E60) || // 288
 		//	U+10E60..U+10E7F	Rumi Numeral Symbols
 		//	U+10E80..U+10EBF	Yezidi
 		//	U+10EC0..U+10EFF	Arabic Extended-C (Uni 15.0)
@@ -2031,115 +2040,115 @@ bool TextFileR::IsNonUnicodeRange(qbyte u) const
 		//	U+11180..U+111DF	Sharada
 		//	U+111E0..U+111FF	Sinhala Archaic Numbers
 		//	U+11200..U+1124F	Khojki
-		(0x011250 <= u && u < 0x011280) ||
+//		(0x011250 <= u && u < 0x011280) || // 48
 		//	U+11280..U+112AF	Multani
 		//	U+112B0..U+112FF	Khudawadi
 		//	U+11300..U+1137F	Grantha
-		(0x011380 <= u && u < 0x011400) ||
+//		(0x011380 <= u && u < 0x011400) || //128
 		//	U+11400..U+1147F	Newa
 		//	U+11480..U+114DF	Tirhuta
-		(0x0114E0 <= u && u < 0x011580) ||
+//		(0x0114E0 <= u && u < 0x011580) || //160
 		//	U+11580..U+115FF	Siddham
 		//	U+11600..U+1165F	Modi
 		//	U+11660..U+1167F	Mongolian Supplement
 		//	U+11680..U+116CF	Takri
-		(0x0116D0 <= u && u < 0x011700) ||
+//		(0x0116D0 <= u && u < 0x011700) || //48
 		//	U+11700..U+1174F	Ahom
-		(0x011750 <= u && u < 0x011800) ||
+//		(0x011750 <= u && u < 0x011800) || // 176
 		//	U+11800..U+1184F	Dogra
-		(0x011850 <= u && u < 0x0118A0) ||
+//		(0x011850 <= u && u < 0x0118A0) || // 80
 		//	U+118A0..U+118FF	Warang Citi
 		//	U+11900..U+1195F	Dives Akuru
-		(0x011960 <= u && u < 0x0119A0) ||
+//		(0x011960 <= u && u < 0x0119A0) || // 64
 		//	U+119A0..U+119FF	Nandinagari
 		//	U+11A00..U+11A4F	Zanabazar Square
 		//	U+11A50..U+11AAF	Soyombo
 		//	U+11AB0..U+11ABF	Unified Canadian Aboriginal Syllabics Extended-A
 		//	U+11AC0..U+11AFF	Pau Cin Hau
 		//	U+11B00..U+11B5F	Devanagari Extended-A (Uni 15.0)
-		(0x011B60 <= u && u < 0x011C00) ||
+//		(0x011B60 <= u && u < 0x011C00) || // 160
 		//	U+11C00..U+11C6F	Bhaiksuki
 		//	U+11C70..U+11CBF	Marchen
-		(0x011CC0 <= u && u < 0x011D00) ||
+//		(0x011CC0 <= u && u < 0x011D00) || // 64
 		//	U+11D00..U+11D5F	Masaram Gondi
 		//	U+11D60..U+11DAF	Gunjala Gondi
-		(0x011DB0 <= u && u < 0x011EE0) ||
+//		(0x011DB0 <= u && u < 0x011EE0) || // 304
 		//	U+11EE0..U+11EFF	Makasar
 		//	U+11F00..U+11F5F	Kawi (Uni 15.0)
-		(0x011F60 <= u && u < 0x011FB0) ||
+//		(0x011F60 <= u && u < 0x011FB0) || // 80
 		//	U+11FB0..U+11FBF	Lisu Supplement
 		//	U+11FC0..U+11FFF	Tamil Supplement
 		//	U+12000..U+123FF	Cuneiform
 		//	U+12400..U+1247F	Cuneiform Numbers and Punctuation
 		//	U+12480..U+1254F	Early Dynastic Cuneiform
-		(0x012550 <= u && u < 0x012F90) ||
+		(/*0x012550 <= u &&*/ u < 0x012F90) || // 2624
 		//	U+12F90..U+12FFF	Cypro-Minoan
 		//	U+13000..U+1342F	Egyptian Hieroglyphs
 		//	U+13430..U+1343F	Egyptian Hieroglyph Format Controls
-		(0x013440 <= u && u < 0x014400) ||
+		(0x013440 <= u && u < 0x014400) || // 4032
 		//	U+14400..U+1467F	Anatolian Hieroglyphs
-		(0x014680 <= u && u < 0x016800) ||
+		(0x014680 <= u && u < 0x016800) || // 8576
 		//	U+16800..U+16A3F	Bamum Supplement
 		//	U+16A40..U+16A6F	Mro
 		//	U+16A70..U+16ACF	Tangsa
 		//	U+16AD0..U+16AFF	Bassa Vah
 		//	U+16B00..U+16B8F	Pahawh Hmong
-		(0x016B90 <= u && u < 0x016E40) ||
+//		(0x016B90 <= u && u < 0x016E40) || // 688
 		//	U+16E40..U+16E9F	Medefaidrin
-		(0x016EA0 <= u && u < 0x016F00) ||
+//		(0x016EA0 <= u && u < 0x016F00) || // 96
 		//	U+16F00..U+16F9F	Miao
-		(0x016FA0 <= u && u < 0x016FE0) ||
+//		(0x016FA0 <= u && u < 0x016FE0) || // 64
 		//	U+16FE0..U+16FFF	Ideographic Symbols and Punctuation
 		//	U+17000..U+187FF	Tangut
 		//	U+18800..U+18AFF	Tangut Components
 		//	U+18B00..U+18CFF	Khitan Small Script
 		//	U+18D00..U+18D7F	Tangut Supplement
-		(0x018D80 <= u && u < 0x01AFF0) ||
+		(0x018D80 <= u && u < 0x01AFF0) || // 8816
 		//	U+1AFF0..U+1AFFF	Kana Extended-B
 		//	U+1B000..U+1B0FF	Kana Supplement
 		//	U+1B100..U+1B12F	Kana Extended-A
 		//	U+1B130..U+1B16F	Small Kana Extension
 		//	U+1B170..U+1B2FF	Nushu
-		(0x01B300 <= u && u < 0x01BC00) ||
+		(0x01B300 <= u && u < 0x01BC00) || // 2304
 		//	U+1BC00..U+1BC9F	Duployan
 		//	U+1BCA0..U+1BCAF	Shorthand Format Controls
-		(0x01BCB0 <= u && u < 0x01CF00) ||
+		(0x01BCB0 <= u && u < 0x01CF00) || // 4688
 		//	U+1CF00..U+1CFCF	Znamenny Musical Notation
-		(0x01CFD0 <= u && u < 0x01D000) ||
+//		(0x01CFD0 <= u && u < 0x01D000) || // 48
 		//	U+1D000..U+1D0FF	Byzantine Musical Symbols
 		//	U+1D100..U+1D1FF	Musical Symbols
 		//	U+1D200..U+1D24F	Ancient Greek Musical Notation
-		(0x01D250 <= u && u < 0x01D2C0) ||
+//		(0x01D250 <= u && u < 0x01D2C0) || // 112
 		//	U+1D2C0..U+1D2DF	Kaktovik Numerals (Uni 15.0)
 		//	U+1D2E0..U+1D2FF	Mayan Numerals
 		//	U+1D300..U+1D35F	Tai Xuan Jing Symbols
 		//	U+1D360..U+1D37F	Counting Rod Numerals
-		(0x01D380 <= u && u < 0x01D400) ||
+//		(0x01D380 <= u && u < 0x01D400) || // 128
 		//	U+1D400..U+1D7FF	Mathematical Alphanumeric Symbols
 		//	U+1D800..U+1DAAF	Sutton SignWriting
-		(0x01DAB0 <= u && u < 0x01DF00) ||
+		(0x01DAB0 <= u && u < 0x01DF00) || // 1104
 		//	U+1DF00..U+1DFFF	Latin Extended-G
 		//	U+1E000..U+1E02F	Glagolitic Supplement
 		//	U+1E030..U+1E08F	Cyrillic Extended-D (Uni 15.0)
-		(0x01E090 <= u && u < 0x01E100) ||
+//		(0x01E090 <= u && u < 0x01E100) || // 112
 		//	U+1E100..U+1E14F	Nyiakeng Puachue Hmong
-		(0x01E150 <= u && u < 0x01E290) ||
+//		(0x01E150 <= u && u < 0x01E290) || // 320
 		//	U+1E290..U+1E2BF	Toto
 		//	U+1E2C0..U+1E2FF	Wancho
-		(0x01E300 <= u && u < 0x01E4D0) ||
+//		(0x01E300 <= u && u < 0x01E4D0) || // 464
 		//	U+1E4D0..U+1E4FF	Nag Mundari (Uni 15.0)
-		(0x01E500 <= u && u < 0x01E7E0) ||
+//		(0x01E500 <= u && u < 0x01E7E0) || // 736
 		//	U+1E7E0..U+1E7FF	Ethiopic Extended-B
 		//	U+1E800..U+1E8DF	Mende Kikakui
-		(0x01E8E0 <= u && u < 0x01E900) ||
+//		(0x01E8E0 <= u && u < 0x01E900) || // 32
 		//	U+1E900..U+1E95F	Adlam
-		(0x01E960 <= u && u < 0x01EC70) ||
+//		(0x01E960 <= u && u < 0x01EC70) || // 784
 		//	U+1EC70..U+1ECBF	Indic Siyaq Numbers
-		(0x01ECC0 <= u && u < 0x01ED00) ||
+//		(0x01ECC0 <= u && u < 0x01ED00) || // 64
 		//	U+1ED00..U+1ED4F	Ottoman Siyaq Numbers
-		(0x01ED50 <= u && u < 0x01EE00) ||
+//		(0x01ED50 <= u && u < 0x01EE00) || // 176
 		//	U+1EE00..U+1EEFF	Arabic Mathematical Alphabetic Symbols
-		(0x01EF00 <= u && u < 0x01F000) ||
+//		(0x01EF00 <= u && u < 0x01F000) || // 256
 		//	U+1F000..U+1F02F	Mahjong Tiles
 		//	U+1F030..U+1F09F	Domino Tiles
 		//	U+1F0A0..U+1F0FF	Playing Cards
@@ -2156,25 +2165,25 @@ bool TextFileR::IsNonUnicodeRange(qbyte u) const
 		//	U+1FA00..U+1FA6F	Chess Symbols
 		//	U+1FA70..U+1FAFF	Symbols and Pictographs Extended-A
 		//	U+1FB00..U+1FBFF	Symbols for Legacy Computing
-		(0x01FC00 <= u && u < 0x020000) ||
+		(0x01FC00 <= u && u < 0x020000) || // 1024
 		//	U+20000..U+2A6DF	CJK Unified Ideographs Extension B
 		//	U+2A700..U+2B73F	CJK Unified Ideographs Extension C
 		//	U+2B740..U+2B81F	CJK Unified Ideographs Extension D
 		//	U+2B820..U+2CEAF	CJK Unified Ideographs Extension E
 		//	U+2CEB0..U+2EBEF	CJK Unified Ideographs Extension F
-		(0x02EBF0 <= u && u < 0x02F800) ||
+		(0x02EBF0 <= u && u < 0x02F800) || // 3088
 		//	U+2F800..U+2FA1F	CJK Compatibility Ideographs Supplement
-		(0x02FA20 <= u && u < 0x030000) ||
+		(0x02FA20 <= u && u < 0x030000) || // 1504
 		//	U+30000..U+3134F	CJK Unified Ideographs Extension G
 		//	U+31350..U+323AF	CJK Unified Ideographs Extension H (Uni 15.0)
-		(0x0323B0 <= u && u < 0x0E0000) ||
+		(0x0323B0 <= u && u < 0x0E0000) || // 711760
 		//	U+E0000..U+E007F	Tags
-		(0x0E0080 <= u && u < 0x0E0100) ||
+//		(0x0E0080 <= u && u < 0x0E0100) || // 128
 		//	U+E0100..U+E01EF	Variation Selectors Supplement
-		(0x0E01F0 <= u && u < 0x0F0000) ||
+		(0x0E01F0 <= u && u < 0x0F0000);   // 65040
 		//	U+F0000..U+FFFFF	Supplementary Private Use Area-A
 		//	U+100000..U+10FFFF	Supplementary Private Use Area-B
-		(0x110000 <= u);
+//		(0x110000 <= u); // 4293853183
 }
 bool TextFileR::IsAscii(uchar c) const { return 0x20 <= c && c < 0x80; }
 bool TextFileR::IsSurrogateLead(qbyte w) const { return 0xD800 <= w && w <= 0xDBFF; }
@@ -2256,6 +2265,8 @@ protected:
 		: fp_   (w) {}
 
 	FileW& fp_;
+private:
+	NOCOPY(TextFileWPimpl);
 };
 
 //#define WBUF_SIZE 16 // Test with a super small buffer for debugging.
