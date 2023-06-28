@@ -168,6 +168,12 @@ bool SearchManager::on_command( UINT cmd, UINT id, HWND ctrl )
 	return true;
 }
 
+bool SearchManager::on_cancel()
+{
+	UpdateData();
+	return true;
+}
+
 void SearchManager::on_findnext()
 {
 	UpdateData();
