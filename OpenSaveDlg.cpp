@@ -613,7 +613,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			else
 			{	// Show CP number If selection failed.
 				TCHAR tmp[INT_DIGITS+1];
-				TCHAR *cpnum = (TCHAR*)Int2lStr(tmp, csi&0xfffff);
+				const TCHAR *cpnum = Int2lStr(tmp, csi&0xfffff);
 				cb.Add( cpnum );
 				cb.Select( cpnum );
 			}

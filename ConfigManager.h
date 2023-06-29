@@ -113,7 +113,7 @@ public:
 	int GetWndW() const;
 	int GetWndH() const;
 	bool GetWndM() const;
-	void RememberWnd( ki::Window* wnd );
+	void RememberWnd( const ki::Window* wnd );
 	const RECT *PMargins() const;
 	void SetPrintMargins(const RECT *rc);
 	bool useQuickExit() const;
