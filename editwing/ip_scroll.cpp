@@ -698,6 +698,7 @@ void ViewImpl::UpDown( int dy, bool thumb )
 		dy = -udScr_.nPos;
 	else if( udScr_.nMax+1-(signed)udScr_.nPage < udScr_.nPos+dy )
 		dy = udScr_.nMax+1-udScr_.nPage-udScr_.nPos;
+
 	if( dy==0 )
 		return;
 
@@ -722,7 +723,7 @@ void ViewImpl::UpDown( int dy, bool thumb )
 			while( rl < 0 )
 				rl += rln(--tl);
 		}
-		else if( dy>0 ) // 下へ進む場合
+		else/*if( dy>0 )*/ // 下へ進む場合
 		{
 			// ジャンプ先論理行の行頭へDash!
 			while( rl > 0 )

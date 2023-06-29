@@ -63,7 +63,7 @@ public:
 	void AddHandler( DocEvHandler* eh );
 
 	//@{ イベントハンドラ解除 //@}
-	void DelHandler( DocEvHandler* eh );
+	void DelHandler( const DocEvHandler* eh );
 
 	//@{ キーワード定義切り替え //@}
 	void SetKeyword( const unicode* defbuf, ulong siz=0 );

@@ -41,7 +41,7 @@ void Document::SetKeyword( const unicode* b, ulong s )
 void Document::AddHandler( DocEvHandler* h )
 	{ impl_->AddHandler( h ); }
 
-void Document::DelHandler( DocEvHandler* h )
+void Document::DelHandler( const DocEvHandler* h )
 	{ impl_->DelHandler( h ); }
 
 void Document::OpenFile( TextFileR& t )
@@ -101,7 +101,7 @@ void DocImpl::AddHandler( DocEvHandler* eh )
 	pEvHan_.Add( eh );
 }
 
-void DocImpl::DelHandler( DocEvHandler* eh )
+void DocImpl::DelHandler( const DocEvHandler* eh )
 {
 	// Œã‚ë‚©‚çŒ©‚Äs‚Á‚Äc
 	const int last = pEvHan_.size() - 1;
