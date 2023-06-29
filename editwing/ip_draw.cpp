@@ -531,7 +531,10 @@ void Painter::DrawCTLs( const unicode *str, int len, int x, int y )
 		int x2 = x;
 		for(int j=0 ; j<mx ; ++j )
 		{
-			buf[j] = str[j]<32? ctlMap[str[j]]: ctl2Map[str[j]-127];
+			const unicode ch = str[j];
+			if      (               ch <= 31 ) buf[j] = ctlMap[ch];
+			else if (127 <= ch &&   ch <= 160) buf[j] = ctl2Map[ch-127];
+			else                               buf[j] = ch;
 			x2 += Wc( buf[j] );
 		}
 		#ifdef WIN32S
