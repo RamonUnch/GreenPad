@@ -400,7 +400,7 @@ bool ConfigManager::DoDialog( const ki::Window& parent )
 //-------------------------------------------------------------------------
 
 namespace {
-	static ulong ToByte( unicode* str )
+	static ulong ToByte( const unicode* str )
 	{
 		ulong c = str[0];
 			 if( L'a' <= str[0] ) c -= (L'a' - 10);
@@ -412,11 +412,11 @@ namespace {
 		else                      c -=  L'0';
 		return c;
 	}
-	static ulong GetColor( unicode* str )
+	static ulong GetColor( const unicode* str )
 	{
 		return ToByte(str) + (ToByte(str+2)<<8) + (ToByte(str+4)<<16);
 	}
-	static int GetInt( unicode* str )
+	static int GetInt( const unicode* str )
 	{
 		int c = 0;
 		int s = 1;
@@ -974,7 +974,7 @@ Path ConfigManager::GetMRU( int no ) const
 // ウインドウサイズ復元処理
 //-------------------------------------------------------------------------
 
-void ConfigManager::RememberWnd( ki::Window* wnd )
+void ConfigManager::RememberWnd( const ki::Window* wnd )
 {
 	if( this->rememberWindowPlace_ || this->rememberWindowSize_ )
 	{

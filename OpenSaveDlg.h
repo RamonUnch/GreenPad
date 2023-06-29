@@ -21,9 +21,9 @@ public:
 	struct CsInfo
 	{
 		int                 ID;
+		int               type;
 		const TCHAR*  longName;
 		const TCHAR* shortName;
-		int               type;
 	};
 
 public:
