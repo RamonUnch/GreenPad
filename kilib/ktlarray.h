@@ -122,7 +122,7 @@ class A_WUNUSED olist : public Object
 private:
 
 	struct Node {
-		Node( const T& obj )
+		explicit Node( const T& obj )
 			: obj_ ( obj ), next_( NULL ) {}
 		~Node()
 			{ delete next_; }
@@ -135,7 +135,7 @@ private:
 public:
 
 	struct iterator {
-		iterator( Node* p=NULL ) : ptr_(p)   {}
+		explicit iterator( Node* p=NULL ) : ptr_(p)   {}
 		T& operator*()                       { return ptr_->obj_; }
 		T* operator->() const                { return &ptr_->obj_; }
 		bool operator==( const iterator& i ) { return i.ptr_==ptr_; }

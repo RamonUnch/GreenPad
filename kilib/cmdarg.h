@@ -19,12 +19,12 @@ namespace ki {
 //@}
 //=========================================================================
 
-class Argv : public Object
+class A_WUNUSED Argv : public Object
 {
 public:
 
 	//@{ w’è‚³‚ê‚½•¶š—ñ‚ğ•ªŠ„‚·‚é //@}
-	Argv( const TCHAR* cmd = GetCommandLine() );
+	explicit Argv( const TCHAR* cmd = GetCommandLine() );
 	~Argv() { delete [] buf_; }
 
 	//@{ ˆø”Get //@}

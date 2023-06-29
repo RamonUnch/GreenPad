@@ -28,18 +28,18 @@ static HRESULT MyOleInitialize(LPVOID r)
 //	return 666; // Fail with 666 error.
 //}
 
-typedef void (WINAPI * UnInitialize_funk)( );
 static void MyOleUninitialize( )
 {
+	typedef void (WINAPI * UnInitialize_funk)( );
 	UnInitialize_funk func = (UnInitialize_funk)GetProcAddress(app().hOle32(), "OleUninitialize");
 
 	if (func) { // We got the function!
 		func();
 	}
 }
-typedef HRESULT (WINAPI * CoCreateInstance_funk)(REFCLSID , LPUNKNOWN , DWORD , REFIID , LPVOID *);
 HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv)
 {
+	typedef HRESULT (WINAPI * CoCreateInstance_funk)(REFCLSID , LPUNKNOWN , DWORD , REFIID , LPVOID *);
 	static CoCreateInstance_funk func = (CoCreateInstance_funk)(-1);
 	if (func == (CoCreateInstance_funk)(-1)) // First time!
 		func = (CoCreateInstance_funk)GetProcAddress(app().hOle32(), "CoCreateInstance");
@@ -50,7 +50,7 @@ HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsCont
 		#ifdef WIN32S
 		// On Win32s HRESULTS can return S_OK instead of E_NOTIMPL
 		// and only LastError is set to E_NOTIMPL
-		if (ret == S_OK  && GetLastError() == E_NOTIMPL )
+		if (ret == S_OK  && GetLastError() == (DWORD)E_NOTIMPL )
 			ret = E_NOTIMPL;
 		#endif
 		return ret;

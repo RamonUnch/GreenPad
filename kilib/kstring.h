@@ -12,7 +12,7 @@
 	#define my_lstrlen my_lstrlenW
 	#define my_lstrcmp my_lstrcmpW
 	#define my_lstrchr my_lstrchrW
-	#define my_lstrcat my_lstrcatW
+//	#define my_lstrcat my_lstrcatW
 	#define my_lstrkpy my_lstrkpyW
 #else
 	#define my_lstrcpy my_lstrcpyA
@@ -20,7 +20,7 @@
 	#define my_lstrlen my_lstrlenA
 	#define my_lstrcmp my_lstrcmpA
 	#define my_lstrchr my_lstrchrA
-	#define my_lstrcat my_lstrcatA
+//	#define my_lstrcat my_lstrcatA
 	#define my_lstrkpy my_lstrkpyA
 #endif
 
@@ -42,23 +42,23 @@ BOOL my_IsCharLowerW(wchar_t c);
 const TCHAR *Int2lStr(TCHAR str[INT_DIGITS+1], int n) A_NONNULL;
 const TCHAR *Ulong2lStr(TCHAR str[ULONG_DIGITS+1], ulong n) A_NONNULL;
 
-inline static
-const char *my_lstrcatA(char *dest, const char * restrict src)
-{
-	char *orig=dest;
-	for (; *dest; ++dest) ;	/* go to end of dest */
-	for (; (*dest=*src); ++src,++dest) ;	/* then append from src */
-	return orig;
-}
-
-inline static
-const wchar_t *my_lstrcatW(wchar_t *dest, const wchar_t * restrict src)
-{
-	wchar_t *orig=dest;
-	for (; *dest; ++dest) ;	/* go to end of dest */
-	for (; (*dest=*src); ++src,++dest) ;	/* then append from src */
-	return orig;
-}
+//inline static
+//const char *my_lstrcatA(char *dest, const char * restrict src)
+//{
+//	char *orig=dest;
+//	for (; *dest; ++dest) ; /* go to end of dest */
+//	for (; (*dest=*src); ++src,++dest) ; /* then append from src */
+//	return orig;
+//}
+//
+//inline static
+//const wchar_t *my_lstrcatW(wchar_t *dest, const wchar_t * restrict src)
+//{
+//	wchar_t *orig=dest;
+//	for (; *dest; ++dest) ; /* go to end of dest */
+//	for (; (*dest=*src); ++src,++dest) ; /* then append from src */
+//	return orig;
+//}
 
 inline static
 char *my_lstrkpyA(char *dest, const char * restrict src)
@@ -273,14 +273,14 @@ public:
 public:
 
 	//@{ 次の一文字 //@}
-	static TCHAR*       next( TCHAR* p );
-	static const TCHAR* next( const TCHAR* p );
+	static TCHAR*       next( TCHAR* p ) A_NONNULL;
+	static const TCHAR* next( const TCHAR* p ) A_NONNULL;
 
 	//@{ ２バイト文字の先頭かどうか？ //@}
 	static bool isLB( TCHAR c );
 
 	//@{ 文字列からintへ変換 //@}
-	static int GetInt( const TCHAR* p );
+	static int GetInt( const TCHAR* p ) A_NONNULL;
 
 protected:
 
@@ -306,10 +306,10 @@ private:
 
 private:
 
-	TCHAR*  AllocMemHelper( size_t minimum, const TCHAR* str, size_t siz );
-	String& CatString( const TCHAR* str, size_t siz );
-	String& SetString( const TCHAR* str, size_t siz );
-	void    SetData( StringData* d );
+	TCHAR*  AllocMemHelper( size_t minimum, const TCHAR* str, size_t siz ) A_NONNULL;
+	String& CatString( const TCHAR* str, size_t siz ) A_NONNULL;
+	String& SetString( const TCHAR* str, size_t siz ) A_NONNULL;
+	void    SetData( StringData* d ) A_NONNULL;
 	void    ReleaseData();
 	static  StringData* null();
 	        StringData* data() const;
@@ -476,7 +476,8 @@ struct RawString : public String
 class A_WUNUSED RzsString
 {
 public:
-	RzsString( UINT rsrcID );
+//	~RzsString() { ki::mem00(str_, sizeof(str_)); }
+	explicit RzsString( UINT rsrcID );
 	const TCHAR *c_str() const { return &str_[0]; }
 
 private:
@@ -492,14 +493,15 @@ private:
 class A_WUNUSED SInt2Str
 {
 public:
-	SInt2Str( int num )   : str_ ( Int2lStr(buf_, num)   ) {}
+//	~SInt2Str() { ki::mem00(buf_, sizeof(buf_)); str_ = NULL; }
+	explicit SInt2Str( int num )   : str_ ( Int2lStr(buf_, num)   ) {}
 #ifdef WIN64
-	SInt2Str( unsigned long long num ) : str_ ( Ulong2lStr(buf_, num) ) {}
+	explicit SInt2Str( unsigned long long num ) : str_ ( Ulong2lStr(buf_, num) ) {}
 #endif
-	SInt2Str( DWORD num ) : str_ ( Ulong2lStr(buf_, num) ) {}
-	SInt2Str( UINT num )  : str_ ( Ulong2lStr(buf_, num) ) {}
-	SInt2Str( WORD num )  : str_ ( Ulong2lStr(buf_, num) ) {}
-	SInt2Str( BYTE num )  : str_ ( Ulong2lStr(buf_, num) ) {}
+	explicit SInt2Str( DWORD num ) : str_ ( Ulong2lStr(buf_, num) ) {}
+	explicit SInt2Str( UINT num )  : str_ ( Ulong2lStr(buf_, num) ) {}
+	explicit SInt2Str( WORD num )  : str_ ( Ulong2lStr(buf_, num) ) {}
+	explicit SInt2Str( BYTE num )  : str_ ( Ulong2lStr(buf_, num) ) {}
 	const TCHAR *c_str() const { return str_; }
 
 private:

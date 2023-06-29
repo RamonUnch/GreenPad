@@ -3,7 +3,7 @@
 #include "types.h"
 #include "kstring.h"
 
-DWORD GetFileAttributesUNC(LPCTSTR fname);
+DWORD GetFileAttributesUNC(LPCTSTR fname) A_NONNULL;
 
 #ifndef __ccdoc__
 namespace ki {
@@ -78,7 +78,7 @@ public:
 	Path& BeShortLongStyle();
 
 	//@{ ...とかを入れて短く //@}
-	const TCHAR *CompactIfPossible(TCHAR *buf, unsigned Mx);
+	const TCHAR *CompactIfPossible(TCHAR *buf, unsigned Mx) A_NONNULL;
 
 	//@{ ディレクトリ情報以外 //@}
 	const TCHAR* name() const;
@@ -102,11 +102,11 @@ public:
 
 	//@{ ディレクトリかどうか //@}
 	bool isDirectory() const;
-	static bool isDirectory( const TCHAR *fn );
+	static bool isDirectory( const TCHAR *fn ) A_NONNULL;
 
 	//@{ 存在するかどうか。isFile() || isDirectory() //@}
 	bool exist() const;
-	static bool exist( const TCHAR *fn );
+	static bool exist( const TCHAR *fn ) A_NONNULL;
 
 	//@{ 読み取り専用かどうか //@}
 	bool isReadOnly() const;
@@ -117,7 +117,7 @@ public:
 	static const TCHAR* name( const TCHAR* str );
 	static const TCHAR* ext( const TCHAR* str );
 	static const TCHAR* ext_all( const TCHAR* str );
-	static DWORD GetExeName( TCHAR buf[MAX_PATH] );
+	static DWORD GetExeName( TCHAR buf[MAX_PATH] ) A_NONNULL;
 };
 
 
