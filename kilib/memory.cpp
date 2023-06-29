@@ -37,7 +37,7 @@ using namespace ki;
 			if (ptr != NULL)
 			{   // It is not Guarenteed that HeapFree can free NULL.
 				#ifdef USE_LOCALALLOC
-				void *ret = ::LocalFree( ptr );
+				::LocalFree( ptr );
 				#else
 				::HeapFree( g_heap, 0, ptr );
 				#endif
@@ -48,6 +48,8 @@ using namespace ki;
 
 		// デバッグ用に回数計測版(^^;
 		static int allocCounter = 0;
+		static int smallAllocSize = 0;
+		static int smallDeAllocSize = 0;
 		void* __cdecl operator new( size_t siz )
 		{
 			void *ret;
@@ -99,7 +101,6 @@ using namespace ki;
 			mov  edx, [cnt]    ;V  edx =       void* cnt
 			mov  edi, [dst]    ;U  edi =       ulong dst
 			mov  ebx, edx      ;V
-//			mov  eax, 03h      ;U  eax = const ulong  3 (for masking)
 			add  ebx, esi      ;V  ebx = const void* src+cnt
 
 			cmp  edi, esi      ;
@@ -158,7 +159,7 @@ using namespace ki;
 		return dst;
 	}
 	#else
-	#if defined(__i386__)
+	#if defined(__i386__) && !defined(WIN64)
 	// This is a convertion from the normal intel syntax
 	// Converted %%edx into a generic register "q" -> %1
 	// GCC seems to choose edx anyway.
@@ -166,9 +167,6 @@ using namespace ki;
 	{
 		void *odst = dst;
 		asm (
-//		"    mov      %0, %%esi\n"    //U  esi = const void* src
-//		"    mov      %1, %%edx\n"    //V  edx =       size_t  n
-//		"    mov      %2, %%edi\n"    //U  edi =       void* dst
 		"    mov      %1, %%ebx\n"    //V  ebx = n
 		"    add      %%esi, %%ebx\n" //V  ebx = const void* src+cnt
 
@@ -191,7 +189,7 @@ using namespace ki;
 
 		"    mov      %1, %%ecx\n"
 		"    shr      $0x2, %%ecx\n"  //ecx = [rest bytes]/4
-		"    and      $0x3, %1\n"  //edx = [rest bytes]%4
+		"    and      $0x3, %1\n"     //edx = [rest bytes]%4
 		"    rep movsl\n"             //N  DWORD MOVE
 		"    jmp      MiniCopy\n"
 		"CopyDown:    \n"
@@ -199,7 +197,7 @@ using namespace ki;
 		"    lea      (-1)(%%esi,%1,1), %%esi\n"
 		"    lea      (-1)(%%edi,%1,1), %%edi\n"
 
-		"    cmp      $0x4, %1\n"  //if( cnt<=4 )
+		"    cmp      $0x4, %1\n"     //if( cnt<=4 )
 		"    jbe      MiniCopy\n"     //byte by byte copy
 
 		"    mov      %%edi, %%ecx\n"
@@ -209,10 +207,10 @@ using namespace ki;
 		"    rep movsb\n"             //N  BYTE MOVE (align dst @ dword)
 
 		"    sub      $0x3, %%edi\n"  //U
-		"    mov      %1, %%ecx\n" //V
+		"    mov      %1, %%ecx\n"    //V
 		"    sub      $0x3, %%esi\n"  //U
 		"    shr      $0x2, %%ecx\n"  //V  ecx = [rest bytes]/4
-		"    and      $0x3, %1\n"  //edx[= [rest bytes]%4
+		"    and      $0x3, %1\n"     //edx[= [rest bytes]%4
 		"    rep movsl\n"             //N  DWORD MOVE
 		"    add      $0x3, %%edi\n"  //U
 		"    add      $0x3, %%esi\n"  //V
@@ -321,7 +319,7 @@ public:
 	void  DeAlloc( void* ptr, byte siz );
 	bool  isAvail();
 	bool  isEmpty( byte num );
-	bool  hasThisPtr( void* ptr, size_t len );
+	bool  hasThisPtr( const void* ptr, size_t len );
 private:
 	byte* buf_;
 	byte  first_, avail_;
@@ -377,7 +375,7 @@ inline bool MemBlock::isEmpty( byte num )
 	return (avail_ == num);
 }
 
-inline bool MemBlock::hasThisPtr( void* ptr, size_t len )
+inline bool MemBlock::hasThisPtr( const void* ptr, size_t len )
 {
 	// このブロックのポインタ？
 	return ( buf_<=ptr && ptr<buf_+len );
@@ -405,7 +403,7 @@ void MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
 	// 普通のauto_ptrも使わない方が無難…
 	struct AutoDeleter
 	{
-		AutoDeleter( MemBlock* p ) : ptr_(p) {}
+		explicit AutoDeleter( MemBlock* p ) : ptr_(p) {}
 		~AutoDeleter() { ::delete [] ptr_; }
 		void Release() { ptr_ = NULL; }
 		MemBlock* ptr_;
@@ -599,16 +597,23 @@ MemoryManager::~MemoryManager()
 #if defined(_DEBUG)
 	// リーク検出用
 	if( allocCounter != 0 )
-		::MessageBox( GetActiveWindow(), TEXT("MemoryLeak!"), NULL, MB_OK );
+	{
+		TCHAR buf[128];
+		::wsprintf(buf, TEXT("alloc - dealloc = %d\nSmall Allocs/DeAllocs=%d - %d = %d bytes")
+		              , allocCounter, smallAllocSize, smallDeAllocSize, smallAllocSize-smallDeAllocSize );
+		::MessageBox( GetActiveWindow(), buf, TEXT("MemoryLeak!"), MB_OK|MB_TOPMOST );
+	}
 #endif // _DEBUG
 #endif // SUPERTINY
 }
 
-
+//#include "log.h"
 void* A_HOT MemoryManager::Alloc( size_t siz )
 {
 #if defined(SUPERTINY) && defined(_DEBUG)
 	++allocCounter;
+	smallAllocSize += siz;
+//	LOGGERF( TEXT("Alloc(%lu) - %lu tot"), siz, smallAllocSize );
 #endif
 
 	// サイズが零か大きすぎるなら
@@ -633,6 +638,8 @@ void A_HOT MemoryManager::DeAlloc( void* ptr, size_t siz )
 {
 #if defined(SUPERTINY) && defined(_DEBUG)
 	--allocCounter;
+	smallDeAllocSize += siz;
+//	LOGGERF( TEXT("Free(%lu) - %lu tot"), siz, smallAllocSize );
 #endif
 
 	// サイズが零か大きすぎるなら
@@ -671,7 +678,11 @@ MemoryManager::~MemoryManager()
 #if defined(SUPERTINY) && defined(_DEBUG)
 	// リーク検出用
 	if( allocCounter != 0 )
-		::MessageBox( GetActiveWindow(), TEXT("MemoryLeak!"), NULL, MB_OK|MB_TOPMOST );
+	{
+		TCHAR buf[128];
+		::wsprintf(buf, TEXT("alloc - dealloc = %d\n"), allocCounter);
+		::MessageBox( GetActiveWindow(), buf, TEXT("MemoryLeak!"), MB_OK|MB_TOPMOST );
+	}
 #endif
 }
 
