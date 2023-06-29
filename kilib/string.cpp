@@ -112,7 +112,7 @@ const TCHAR *Int2lStr(TCHAR str[INT_DIGITS+1], int n)
 	minus = (n<0);
 	str[INT_DIGITS] = TEXT('\0');
 
-	for( i=INT_DIGITS-1; i>0; --i )
+	for( i=INT_DIGITS-1; i>1; --i )
 	{
 		str[i] = TEXT('0') + (minus ? -1*(n%10) : n%10);
 		n /= 10;
@@ -130,7 +130,7 @@ const TCHAR *Ulong2lStr(TCHAR str[ULONG_DIGITS+1], ulong n)
 	int i = 0;
 	str[ULONG_DIGITS] = TEXT('\0');
 
-	for( i=ULONG_DIGITS-1; i>=0; --i )
+	for( i=ULONG_DIGITS-1; i>0; --i )
 	{
 		str[i] = TEXT('0') + (uchar)(n%10UL);
 		n /= 10;

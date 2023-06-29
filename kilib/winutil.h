@@ -447,7 +447,7 @@ private:
 class Mutex
 {
 public:
-	Mutex( const TCHAR* name );
+	explicit Mutex( const TCHAR* name );
 	~Mutex();
 	bool isLocked() const;
 
