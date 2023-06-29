@@ -346,7 +346,7 @@ public:
 	void AddHandler( DocEvHandler* eh );
 
 	//@{ イベントハンドラ解除 //@}
-	void DelHandler( DocEvHandler* eh );
+	void DelHandler( const DocEvHandler* eh );
 
 	//@{ ファイルを開く //@}
 	void OpenFile( TextFileR& tf );
