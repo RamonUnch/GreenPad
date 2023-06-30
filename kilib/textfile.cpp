@@ -459,7 +459,7 @@ struct rUtf7 A_FINAL: public rBasicUTF
 //-------------------------------------------------------------------------
 namespace
 {
-	static const int SCSU_win[256]={
+	static const WORD SCSU_win[256]={
 	0x0000, 0x0080, 0x0100, 0x0180, 0x0200, 0x0280, 0x0300, 0x0380,
 	0x0400, 0x0480, 0x0500, 0x0580, 0x0600, 0x0680, 0x0700, 0x0780,
 	0x0800, 0x0880, 0x0900, 0x0980, 0x0A00, 0x0A80, 0x0B00, 0x0B80,
@@ -494,7 +494,7 @@ namespace
 	0x0000, 0x00C0, 0x0250, 0x0370, 0x0530, 0x3040, 0x30A0, 0xFF60};
 
 	static int SCSU_start[8]={0x0000,0x0080,0x0100,0x0300,0x2000,0x2080,0x2100,0x3000},
-	SCSU_slide[8]={0x0080,0x00C0,0x0400,0x0600,0x0900,0x3040,0x30A0,0xFF00};
+	           SCSU_slide[8]={0x0080,0x00C0,0x0400,0x0600,0x0900,0x3040,0x30A0,0xFF00};
 }
 struct rSCSU A_FINAL: public rBasicUTF
 {
@@ -1016,7 +1016,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 			{ // We got the function!
 			  // Double check that it actually works, Just in case
 				const char *test = "ts";
-				char *t = Window_CharNextExA(CP_ACP, test, 0);
+				const char *t = Window_CharNextExA(CP_ACP, test, 0);
 				if( t == &test[1] ) // Olny valid answer for any CP
 				{ // CharNextExA Works!
 					//MessageBox(NULL, TEXT("CharNextExA Works!"), NULL, 0);
@@ -2629,7 +2629,7 @@ struct wUtf5 A_FINAL: public TextFileWPimpl
 //-------------------------------------------------------------------------
 
 namespace {
-	static const uint SCSU_offsets[16]={
+	static const WORD SCSU_offsets[16]={
 		/* initial offsets for the 8 dynamic (sliding) windows */
 		0x0080, /* Latin-1 */
 		0x00C0, /* Latin Extended A */
