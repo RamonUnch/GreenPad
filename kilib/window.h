@@ -356,7 +356,7 @@ class DlgImpl : public Window
 {
 public:
 
-	enum dlgtype { MODAL, MODELESS };
+	enum dlgtype { MODAL, MODELESS, UNDEFINED };
 
 	//@{ モーダルで実行 //@}
 	void GoModal( HWND parent=NULL );
@@ -378,7 +378,8 @@ public:
 protected:
 
 	//@{ コンストラクタ //@}
-	DlgImpl( UINT id );
+	explicit DlgImpl( UINT id )
+		: type_(UNDEFINED), rsrcID_( id ) { }
 	~DlgImpl();
 
 	//@{ 子アイテムID→HWND変換 //@}
