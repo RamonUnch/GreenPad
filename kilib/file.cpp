@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "file.h"
 #include "app.h"
+#include "path.h"
 using namespace ki;
 
 #ifdef UNICODE
@@ -120,18 +121,6 @@ DWORD GetFileAttributesUNC(LPCTSTR fname)
 
 //=========================================================================
 
-FileR::FileR()
-	: handle_ ( INVALID_HANDLE_VALUE )
-	, fmo_    ( NULL )
-	, basePtr_( NULL )
-{
-}
-
-FileR::~FileR()
-{
-	Close();
-}
-
 bool FileR::Open( const TCHAR* fname, bool always)
 {
 //	MessageBox(NULL, fname, fname, MB_OK);
@@ -156,7 +145,29 @@ bool FileR::Open( const TCHAR* fname, bool always)
 	}
 
 	// サイズを取得
-	size_ = ::GetFileSize( handle_, NULL );
+	size_t bytesToMap=0; // 0 => map all
+	DWORD hisize=0;
+	size_ = ::GetFileSize( handle_, &hisize );
+#ifdef WIN64
+	// in 64 bit mode, we can try to Map a huge file.
+	// size_ must combine lo and hi size
+	size_ = size_ | (((size_t)hisize) << 32);
+#else
+	// in 32 bit mode we cannot map a file larger than 2GB
+	if( hisize || size_ >= 0x80000000 )
+	{
+		int yesno = MessageBox(
+			GetActiveWindow(),
+			TEXT("File is too large to be loaded!\nRetry loading the 1st 64KB only?\nBE CAREFUL NOT TO ERASE THE FILE!!!!"),
+			Path::name(fname),
+			MB_ABORTRETRYIGNORE|MB_TASKMODAL);
+		if( yesno == IDRETRY )
+			size_ = bytesToMap = 1<<16;
+		else if (yesno == IDABORT)
+			return false;
+	}
+#endif
+
 
 	if( size_==0 )
 	{
@@ -194,7 +205,7 @@ bool FileR::Open( const TCHAR* fname, bool always)
 		}
 
 		// ビュー
-		basePtr_ = ::MapViewOfFile( fmo_, FILE_MAP_READ, 0, 0, 0 );
+		basePtr_ = ::MapViewOfFile( fmo_, FILE_MAP_READ, 0, 0, bytesToMap );
 		if( basePtr_ == NULL )
 		{
 			#ifdef _DEBUG
@@ -325,7 +336,7 @@ void FileW::Close()
 	}
 }
 
-void FileW::Write( const void* dat, ulong siz )
+void FileW::Write( const void* dat, size_t siz )
 {
 	const uchar* udat = static_cast<const uchar*>(dat);
 
@@ -350,13 +361,13 @@ void FileW::WriteC( const uchar ch )
 	buf_[bPos_++] = ch;
 }
 
-void FileW::WriteInCodepageFromUnicode( int cp, const unicode* str, ulong len )
+void FileW::WriteInCodepageFromUnicode( int cp, const unicode* str, size_t len )
 {
-	ulong bremain;
+	size_t bremain;
 	while( (bremain = BUFSIZE-bPos_) <= len<<2 )
 	{	// While the remaining number of bytes is less than 4x len
 
-		ulong uniwrite = (bremain>>2) - (0xD800 <= str[(bremain>>2)-1] && str[(bremain>>2)-1] <= 0xDBFF);
+		size_t uniwrite = (bremain>>2) - (0xD800 <= str[(bremain>>2)-1] && str[(bremain>>2)-1] <= 0xDBFF);
 
 		// Fill the buffer to the end (kinda).
 		bPos_ += ::WideCharToMultiByte( cp, 0, str, uniwrite, (char*)(buf_+bPos_), bremain, NULL, NULL ) ;
