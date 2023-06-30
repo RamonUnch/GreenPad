@@ -839,10 +839,6 @@ bool WndImpl::PreTranslateMessage( MSG* )
 
 //=========================================================================
 
-DlgImpl::DlgImpl( UINT id )
-	: rsrcID_( id )
-{
-}
 
 DlgImpl::~DlgImpl()
 {

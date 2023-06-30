@@ -8,6 +8,9 @@ using namespace ki;
 //=========================================================================
 
 StatusBar::StatusBar()
+	: width_   (0)
+	, visible_ (false)
+	, parent_  (NULL)
 {
 	//app().InitModule( App::CTL );
 }
