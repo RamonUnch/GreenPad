@@ -22,8 +22,11 @@ class FileR : public Object
 {
 public:
 
-	FileR();
-	~FileR();
+	FileR()
+		: handle_ ( INVALID_HANDLE_VALUE )
+		, fmo_    ( NULL )
+		, basePtr_( NULL ) {}
+	~FileR() { Close(); }
 
 	//@{
 	//	開く
@@ -40,32 +43,24 @@ public:
 public:
 
 	//@{ ファイルサイズ //@}
-	ulong size() const;
+	size_t size() const
+		{ return size_; };
 
 	//@{ ファイル内容をマップしたアドレス取得 //@}
-	const uchar* base() const;
+	const uchar* base() const
+		{ return static_cast<const uchar*>(basePtr_); }
 
 private:
 
 	HANDLE      handle_;
 	HANDLE      fmo_;
-	ulong       size_;
+	size_t      size_;
 	const void* basePtr_;
 
 private:
 
 	NOCOPY(FileR);
 };
-
-
-
-//-------------------------------------------------------------------------
-
-inline ulong FileR::size() const
-	{ return size_; }
-
-inline const uchar* FileR::base() const
-	{ return static_cast<const uchar*>(basePtr_); }
 
 
 
@@ -91,7 +86,7 @@ public:
 	void Close();
 
 	//@{ 書く //@}
-	void Write( const void* buf, ulong siz );
+	void Write( const void* buf, size_t siz );
 
 	//@{ 一文字書く //@}
 	void WriteC( const uchar ch );
@@ -101,11 +96,11 @@ public:
 		{ buf_[bPos_++] = ch; }
 
 	//@{ Flush if needed to get the specified space //@}
-	inline void NeedSpace( const ulong sz )
+	inline void NeedSpace( const size_t sz )
 		{ if( (BUFSIZE-bPos_) <= sz ) Flush(); }
 
 	//@{ Writes to the file using a specific output codepage //@}
-	void WriteInCodepageFromUnicode( int cp, const unicode* str, ulong len );
+	void WriteInCodepageFromUnicode( int cp, const unicode* str, size_t len );
 
 public:
 
@@ -116,7 +111,7 @@ private:
 	const int    BUFSIZE;
 	HANDLE       handle_;
 	uchar* const buf_;
-	ulong        bPos_;
+	size_t       bPos_;
 
 private:
 
