@@ -13,6 +13,7 @@ EwEdit::ClsName EwEdit::className_ = TEXT("EditWing Control-01");
 
 EwEdit::EwEdit()
 	: WndImpl( className_, WS_CHILD|WS_VISIBLE, WS_EX_CLIENTEDGE )
+	, view_ ( NULL )
 {
 	static bool ClassRegistered = false;
 	if( !ClassRegistered )

@@ -1384,11 +1384,12 @@ OleDnDTarget::~OleDnDTarget(  )
 
 		if( dyn_RevokeDragDrop )
 		{
-			LOGGER( "~OleDnDTarget RevokeDragDrop()" );
-			dyn_RevokeDragDrop(hwnd_);
+			HRESULT rev = dyn_RevokeDragDrop(hwnd_);
+			LOGGERF( TEXT("~OleDnDTarget RevokeDragDrop(): %u"), (UINT)rev );
 
 			// Release all pointers to the object
-			MyCoLockObjectExternal( this, FALSE, TRUE );
+			rev = MyCoLockObjectExternal( this, FALSE, TRUE );
+			LOGGERF( TEXT("~OleDnDTarget MyCoLockObjectExternal(): %u"), (UINT)rev );
 		}
 	}
 }
