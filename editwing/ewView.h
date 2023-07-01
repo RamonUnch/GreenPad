@@ -53,7 +53,7 @@ public:
 
 private:
 
-	doc::DocImpl&      doc_;
+	doc::Document&      doc_;
 	ViewImpl*          impl_;
 	static ClsName     className_;
 
@@ -228,7 +228,7 @@ class Cursor : public ki::Object
 public:
 
 	// èâä˙âªÇ∆Ç©
-	Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc );
+	Cursor( HWND wnd, ViewImpl& vw, doc::Document& dc );
 	~Cursor();
 	void AddHandler( CurEvHandler* ev );
 	void DelHandler( const CurEvHandler* ev );
@@ -321,7 +321,7 @@ public:
 private:
 
 	ViewImpl&       view_;
-	doc::DocImpl&   doc_;
+	doc::Document&   doc_;
 	CurEvHandler*   pEvHan_;
 	Caret           caret_;
 #ifndef NO_OLEDNDTAR

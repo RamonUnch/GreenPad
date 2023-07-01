@@ -25,7 +25,7 @@ using namespace editwing::view;
 // èâä˙âª
 //-------------------------------------------------------------------------
 
-ViewImpl::ViewImpl( View& vw, DocImpl& dc )
+ViewImpl::ViewImpl( View& vw, doc::Document& dc )
 	: doc_   ( dc )
 	, cvs_   ( vw )
 	, cur_   ( vw.hwnd(), *this, dc )

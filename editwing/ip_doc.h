@@ -323,7 +323,7 @@ inline bool UnReDoChain::isModified() const
 //@}
 //=========================================================================
 
-class DocImpl A_FINAL : public Object
+class Document A_FINAL : public Object
 #ifdef USE_THREADS
               , private EzLockable
               , private Runnable
@@ -333,8 +333,8 @@ class DocImpl A_FINAL : public Object
 {
 public:
 
-	DocImpl( Document& theDoc );
-	~DocImpl();
+	Document();
+	~Document();
 
 	//@{ 操作コマンド実行 //@}
 	void Execute( const Command& cmd );
@@ -413,15 +413,18 @@ public:
 
 	const unicode* getCommentStr() const;
 
+	//@{ ビジーフラグ（マクロコマンド実行中のみ成立） //@}
+	void setBusyFlag( bool b ) { busy_ = b; }
+	bool isBusy() const { return busy_; }
+
 private:
 
-	Document&                      doc_;    // 自分
 	aptr<Parser>                   parser_; // 文字列解析役
 	unicode                        CommentStr_[8];
 	gapbufobj<Line>                text_;   // テキストデータ
 	mutable storage<DocEvHandler*> pEvHan_; // イベント通知先
 	UnReDoChain                    urdo_;   // アンドゥリドゥ
-
+	bool busy_;
 //	aptr<TextFileR> currentOpeningFile_; // ToDo: multi-threaded
 
 private:
@@ -449,7 +452,7 @@ private:
 
 private:
 
-	NOCOPY(DocImpl);
+	NOCOPY(Document);
 	friend class Insert;
 	friend class Delete;
 	friend class Replace;
@@ -459,23 +462,23 @@ private:
 
 //-------------------------------------------------------------------------
 
-inline ulong DocImpl::tln() const
+inline ulong Document::tln() const
 	{ return text_.size(); }
 
-inline const unicode* DocImpl::tl( ulong i ) const
+inline const unicode* Document::tl( ulong i ) const
 	{ return text_[i].str(); }
 
-inline ulong DocImpl::len( ulong i ) const
+inline ulong Document::len( ulong i ) const
 	{ return text_[i].size(); }
 
-inline const uchar* DocImpl::pl( ulong i ) const
+inline const uchar* Document::pl( ulong i ) const
 	{
 		const Line& x = text_[i];
 		if( !x.isCmtBitReady() )
 			SetCommentBit( x );
 		return x.flg();
 	}
-inline const unicode* DocImpl::getCommentStr() const
+inline const unicode* Document::getCommentStr() const
 	{ return CommentStr_; }
 
 
