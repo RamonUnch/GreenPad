@@ -2,7 +2,6 @@
 #define _EDITWING_IP_VIEW_H_
 #include "ewView.h"
 #include "ip_doc.h"
-using namespace ki;
 #ifndef __ccdoc__
 namespace editwing {
 namespace view {

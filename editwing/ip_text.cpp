@@ -851,6 +851,7 @@ void DocImpl::OpenFile( TextFileR& tf )
 		buf = sbuf;
 		buf_sz = SBUF_SZ;
 	}
+//	DWORD otime = GetTickCount();
 	for( ulong i=0; tf.state(); )
 	{
 		if( size_t L = tf.ReadBuf( buf, buf_sz ) )
@@ -871,6 +872,7 @@ void DocImpl::OpenFile( TextFileR& tf )
 
 	// ƒCƒxƒ“ƒg”­‰Î, Event firing
 	Fire_TEXTUPDATE( DPos(0,0), DPos(0,0), e, true, false );
+//	MessageBox(GetForegroundWindow(),  SInt2Str(GetTickCount()-otime).c_str(), TEXT("Time in ms"), 0);
 }
 
 

@@ -71,6 +71,7 @@ View::ClsName
 View::View( doc::Document& d, HWND wnd )
 	: WndImpl( className_, WS_CHILD|WS_VISIBLE|WS_VSCROLL|WS_HSCROLL )
 	, doc_   ( d.impl() )
+	, impl_  ( NULL )
 {
 	static bool ClassRegistered = false;
 	if( !ClassRegistered )
@@ -534,7 +535,7 @@ void Painter::DrawCTLs( const unicode *str, int len, int x, int y )
 			const unicode ch = str[j];
 			if      (               ch <= 31 ) buf[j] = ctlMap[ch];
 			else if (127 <= ch &&   ch <= 160) buf[j] = ctl2Map[ch-127];
-			else                               buf[j] = ch;
+			else                               buf[j] = '?';
 			x2 += Wc( buf[j] );
 		}
 		#ifdef WIN32S

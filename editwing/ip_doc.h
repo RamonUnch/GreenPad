@@ -62,7 +62,7 @@ public:
 			{
 				// バッファ拡張
 				ulong psiz = (alen_+1)*2+alen_;
-				alen_ = Max( alen_+(alen_>>1), len_+siz ); // len_+siz; 
+				alen_ = Max( alen_+(alen_>>1), len_+siz ); // len_+siz;
 				unicode* tmpS =
 					static_cast<unicode*>( mem().Alloc((alen_+1)*2+alen_) );
 				uchar*   tmpF =
@@ -391,7 +391,7 @@ public:
 
 	//@{ 指定位置の単語の先頭を取得 //@}
 	DPos wordStartOf( const DPos& dp ) const;
-	
+
 	unicode findNextBrace( DPos &dp, unicode q, unicode p ) const;
 	unicode findPrevBrace( DPos &dp, unicode q, unicode p ) const;
 	DPos findMatchingBrace( const DPos &dp ) const;

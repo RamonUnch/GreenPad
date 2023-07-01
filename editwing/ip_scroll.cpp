@@ -183,6 +183,7 @@ void Canvas::CalcWrapWidth()
 
 Canvas::Canvas( const View& vw )
 	: wrapType_ ( -1 )
+	, warpSmart_( false )
 	, showLN_   ( false )
 	, font_     ( new Painter( vw.hwnd(),
 	              VConfig(TEXT(""),0) ) )
