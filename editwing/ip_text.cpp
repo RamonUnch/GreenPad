@@ -21,87 +21,17 @@ using namespace editwing::doc;
 //=========================================================================
 
 
-
-//-------------------------------------------------------------------------
-// 公開インターフェイス
-//-------------------------------------------------------------------------
-
-Document::Document() : busy_(false)
-	{ impl_ = new DocImpl( *this ); }
-
-Document::~Document()
-	{ delete impl_; }
-
-void Document::Execute( const Command& c )
-	{ impl_->Execute( c ); }
-
-void Document::SetKeyword( const unicode* b, ulong s )
-	{ impl_->SetKeyword( b, s ); }
-
-void Document::AddHandler( DocEvHandler* h )
-	{ impl_->AddHandler( h ); }
-
-void Document::DelHandler( const DocEvHandler* h )
-	{ impl_->DelHandler( h ); }
-
-void Document::OpenFile( TextFileR& t )
-	{ impl_->OpenFile( t ); }
-
-void Document::SaveFile( TextFileW& t )
-	{ impl_->SaveFile( t ); }
-
-void Document::ClearAll()
-	{ impl_->ClearAll(); }
-
-ulong Document::tln() const
-	{ return impl_->tln(); }
-
-const unicode* Document::tl( ulong i ) const
-	{ return impl_->tl( i ); }
-
-ulong Document::len( ulong i ) const
-	{ return impl_->len( i ); }
-
-ulong Document::getRangeLength( const DPos& s, const DPos& e ) const
-	{ return impl_->getRangeLength( s, e ); }
-
-void Document::getText( unicode* b, const DPos& s, const DPos& e ) const
-	{ impl_->getText( b, s, e ); }
-
-bool Document::isUndoAble() const
-	{ return impl_->isUndoAble(); }
-
-bool Document::isRedoAble() const
-	{ return impl_->isRedoAble(); }
-
-bool Document::isModified() const
-	{ return impl_->isModified(); }
-
-void Document::ClearModifyFlag()
-	{ impl_->ClearModifyFlag(); }
-
-void Document::Undo()
-	{ impl_->Undo(); }
-
-void Document::Redo()
-	{ impl_->Redo(); }
-
-void Document::SetUndoLimit( long lim )
-	{ impl_->SetUndoLimit( lim ); }
-
-
-
 //-------------------------------------------------------------------------
 // イベントハンドラ処理
 //-------------------------------------------------------------------------
 
-void DocImpl::AddHandler( DocEvHandler* eh )
+void Document::AddHandler( DocEvHandler* eh )
 {
 	// ハンドラ追加
 	pEvHan_.Add( eh );
 }
 
-void DocImpl::DelHandler( const DocEvHandler* eh )
+void Document::DelHandler( const DocEvHandler* eh )
 {
 	// 後ろから見て行って…
 	const int last = pEvHan_.size() - 1;
@@ -116,7 +46,7 @@ void DocImpl::DelHandler( const DocEvHandler* eh )
 		}
 }
 
-void DocImpl::Fire_TEXTUPDATE
+void Document::Fire_TEXTUPDATE
 	( const DPos& s, const DPos& e, const DPos& e2, bool reparsed, bool nmlcmd )
 {
 	AutoLock lk(this);
@@ -126,7 +56,7 @@ void DocImpl::Fire_TEXTUPDATE
 		pEvHan_[i]->on_text_update( s, e, e2, reparsed, nmlcmd );
 }
 
-void DocImpl::Fire_KEYWORDCHANGE()
+void Document::Fire_KEYWORDCHANGE()
 {
 	AutoLock lk(this);
 
@@ -135,7 +65,7 @@ void DocImpl::Fire_KEYWORDCHANGE()
 		pEvHan_[i]->on_keyword_change();
 }
 
-void DocImpl::Fire_MODIFYFLAGCHANGE()
+void Document::Fire_MODIFYFLAGCHANGE()
 {
 	AutoLock lk(this);
 
@@ -252,19 +182,19 @@ void UnReDoChain::NewlyExec( const Command& cmd, Document& doc )
 
 
 
-bool DocImpl::isUndoAble() const
+bool Document::isUndoAble() const
 	{ return urdo_.isUndoAble(); }
 
-bool DocImpl::isRedoAble() const
+bool Document::isRedoAble() const
 	{ return urdo_.isRedoAble(); }
 
-bool DocImpl::isModified() const
+bool Document::isModified() const
 	{ return urdo_.isModified(); }
 
-void DocImpl::SetUndoLimit( long lim )
+void Document::SetUndoLimit( long lim )
 	{ urdo_.SetLimit( lim ); }
 
-void DocImpl::ClearModifyFlag()
+void Document::ClearModifyFlag()
 {
 	bool b = urdo_.isModified();
 	urdo_.SavedHere();
@@ -272,32 +202,32 @@ void DocImpl::ClearModifyFlag()
 		Fire_MODIFYFLAGCHANGE();
 }
 
-void DocImpl::Undo()
+void Document::Undo()
 {
 	if( urdo_.isUndoAble() )
 	{
 		bool b = urdo_.isModified();
-		urdo_.Undo(doc_);
+		urdo_.Undo(*this);
 		if( b != urdo_.isModified() )
 			Fire_MODIFYFLAGCHANGE();
 	}
 }
 
-void DocImpl::Redo()
+void Document::Redo()
 {
 	if( urdo_.isRedoAble() )
 	{
 		bool b = urdo_.isModified();
-		urdo_.Redo(doc_);
+		urdo_.Redo(*this);
 		if( b != urdo_.isModified() )
 			Fire_MODIFYFLAGCHANGE();
 	}
 }
 
-void DocImpl::Execute( const Command& cmd )
+void Document::Execute( const Command& cmd )
 {
 	bool b = urdo_.isModified();
-	urdo_.NewlyExec( cmd, doc_ );
+	urdo_.NewlyExec( cmd, *this );
 	if( b != urdo_.isModified() )
 		Fire_MODIFYFLAGCHANGE();
 }
@@ -308,7 +238,7 @@ void DocImpl::Execute( const Command& cmd )
 // カーソル移動ヘルパー, Cursor movement helper
 //-------------------------------------------------------------------------
 
-DPos DocImpl::leftOf( const DPos& dp, bool wide ) const
+DPos Document::leftOf( const DPos& dp, bool wide ) const
 {
 	if( dp.ad == 0 )
 	{
@@ -339,7 +269,7 @@ DPos DocImpl::leftOf( const DPos& dp, bool wide ) const
 	}
 }
 
-DPos DocImpl::rightOf( const DPos& dp, bool wide ) const
+DPos Document::rightOf( const DPos& dp, bool wide ) const
 {
 	if( dp.ad == len(dp.tl) )
 	{
@@ -380,7 +310,7 @@ DPos DocImpl::rightOf( const DPos& dp, bool wide ) const
 	}
 }
 
-DPos DocImpl::wordStartOf( const DPos& dp ) const
+DPos Document::wordStartOf( const DPos& dp ) const
 {
 	if( dp.ad == 0 )
 	{
@@ -398,7 +328,7 @@ DPos DocImpl::wordStartOf( const DPos& dp ) const
 	}
 }
 
-DPos DocImpl::findMatchingBrace( const DPos &dp ) const
+DPos Document::findMatchingBrace( const DPos &dp ) const
 {
 	// Currently selected character.
 	DPos np=dp;
@@ -464,7 +394,7 @@ DPos DocImpl::findMatchingBrace( const DPos &dp ) const
 	return dp;
 }
 
-unicode DocImpl::findNextBrace( DPos &dp, unicode q, unicode p ) const
+unicode Document::findNextBrace( DPos &dp, unicode q, unicode p ) const
 {
 	// Loop forward word by word to find the next brace
 	// specified in the brace parameter.
@@ -480,7 +410,7 @@ unicode DocImpl::findNextBrace( DPos &dp, unicode q, unicode p ) const
 	return L'\0';
 }
 
-unicode DocImpl::findPrevBrace( DPos &dp, unicode q, unicode p ) const
+unicode Document::findPrevBrace( DPos &dp, unicode q, unicode p ) const
 {
 	// Loop back word by word to find the previous brace,
 	// specified in the brace parameters.
@@ -499,7 +429,7 @@ unicode DocImpl::findPrevBrace( DPos &dp, unicode q, unicode p ) const
 // 挿入・削除等の作業用関数群, A set of functions for working with ins, del, etc.
 //-------------------------------------------------------------------------
 
-ulong DocImpl::getRangeLength( const DPos& s, const DPos& e )
+ulong Document::getRangeLength( const DPos& s, const DPos& e )
 {
 	// とりあえず全部足す, Just add it all up.
 	ulong ans=0, tl=s.tl, te=e.tl;
@@ -515,7 +445,7 @@ ulong DocImpl::getRangeLength( const DPos& s, const DPos& e )
 	return ans;
 }
 
-void DocImpl::getText( unicode* buf, const DPos& s, const DPos& e )
+void Document::getText( unicode* buf, const DPos& s, const DPos& e )
 {
 	if( !buf ) return;
 	if( s.tl == e.tl )
@@ -541,14 +471,14 @@ void DocImpl::getText( unicode* buf, const DPos& s, const DPos& e )
 	}
 }
 
-void DocImpl::CorrectPos( DPos& pos )
+void Document::CorrectPos( DPos& pos )
 {
 	// 正常範囲に収まるように修正, Fix to fall within normal range.
 	pos.tl = Min( pos.tl, tln()-1 );
 	pos.ad = Min( pos.ad, len(pos.tl) );
 }
 
-void DocImpl::CorrectPos( DPos& s, DPos& e )
+void Document::CorrectPos( DPos& s, DPos& e )
 {
 	// 必ずs<=eになるように修正,  Fix it so that s<=e.
 	if( s > e )
@@ -559,7 +489,7 @@ void DocImpl::CorrectPos( DPos& s, DPos& e )
 	}
 }
 
-bool DocImpl::DeletingOperation
+bool Document::DeletingOperation
 	( DPos& s, DPos& e, unicode*& undobuf, ulong& undosiz )
 {
 	AutoLock lk( this );
@@ -605,7 +535,7 @@ bool DocImpl::DeletingOperation
 	return ReParse( s.tl, s.tl );
 }
 
-bool DocImpl::InsertingOperation
+bool Document::InsertingOperation
 	( DPos& s, const unicode* str, ulong len, DPos& e )
 {
 	AutoLock lk( this );
@@ -679,14 +609,12 @@ Insert::~Insert()
 
 Command* Insert::operator()( Document& d ) const
 {
-	DocImpl& di = d.impl();
-
 	// 挿入, Insertion
 	DPos s=stt_, e;
-	bool aa = di.InsertingOperation( s, buf_, len_, e );
+	bool aa = d.InsertingOperation( s, buf_, len_, e );
 
 	// イベント発火, Event firing
-	di.Fire_TEXTUPDATE( s, s, e, aa, true );
+	d.Fire_TEXTUPDATE( s, s, e, aa, true );
 
 	// 逆操作オブジェクトを返す, Return the reverse operation object
 	return new Delete( s, e );
@@ -706,16 +634,14 @@ Delete::Delete( const DPos& s, const DPos& e )
 
 Command* Delete::operator()( Document& d ) const
 {
-	DocImpl& di = d.impl();
-
 	// 削除, Deletion
 	unicode* buf;
 	ulong    siz;
 	DPos s = stt_, e=end_;
-	bool aa = di.DeletingOperation( s, e, buf, siz );
+	bool aa = d.DeletingOperation( s, e, buf, siz );
 
 	// イベント発火, Event firing
-	di.Fire_TEXTUPDATE( s, e, s, aa, true );
+	d.Fire_TEXTUPDATE( s, e, s, aa, true );
 
 	// 逆操作オブジェクトを返す, Return the reverse operation object
 	return new Insert( s, buf, siz, true );
@@ -745,20 +671,18 @@ Replace::~Replace()
 
 Command* Replace::operator()( Document& d ) const
 {
-	DocImpl& di = d.impl();
-
 	// 削除, Deletion
 	unicode* buf;
 	ulong    siz;
 	DPos s=stt_, e=end_;
-	bool aa = di.DeletingOperation( s, e, buf, siz );
+	bool aa = d.DeletingOperation( s, e, buf, siz );
 
 	// 挿入, Insertion
 	DPos e2;
-	aa = (di.InsertingOperation( s, buf_, len_, e2 ) || aa);
+	aa = (d.InsertingOperation( s, buf_, len_, e2 ) || aa);
 
 	// イベント発火, event firing
-	di.Fire_TEXTUPDATE( s, e, e2, aa, true );
+	d.Fire_TEXTUPDATE( s, e, e2, aa, true );
 
 	// 逆操作オブジェクトを返す, Return the reverse operation object
 	return new Replace( s, e2, buf, siz, true );
@@ -772,7 +696,7 @@ Command* Replace::operator()( Document& d ) const
 
 Command* MacroCommand::operator()( Document& doc ) const
 {
-	doc.setBusyFlag();
+	doc.setBusyFlag(true);
 
 	MacroCommand* undo = new MacroCommand;
 	undo->arr_.ForceSize( size() );
@@ -789,7 +713,7 @@ Command* MacroCommand::operator()( Document& doc ) const
 // ファイルに保存, Save to file
 //-------------------------------------------------------------------------
 
-void DocImpl::SaveFile( TextFileW& tf )
+void Document::SaveFile( TextFileW& tf )
 {
 	urdo_.SavedHere();
 	for( ulong i=0,iLast=tln()-1; i<=iLast; ++i )
@@ -802,7 +726,7 @@ void DocImpl::SaveFile( TextFileW& tf )
 // バッファの内容を全部破棄（暫定）, Destroy all buffer contents (temporary)
 //-------------------------------------------------------------------------
 
-void DocImpl::ClearAll()
+void Document::ClearAll()
 {
 	// 全部削除, delete everything
 	Execute( Delete( DPos(0,0), DPos(0xffffffff,0xffffffff) ) );
@@ -820,7 +744,7 @@ void DocImpl::ClearAll()
 // ファイルを開く（暫定）, Open a file (temporary)
 //-------------------------------------------------------------------------
 
-void DocImpl::OpenFile( TextFileR& tf )
+void Document::OpenFile( TextFileR& tf )
 {
 	// ToDo: マルチスレッド化, ToDo: multi-threaded
 	//currentOpeningFile_ = tf;
@@ -876,7 +800,7 @@ void DocImpl::OpenFile( TextFileR& tf )
 }
 
 
-void DocImpl::StartThread()
+void Document::StartThread()
 {
 /*
 	// ToDo:

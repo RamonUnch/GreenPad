@@ -8,110 +8,12 @@ namespace doc {
 
 
 
-class DocImpl;
+class Document;
 class DocEvHandler;
 class Command;
 class Insert;
 class Delete;
 class Replace;
-
-
-
-//=========================================================================
-//@{ @pkg editwing.Doc //@}
-//@{
-//	文書データ
-//
-//	このクラスは単なるインターフェイスで、内部実装は
-//	class DocImpl で行う。ので、詳しくはそちらを参照のこと。
-//@}
-//=========================================================================
-
-class Document : public ki::Object
-{
-public:
-
-	//@{ 何もしないコンストラクタ //@}
-	Document();
-	~Document();
-
-	//@{ ファイルを開く //@}
-	void OpenFile( ki::TextFileR& tf );
-
-	//@{ ファイルを保存 //@}
-	void SaveFile( ki::TextFileW& tf );
-
-	//@{ 内容破棄 //@}
-	void ClearAll();
-
-	//@{ 操作コマンド実行 //@}
-	void Execute( const Command& cmd );
-
-	//@{ アンドゥ //@]
-	void Undo();
-
-	//@{ リドゥ //@]
-	void Redo();
-
-	//@{ アンドゥ回数制限 //@]
-	void SetUndoLimit( long lim );
-
-	//@{ 変更フラグをクリア //@}
-	void ClearModifyFlag();
-
-	//@{ イベントハンドラ登録 //@}
-	void AddHandler( DocEvHandler* eh );
-
-	//@{ イベントハンドラ解除 //@}
-	void DelHandler( const DocEvHandler* eh );
-
-	//@{ キーワード定義切り替え //@}
-	void SetKeyword( const unicode* defbuf, ulong siz=0 );
-
-public:
-
-	//@{ 内部実装クラス //@}
-	DocImpl& impl() { return *impl_; }
-
-	//@{ 行数, number of lines //@}
-	ulong tln() const;
-
-	//@{ 行バッファ, line beuufe //@}
-	const unicode* tl( ulong i ) const;
-
-	//@{ 行文字数 line character count //@}
-	ulong len( ulong i ) const;
-
-	//@{ 指定範囲のテキストの長さ, Length of the specified range of text //@}
-	ulong getRangeLength( const DPos& stt, const DPos& end ) const;
-
-	//@{ 指定範囲のテキスト, Text in the specified range //@}
-	void getText( unicode* buf, const DPos& stt, const DPos& end ) const;
-
-	//@{ アンドゥ可能？ //@}
-	bool isUndoAble() const;
-
-	//@{ リドゥ可能？ //@}
-	bool isRedoAble() const;
-
-	//@{ 変更済み？ //@}
-	bool isModified() const;
-
-	//@{ ビジーフラグ（マクロコマンド実行中のみ成立） //@}
-	void setBusyFlag( bool b=true ) { busy_ = b; }
-	bool isBusy() const { return busy_; }
-
-private:
-
-	// 実装
-	DocImpl *impl_;
-	bool busy_;
-
-private:
-
-	NOCOPY(Document);
-};
-
 
 
 //=========================================================================

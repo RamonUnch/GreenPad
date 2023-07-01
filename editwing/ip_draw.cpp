@@ -70,7 +70,7 @@ View::ClsName
 
 View::View( doc::Document& d, HWND wnd )
 	: WndImpl( className_, WS_CHILD|WS_VISIBLE|WS_VSCROLL|WS_HSCROLL )
-	, doc_   ( d.impl() )
+	, doc_   ( d )
 	, impl_  ( NULL )
 {
 	static bool ClassRegistered = false;

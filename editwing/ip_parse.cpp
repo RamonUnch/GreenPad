@@ -675,21 +675,20 @@ public:
 // 定義ファイル読みとり処理とか
 //-------------------------------------------------------------------------
 
-DocImpl::DocImpl( Document& theDoc )
-	: doc_    ( theDoc )
-	, pEvHan_ ( 2 )
+Document::Document( )
+	: pEvHan_ ( 2 )
 {
 	text_.Add( new Line(L"",0) ); // 最初は一行だけ
 	SetKeyword( NULL, 0 );        // キーワード無し
 }
 
-DocImpl::~DocImpl()
+Document::~Document()
 {
 	// このファイルにデストラクタを入れておかないと、
 	// delete parser_ が出来なくなる。^^;
 }
 
-void DocImpl::SetKeyword( const unicode* defbuf, ulong siz )
+void Document::SetKeyword( const unicode* defbuf, ulong siz )
 {
 	// BOMがあったらスキップ
 	if( siz!=0 && *defbuf==0xfeff )
@@ -754,7 +753,7 @@ void DocImpl::SetKeyword( const unicode* defbuf, ulong siz )
 	Fire_KEYWORDCHANGE();
 }
 
-bool A_HOT DocImpl::ReParse( ulong s, ulong e )
+bool A_HOT Document::ReParse( ulong s, ulong e )
 {
 	ulong i;
 	uchar cmt = text_[s].isLineHeadCmt();
@@ -778,7 +777,7 @@ bool A_HOT DocImpl::ReParse( ulong s, ulong e )
 	return true;
 }
 
-void DocImpl::SetCommentBit( const Line& x ) const
+void Document::SetCommentBit( const Line& x ) const
 {
 	parser_->SetCommentBit( const_cast<Line&>(x) );
 }

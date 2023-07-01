@@ -129,7 +129,7 @@ static UINT GetInputCP()
 // ÉJÅ[É\Éãèâä˙âª, Cursor initialization
 //-------------------------------------------------------------------------
 
-Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::DocImpl& dc )
+Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::Document& dc )
 	: view_   ( vw )
 	, doc_    ( dc )
 	, pEvHan_ ( &defaultHandler_ )

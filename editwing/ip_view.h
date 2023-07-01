@@ -13,8 +13,6 @@ namespace view {
 #define CW_INTTYPE int
 #endif
 
-using doc::DocImpl;
-
 
 
 //=========================================================================
@@ -373,7 +371,7 @@ class ViewImpl : public Object
 {
 public:
 
-	ViewImpl( View& vw, DocImpl& dc );
+	ViewImpl( View& vw, doc::Document &dc );
 
 	//@{ ê‹ÇËï‘Çµï˚éÆêÿë÷ //@}
 	void SetWrapType( int wt );
@@ -449,7 +447,7 @@ public:
 
 private:
 
-	const DocImpl&   doc_;
+	const doc::Document&   doc_;
 	Canvas           cvs_;
 	Cursor           cur_;
 	gapbufobj<WLine> wrap_;
