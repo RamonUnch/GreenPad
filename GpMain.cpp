@@ -430,7 +430,7 @@ void GreenPadWnd::on_helpabout()
 	#endif
 
 	#if defined(__GNUC__)
-		#define COMPILER TEXT( "GNU C Compiler - " __VERSION__ "\n" )
+		#define COMPILER TEXT( "GNU C Compiler - " __VERSION__ )
 	#elif defined(_MSC_VER)
 //		#define COMPILER TEXT("Visual C++ - ")  TEXT(STR(_MSC_VER))
 		#define COMPILER TEXT("Visual C++ - ")  + (String)SInt2Str((_MSC_VER-600)/100).c_str() + TEXT(".") + SInt2Str(_MSC_VER%100).c_str() +
@@ -877,7 +877,7 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 #endif
 	if( editmenu_only )
 	{
-		LOGGER("GreenPadWnd::on_initmenu end");
+		LOGGER("GreenPadWnd::on_initmenu end (edit menu only)");
 		return;
 	}
 
@@ -891,7 +891,7 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 	::CheckMenuItem( menu, ID_CMD_WRAPWINDOW, MF_BYCOMMAND|(wrap_==0?MF_CHECKED:MF_UNCHECKED));
 	::CheckMenuItem( menu, ID_CMD_STATUSBAR, cfg_.showStatusBar()?MF_CHECKED:MF_UNCHECKED );
 
-	LOGGER("GreenPadWnd::on_initmenu end");
+	LOGGER("GreenPadWnd::on_initmenu end (full init)");
 }
 
 void GreenPadWnd::on_drop( HDROP hd )
@@ -920,7 +920,7 @@ void GreenPadWnd::on_jump()
 		void on_init() override {
 			SetCenter(hwnd(),w_); ::SetFocus(item(IDC_LINEBOX)); }
 		bool on_ok() override {
-			TCHAR str[100];
+			TCHAR str[32];
 			::GetWindowText( item(IDC_LINEBOX), str, countof(str) );
 			LineNo = String::GetInt(str);
 			return true;

@@ -20,6 +20,7 @@ SearchManager::SearchManager( ki::Window& w, editwing::EwEdit& e )
 	, bIgnoreCase_( true ) // 1.08 default true
 	, bRegExp_( false )
 	, bDownSearch_( true )
+	, bChanged_ (false )
 	, inichanged_( false )
 {
 }
@@ -381,7 +382,7 @@ void SearchManager::FindPrevImpl()
 bool SearchManager::FindNextFromImpl( DPos s, DPos* beg, DPos* end )
 {
 	// １行ずつサー, Search one line at a time
-	doc::Document& d = edit_.getDoc();
+	const doc::Document& d = edit_.getDoc();
 	for( ulong mbg,med,e=d.tln(); s.tl<e; ++s.tl, s.ad=0 )
 		if( searcher_->Search(
 			d.tl(s.tl), d.len(s.tl), s.ad, &mbg, &med ) )
@@ -397,7 +398,7 @@ bool SearchManager::FindNextFromImpl( DPos s, DPos* beg, DPos* end )
 bool SearchManager::FindPrevFromImpl( DPos s, DPos* beg, DPos* end )
 {
 	// １行ずつサーチ, Search one line at a time
-	doc::Document& d = edit_.getDoc();
+	const doc::Document& d = edit_.getDoc();
 	for( ulong mbg,med; ; s.ad=d.len(--s.tl) )
 	{
 		if( searcher_->Search(

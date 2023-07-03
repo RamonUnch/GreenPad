@@ -85,7 +85,8 @@ private:
 #ifndef __ccdoc__
 
 inline OpenFileDlg::OpenFileDlg( const CharSetList& csl, bool oldstyle )
-	: csl_(csl), oldstyleDlg_(oldstyle) {}
+	: csl_(csl), csIndex_(0), dlgEverOpened_ (false), oldstyleDlg_(oldstyle)
+	{ ki::mem00( filename_, sizeof(filename_) ); }
 
 inline const TCHAR* OpenFileDlg::filename() const
 	{ return filename_; }
@@ -136,7 +137,8 @@ private:
 #ifndef __ccdoc__
 
 inline SaveFileDlg::SaveFileDlg( const CharSetList& csl, int cs, int lb, bool oldstyle )
-	: csl_(csl), csIndex_(cs), lb_(lb), oldstyleDlg_(oldstyle) {}
+	: csl_(csl), csIndex_(cs), lb_(lb), dlgEverOpened_(false), oldstyleDlg_(oldstyle)
+	{ ki::mem00( filename_, sizeof(filename_) ); }
 
 inline const TCHAR* SaveFileDlg::filename() const
 	{ return filename_; }
