@@ -37,6 +37,8 @@ private:
 	RegNFA *re_;
 	bool caseS_;
 	bool down_;
+
+	NOCOPY(RSearch);
 };
 
 

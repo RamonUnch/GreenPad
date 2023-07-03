@@ -65,6 +65,7 @@ inline RegLexer::RegLexer( const wchar_t* pat, ulong len )
 	: pat_( pat )
 	, end_( pat+len )
 	, sub_( L"" )
+	, chr_( L'\0' )
 {
 }
 

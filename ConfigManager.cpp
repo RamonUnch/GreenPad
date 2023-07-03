@@ -1,5 +1,6 @@
 
 #include "kilib/stdafx.h"
+#include "kilib/find.h"
 #include "ConfigManager.h"
 #include "rsrc/resource.h"
 #include "RSearch.h"
@@ -944,7 +945,7 @@ int ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 
 	// ÉÅÉjÉÖÅ[ç\íz
 	TCHAR tmp[61];
-	TCHAR cpt[61+INT_DIGITS+3], *end;
+	TCHAR cpt[61+INT_DIGITS+3];
 	cpt[0] = TEXT('&');
 	for( int i=0; i<mrus_; ++i )
 	{
@@ -956,7 +957,7 @@ int ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 			}
 			break;
 		}
-		end = my_lstrkpy( cpt+1, SInt2Str(i+1).c_str() );
+		TCHAR *end = my_lstrkpy( cpt+1, SInt2Str(i+1).c_str() );
 		*end++ = TEXT(' ');
 		my_lstrkpy( end, mru_[i].CompactIfPossible(tmp, countof(tmp)-1) );
 		::InsertMenu( m, i, MF_BYPOSITION, id + i, cpt );
