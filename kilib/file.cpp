@@ -261,6 +261,7 @@ FileW::FileW()
 	: BUFSIZE( 32768 )
 	, handle_( INVALID_HANDLE_VALUE )
 	, buf_   ( new uchar[BUFSIZE] )
+	, bPos_  ( 0 )
 {
 }
 

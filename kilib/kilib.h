@@ -6,7 +6,6 @@
 #include "app.h"
 #include "thread.h"
 #include "memory.h"
-#include "window.h"
 #include "kstring.h"
 #include "cmdarg.h"
 #include "path.h"
@@ -14,7 +13,6 @@
 #include "ctrl.h"
 #include "textfile.h"
 #include "winutil.h"
-#include "find.h"
 #include "log.h"
 
 #include "ktlaptr.h"

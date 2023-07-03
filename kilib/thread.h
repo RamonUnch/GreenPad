@@ -151,7 +151,9 @@ protected:
 		}
 	private:
 		NOCOPY(AutoLock);
+		#ifdef USE_THREADS
 	    CRITICAL_SECTION* pCs_;
+		#endif
 	};
 
 private:

@@ -42,11 +42,13 @@ public:
 		{ mem().DeAlloc( buf_, alen_*sizeof(T) ); }
 
 	//@{ 末尾に要素を追加 //@}
-	void Add( const T& obj )
+	bool Add( const T& obj )
 		{
 			if( len_ >= alen_ )
-				ReAllocate( alen_<<1 );
+				if( !ReAllocate( alen_<<1 ) )
+					return false;
 			buf_[ len_++ ] = obj;
+			return true;
 		}
 
 	//@{
@@ -56,11 +58,13 @@ public:
 	//	指定した値に基づき最大indexが変化します。
 	//	@param new_size 新しいサイズ。
 	//@}
-	void ForceSize( ulong newSize )
+	bool ForceSize( ulong newSize )
 		{
 			if( newSize > alen_ )
-				ReAllocate( newSize );
+				if( !ReAllocate( newSize ) )
+					return false;
 			len_ = newSize;
+			return true;
 		}
 
 public:
@@ -78,20 +82,20 @@ public:
 		{ return buf_[i]; }
 
 	//@{ 配列先頭のポインタを返す //@}
-	const T* head() const
-		{ return buf_; }
+	const T* head() const { return buf_; }
 
 private:
 
-	void ReAllocate( ulong siz )
+	bool ReAllocate( ulong siz )
 		{
 			ulong p = alen_*sizeof(T);
-			T* newbuf = static_cast<T*>
-				(mem().Alloc( (alen_=siz)*sizeof(T) ));
+			T* newbuf = static_cast<T*>(mem().Alloc( siz*sizeof(T) ));
+			if( !newbuf ) return false;
+			alen_ = siz;
 			memmove( newbuf, buf_, len_*sizeof(T) );
 			mem().DeAlloc( buf_, p );
 			buf_ = newbuf;
-//			buf_ = static_cast<T*>(mem().ReAlloc(buf_, (alen_=siz)*sizeof(T) ));
+			return true;
 		}
 
 private:
@@ -195,7 +199,7 @@ public:
 	//@{ 指定要素以降全てを削除 //@}
 	void DelAfter( iterator d )
 		{
-			if( d != end() ) 
+			if( d != end() )
 			{
 				if( d == begin() )
 				{
