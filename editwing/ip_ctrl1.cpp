@@ -34,7 +34,6 @@ EwEdit::~EwEdit()
 
 void EwEdit::on_create( CREATESTRUCT* cs )
 {
-//	doc_  = new doc::Document;
 	view_ = new view::View( doc_, hwnd() );
 }
 
@@ -42,8 +41,6 @@ void EwEdit::on_destroy()
 {
 	delete view_;
 	view_ = NULL;
-//	delete doc_;
-//	doc_  = NULL;
 }
 
 

@@ -141,6 +141,7 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::Document& dc )
 	, bRO_    ( false )
 	, lineSelectMode_( false )
 	, timerID_( 0 )
+	, dragX_(0), dragY_(0)
 	, inputCP_( GetInputCP() )
 {
 	// ‚Ä‚«‚Æ[‚Éî•ñ‰Šú‰»
