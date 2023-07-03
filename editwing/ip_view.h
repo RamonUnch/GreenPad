@@ -104,8 +104,8 @@ public:
 					return (CW_INTTYPE)sz.cx; // Valid surrogate pair.
 				}
 #endif
-				// Not a proper surrogate pair fallback to 2x (fast)
-				return 2 * widthTable_[ L'x' ];
+				// Not a proper surrogate pair fallback to ?? (fast)
+				return 2 * widthTable_[ L'?' ];
 			}
 #ifdef WIN32S
 			if( useOutA_ )
@@ -119,7 +119,7 @@ public:
 					if( len && ::GetTextExtentPointA( cdc_, strch, len, &sz ) )
 						widthTable_[ ch ] = (CW_INTTYPE)sz.cx;
 					else
-						widthTable_[ ch ] = 2 * widthTable_[ L'x' ]; // Default 2x width
+						widthTable_[ ch ] = 2 * widthTable_[ L'?' ]; // Default ?? width
 				}
 				else
 				{
@@ -200,7 +200,7 @@ private:
 	HFONT  oldfont_;   // Old objects to be released before
 	HPEN   oldpen_;    // the EndPaint() call.
 	HBRUSH oldbrush_;  //
-	CW_INTTYPE*  widthTable_; // int or short [65535] values
+	CW_INTTYPE*  const widthTable_; // int or short [65535] values
 	CW_INTTYPE   height_;
 	CW_INTTYPE   figWidth_;
 	LOGFONT      logfont_;
@@ -352,7 +352,9 @@ struct VDrawInfo
 	int SXB, SXE;   // 選択範囲のx座標, x-coordinate of selection
 	int SYB, SYE;   // 選択範囲のy座標, y-coordinate of selection
 
-	explicit VDrawInfo( const RECT& r ) : rc(r) {}
+	explicit VDrawInfo( const RECT& r )
+		: rc(r), XBASE(0), XMIN(0),XMAX(0), YMIN(0),YMAX(0)
+		, TLMIN(0), SXB(0),SXE(0), SYB(0),SYE(0) {}
 };
 
 

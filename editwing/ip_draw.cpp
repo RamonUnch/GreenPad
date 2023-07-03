@@ -357,8 +357,8 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	}
 #endif // WIN32S
 
-	const unicode zsp=0x3000; // L'　'
-	W(&zsp); // Initialize width of L'　'
+	const unicode zsp[2] = { 0x3000, 0x0000 }; // L'　'
+	W(zsp); // Initialize width of L'　'
 
 	// 下位サロゲートは文字幅ゼロ (Lower surrogates have zero character width)
 	mem00( widthTable_+0xDC00, (0xE000 - 0xDC00)*sizeof(*widthTable_) );

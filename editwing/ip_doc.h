@@ -45,6 +45,7 @@ public:
 		, flg_ ( reinterpret_cast<uchar*>(str_+alen_+1) )
 		, commentBitReady_( 0 )
 		, isLineHeadCommented_( 0 )
+		, commentTransition_( 0 )
 		{
 			memmove( str_, str, len*2 );
 			str_[ len ] = 0x007f;
