@@ -401,13 +401,26 @@ int String::GetInt( const TCHAR* x )
 {
 	int n=0;
 	bool minus = (*x==TEXT('-'));
-	for( const TCHAR* p=(minus?x+1:x); *p!=TEXT('\0'); p=next(p) )
+	x += minus;
+	for( ; *x!=TEXT('\0'); x=next(x) )
 	{
-		if( *p<TEXT('0') || TEXT('9')<*p )
+		if( *x<TEXT('0') || TEXT('9')<*x )
 			return 0;
-		n = (10*n) + (*p-TEXT('0'));
+		n = (10*n) + (*x-TEXT('0'));
 	}
 	return minus ? -n : n;
+}
+
+ulong String::GetULong( const TCHAR* x )
+{
+	ulong n=0;
+	for( ; *x != TEXT('\0'); x = next(x) )
+	{
+		if( *x<TEXT('0') || TEXT('9')<*x )
+			return 0;
+		n = 10*n + (*x - TEXT('0'));
+	}
+	return n;
 }
 
 String& String::SetInt( int n )

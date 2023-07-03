@@ -226,8 +226,8 @@ using namespace ki;
 		return odst;
 	}
 	#else // Other CPUS
-	typedef __attribute__((__may_alias__)) uintptr_t WT;
-	#define WS (sizeof(WT))
+	#pragma GCC push_options
+	#pragma GCC optimize("O3")
 	void *__cdecl memmove(void *dest, const void *src, size_t n)
 	{
 		if (dest == src)
@@ -236,27 +236,14 @@ using namespace ki;
 		unsigned char *d = (unsigned char *)dest;
 		const unsigned char *s = (const unsigned char *)src;
 
-		if (d < s) {
-			if ((uintptr_t)s % WS == (uintptr_t)d % WS) {
-				while ((uintptr_t)d % WS) {
-					if (!n--) return dest;
-					*d++ = *s++;
-				}
-				for (; n>=WS; n-=WS, d+=WS, s+=WS) *(WT *)d = *(WT *)s;
-			}
+		if (d < s || s+n < d) {
 			for (; n; n--) *d++ = *s++;
 		} else {
-			if ((uintptr_t)s % WS == (uintptr_t)d % WS) {
-				while ((uintptr_t)(d+n) % WS) {
-					if (!n--) return dest;
-					d[n] = s[n];
-				}
-				while (n>=WS) n-=WS, *(WT *)(d+n) = *(WT *)(s+n);
-			}
 			while (n) n--, d[n] = s[n];
 		}
 		return dest;
 	}
+	#pragma GCC pop_options
 	#endif
 
 

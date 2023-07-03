@@ -25,6 +25,7 @@ public:
 	FileR()
 		: handle_ ( INVALID_HANDLE_VALUE )
 		, fmo_    ( NULL )
+		, size_   ( 0 )
 		, basePtr_( NULL ) {}
 	~FileR() { Close(); }
 

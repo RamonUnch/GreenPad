@@ -27,12 +27,14 @@
 #define A_NONNULL3(x, y, z) __attribute__((nonnull(x, y, z)))
 #define A_WUNUSED  __attribute__((warn_unused))
 #define ASSUME(x) do { if (!(x)) __builtin_unreachable(); } while (0)
+#define UNREACHABLE() __builtin_unreachable()
 #define restrict __restrict
 #define likely(x)       __builtin_expect(!!(x),1)
 #define unlikely(x)     __builtin_expect(!!(x),0)
 
 #else //__GNUC__
 #define ASSUME(x)
+#define UNREACHABLE()
 #define A_HOT
 #define A_COLD
 #define A_PURE

@@ -250,6 +250,7 @@ public:
 
 	//@{ •¶Žš—ñ‚©‚çint‚Ö•ÏŠ· //@}
 	int GetInt();
+	int GetULong();
 
 public:
 
@@ -281,6 +282,7 @@ public:
 
 	//@{ •¶Žš—ñ‚©‚çint‚Ö•ÏŠ· //@}
 	static int GetInt( const TCHAR* p ) A_NONNULL;
+	static ulong GetULong( const TCHAR* x ) A_NONNULL;
 
 protected:
 
@@ -416,6 +418,8 @@ inline String& String::operator += ( TCHAR c )
 // •ÏŠ·
 inline int String::GetInt()
 	{ return GetInt( data_->buf() ); }
+inline int String::GetULong()
+	{ return GetULong( data_->buf() ); }
 
 //@{ String + String //@}
 inline const String operator+( const String& a, const String& b )

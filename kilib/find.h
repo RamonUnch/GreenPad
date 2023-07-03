@@ -24,10 +24,10 @@ class FindFile : public Object
 public:
 
 	//@{ コンストラクタ //@}
-	FindFile();
+	FindFile() : han_( INVALID_HANDLE_VALUE ), first_(false) {}
 
 	//@{ デストラクタ //@}
-	~FindFile();
+	~FindFile() { Close(); }
 
 	//@{ 検索終了処理 //@}
 	void Close();
@@ -52,17 +52,6 @@ private:
 
 	NOCOPY(FindFile);
 };
-
-
-
-//-------------------------------------------------------------------------
-
-inline FindFile::FindFile()
-	: han_( INVALID_HANDLE_VALUE ) {}
-
-inline FindFile::~FindFile()
-	{ Close(); }
-
 
 
 //=========================================================================

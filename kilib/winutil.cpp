@@ -124,7 +124,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 					totstrlen += lenmap[i];
 				}
 				unicode* ustr = new unicode[totstrlen+2*nf+1];
-				if(!ustr) return Text( NULL, Text::NEW ); 
+				if(!ustr) return Text( NULL, Text::NEW );
 				//mem00( ustr, (totstrlen+2*nf+1) * sizeof(unicode) );
 				unicode* ptr=ustr; *ptr = L'\0';
 				for( UINT i=0; i < nf; i++ )
@@ -140,7 +140,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 						ptr+=len;
 					}
 					#endif
-	
+
 					*ptr++ = L'\r';
 					*ptr++ = L'\n';
 				}
@@ -161,7 +161,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 #ifndef NO_OLEDNDSRC
 size_t IDataObjectTxt::convCRLFtoNULLS(unicode *d, const unicode *s, size_t l)
 {
-	unicode *od = d;
+	const unicode *od = d;
 	while( l-- )
 	{
 		if( *s == L'\r' || *s == L'\n' )
