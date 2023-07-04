@@ -19,8 +19,6 @@ struct ki::TextFileRPimpl: public Object
 	virtual size_t ReadBuf( unicode* buf, ulong siz )
 		= 0;
 
-	virtual void SkipBOMIfNeeded()=0;
-
 	enum { EOF=0, EOL=1, EOB=2 } state;
 
 	virtual ~TextFileRPimpl() {}
@@ -40,7 +38,7 @@ struct rBasicUTF : public ki::TextFileRPimpl
 	inline unicode GetC() {unicode ch=PeekC(); Skip(); return ch;}
 	virtual void Skip() = 0;
 	virtual bool Eof() = 0;
-	virtual void SkipBOMIfNeeded() override A_FINAL
+	void SkipBOMIfNeeded()
 	{
 		if( !Eof() )
 		{
@@ -92,7 +90,7 @@ struct rUCS A_FINAL : public rBasicUTF
 	rUCS( const uchar* b, ulong s )
 		: fb( reinterpret_cast<const T*>(b) )
 		, fe( reinterpret_cast<const T*>(b+(s/sizeof(T))*sizeof(T)) )
-		{}
+		{ SkipBOMIfNeeded(); }
 
 	const T *fb, *fe;
 
@@ -118,7 +116,7 @@ struct rUtf32 A_FINAL: public rBasicUTF
 	rUtf32( const uchar* b, ulong s )
 		: fb( reinterpret_cast<const qbyte*>(b) )
 		, fe( reinterpret_cast<const qbyte*>(b+(s/sizeof(qbyte))*sizeof(qbyte)) )
-		, state(0) {}
+		, state(0) { SkipBOMIfNeeded(); }
 
 	const qbyte *fb, *fe;
 	int state;
@@ -167,7 +165,7 @@ struct rUtf1 A_FINAL: public rBasicUTF
 	rUtf1( const uchar* b, ulong s )
 		: fb( b )
 		, fe( b+s )
-		, SurrogateLow( 0 ) {}
+		, SurrogateLow( 0 ) { SkipBOMIfNeeded(); }
 
 	const uchar *fb, *fe;
 	qbyte SurrogateLow;
@@ -232,7 +230,7 @@ struct rUtf9 A_FINAL: public rBasicUTF
 	rUtf9( const uchar* b, ulong s )
 		: fb( b )
 		, fe( b+s )
-		, SurrogateLow( 0 ) {}
+		, SurrogateLow( 0 ) { SkipBOMIfNeeded(); }
 
 	const uchar *fb, *fe;
 	qbyte SurrogateLow;
@@ -282,7 +280,7 @@ struct rUtfOFSS A_FINAL: public rBasicUTF
 	rUtfOFSS( const uchar* b, ulong s )
 		: fb( b )
 		, fe( b+s )
-		, SurrogateLow( 0 ) {}
+		, SurrogateLow( 0 ) { SkipBOMIfNeeded(); }
 
 	const uchar *fb, *fe;
 	qbyte SurrogateLow;
@@ -338,7 +336,7 @@ struct rUtf5 A_FINAL: public rBasicUTF
 {
 	rUtf5( const uchar* b, ulong s )
 		: fb( b )
-		, fe( b+s ) {}
+		, fe( b+s ) { SkipBOMIfNeeded(); }
 
 	const uchar *fb, *fe;
 
@@ -387,7 +385,7 @@ struct rUtf7 A_FINAL: public rBasicUTF
 	rUtf7( const uchar* b, ulong s )
 		: fb( b )
 		, fe( b+s )
-		, rest( -1 ) { fillbuf(); }
+		, rest( -1 ) { fillbuf();  SkipBOMIfNeeded(); }
 
 	const uchar *fb, *fe;
 	unicode buf[3]; // b64を８文字毎に読んでバッファに溜めておく
@@ -505,7 +503,7 @@ struct rSCSU A_FINAL: public rBasicUTF
 		, mode( 0 )
 		, skip( 0 )
 		, c( 0 )
-		, d( 0 ) {}
+		, d( 0 ) { SkipBOMIfNeeded(); }
 
 	const uchar *fb, *fe;
 	uchar active, mode;
@@ -649,7 +647,7 @@ struct rBOCU1 A_FINAL: public rBasicUTF
 		, fe( b+s )
 		, skip( 0 )
 		, cp( 0 )
-		, pc( 0x40 ) {}
+		, pc( 0x40 ) { SkipBOMIfNeeded(); }
 
 	const uchar *fb, *fe;
 	ulong skip;
@@ -957,7 +955,6 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		// 終了
 		return len;
 	}
-	void SkipBOMIfNeeded() override {}
 
 	uNextFunc GetCharNextExA(WORD cp)
 	{
@@ -1090,7 +1087,6 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 		if( k&1 )	s[1] = (char)((t>>6) ? t+0x40 : t+0x3f);
 		else		s[1] = (char)(t+0x9e);
 	}
-	void SkipBOMIfNeeded() override {}
 	// ファイルポインタ
 	const uchar* fb;
 	const uchar* fe;
@@ -1367,9 +1363,6 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	case HZ:      impl_ = new rIso2022(buf,siz,true,true, ASCII,GB); break;
 	default:      impl_ = new rMBCS(buf,siz,cs_); break;
 	}
-
-	if( impl_ )
-		impl_->SkipBOMIfNeeded();
 
 	return impl_ != NULL;
 }
