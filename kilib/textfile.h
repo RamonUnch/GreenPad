@@ -159,7 +159,7 @@ class TextFileR : public Object
 public:
 
 	//@{ コンストラクタ（コード指定）//@}
-	TextFileR( int charset=AutoDetect );
+	explicit TextFileR( int charset=AutoDetect );
 
 	//@{ デストラクタ //@}
 	~TextFileR();

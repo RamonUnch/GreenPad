@@ -1108,6 +1108,7 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 		, mode_hz( hz )
 		, GL( &G[0] )
 		, gWhat( 1 )
+		, len( 0 )
 	{
 		G[0]=g0, G[1]=g1, G[2]=g2, G[3]=g3;
 	}
@@ -2254,7 +2255,7 @@ struct ki::TextFileWPimpl : public Object
 
 protected:
 
-	TextFileWPimpl( FileW& w )
+	explicit TextFileWPimpl( FileW& w )
 		: fp_   (w) {}
 
 	FileW& fp_;
@@ -2266,7 +2267,7 @@ private:
 #define WBUF_SIZE 8192
 struct TextFileWPimplWithBuf: public ki::TextFileWPimpl
 {
-	TextFileWPimplWithBuf( FileW& w )
+	explicit TextFileWPimplWithBuf( FileW& w )
 		: ki::TextFileWPimpl( w )
 		, bsiz_  ( WBUF_SIZE )
 		, bstep_ ( bsiz_ >> 2 ) // Quarter of allocated bufer
@@ -2310,7 +2311,7 @@ protected:
 
 struct wUtf16LE A_FINAL: public TextFileWPimpl
 {
-	wUtf16LE( FileW& w, bool bom ) : TextFileWPimpl(w)
+	explicit wUtf16LE( FileW& w, bool bom ) : TextFileWPimpl(w)
 		{ if(bom){ unicode ch=0xfeff; fp_.Write(&ch,2); } }
 	void WriteLine( const unicode* buf, ulong siz ) override
 		{ fp_.Write(buf, siz*2); }
@@ -2318,7 +2319,7 @@ struct wUtf16LE A_FINAL: public TextFileWPimpl
 
 struct wUtf16BE A_FINAL: public TextFileWPimpl
 {
-	wUtf16BE( FileW& w, bool bom ) : TextFileWPimpl(w)
+	explicit wUtf16BE( FileW& w, bool bom ) : TextFileWPimpl(w)
 		{ if(bom) WriteChar(0xfeff); }
 	void WriteChar( unicode ch ) override
 		{ fp_.NeedSpace(2), fp_.WriteCN(ch>>8), fp_.WriteCN(ch&0xff); }
@@ -2338,7 +2339,7 @@ struct wUtf16BE A_FINAL: public TextFileWPimpl
 
 struct wUtf32LE A_FINAL: public TextFileWPimpl
 {
-	wUtf32LE( FileW& w, bool bom ) : TextFileWPimpl(w)
+	explicit wUtf32LE( FileW& w, bool bom ) : TextFileWPimpl(w)
 		{ if(bom) {unicode c=0xfeff; WriteLine(&c,1);} }
 //	void WriteChar( unicode ch )
 //		{ fp_.WriteC(ch&0xff), fp_.WriteC(ch>>8), fp_.WriteC(0), fp_.WriteC(0); }
@@ -2364,7 +2365,7 @@ struct wUtf32LE A_FINAL: public TextFileWPimpl
 
 struct wUtf32BE A_FINAL: public TextFileWPimpl
 {
-	wUtf32BE( FileW& w, bool bom ) : TextFileWPimpl(w)
+	explicit wUtf32BE( FileW& w, bool bom ) : TextFileWPimpl(w)
 		{ if(bom) {unicode c=0xfeff; WriteLine(&c,1);} }
 //	void WriteChar( unicode ch )
 //		{ fp_.WriteC(0), fp_.WriteC(0), fp_.WriteC(ch>>8), fp_.WriteC(ch&0xff); }
@@ -2390,7 +2391,7 @@ struct wUtf32BE A_FINAL: public TextFileWPimpl
 
 struct wWestISO88591 A_FINAL: public TextFileWPimpl
 {
-	wWestISO88591( FileW& w ) : TextFileWPimpl(w) {}
+	explicit wWestISO88591( FileW& w ) : TextFileWPimpl(w) {}
 	void WriteChar( unicode ch ) override { fp_.WriteC(ch>0xff ? '?' : (uchar)ch); }
 	virtual void WriteLine( const unicode* buf, ulong siz ) override
 	{
@@ -2583,7 +2584,7 @@ struct wUtfOFSS A_FINAL: public TextFileWPimpl
 
 struct wUtf5 A_FINAL: public TextFileWPimpl
 {
-	wUtf5( FileW& w ) : TextFileWPimpl(w) {}
+	explicit wUtf5( FileW& w ) : TextFileWPimpl(w) {}
 	void WriteChar( unicode ch ) override
 	{
 		fp_.NeedSpace(4);
@@ -2657,7 +2658,7 @@ struct wSCSU A_FINAL: public TextFileWPimpl
 		UQU=0xF0  /* Quote a single Unicode character */
 	};
 
-	wSCSU( FileW& w ) : TextFileWPimpl(w), isUnicodeMode(0), win(0)
+	explicit wSCSU( FileW& w ) : TextFileWPimpl(w), isUnicodeMode(0), win(0)
 	{
 		WriteChar( 0xfeff ); // Write BOM
 	}
@@ -2706,7 +2707,7 @@ struct wSCSU A_FINAL: public TextFileWPimpl
 				* which are encoded directly.
 				* All other C0 control codes are quoted with SQ0.
 				*/
-				if( c<=0x1f && ((1<<c)&0x2601)==0 ) {
+				if( ((1u<<c)&0x2601) == 0 ) {
 					fp_.WriteC( static_cast<uchar>(SQ0) );
 				}
 				fp_.WriteC( static_cast<uchar>(c) );
@@ -2809,7 +2810,7 @@ namespace {
 }
 struct wBOCU1 A_FINAL: public TextFileWPimpl
 {
-	wBOCU1( FileW& w ) : TextFileWPimpl(w), cp ( 0 ) , pc ( 0x40 ), diff( 0 )
+	explicit wBOCU1( FileW& w ) : TextFileWPimpl(w), cp ( 0 ) , pc ( 0x40 ), diff( 0 )
 	{ // write BOM
 		fp_.Write( "\xFB\xEE\x28", 3 );
 	}
@@ -2897,7 +2898,7 @@ struct wBOCU1 A_FINAL: public TextFileWPimpl
 
 struct wUTF8 A_FINAL: public TextFileWPimpl
 {
-	wUTF8( FileW& w, int cp )
+	explicit wUTF8( FileW& w, int cp )
 		: TextFileWPimpl(w)
 	{
 		if( cp == UTF8 ) // BOMèëÇ´çûÇ›
@@ -2965,7 +2966,7 @@ struct wUTF8 A_FINAL: public TextFileWPimpl
 
 struct wUTF7 A_FINAL: public TextFileWPimpl
 {
-	wUTF7( FileW& w ) : TextFileWPimpl(w) {}
+	explicit wUTF7( FileW& w ) : TextFileWPimpl(w) {}
 
 	void WriteLine( const unicode* str, ulong len ) override
 	{
@@ -3032,7 +3033,7 @@ struct wUTF7 A_FINAL: public TextFileWPimpl
 
 struct wMBCS A_FINAL: public TextFileWPimpl
 {
-	wMBCS( FileW& w, int cp )
+	explicit wMBCS( FileW& w, int cp )
 		: TextFileWPimpl(w), cp_(cp)
 	{
 		if( cp == UTF8 )
@@ -3063,7 +3064,7 @@ private:
 
 struct wIso2022 A_FINAL: public TextFileWPimplWithBuf
 {
-	wIso2022( FileW& w, int cp )
+	explicit wIso2022( FileW& w, int cp )
 		: TextFileWPimplWithBuf(w), hz_(cp==HZ)
 	{
 		switch( cp )
@@ -3207,7 +3208,7 @@ static const WORD IBM_sjis2kuten[400] = {
 
 struct wEucJp A_FINAL: public TextFileWPimplWithBuf
 {
-	wEucJp( FileW& w )
+	explicit wEucJp( FileW& w )
 		: TextFileWPimplWithBuf(w) {}
 
 	void WriteBuf( const unicode* str, ulong len ) override
@@ -3251,7 +3252,7 @@ struct wEucJp A_FINAL: public TextFileWPimplWithBuf
 
 struct wIsoJp A_FINAL: public TextFileWPimplWithBuf
 {
-	wIsoJp( FileW& w )
+	explicit wIsoJp( FileW& w )
 		: TextFileWPimplWithBuf(w)
 	{
 		fp_.Write( "\x1b\x28\x42", 3 );
