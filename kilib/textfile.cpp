@@ -2706,7 +2706,7 @@ struct wSCSU A_FINAL: public TextFileWPimpl
 				* which are encoded directly.
 				* All other C0 control codes are quoted with SQ0.
 				*/
-				if( c<=0xf && ((1<<c)&0x2601)==0 ) {
+				if( c<=0x1f && ((1<<c)&0x2601)==0 ) {
 					fp_.WriteC( static_cast<uchar>(SQ0) );
 				}
 				fp_.WriteC( static_cast<uchar>(c) );
