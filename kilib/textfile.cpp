@@ -19,7 +19,7 @@ struct ki::TextFileRPimpl: public Object
 	virtual size_t ReadBuf( unicode* buf, ulong siz )
 		= 0;
 
-	virtual void SkipBOMIfNeeded() {}
+	virtual void SkipBOMIfNeeded()=0;
 
 	enum { EOF=0, EOL=1, EOB=2 } state;
 
@@ -207,7 +207,7 @@ struct rUtf1 A_FINAL: public rBasicUTF
 		else if( *fb <= 0xFB ) { ch = ((*fb-0xF6) * 0x8D04 + conv(*(fb+1)) * 0xBE + conv(*(fb+2)) + 0x4016); }
 		else/*if(*fb <= 0xFF)*/{ ch = ((*fb-0xFC) * 0x4DAD6810 + conv(*(fb+1)) * 0x68A8F8 + conv(*(fb+2)) * 0x8D04 + conv(*(fb+3)) * 0xBE + conv(*(fb+4)) + 0x38E2E); }
 
-		if( ch > 0x10000 )
+		if( ch >= 0x10000 )
 		{
 			SurrogateLow = (0xDC00 + (((ch-0x10000)    )&0x3ff));
 			ch = (0xD800 + (((ch-0x10000)>>10)&0x3ff));
@@ -265,7 +265,7 @@ struct rUtf9 A_FINAL: public rBasicUTF
 		else if( *fb >= 0x80 && *fb <= 0x8F ) { ch = (((*fb & 0x7F) << 7) + (*(fb+1) & 0x7F)); }
 		else /* 0~0x7F,0xA0~0xFF */           { ch = (*fb); }
 
-		if( ch > 0x10000 )
+		if( ch >= 0x10000 )
 		{
 			SurrogateLow = (0xDC00 + (((ch-0x10000)    )&0x3ff));
 			ch = (0xD800 + (((ch-0x10000)>>10)&0x3ff));
@@ -315,7 +315,7 @@ struct rUtfOFSS A_FINAL: public rBasicUTF
 		else if( *fb >= 0x80 && *fb <= 0xc0 ) { ch = (((*fb & 0x3f) << 7) + (*(fb+1) & 0x7F) + 0x0000080); }
 		else /* 0~0x7F,0xA0~0xFF */           { ch = (*fb); }
 
-		if( ch > 0x10000 )
+		if( ch >= 0x10000 )
 		{
 			SurrogateLow = (0xDC00 + (((ch-0x10000)    )&0x3ff));
 			ch = (0xD800 + (((ch-0x10000)>>10)&0x3ff));
@@ -957,7 +957,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		// 終了
 		return len;
 	}
-
+	void SkipBOMIfNeeded() override {}
 
 	uNextFunc GetCharNextExA(WORD cp)
 	{
@@ -1090,7 +1090,7 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 		if( k&1 )	s[1] = (char)((t>>6) ? t+0x40 : t+0x3f);
 		else		s[1] = (char)(t+0x9e);
 	}
-
+	void SkipBOMIfNeeded() override {}
 	// ファイルポインタ
 	const uchar* fb;
 	const uchar* fe;
