@@ -14,6 +14,12 @@
   #define memset memset_default
 #endif
 
+#ifdef _MSC_VER
+#define A_NOVTABLE __declspec(novtable)
+#else
+#define A_NOVTABLE
+#endif
+
 #ifdef __GNUC__
 // Define some cool gcc attributes
 #define A_HOT __attribute__((hot))
@@ -48,6 +54,7 @@
 #define A_WUNUSED
 #define likely(x)   (x)
 #define unlikely(x) (x)
+
 #endif
 
 #if defined (__cplusplus) && __cplusplus >= 201103L

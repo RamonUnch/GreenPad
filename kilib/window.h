@@ -2,7 +2,6 @@
 #define _KILIB_WINDOW_H_
 #include "types.h"
 #include "memory.h"
-#include "ktlaptr.h"
 #ifndef __ccdoc__
 namespace ki {
 #endif
@@ -25,7 +24,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class Window : public Object
+class A_NOVTABLE Window : public Object
 {
 public:
 
@@ -278,7 +277,7 @@ inline IMEManager& ime()
 //@}
 //=========================================================================
 
-class WndImpl : public Window
+class A_NOVTABLE WndImpl : public Window
 {
 	enum { THUNK_SIZE = 22 };
 
@@ -352,7 +351,7 @@ private:
 //@}
 //=========================================================================
 
-class DlgImpl : public Window
+class A_NOVTABLE DlgImpl : public Window
 {
 public:
 
