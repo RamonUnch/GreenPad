@@ -1,6 +1,7 @@
 
 #include "../kilib/stdafx.h"
 #include "ip_view.h"
+using namespace ki;
 using namespace editwing;
 using namespace editwing::view;
 

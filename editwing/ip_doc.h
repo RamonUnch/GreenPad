@@ -1,7 +1,7 @@
 #ifndef _EDITWING_IP_DOC_H_
 #define _EDITWING_IP_DOC_H_
 #include "ewDoc.h"
-using namespace ki;
+
 #ifndef __ccdoc__
 namespace editwing {
 namespace doc {
@@ -33,7 +33,7 @@ class Parser;
 //@}
 //=========================================================================
 
-class Line : public Object
+class Line : public ki::Object
 {
 public:
 
@@ -41,7 +41,7 @@ public:
 	Line( const unicode* str, ulong len )
 		: alen_( Max(len, (ulong)1) )
 		, len_ ( len )
-		, str_ ( static_cast<unicode*>( mem().Alloc((alen_+1)*2+alen_) ) )
+		, str_ ( static_cast<unicode*>( ki::mem().Alloc((alen_+1)*2+alen_) ) )
 		, flg_ ( reinterpret_cast<uchar*>(str_+alen_+1) )
 		, commentBitReady_( 0 )
 		, isLineHeadCommented_( 0 )
@@ -53,7 +53,7 @@ public:
 
 	~Line()
 		{
-			mem().DeAlloc( str_, (alen_+1)*2+alen_ );
+		ki::mem().DeAlloc( str_, (alen_+1)*2+alen_ );
 		}
 
 	//@{ テキスト挿入(指定位置に指定サイズ), Insert text (specified position, specified size)  //@}
@@ -65,7 +65,7 @@ public:
 				ulong psiz = (alen_+1)*2+alen_;
 				alen_ = Max( alen_+(alen_>>1), len_+siz ); // len_+siz;
 				unicode* tmpS =
-					static_cast<unicode*>( mem().Alloc((alen_+1)*2+alen_) );
+					static_cast<unicode*>( ki::mem().Alloc((alen_+1)*2+alen_) );
 				uchar*   tmpF =
 					reinterpret_cast<uchar*>(tmpS+alen_+1);
 				// コピー
@@ -73,7 +73,7 @@ public:
 				memmove( tmpS+at+siz, str_+at, (len_-at+1)*2 );
 				memmove( tmpF,        flg_,             at   );
 				// 古いのを削除
-				mem().DeAlloc( str_, psiz );
+				ki::mem().DeAlloc( str_, psiz );
 				str_ = tmpS;
 				flg_ = tmpF;
 			}
@@ -233,7 +233,7 @@ private:
 //@}
 //=========================================================================
 
-class UnReDoChain : public Object
+class UnReDoChain : public ki::Object
 {
 public:
 
@@ -274,7 +274,7 @@ public:
 
 private:
 
-	struct Node : public Object
+	struct Node : public ki::Object
 	{
 		Node();
 		Node( Command*, Node*, Node* );
@@ -324,12 +324,12 @@ inline bool UnReDoChain::isModified() const
 //@}
 //=========================================================================
 
-class Document A_FINAL : public Object
+class Document A_FINAL : public ki::Object
 #ifdef USE_THREADS
-              , private EzLockable
-              , private Runnable
+              , private ki::EzLockable
+              , private ki::Runnable
 #else
-              , private NoLockable
+              , private ki::NoLockable
 #endif
 {
 public:
@@ -350,10 +350,10 @@ public:
 	void DelHandler( const DocEvHandler* eh );
 
 	//@{ ファイルを開く //@}
-	void OpenFile( TextFileR& tf );
+	void OpenFile( ki::TextFileR& tf );
 
 	//@{ ファイルを保存 //@}
-	void SaveFile( TextFileW& tf );
+	void SaveFile( ki::TextFileW& tf );
 
 	//@{ 内容破棄 //@}
 	void ClearAll();
@@ -420,10 +420,10 @@ public:
 
 private:
 
-	aptr<Parser>                   parser_; // 文字列解析役
+	ki::aptr<Parser>                   parser_; // 文字列解析役
 	unicode                        CommentStr_[8];
-	gapbufobj<Line>                text_;   // テキストデータ
-	mutable storage<DocEvHandler*> pEvHan_; // イベント通知先
+	ki::gapbufobj<Line>                text_;   // テキストデータ
+	mutable ki::storage<DocEvHandler*> pEvHan_; // イベント通知先
 	UnReDoChain                    urdo_;   // アンドゥリドゥ
 	bool busy_;
 //	aptr<TextFileR> currentOpeningFile_; // ToDo: multi-threaded

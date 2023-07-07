@@ -3,6 +3,7 @@
 #include "ip_view.h"
 using namespace editwing;
 using namespace editwing::view;
+using namespace ki;
 using doc::Insert;
 using doc::Delete;
 using doc::Replace;

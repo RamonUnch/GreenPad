@@ -5,7 +5,7 @@
 namespace ki {
 #endif
 
-	
+
 
 //=========================================================================
 //@{ @pkg ki.Core //@}
@@ -100,7 +100,7 @@ class NoLockable
 protected:
 	struct AutoLock
 	{
-		AutoLock( NoLockable* host ) {}
+		explicit AutoLock( NoLockable* host ) {}
 	};
 };
 
@@ -123,13 +123,13 @@ protected:
 	EzLockable()
 		{
 		#ifdef USE_THREADS
-			::InitializeCriticalSection( &csection_ ); 
+			::InitializeCriticalSection( &csection_ );
 		#endif
 		}
 	~EzLockable()
 		{
 		#ifdef USE_THREADS
-			::DeleteCriticalSection( &csection_ ); 
+			::DeleteCriticalSection( &csection_ );
 		#endif
 		}
 

@@ -7,8 +7,6 @@ namespace editwing {
 namespace view {
 #endif
 
-using namespace ki;
-
 class Canvas;
 class ViewImpl;
 class Cursor;
@@ -121,7 +119,7 @@ class OleDnDTarget A_FINAL: public IDropTarget
 		}
 
 		fmt.cfFormat = CF_HDROP;
-		if( app().isWin32s() && S_OK == pDataObj->QueryGetData(&fmt) )
+		if( ki::app().isWin32s() && S_OK == pDataObj->QueryGetData(&fmt) )
 		{
 			LOGGER( "OleDnDTarget::DragEnter(CF_HDROP)" );
 			return S_OK;
@@ -175,7 +173,7 @@ struct VPos : public DPos
 //-------------------------------------------------------------------------
 // Caret制御用ラッパー
 //-------------------------------------------------------------------------
-class Caret : public Object
+class Caret : public ki::Object
 {
 public:
 	Caret( HWND wnd )
@@ -194,7 +192,7 @@ public:
 		{ if( created_ ) ::DestroyCaret(), created_=false; }
 
 	void SetPos( int x, int y )
-		{ if( created_ ) ::SetCaretPos(x,y), ime().SetPos(hwnd_,x,y); }
+		{ if( created_ ) ::SetCaretPos(x,y), ki::ime().SetPos(hwnd_,x,y); }
 
 	void Create( int H, int W, const LOGFONT& lf )
 		{
@@ -202,7 +200,7 @@ public:
 				::DestroyCaret();
 			created_ = true;
 			::CreateCaret( hwnd_, NULL, W, H );
-			ime().SetFont( hwnd_, lf );
+			ki::ime().SetFont( hwnd_, lf );
 			Show();
 		}
 	bool isAlive()

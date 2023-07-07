@@ -37,13 +37,13 @@ private:
 };
 
 #ifdef DO_LOGGING
-	#define LOGGER(str) Logger().WriteLine(TEXT(str))
-	#define LOGGERS(str) Logger().WriteLine(str)
-	#define LOGGERF Logger().WriteLineFmtErr
+	#define LOGGER(str) ki::Logger().WriteLine(TEXT(str))
+	#define LOGGERS(str) ki::Logger().WriteLine(str)
+	#define LOGGERF ki::Logger().WriteLineFmtErr
 #else
 	#define LOGGER(x)
 	#define LOGGERS(x)
-	#define LOGGERF Logger().WriteLineFmtErr
+	#define LOGGERF ki::Logger().WriteLineFmtErr
 //	static void __cdecl LOGGERF(const TCHAR *fmt, ...){}
 #endif
 

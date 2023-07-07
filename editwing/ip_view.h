@@ -27,7 +27,7 @@ namespace view {
 //@}
 //=========================================================================
 
-class Painter : public Object
+class Painter : public ki::Object
 {
 public:
 
@@ -232,7 +232,7 @@ private:
 //@}
 //=========================================================================
 
-class Canvas : public Object
+class Canvas : public ki::Object
 {
 public:
 
@@ -302,7 +302,7 @@ private:
 //@}
 //=========================================================================
 
-struct WLine : public storage<ulong>
+struct WLine : public ki::storage<ulong>
 {
 	// [0]   : その行の折り返し無しでの横幅を格納
 	// [1-n] : n行目の終端のindexを格納。
@@ -310,7 +310,7 @@ struct WLine : public storage<ulong>
 	//   例えば "aaabbb" という論理行を "aaab" "bb" と折るなら
 	//   {48, 4, 6} などという長さ３の配列となる。
 
-	WLine() : storage<ulong>(2) {}
+	WLine() : ki::storage<ulong>(2) {}
 	ulong& width()      { return (*this)[0]; }
 	ulong width() const { return (*this)[0]; }
 	ulong rln() const   { return size()-1; }
@@ -369,7 +369,7 @@ struct VDrawInfo
 //@}
 //=========================================================================
 
-class ViewImpl : public Object
+class ViewImpl : public ki::Object
 {
 public:
 
@@ -452,7 +452,7 @@ private:
 	const doc::Document&   doc_;
 	Canvas           cvs_;
 	Cursor           cur_;
-	gapbufobj<WLine> wrap_;
+	ki::gapbufobj<WLine> wrap_;
 	ulong            vlNum_;
 	ulong            textCx_;
 	short            accdelta_;

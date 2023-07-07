@@ -2,7 +2,6 @@
 #define _KILIB_STRING_H_
 #include "types.h"
 #include "memory.h"
-#include "ktlaptr.h"
 #ifndef __ccdoc__
 
 
