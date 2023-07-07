@@ -1,7 +1,6 @@
 #ifndef _KILIB_TEXTFILE_H_
 #define _KILIB_TEXTFILE_H_
 #include "types.h"
-#include "ktlaptr.h"
 #include "memory.h"
 #include "file.h"
 #ifndef __ccdoc__

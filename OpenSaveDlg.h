@@ -1,7 +1,6 @@
 #ifndef _GREENPAD_OPENSAVEDLG_H_
 #define _GREENPAD_OPENSAVEDLG_H_
 #include "kilib/ktlarray.h"
-#include "kilib/ktlaptr.h"
 #include "kilib/kstring.h"
 #include "rsrc/resource.h"
 

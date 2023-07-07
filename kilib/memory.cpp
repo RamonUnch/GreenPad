@@ -93,7 +93,8 @@ using namespace ki;
 		return buf;
 	}
 	#endif
-	#if !defined(__GNUC__)
+	#if defined(_MSC_VER) && defined(_M_IX86) && !(defined(_M_AMD64) || defined(_M_X64))
+	// MSVC 386 ONLY
 	void* __cdecl memmove( void* dst, const void* src, size_t cnt )
 	{
 		__asm {
@@ -159,10 +160,11 @@ using namespace ki;
 		return dst;
 	}
 	#else
-	#if defined(__i386__) && !defined(WIN64)
+	#if defined(__GNUC__) && defined(__i386__) && !defined(WIN64)
 	// This is a convertion from the normal intel syntax
 	// Converted %%edx into a generic register "q" -> %1
 	// GCC seems to choose edx anyway.
+	// GCC 386 ONLY
 	void *__cdecl memmove(void *dst, const void *src, size_t n)
 	{
 		void *odst = dst;
@@ -225,7 +227,8 @@ using namespace ki;
 		);
 		return odst;
 	}
-	#else // Other CPUS
+	#else
+	// Other CPUS or no GCC/MSVC
 	#pragma GCC push_options
 	#pragma GCC optimize("O3")
 	void *__cdecl memmove(void *dest, const void *src, size_t n)
@@ -545,9 +548,7 @@ inline bool MemoryManager::FixedSizeMemBlockPool::isValid()
 // 動的確保していたが、それは面倒なのでやめました。(^^;
 // 最初に64個確保したからと言って、そんなにメモリも喰わないし…。
 //
-
 MemoryManager* MemoryManager::pUniqueInstance_;
-
 MemoryManager::MemoryManager()
 {
 #if defined(SUPERTINY) && !defined(USE_LOCALALLOC)
@@ -557,11 +558,11 @@ MemoryManager::MemoryManager()
 	// g_heap = ::HeapCreate( HEAP_NO_SERIALIZE, 1, 0 );
 #endif
 
+	// メモリプールをZEROクリア
 	#ifndef STACK_MEM_POOLS
-	static FixedSizeMemBlockPool staticpools[SMALL_MAX];
+	static MemoryManager::FixedSizeMemBlockPool staticpools[ SMALL_MAX ];
 	pools_ = staticpools;
 	#endif
-	// メモリプールをZEROクリア
 //	pools_ = new FixedSizeMemBlockPool[ SMALL_MAX ];
 	#ifdef STACK_MEM_POOLS
 	mem00( pools_, /*sizeof(pools_)*/ sizeof(FixedSizeMemBlockPool) * SMALL_MAX );

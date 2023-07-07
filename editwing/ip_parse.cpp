@@ -1,6 +1,7 @@
 
 #include "../kilib/stdafx.h"
 #include "ip_doc.h"
+using namespace ki;
 using namespace editwing;
 using namespace editwing::doc;
 
@@ -172,7 +173,7 @@ const int CommentDFA::tr_table[5][5] = {
 // ChainHashの要素にするためnextポインタがつけてあります。
 // DO NOT USE new/delete for Keyword, stick to Keyword::New/Delete
 //-------------------------------------------------------------------------
-struct Keyword : public Object
+struct Keyword : public ki::Object
 {
 	Keyword*    next;
 	ulong len;

@@ -26,7 +26,7 @@ class Replace;
 //@}
 //=========================================================================
 
-class DocEvHandler
+class A_NOVTABLE DocEvHandler
 {
 public:
 	//@{
@@ -64,7 +64,7 @@ public:
 //@}
 //=========================================================================
 
-class Command : public ki::Object
+class A_NOVTABLE Command : public ki::Object
 {
 protected:
 	friend class UnReDoChain;

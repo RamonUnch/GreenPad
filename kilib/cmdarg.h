@@ -2,7 +2,6 @@
 #define _KILIB_CMDARG_H_
 #include "types.h"
 #include "memory.h"
-#include "ktlaptr.h"
 #include "ktlarray.h"
 #ifndef __ccdoc__
 namespace ki {

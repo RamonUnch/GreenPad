@@ -2,7 +2,6 @@
 #define _KILIB_WINUTIL_H_
 #include "types.h"
 #include "memory.h"
-#include "ktlaptr.h"
 
 #ifndef NO_OLEDNDTAR
 bool coolDragDetect( HWND hwnd, LPARAM pt, WORD btup, WORD removebutton );

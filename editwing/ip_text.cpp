@@ -1,6 +1,7 @@
 
 #include "../kilib/stdafx.h"
 #include "ip_doc.h"
+using namespace ki;
 using namespace editwing;
 using namespace editwing::doc;
 
@@ -713,7 +714,7 @@ Command* MacroCommand::operator()( Document& doc ) const
 // ƒtƒ@ƒCƒ‹‚É•Û‘¶, Save to file
 //-------------------------------------------------------------------------
 
-void Document::SaveFile( TextFileW& tf )
+void Document::SaveFile( ki::TextFileW& tf )
 {
 	urdo_.SavedHere();
 	for( ulong i=0,iLast=tln()-1; i<=iLast; ++i )

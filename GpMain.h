@@ -107,7 +107,7 @@ private:
 	void    on_refreshfile();
 	void    on_savefile();
 	void    on_savefileas();
-	void	SetFontSizeforDC(LOGFONT *font, HDC hDC, int fsiz, int fx);
+	void    SetFontSizeforDC(LOGFONT *font, HDC hDC, int fsiz, int fx);
 	void    on_print();
 	void    on_pagesetup();
 	void    on_exit();
