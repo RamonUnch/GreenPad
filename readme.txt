@@ -1,4 +1,4 @@
-=<> GreenPad ver 1.18
+=<> GreenPad ver 1.19
 =<> RamonUnch builds 2023/06/23
 
 <<What's This?>>
@@ -54,42 +54,56 @@
   * Handle per-monitor dpi awareness. This will require to reload the
     Painter each time we receive the WM_DPICHANGED message.
   * Improve syntactic coloration (highlight matching braces/parenthesis)
-  * Add the ability to go to matching brace with Ctrl+B or something.
   * Handle Dark mode in the non-client area for Windows 10 1607+
   * Allow a Square selection mode for ASCII-Art or column handling.
   * Improve printer configuration.
   * Fix more bugs, handle low memory situations better.
   * Optimize memory usage so that larger files can be loaded.
 
-<<What's New in 1.18 (by RamonUnch, 2023/06/23)>>
+<<What's New in 1.19 (by RamonUnch, 2023/07/07)>>
  < NEW >
-   * Display codepage number in the status bar.
-   * Allow to directly type codepage number in Save/Open/ReOpen dialogs
-   * Added Help->About dialog that displays GreenPad version and build
-     details as well as the Currently running Windows version.
-   * Optimize memmove for gcc build (significantly faster).
-   * Minor refactoring, reduces mem usage a few percents.
-   * Increase Win32s scrolling range from 8 million up to 24 million lines
-   * Various optimizations for file reading/writing code.
+  * Added the ability to go to matching brace with Ctrl+B.
 
  < FIXED >
-   * Crash when opening the Save dialog if the current codepage is outside
-     the default cs list.
-   * Avoid false UTF-16/32 detection for some files.
-   * The Tab key can now be used to navigate through the Open/Save dialog.
-   * Fixed Crash when reading invalid Iso2022 or UtfOFSS files.
-   * Directly use current local codepage when detecting a pure ASCII file.
-   * Minor code refactoring, reducing exe size.
-   * Use more stack buffers when possible instead of new/delete.
-   * Avoid excessive memory allocation when saving a file, also avoid
-     useless memmove between two intermediate buffers and improve perf.
+  * Fixed Unicode reader for UTF-1, UTF-9, FSS-UTF and writer for SCSU.
+  * Warn when trying to load a huge file (larger than 2GB),
+    and propose to retry loading only the first 64KB.
+  * Sometime a setting would not be written to ini file properly.
+  * Find dialog settings will be saved even on cancel.
+  * Fixed a potential crash in rightOf() function. #121
+  * Minor refactoring: ensure some variables are always initialized,
+    remove redundent checks, be more carfeful with some lifetimes.
+    use const and explicit when possible...
+
+<<What's New in 1.18 (by RamonUnch, 2023/06/23)>>
+ < NEW >
+  * Display codepage number in the status bar.
+  * Allow to directly type codepage number in Save/Open/ReOpen dialogs
+  * Added Help->About dialog that displays GreenPad version and build
+    details as well as the Currently running Windows version.
+  * Optimize memmove for gcc build (significantly faster).
+  * Minor refactoring, reduces mem usage a few percents.
+  * Increase Win32s scrolling range from 8 million up to 24 million lines
+  * Various optimizations for file reading/writing code.
+
+ < FIXED >
+  * Crash when opening the Save dialog if the current codepage is outside
+    the default cs list.
+  * Avoid false UTF-16/32 detection for some files.
+  * The Tab key can now be used to navigate through the Open/Save dialog.
+  * Fixed Crash when reading invalid Iso2022 or UtfOFSS files.
+  * Directly use current local codepage when detecting a pure ASCII file.
+  * Minor code refactoring, reducing exe size.
+  * Use more stack buffers when possible instead of new/delete.
+  * Avoid excessive memory allocation when saving a file, also avoid
+    useless memmove between two intermediate buffers and improve perf.
 
 <<What's New in 1.17 (by RamonUnch, 2023/03/11)>>
  < NEW >
-   * OLE2 style drag and drop support was added in most builds
-     To use it you will need to use the right click (easier to code)
-     Also Win32s 1.25+ or NT3.50+ are needed.
-   * The Help->About menu and Dialog were added to GreenPad.
+  * OLE2 style drag and drop support was added in most builds
+    To use it you will need to use the right click (easier to code)
+    Also Win32s 1.25+ or NT3.50+ are needed.
+  * The Help->About menu and Dialog were added to GreenPad.
 
  < FIXED >
   * Loading is now significantly faster for large files.
