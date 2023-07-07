@@ -82,7 +82,7 @@ public:
 			int txtlen = SendMsg( CB_GETLBTEXTLEN, i, 0 );
 			if( 0 < txtlen && txtlen < len )
 			{
-				SendMsg( CB_GETLBTEXT, i, (LPARAM)buf );
+				SendMsg( CB_GETLBTEXT, i, reinterpret_cast<LPARAM>(buf) );
 				return true;
 			}
 		}

@@ -392,14 +392,14 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	if( myGetFontUnicodeRanges )
 	{ // We found the function
 		DWORD frlen = myGetFontUnicodeRanges( cdc_, NULL );
-		if( frlen && (fontranges_ = (GLYPHSET*) new BYTE[frlen]) )
+		if( frlen && (fontranges_ = reinterpret_cast<GLYPHSET*>(new BYTE[frlen])) )
 		{
 			mem00(fontranges_, frlen);
 			fontranges_->cbThis = frlen;
 			fontranges_->flAccel = 0;
 			if( frlen != myGetFontUnicodeRanges( cdc_, fontranges_ ) )
 			{ // Failed!
-				delete [] ((BYTE*)fontranges_);
+				delete [] (reinterpret_cast<BYTE*>(fontranges_));
 				fontranges_ = NULL;
 			}
 		}
@@ -456,7 +456,7 @@ Painter::~Painter()
 	::DeleteObject( pen_ );
 	::DeleteObject( brush_ );
 	if( fontranges_ )
-		delete [] ((BYTE *)fontranges_); // As BYTES...
+		delete [] (reinterpret_cast<BYTE*>(fontranges_)); // As BYTES...
 //	delete [] widthTable_;
 }
 

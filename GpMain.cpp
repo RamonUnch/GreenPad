@@ -1102,7 +1102,7 @@ static HWND MyFindWindowEx(HWND parent, HWND after, LPCTSTR lpszClass, LPCTSTR l
   # endif
 	// Fallback to the WIP FindWindowEx re-implementation.
 	struct MyFindWindowExstruct param = {after, lpszClass, lpszWindow, NULL};
-	EnumChildWindows(parent, MyFindWindowExProc, (LPARAM)&param);
+	EnumChildWindows(parent, MyFindWindowExProc, reinterpret_cast<LPARAM>(&param));
 	return param.ret;
 }
 #else // TARGET_VER
@@ -1418,7 +1418,7 @@ BOOL CALLBACK GreenPadWnd::PostMsgToFriendsProc(HWND hwnd, LPARAM lPmsg)
 }
 BOOL GreenPadWnd::PostMsgToAllFriends(UINT msg)
 {
-	return EnumWindows(PostMsgToFriendsProc, (LPARAM)msg);
+	return EnumWindows(PostMsgToFriendsProc, static_cast<LPARAM>(msg));
 }
 bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, bool always )
 {

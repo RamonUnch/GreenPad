@@ -186,7 +186,7 @@ bool FileR::Open( const TCHAR* fname, bool always)
 			// So we allocate a buffer for the whole file and use ReadFile().
 			basePtr_ = new BYTE[size_];
 			DWORD nBytesRead=0;
-			BOOL ret = ReadFile( handle_, (void*)basePtr_, size_, &nBytesRead,  NULL);
+			BOOL ret = ReadFile( handle_, basePtr_, size_, &nBytesRead,  NULL);
 			::CloseHandle( handle_ ); // We can already close the handle
 			handle_ = INVALID_HANDLE_VALUE;
 			size_ = nBytesRead; // Update size with what was actually read.
