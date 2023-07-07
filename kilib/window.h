@@ -465,10 +465,10 @@ inline void DlgImpl::GrayCheckItem( UINT id)
 	{ setItemCheck(id, BST_INDETERMINATE); }
 
 inline LRESULT DlgImpl::SetItemText( UINT id, const TCHAR *str )
-	{ return ::SendDlgItemMessage(hwnd(), id, WM_SETTEXT, 0, (LPARAM)str ); }
+	{ return ::SendDlgItemMessage(hwnd(), id, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(str) ); }
 
 inline LRESULT DlgImpl::GetItemText( UINT id, size_t len, TCHAR *str ) const
-	{ return ::SendDlgItemMessage(hwnd(), id, WM_GETTEXT, (WPARAM)len, (LPARAM)str ); }
+	{ return ::SendDlgItemMessage(hwnd(), id, WM_GETTEXT, static_cast<WPARAM>(len), reinterpret_cast<LPARAM>(str) ); }
 
 
 

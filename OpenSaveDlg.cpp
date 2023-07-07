@@ -474,7 +474,7 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		{
 			TCHAR buf[32];
 			buf[0] = TEXT('\0');
-			::SendDlgItemMessage(dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), (LPARAM)buf);
+			::SendDlgItemMessage(dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), reinterpret_cast<LPARAM>(buf));
 			// Typed CP has precedence over droplist
 			if ( isSDigit(buf[0]) )
 			{
@@ -645,7 +645,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 
 			TCHAR buf[32];
 			buf[0] = TEXT('\0');
-			::SendDlgItemMessage( dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), (LPARAM)buf);
+			::SendDlgItemMessage( dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), reinterpret_cast<LPARAM>(buf));
 			// Typed CP has precedence over droplist
 			if ( isSDigit(buf[0]) )
 			{
@@ -737,14 +737,14 @@ void ReopenDlg::on_init()
 	{	// Show CP number in the reopen dialog
 		// If selection failed.
 		TCHAR tmp[INT_DIGITS+1];
-		SendMsgToItem( IDC_CODELIST, WM_SETTEXT, 0, (LPARAM)Int2lStr(tmp, csIndex_&0xfffff) );
+		SendMsgToItem( IDC_CODELIST, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(Int2lStr(tmp, csIndex_&0xfffff)) );
 	}
 }
 
 bool ReopenDlg::on_ok()
 {
 	TCHAR buf[32];
-	SendMsgToItem( IDC_CODELIST, WM_GETTEXT, countof(buf), (LPARAM)buf );
+	SendMsgToItem( IDC_CODELIST, WM_GETTEXT, countof(buf), reinterpret_cast<LPARAM>(buf) );
 	// Typed CP has precedence over droplist
 	if ( isSDigit(buf[0]) )
 	{

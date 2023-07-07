@@ -1452,7 +1452,7 @@ HRESULT STDMETHODCALLTYPE OleDnDTarget::Drop(IDataObject *pDataObj, DWORD grfKey
 	fmt.cfFormat = CF_HDROP;
 	if( app().isWin32s() && S_OK == pDataObj->GetData(&fmt, &stg) && stg.hGlobal)
 	{
-		::SendMessage(GetParent(GetParent(hwnd_)), WM_DROPFILES, (WPARAM) stg.hGlobal, NULL);
+		::SendMessage(GetParent(GetParent(hwnd_)), WM_DROPFILES, reinterpret_cast<WPARAM>(stg.hGlobal), NULL);
 	}
 
 

@@ -750,7 +750,7 @@ namespace
 	static char* WINAPI CharNextGB18030( WORD, const char* sp, DWORD )
 	{
 		const unsigned char *q;
-		const unsigned char *p = (const unsigned char *)sp;
+		const unsigned char *p = reinterpret_cast<const unsigned char *>(sp);
 		if (!(*p & 0x80) || *p == 0x80 || *p == 0xFF || // ASCII, Euro sign, EOF
 			!p[1] || p[1] == 0xFF || p[1] < 0x30) // invalid DBCS
 		{
@@ -1577,12 +1577,12 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 	IMultiLanguage2 *lang = NULL;
 	static const IID myIID_IMultiLanguage2 = {0xDCCFC164, 0x2B38, 0x11d2, {0xB7, 0xEC, 0x00, 0xC0, 0x4F, 0x8F, 0x5D, 0x9A}};
 	static const CLSID myCLSID_CMultiLanguage = { 0x275c23e2, 0x3747, 0x11d0, {0x9f, 0xea, 0x00,0xaa,0x00,0x3f,0x86,0x46} };
-	HRESULT ret = ::MyCoCreateInstance(myCLSID_CMultiLanguage, NULL, CLSCTX_ALL, myIID_IMultiLanguage2, (LPVOID*)&lang );
+	HRESULT ret = ::MyCoCreateInstance(myCLSID_CMultiLanguage, NULL, CLSCTX_ALL, myIID_IMultiLanguage2, reinterpret_cast<LPVOID*>(&lang) );
 	if( S_OK == ret && lang != NULL )
 	{
 		int detectEncCount = 5;
 		DetectEncodingInfo detectEnc[5];
-		lang->DetectInputCodepage(MLDETECTCP_DBCS, 0, (char *)(ptr), (INT *)(&siz), detectEnc, &detectEncCount); // 2 ugly C-cast here
+		lang->DetectInputCodepage(MLDETECTCP_DBCS, 0, (char *)(ptr), reinterpret_cast<INT*>(&siz), detectEnc, &detectEncCount); // Ugly C-cast here
 
 	# ifdef MLANG_DEBUG
 		TCHAR otmp[1024];
@@ -1724,7 +1724,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 		goto freeandexit;
 	}
 
-	if( 0 == chardet_handle_data(pdet, (const char *)ptr, siz-1) )
+	if( 0 == chardet_handle_data(pdet, reinterpret_cast<const char *>(ptr), siz-1) )
 	{
 		static const struct {
 			const char *str; int cs;

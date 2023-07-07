@@ -236,8 +236,8 @@ using namespace ki;
 		if (dest == src)
 			return dest;
 
-		unsigned char *d = (unsigned char *)dest;
-		const unsigned char *s = (const unsigned char *)src;
+		unsigned char *d = reinterpret_cast<unsigned char *>(dest);
+		const unsigned char *s = reinterpret_cast<const unsigned char *>(src);
 
 		if (d < s || s+n < d) {
 			for (; n; n--) *d++ = *s++;
@@ -252,8 +252,8 @@ using namespace ki;
 
 	extern "C" void *__cdecl memset(void *dest, int ch, size_t n)
 	{
-		unsigned char *d = (unsigned char *)dest;
-		const unsigned char c = (unsigned char)ch;
+		unsigned char *d = reinterpret_cast<unsigned char *>(dest);
+		const unsigned char c = static_cast<unsigned char>(ch);
 		while( n-- )
 			*d++ = c;
 
