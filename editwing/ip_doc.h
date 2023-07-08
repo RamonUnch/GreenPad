@@ -420,7 +420,7 @@ public:
 
 private:
 
-	ki::aptr<Parser>                   parser_; // 文字列解析役
+	ki::uptr<Parser>                   parser_; // 文字列解析役
 	unicode                        CommentStr_[8];
 	ki::gapbufobj<Line>                text_;   // テキストデータ
 	mutable ki::storage<DocEvHandler*> pEvHan_; // イベント通知先

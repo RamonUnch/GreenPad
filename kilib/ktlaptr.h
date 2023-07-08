@@ -22,44 +22,35 @@ namespace ki {
 //=========================================================================
 
 template<class T>
-class A_WUNUSED aptr
+class A_WUNUSED uptr
 {
 public:
 
 	//@{ コンストラクタ //@}
-	explicit aptr( T* p = NULL )
+	explicit uptr( T* p = NULL )
 		: obj_( p ) {}
 
 	//@{ デストラクタ //@}
-	~aptr()
+	~uptr()
 		{ delete obj_; }
 
-	//@{ 所有権移動 //@}
-//	aptr( aptr<T>& r )
-//		: obj_ ( r.release() ) {}
-//
-//	//@{ 所有権移動 //@}
-//	aptr<T>& operator=( aptr<T>& r )
-//		{
-//			if( obj_ != r.obj_ )
-//			{
-//				delete obj_;
-//				obj_ = r.release();
-//			}
-//			return *this;
-//		}
-
-	void reset( T *r )
+	//@{ Set/Reset object, (delete the old) //@} 
+	void reset( T *ptr = NULL )
 		{
-			delete obj_;
-			obj_ = r;
+		#ifdef _DEBUG
+			if( obj_ && obj_ == ptr )
+				MessageBox(NULL, TEXT("uptr::reset(): trying to reset an object to itself!"), NULL, 0);
+		#endif
+			T *old = obj_;
+			obj_ = ptr;
+			delete old;
 		}
 
-//	void move( aptr<T>& r )
-//		{
-//			delete obj_;
-//			obj_ = r.release();
-//		}
+	//@{ Transfer ownership of r to here //@} 
+	void move( uptr& r )
+		{
+			reset( r.release() );
+		}
 
 public:
 
@@ -90,7 +81,7 @@ public:
 		}
 
 private:
-	NOCOPY(aptr);
+	NOCOPY(uptr);
 	mutable T* obj_;
 };
 

@@ -129,7 +129,7 @@ struct RegClass: public Object
 		wchar_t end;
 	};
 	OneRange      range;
-	aptr<RegClass> next;
+	uptr<RegClass> next;
 	RegClass( wchar_t s, wchar_t e, RegClass* n )
 		{  range.stt=s, range.end=e, next.reset(n); }
 };
@@ -152,7 +152,7 @@ struct RegNode: public Object
 	}
 	RegType           type; // このノードの種類
 	wchar_t             ch; // 文字
-	aptr<RegClass>     cls; // 文字集合
+	uptr<RegClass>     cls; // 文字集合
 	bool            cmpcls; // ↑補集合かどうか
 	RegNode          *left; // 左の子
 	RegNode         *right; // 右の子
@@ -282,7 +282,6 @@ RegNode* RegParser::reclass()
 
 	RegNode* node = new RegNode;
 	node->type   = N_Class;
-//	aptr<RegClass> ncls(cls);
 	node->cls.reset( cls );
 	node->cmpcls = neg;
 	return node;
@@ -305,7 +304,6 @@ RegNode* RegParser::primary()
 	case R_Any:{
 		node         = new RegNode;
 		node->type   = N_Class;
-//		aptr<RegClass> ncls(new RegClass( 0, 65535, NULL ));
 		node->cls.reset( new RegClass( 0, 65535, NULL ) );
 		node->cmpcls = false;
 		eat_token();
@@ -396,12 +394,12 @@ struct RegTrans : public Object
 		Class,
 		Char
 	}              type;
-	aptr<RegClass>  cls; // この文字集合
+	uptr<RegClass>  cls; // この文字集合
 	                     // orEpsilon が来たら
 	bool         cmpcls;
 	int              to; // 状態番号toの状態へ遷移
 
-	aptr<RegTrans> next; // 連結リスト
+	uptr<RegTrans> next; // 連結リスト
 /*
 	template<class Cmp>
 	bool match_i( wchar_t c, Cmp )
@@ -498,7 +496,6 @@ inline void RegNFA::add_transition
 	( int from, RegClass *cls, bool cmp, int to )
 {
 	RegTrans* x = new RegTrans;
-//	aptr<RegTrans> nn( st[from] );
 	x->next.reset( st[from] );
 	x->to    = to;
 	x->type  = RegTrans::Class;
@@ -509,14 +506,12 @@ inline void RegNFA::add_transition
 
 inline void RegNFA::add_transition( int from, wchar_t ch, int to )
 {
-//	aptr<RegClass> cls(new RegClass(ch,ch,NULL));
 	add_transition( from, new RegClass(ch,ch,NULL), false, to );
 }
 
 inline void RegNFA::add_e_transition( int from, int to )
 {
 	RegTrans* x = new RegTrans;
-//	aptr<RegTrans> nn( st[from] );
 	x->next.reset( st[from]  );
 	x->to    = to;
 	x->type  = RegTrans::Epsilon;
