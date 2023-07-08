@@ -2,8 +2,8 @@
 #define _KILIB_KTL_APTR_H_
 #include "types.h"
 #ifdef _MSC_VER
-#pragma warning( disable : 4284 ) // 警告：->のリターン型がうにゃうにゃ
-#pragma warning( disable : 4150 ) // 警告：deleteの定義がうにょうにょ
+//#pragma warning( disable : 4284 ) // 警告：->のリターン型がうにゃうにゃ
+//#pragma warning( disable : 4150 ) // 警告：deleteの定義がうにょうにょ
 #endif
 #ifndef __ccdoc__
 namespace ki {
@@ -34,7 +34,7 @@ public:
 	~uptr()
 		{ delete obj_; }
 
-	//@{ Set/Reset object, (delete the old) //@} 
+	//@{ Set/Reset object, (delete the old) //@}
 	void reset( T *ptr = NULL )
 		{
 		#ifdef _DEBUG
@@ -44,12 +44,6 @@ public:
 			T *old = obj_;
 			obj_ = ptr;
 			delete old;
-		}
-
-	//@{ Transfer ownership of r to here //@} 
-	void move( uptr& r )
-		{
-			reset( r.release() );
 		}
 
 public:
