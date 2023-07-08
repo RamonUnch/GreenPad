@@ -143,9 +143,12 @@ struct RegNode: public Object
 	, cls  ( NULL )
 	, cmpcls (false)
 	, left (NULL)
-	, right (NULL)
-	{
-	}
+	, right (NULL) { }
+
+	explicit RegNode( RegType t, RegClass *kls, bool cmp )
+	: type(t), ch(L'\0'), cls(kls), cmpcls(cmp)
+	, left (NULL), right (NULL) { }
+
 	~RegNode()
 	{
 		if( left )  delete left;
@@ -281,10 +284,7 @@ RegNode* RegParser::reclass()
 		}
 	}
 
-	RegNode* node = new RegNode;
-	node->type   = N_Class;
-	node->cls.reset( cls );
-	node->cmpcls = neg;
+	RegNode* node = new RegNode( N_Class, cls, neg );
 	return node;
 }
 
@@ -303,10 +303,7 @@ RegNode* RegParser::primary()
 		eat_token();
 		break;
 	case R_Any:{
-		node         = new RegNode;
-		node->type   = N_Class;
-		node->cls.reset( new RegClass( 0, 65535, NULL ) );
-		node->cmpcls = false;
+		node         = new RegNode( N_Class, new RegClass( 0, 65535, NULL ), false );
 		eat_token();
 		}break;
 	case R_Lcl:
@@ -390,11 +387,11 @@ RegNode* RegParser::expr()
 
 struct RegTrans : public Object
 {
-	enum {
-		Epsilon,
-		Class,
-		Char
-	}              type;
+	enum Type { Epsilon, Class, Char };
+//	RegTrans() {} ;
+	explicit RegTrans(Type t, RegClass *rc, bool cmp, int tto, RegTrans *nx)
+		: type(t), cls(rc), cmpcls(cmp), to(tto), next(nx) {}
+	Type           type;
 	uptr<RegClass>  cls; // ‚±‚Ì•¶ŽšW‡
 	                     // orEpsilon ‚ª—ˆ‚½‚ç
 	bool         cmpcls;
@@ -496,13 +493,7 @@ inline RegNFA::~RegNFA()
 inline void RegNFA::add_transition
 	( int from, RegClass *cls, bool cmp, int to )
 {
-	RegTrans* x = new RegTrans;
-	x->next.reset( st[from] );
-	x->to    = to;
-	x->type  = RegTrans::Class;
-	x->cls.reset( cls );
-	x->cmpcls= cmp;
-	st[from] = x;
+	st[from] = new RegTrans(RegTrans::Class, cls, cmp, to, st[from]);
 }
 
 inline void RegNFA::add_transition( int from, wchar_t ch, int to )
@@ -512,11 +503,7 @@ inline void RegNFA::add_transition( int from, wchar_t ch, int to )
 
 inline void RegNFA::add_e_transition( int from, int to )
 {
-	RegTrans* x = new RegTrans;
-	x->next.reset( st[from]  );
-	x->to    = to;
-	x->type  = RegTrans::Epsilon;
-	st[from] = x;
+	st[from] = new RegTrans(RegTrans::Epsilon, NULL, false, to, st[from]);
 }
 
 inline int RegNFA::gen_state()
@@ -754,5 +741,3 @@ bool RSearch::Search(
 
 	return false;
 }
-
-
