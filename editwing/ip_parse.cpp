@@ -735,10 +735,9 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 
 
 	// パーサー作成
-	aptr<Parser> np( new Parser(
+	parser_.reset( new Parser(
 		tags[0], taglen[0], tags[1], taglen[1], tags[2], taglen[2],
-		flags[1], flags[2], flags[3], flags[0] ) );
-	parser_ = np;
+		flags[1], flags[2], flags[3], flags[0] ));
 
 	// ５行目以降：キーワードリスト
 	while( !r.isEmpty() )

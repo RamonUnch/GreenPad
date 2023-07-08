@@ -35,19 +35,31 @@ public:
 		{ delete obj_; }
 
 	//@{ Š—LŒ ˆÚ“® //@}
-	aptr( aptr<T>& r )
-		: obj_ ( r.release() ) {}
+//	aptr( aptr<T>& r )
+//		: obj_ ( r.release() ) {}
+//
+//	//@{ Š—LŒ ˆÚ“® //@}
+//	aptr<T>& operator=( aptr<T>& r )
+//		{
+//			if( obj_ != r.obj_ )
+//			{
+//				delete obj_;
+//				obj_ = r.release();
+//			}
+//			return *this;
+//		}
 
-	//@{ Š—LŒ ˆÚ“® //@}
-	aptr<T>& operator=( aptr<T>& r )
+	void reset( T *r )
 		{
-			if( obj_ != r.obj_ )
-			{
-				delete obj_;
-				obj_ = r.release();
-			}
-			return *this;
+			delete obj_;
+			obj_ = r;
 		}
+
+//	void move( aptr<T>& r )
+//		{
+//			delete obj_;
+//			obj_ = r.release();
+//		}
 
 public:
 
@@ -78,7 +90,7 @@ public:
 		}
 
 private:
-
+	NOCOPY(aptr);
 	mutable T* obj_;
 };
 

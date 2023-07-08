@@ -131,7 +131,7 @@ struct RegClass: public Object
 	OneRange      range;
 	aptr<RegClass> next;
 	RegClass( wchar_t s, wchar_t e, RegClass* n )
-		{ aptr<RegClass> an(n); range.stt=s, range.end=e, next=an; }
+		{  range.stt=s, range.end=e, next.reset(n); }
 };
 
 struct RegNode: public Object
@@ -282,8 +282,8 @@ RegNode* RegParser::reclass()
 
 	RegNode* node = new RegNode;
 	node->type   = N_Class;
-	aptr<RegClass> ncls(cls);
-	node->cls    = ncls;
+//	aptr<RegClass> ncls(cls);
+	node->cls.reset( cls );
 	node->cmpcls = neg;
 	return node;
 }
@@ -305,8 +305,8 @@ RegNode* RegParser::primary()
 	case R_Any:{
 		node         = new RegNode;
 		node->type   = N_Class;
-		aptr<RegClass> ncls(new RegClass( 0, 65535, NULL ));
-		node->cls    = ncls;
+//		aptr<RegClass> ncls(new RegClass( 0, 65535, NULL ));
+		node->cls.reset( new RegClass( 0, 65535, NULL ) );
 		node->cmpcls = false;
 		eat_token();
 		}break;
@@ -469,7 +469,7 @@ private:
 
 private:
 	void add_transition( int from, wchar_t ch, int to );
-	void add_transition( int from, aptr<RegClass> cls, bool cmp, int to );
+	void add_transition( int from, RegClass *cls, bool cmp, int to );
 	void add_e_transition( int from, int to );
 	int gen_state();
 	void gen_nfa( int entry, RegNode* t, int exit );
@@ -495,29 +495,29 @@ inline RegNFA::~RegNFA()
 }
 
 inline void RegNFA::add_transition
-	( int from, aptr<RegClass> cls, bool cmp, int to )
+	( int from, RegClass *cls, bool cmp, int to )
 {
 	RegTrans* x = new RegTrans;
-	aptr<RegTrans> nn( st[from] );
-	x->next  = nn;
+//	aptr<RegTrans> nn( st[from] );
+	x->next.reset( st[from] );
 	x->to    = to;
 	x->type  = RegTrans::Class;
-	x->cls   = cls;
+	x->cls.reset( cls );
 	x->cmpcls= cmp;
 	st[from] = x;
 }
 
 inline void RegNFA::add_transition( int from, wchar_t ch, int to )
 {
-	aptr<RegClass> cls(new RegClass(ch,ch,NULL));
-	add_transition( from, cls, false, to );
+//	aptr<RegClass> cls(new RegClass(ch,ch,NULL));
+	add_transition( from, new RegClass(ch,ch,NULL), false, to );
 }
 
 inline void RegNFA::add_e_transition( int from, int to )
 {
 	RegTrans* x = new RegTrans;
-	aptr<RegTrans> nn( st[from] );
-	x->next  = nn;
+//	aptr<RegTrans> nn( st[from] );
+	x->next.reset( st[from]  );
 	x->to    = to;
 	x->type  = RegTrans::Epsilon;
 	st[from] = x;
@@ -541,7 +541,7 @@ void RegNFA::gen_nfa( int entry, RegNode* t, int exit )
 	case N_Class:
 		//         cls
 		//  entry -----> exit
-		add_transition( entry, t->cls, t->cmpcls, exit );
+		add_transition( entry, t->cls.release(), t->cmpcls, exit );
 		break;
 	case N_Concat: {
 		//         left         right
