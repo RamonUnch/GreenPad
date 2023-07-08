@@ -125,13 +125,14 @@ struct RegClass: public Object
 {
 	struct OneRange
 	{
+		OneRange( wchar_t s, wchar_t e ): stt(s), end(e) {}
 		wchar_t stt;
 		wchar_t end;
 	};
 	OneRange      range;
 	uptr<RegClass> next;
 	RegClass( wchar_t s, wchar_t e, RegClass* n )
-		{  range.stt=s, range.end=e, next.reset(n); }
+		: range( s, e ) , next( n ) {}
 };
 
 struct RegNode: public Object
