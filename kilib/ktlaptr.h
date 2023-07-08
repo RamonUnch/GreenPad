@@ -2,8 +2,8 @@
 #define _KILIB_KTL_APTR_H_
 #include "types.h"
 #ifdef _MSC_VER
-//#pragma warning( disable : 4284 ) // 警告：->のリターン型がうにゃうにゃ
-//#pragma warning( disable : 4150 ) // 警告：deleteの定義がうにょうにょ
+#pragma warning( disable : 4284 ) // 警告：->のリターン型がうにゃうにゃ
+#pragma warning( disable : 4150 ) // 警告：deleteの定義がうにょうにょ
 #endif
 #ifndef __ccdoc__
 namespace ki {
@@ -16,7 +16,7 @@ namespace ki {
 //@{
 //	自動ポインタ
 //
-//	私の期待する範囲では概ね std::auto_ptr と同じ動作をすると思う…。
+//	私の期待する範囲では概ね std::unique_ptr と同じ動作をすると思う…。
 //	車輪の最発明ばんざーい！
 //@}
 //=========================================================================
