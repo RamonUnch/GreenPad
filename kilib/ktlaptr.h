@@ -76,7 +76,7 @@ public:
 
 private:
 	NOCOPY(uptr);
-	mutable T* obj_;
+	T* obj_;
 };
 
 
@@ -143,7 +143,7 @@ public:
 
 private:
 
-	mutable T* obj_;
+	T* obj_;
 };
 
 
