@@ -125,13 +125,14 @@ struct RegClass: public Object
 {
 	struct OneRange
 	{
+		OneRange( wchar_t s, wchar_t e ): stt(s), end(e) {}
 		wchar_t stt;
 		wchar_t end;
 	};
 	OneRange      range;
-	aptr<RegClass> next;
+	uptr<RegClass> next;
 	RegClass( wchar_t s, wchar_t e, RegClass* n )
-		{ aptr<RegClass> an(n); range.stt=s, range.end=e, next=an; }
+		: range( s, e ) , next( n ) {}
 };
 
 struct RegNode: public Object
@@ -142,9 +143,12 @@ struct RegNode: public Object
 	, cls  ( NULL )
 	, cmpcls (false)
 	, left (NULL)
-	, right (NULL)
-	{
-	}
+	, right (NULL) { }
+
+	explicit RegNode( RegType t, RegClass *kls, bool cmp )
+	: type(t), ch(L'\0'), cls(kls), cmpcls(cmp)
+	, left (NULL), right (NULL) { }
+
 	~RegNode()
 	{
 		if( left )  delete left;
@@ -152,7 +156,7 @@ struct RegNode: public Object
 	}
 	RegType           type; // このノードの種類
 	wchar_t             ch; // 文字
-	aptr<RegClass>     cls; // 文字集合
+	uptr<RegClass>     cls; // 文字集合
 	bool            cmpcls; // ↑補集合かどうか
 	RegNode          *left; // 左の子
 	RegNode         *right; // 右の子
@@ -280,11 +284,7 @@ RegNode* RegParser::reclass()
 		}
 	}
 
-	RegNode* node = new RegNode;
-	node->type   = N_Class;
-	aptr<RegClass> ncls(cls);
-	node->cls    = ncls;
-	node->cmpcls = neg;
+	RegNode* node = new RegNode( N_Class, cls, neg );
 	return node;
 }
 
@@ -303,11 +303,7 @@ RegNode* RegParser::primary()
 		eat_token();
 		break;
 	case R_Any:{
-		node         = new RegNode;
-		node->type   = N_Class;
-		aptr<RegClass> ncls(new RegClass( 0, 65535, NULL ));
-		node->cls    = ncls;
-		node->cmpcls = false;
+		node         = new RegNode( N_Class, new RegClass( 0, 65535, NULL ), false );
 		eat_token();
 		}break;
 	case R_Lcl:
@@ -391,17 +387,17 @@ RegNode* RegParser::expr()
 
 struct RegTrans : public Object
 {
-	enum {
-		Epsilon,
-		Class,
-		Char
-	}              type;
-	aptr<RegClass>  cls; // この文字集合
+	enum Type { Epsilon, Class, Char };
+//	RegTrans() {} ;
+	explicit RegTrans(Type t, RegClass *rc, bool cmp, int tto, RegTrans *nx)
+		: type(t), cls(rc), cmpcls(cmp), to(tto), next(nx) {}
+	Type           type;
+	uptr<RegClass>  cls; // この文字集合
 	                     // orEpsilon が来たら
 	bool         cmpcls;
 	int              to; // 状態番号toの状態へ遷移
 
-	aptr<RegTrans> next; // 連結リスト
+	uptr<RegTrans> next; // 連結リスト
 /*
 	template<class Cmp>
 	bool match_i( wchar_t c, Cmp )
@@ -469,7 +465,7 @@ private:
 
 private:
 	void add_transition( int from, wchar_t ch, int to );
-	void add_transition( int from, aptr<RegClass> cls, bool cmp, int to );
+	void add_transition( int from, RegClass *cls, bool cmp, int to );
 	void add_e_transition( int from, int to );
 	int gen_state();
 	void gen_nfa( int entry, RegNode* t, int exit );
@@ -495,32 +491,19 @@ inline RegNFA::~RegNFA()
 }
 
 inline void RegNFA::add_transition
-	( int from, aptr<RegClass> cls, bool cmp, int to )
+	( int from, RegClass *cls, bool cmp, int to )
 {
-	RegTrans* x = new RegTrans;
-	aptr<RegTrans> nn( st[from] );
-	x->next  = nn;
-	x->to    = to;
-	x->type  = RegTrans::Class;
-	x->cls   = cls;
-	x->cmpcls= cmp;
-	st[from] = x;
+	st[from] = new RegTrans(RegTrans::Class, cls, cmp, to, st[from]);
 }
 
 inline void RegNFA::add_transition( int from, wchar_t ch, int to )
 {
-	aptr<RegClass> cls(new RegClass(ch,ch,NULL));
-	add_transition( from, cls, false, to );
+	add_transition( from, new RegClass(ch,ch,NULL), false, to );
 }
 
 inline void RegNFA::add_e_transition( int from, int to )
 {
-	RegTrans* x = new RegTrans;
-	aptr<RegTrans> nn( st[from] );
-	x->next  = nn;
-	x->to    = to;
-	x->type  = RegTrans::Epsilon;
-	st[from] = x;
+	st[from] = new RegTrans(RegTrans::Epsilon, NULL, false, to, st[from]);
 }
 
 inline int RegNFA::gen_state()
@@ -541,7 +524,7 @@ void RegNFA::gen_nfa( int entry, RegNode* t, int exit )
 	case N_Class:
 		//         cls
 		//  entry -----> exit
-		add_transition( entry, t->cls, t->cmpcls, exit );
+		add_transition( entry, t->cls.release(), t->cmpcls, exit );
 		break;
 	case N_Concat: {
 		//         left         right
@@ -758,5 +741,3 @@ bool RSearch::Search(
 
 	return false;
 }
-
-

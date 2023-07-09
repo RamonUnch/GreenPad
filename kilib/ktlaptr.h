@@ -16,37 +16,34 @@ namespace ki {
 //@{
 //	自動ポインタ
 //
-//	私の期待する範囲では概ね std::auto_ptr と同じ動作をすると思う…。
+//	私の期待する範囲では概ね std::unique_ptr と同じ動作をすると思う…。
 //	車輪の最発明ばんざーい！
 //@}
 //=========================================================================
 
 template<class T>
-class A_WUNUSED aptr
+class A_WUNUSED uptr
 {
 public:
 
 	//@{ コンストラクタ //@}
-	explicit aptr( T* p = NULL )
+	explicit uptr( T* p = NULL )
 		: obj_( p ) {}
 
 	//@{ デストラクタ //@}
-	~aptr()
+	~uptr()
 		{ delete obj_; }
 
-	//@{ 所有権移動 //@}
-	aptr( aptr<T>& r )
-		: obj_ ( r.release() ) {}
-
-	//@{ 所有権移動 //@}
-	aptr<T>& operator=( aptr<T>& r )
+	//@{ Set/Reset object, (delete the old) //@}
+	void reset( T *ptr = NULL )
 		{
-			if( obj_ != r.obj_ )
-			{
-				delete obj_;
-				obj_ = r.release();
-			}
-			return *this;
+		#ifdef _DEBUG
+			if( obj_ && obj_ == ptr )
+				MessageBox(NULL, TEXT("uptr::reset(): trying to reset an object to itself!"), NULL, 0);
+		#endif
+			T *old = obj_;
+			obj_ = ptr;
+			delete old;
 		}
 
 public:
@@ -78,8 +75,8 @@ public:
 		}
 
 private:
-
-	mutable T* obj_;
+	NOCOPY(uptr);
+	T* obj_;
 };
 
 
@@ -146,7 +143,7 @@ public:
 
 private:
 
-	mutable T* obj_;
+	T* obj_;
 };
 
 
