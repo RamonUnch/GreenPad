@@ -89,9 +89,9 @@ CharSetList::CharSetList()
 	#else
 	#define useJP 0
 	#endif
-	#define Enroll(_id,_nm)  EnrollCs( _id, _nm|(LOAD|SAVE)<<8 | useJP<<16 )
-	#define EnrollS(_id,_nm) EnrollCs( _id, _nm|SAVE<<8 | useJP<<16)
-	#define EnrollL(_id,_nm) EnrollCs( _id, _nm|LOAD<<8 | useJP<<16)
+	#define Enroll(_id,_nm)  EnrollCs( _id, _nm | BOTH<<8 | useJP<<16 )
+	#define EnrollS(_id,_nm) EnrollCs( _id, _nm | SAVE<<8 | useJP<<16 )
+	#define EnrollL(_id,_nm) EnrollCs( _id, _nm | LOAD<<8 | useJP<<16 )
 	// 適宜登録
 	                               EnrollL( AutoDetect,      0 );
 	if( ::IsValidCodePage(932) )   Enroll(  SJIS,            1 )
@@ -246,6 +246,48 @@ ulong CharSetList::GetCSIfromNumStr( const TCHAR *buf ) const
 	ulong csi = findCsi( cs );
 
 	return csi;
+}
+
+// Find the best cs index based on the selection in the combobox.
+int CharSetList::GetCSIFromComboBox( HWND dlg, const CharSetList& csl_, uint OpenSaveMask )
+{
+
+	int i = ComboBox(dlg,IDC_CODELIST).GetCurSel();
+	if( 0 <= i && i < (int)csl_.size() )
+	{
+		ulong j;
+		for(j=0; ;++j,--i)
+		{
+			while( !(csl_[j].type & OpenSaveMask) ) // 1:Open, 2:Save, 3:Both
+				++j;
+			if( i==0 )
+				break;
+		}
+		return j;
+	}
+
+	// Text was typed in the ComboBox
+	TCHAR buf[32];
+	buf[0] = TEXT('\0');
+	int blen = ::SendDlgItemMessage( dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), reinterpret_cast<LPARAM>(buf));
+
+	if( blen > 0 && buf[0] )
+	{
+		// If a number was typed, convert it to cs index.
+		if ( isSDigit(buf[0]) )
+			return csl_.GetCSIfromNumStr(buf);
+
+		// Last resort, Try to find the string in the whole csl_ list...
+		ulong j;
+		for(j=0; j<csl_.size() ;++j)
+		{
+			if( csl_[j].type&OpenSaveMask
+			&&( !lstrcmpi(csl_[j].longName, buf) || !lstrcmpi(csl_[j].shortName, buf) ) )
+				return j; // We found
+		}
+	}
+	// Failed to select any cs, return -1
+	return -1;
 }
 
 
@@ -472,31 +514,9 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		// OKが押されたら、文字コードの選択状況を記録
 		if(( msg==WM_COMMAND && LOWORD(wp)==1 ) || ((LPOFNOTIFY)lp)->hdr.code==CDN_FILEOK )
 		{
-			TCHAR buf[32];
-			buf[0] = TEXT('\0');
-			::SendDlgItemMessage(dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), reinterpret_cast<LPARAM>(buf));
-			// Typed CP has precedence over droplist
-			if ( isSDigit(buf[0]) )
-			{
-				// Try to find value in the charset list
-				pThis->csIndex_ = pThis->csl_.GetCSIfromNumStr( buf );
-				return FALSE;
-			}
-
-			pThis->csIndex_ = 0;
-			int i=ComboBox(dlg,IDC_CODELIST).GetCurSel();
-			if( 0 <= i && i < (int)pThis->csl_.size() )
-			{
-				ulong j=0;
-				for(;;++j,--i)
-				{
-					while( !(pThis->csl_[j].type & 2) ) // !LOAD
-						++j;
-					if( i==0 )
-						break;
-				}
-				pThis->csIndex_ = j;
-			}
+			int csi = CharSetList::GetCSIFromComboBox( dlg, pThis->csl_, 2 ); // LOAD
+			if(csi != -1)
+				pThis->csIndex_ = csi;
 		}
 	}
 	else if (msg == WM_PAINT)
@@ -591,6 +611,7 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 	return ( ret != 0 );
 }
 
+
 UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp )
 {
 	if( msg==WM_INITDIALOG )
@@ -643,35 +664,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			int lb = ComboBox(dlg,IDC_CRLFLIST).GetCurSel();
 			pThis->lb_ = lb == CB_ERR? 2 :lb; // Default to CRLF;
 
-			TCHAR buf[32];
-			buf[0] = TEXT('\0');
-			::SendDlgItemMessage( dlg, IDC_CODELIST, WM_GETTEXT, countof(buf), reinterpret_cast<LPARAM>(buf));
-			// Typed CP has precedence over droplist
-			if ( isSDigit(buf[0]) )
-			{
-				pThis->csIndex_ = pThis->csl_.GetCSIfromNumStr(buf);
-				return FALSE;
-			}
-
-			int i = ComboBox(dlg,IDC_CODELIST).GetCurSel();
-			if( 0 <= i && i < (int)pThis->csl_.size() )
-			{
-				ulong j;
-				for(j=0; ;++j,--i)
-				{
-					while( !(pThis->csl_[j].type & 1) ) // !SAVE
-						++j;
-					if( i==0 )
-						break;
-				}
-				pThis->csIndex_ = j;
-			}
-			else
-			{
-				// Failed to select any cs
-				// An error will occur and we shall not save
-				pThis->csIndex_ = 0xffffffff;
-			}
+			pThis->csIndex_ = CharSetList::GetCSIFromComboBox( dlg, pThis->csl_, 1 ); //SAVE
 		}
 	}
 	else if (msg == WM_PAINT)
@@ -743,28 +736,9 @@ void ReopenDlg::on_init()
 
 bool ReopenDlg::on_ok()
 {
-	TCHAR buf[32];
-	SendMsgToItem( IDC_CODELIST, WM_GETTEXT, countof(buf), reinterpret_cast<LPARAM>(buf) );
-	// Typed CP has precedence over droplist
-	if ( isSDigit(buf[0]) )
-	{
-		csIndex_ = csl_.GetCSIfromNumStr( buf );
-		return true;
-	}
+	int csi = CharSetList::GetCSIFromComboBox( hwnd(), csl_, 1 );
+	if(csi != -1)
+		csIndex_ = csi;
 
-	// OKが押されたら、文字コードの選択状況を記録
-	ulong j=0;
-	int i=ComboBox(hwnd(),IDC_CODELIST).GetCurSel();
-	if( 0 <= i && i < (int)csl_.size() )
-	{ // Only if i is in correct range.
-		for(;;++j,--i)
-		{
-			while( !(csl_[j].type & 1) ) // !SAVE
-				++j;
-			if( i==0 )
-				break;
-		}
-		csIndex_ = j;
-	}
 	return true;
 }
