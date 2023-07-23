@@ -111,14 +111,14 @@ CharSetList::CharSetList()
 	if( ::IsValidCodePage(20003) ) Enroll(  IBM5550,        15 );
 	if( ::IsValidCodePage(20004) ) Enroll( Teletext,        16 );
 	if( ::IsValidCodePage(20005) ) Enroll(  Wang  ,         17 );
-	/* if( always ) */             EnrollS( UTF1,           18 );
-	                               Enroll( UTF1Y,           19 );
+	/* if( always ) */             Enroll(  UTF1,           18 );
+	                               EnrollS( UTF1Y,          19 );
 	                               Enroll(  UTF5,           20 );
 	                               Enroll(  UTF7,           21 );
 	                               Enroll(  UTF8,           22 );
 	                               EnrollS( UTF8N,          23 );
-	                               EnrollS(  UTF9,          24 );
-	                               Enroll(  UTF9Y,          25 );
+	                               Enroll(  UTF9,           24 );
+	                               EnrollS( UTF9Y,          25 );
 	                               EnrollS( UTF16b,         26 );
 	                               EnrollS( UTF16l,         27 );
 	                               Enroll(  UTF16BE,        28 );
@@ -129,8 +129,8 @@ CharSetList::CharSetList()
 	                               Enroll(  UTF32LE,        33 );
 	                               Enroll(  SCSU,           34 );
 	                               Enroll(  BOCU1,          35 );
-	                               EnrollS(  OFSSUTF,       36 );
-	                               Enroll(  OFSSUTFY,       37 );
+	                               Enroll(  OFSSUTF,        36 );
+	                               EnrollS( OFSSUTFY,       37 );
 	if( ::IsValidCodePage(850) )   Enroll(  WesternDOS,     38 );
 	/* if( always ) */             Enroll(  Western,        39 );
 	if( ::IsValidCodePage(852) )   Enroll(  CentralDOS,     40 );
@@ -249,16 +249,16 @@ ulong CharSetList::GetCSIfromNumStr( const TCHAR *buf ) const
 }
 
 // Find the best cs index based on the selection in the combobox.
-int CharSetList::GetCSIFromComboBox( HWND dlg, const CharSetList& csl_, uint OpenSaveMask )
+int CharSetList::GetCSIFromComboBox( HWND dlg, const CharSetList& csl, uint OpenSaveMask )
 {
 
 	int i = ComboBox(dlg,IDC_CODELIST).GetCurSel();
-	if( 0 <= i && i < (int)csl_.size() )
+	if( 0 <= i && i < (int)csl.size() )
 	{
 		ulong j;
 		for(j=0; ;++j,--i)
 		{
-			while( !(csl_[j].type & OpenSaveMask) ) // 1:Open, 2:Save, 3:Both
+			while( !(csl[j].type & OpenSaveMask) ) // 1:Open, 2:Save, 3:Both
 				++j;
 			if( i==0 )
 				break;
@@ -275,14 +275,14 @@ int CharSetList::GetCSIFromComboBox( HWND dlg, const CharSetList& csl_, uint Ope
 	{
 		// If a number was typed, convert it to cs index.
 		if ( isSDigit(buf[0]) )
-			return csl_.GetCSIfromNumStr(buf);
+			return csl.GetCSIfromNumStr(buf);
 
-		// Last resort, Try to find the string in the whole csl_ list...
+		// Last resort, Try to find the string in the whole csl list...
 		ulong j;
-		for(j=0; j<csl_.size() ;++j)
+		for(j=0; j<csl.size() ;++j)
 		{
-			if( csl_[j].type&OpenSaveMask
-			&&( !lstrcmpi(csl_[j].longName, buf) || !lstrcmpi(csl_[j].shortName, buf) ) )
+			if( csl[j].type&OpenSaveMask
+			&&( !lstrcmpi(csl[j].longName, buf) || !lstrcmpi(csl[j].shortName, buf) ) )
 				return j; // We found
 		}
 	}
@@ -717,7 +717,7 @@ void ReopenDlg::on_init()
 	// コンボボックスを埋めて、「自動選択」を選ぶ
 	ComboBox cb( hwnd(), IDC_CODELIST );
 	for( ulong i=0; i<csl_.size(); ++i )
-		if( csl_[i].type & 1 ) // 2:=SAVE
+		if( csl_[i].type & 2 ) // 2:=LOAD
 			cb.Add( csl_[i].longName );
 
 	int csi = csIndex_;
@@ -736,7 +736,7 @@ void ReopenDlg::on_init()
 
 bool ReopenDlg::on_ok()
 {
-	int csi = CharSetList::GetCSIFromComboBox( hwnd(), csl_, 1 );
+	int csi = CharSetList::GetCSIFromComboBox( hwnd(), csl_, 2 );
 	if(csi != -1)
 		csIndex_ = csi;
 
