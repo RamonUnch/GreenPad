@@ -35,6 +35,7 @@ public:
 	ulong findCsi( int cs ) const;
 	void EnrollCs( int _id, uint _num);
 	ulong GetCSIfromNumStr( const TCHAR *buf ) const;
+	static int GetCSIFromComboBox( HWND dlg, const CharSetList& csl, uint OpenSaveMask );
 
 private:
 
