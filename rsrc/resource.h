@@ -135,6 +135,7 @@
 #define ID_CMD_DELENDFILE               50014
 #define ID_CMD_DELSTAFILE               50015
 #define ID_CMD_HELP                     50016
+#define ID_CMD_OPENSELECTION            50017
 
 // Next default values for new objects
 //

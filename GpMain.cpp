@@ -354,6 +354,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_JUMP:       on_jump(); break;
 	case ID_CMD_GREP:       on_grep();break;
 	case ID_CMD_HELP:       on_help();break;
+	case ID_CMD_OPENSELECTION: on_openselection(); break;
 
 	// View
 	case ID_CMD_NOWRAP:     edit_.getView().SetWrapType( wrap_=-1 ); break;
@@ -867,11 +868,22 @@ void GreenPadWnd::on_exit()
 
 void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 {
-	::EnableMenuItem( menu, ID_CMD_CUT, MF_BYCOMMAND|(edit_.getCursor().isSelected() ? MF_ENABLED : MF_GRAYED) );
-	::EnableMenuItem( menu, ID_CMD_COPY, MF_BYCOMMAND|(edit_.getCursor().isSelected() ? MF_ENABLED : MF_GRAYED) );
-	::EnableMenuItem( menu, ID_CMD_DELETE, MF_BYCOMMAND|(edit_.getCursor().isSelected() ? MF_ENABLED : MF_GRAYED) );
-	::EnableMenuItem( menu, ID_CMD_UNDO, MF_BYCOMMAND|(edit_.getDoc().isUndoAble() ? MF_ENABLED : MF_GRAYED) );
-	::EnableMenuItem( menu, ID_CMD_REDO, MF_BYCOMMAND|(edit_.getDoc().isRedoAble() ? MF_ENABLED : MF_GRAYED) );
+	UINT gray_when_unselected = MF_BYCOMMAND|(edit_.getCursor().isSelected()? MF_ENABLED: MF_GRAYED);
+	::EnableMenuItem( menu, ID_CMD_CUT,    gray_when_unselected );
+	::EnableMenuItem( menu, ID_CMD_COPY,   gray_when_unselected );
+	::EnableMenuItem( menu, ID_CMD_DELETE, gray_when_unselected);
+	::EnableMenuItem( menu, ID_CMD_UNDO,   MF_BYCOMMAND|(edit_.getDoc().isUndoAble()? MF_ENABLED: MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_REDO,   MF_BYCOMMAND|(edit_.getDoc().isRedoAble()? MF_ENABLED: MF_GRAYED) );
+
+	::EnableMenuItem( menu, ID_CMD_UPPERCASE, gray_when_unselected );
+	::EnableMenuItem( menu, ID_CMD_LOWERCASE, gray_when_unselected );
+	::EnableMenuItem( menu, ID_CMD_INVERTCASE,gray_when_unselected );
+	::EnableMenuItem( menu, ID_CMD_TTSPACES,  gray_when_unselected );
+	::EnableMenuItem( menu, ID_CMD_SFCHAR,    gray_when_unselected );
+	::EnableMenuItem( menu, ID_CMD_SLCHAR,    gray_when_unselected );
+	::EnableMenuItem( menu, ID_CMD_QUOTE,     gray_when_unselected );
+	::EnableMenuItem( menu, ID_CMD_UNQUOTE,   gray_when_unselected );
+
 #ifndef NO_IME
 	::EnableMenuItem( menu, ID_CMD_RECONV, MF_BYCOMMAND|(edit_.getCursor().isSelected() && ime().IsIME() && ime().CanReconv() ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_TOGGLEIME, MF_BYCOMMAND|(ime().IsIME() ? MF_ENABLED : MF_GRAYED) );
@@ -886,6 +898,7 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 	// ::EnableMenuItem( menu, ID_CMD_REOPENFILE, MF_BYCOMMAND|(!isUntitled() ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_OPENELEVATED, MF_BYCOMMAND|( app().getOSVer() >= 0x0500 ? MF_ENABLED : MF_GRAYED) );
 	::EnableMenuItem( menu, ID_CMD_GREP, MF_BYCOMMAND|(cfg_.grepExe().len()>0 ? MF_ENABLED : MF_GRAYED) );
+	::EnableMenuItem( menu, ID_CMD_OPENSELECTION, gray_when_unselected );
 
 	::CheckMenuItem( menu, ID_CMD_NOWRAP, MF_BYCOMMAND|(wrap_==-1?MF_CHECKED:MF_UNCHECKED));
 	::CheckMenuItem( menu, ID_CMD_WRAPWIDTH, MF_BYCOMMAND|(wrap_>0?MF_CHECKED:MF_UNCHECKED));
@@ -933,6 +946,33 @@ void GreenPadWnd::on_jump()
 		JumpToLine( dlg.LineNo );
 }
 
+void GreenPadWnd::on_openselection()
+{
+#define isAbsolutePath(x) ( x[0] == TEXT('\\') || (x[0] && x[1] == TEXT(':')) )
+	String cmd = TEXT("-c0 \"");
+	aarr<TCHAR> sel = edit_.getCursor().getSelectedStr();
+	if( !isAbsolutePath( sel ) )
+	{
+		// We got a relative path, get a directorry for it.
+		Path d;
+		if( filename_.len() )
+			(d = filename_).BeDirOnly().BeBackSlash(true);
+		else
+			d = Path(Path::Cur);
+
+		cmd += d;
+	}
+
+	// Remove trailing CRLFs.
+	size_t slen = my_lstrlen( sel.get() );
+	while( slen-- && (sel[ slen ] == TEXT('\r') || sel[ slen ] == TEXT('\n')) )
+		sel[ slen ] = TEXT('\0');
+
+	cmd += sel.get();
+	cmd += TEXT("\""); // -c0 "Path\To\File.ext"
+	BootNewProcess( cmd.c_str() );
+#undef isAbsolutePath
+}
 void GreenPadWnd::on_grep()
 {
 	on_external_exe_start( cfg_.grepExe() );
@@ -1446,7 +1486,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 		// ERROR!
 		int err = GetLastError();
 		RzsString ids_oerr(IDS_OPENERROR);
-		String fnerror = fn; fnerror += ids_oerr.c_str();
+		String fnerror = fn; fnerror+= TEXT('\n'); fnerror += ids_oerr.c_str();
 		fnerror += SInt2Str(err).c_str();
 		if( err == ERROR_ACCESS_DENIED )
 		{
