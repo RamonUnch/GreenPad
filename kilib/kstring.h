@@ -235,6 +235,11 @@ public:
 	String& operator+=( const String& obj );
 	String& operator+=( const TCHAR* s );
 	String& operator+=( TCHAR c );
+#ifdef _UNICODE
+	String& operator+=( const char* s );
+#else
+	String& operator+=( const wchar_t* s );
+#endif
 
 	//@{ リソースロード //@}
 	String& Load( UINT rsrcID );

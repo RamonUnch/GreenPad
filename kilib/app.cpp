@@ -441,28 +441,27 @@ namespace ki
 							const int r = kmain();
 							myApp.SetExitCode( r );
 						}
-					}
-				}
+					} //~IMEManager
+				} //~MemoryManager
 			#ifdef USE_THREADS
-			} // myThr, ~ThreadManager
+			} //~ThreadManager
 			#endif
-		}
+		} //~App
 	}
 }
 
-#ifdef __GNUC__
-  #ifdef SUPERTINY
-	extern "C" void WINAPI entryp() { ki::Startup(); }
-  #endif
-	extern "C" void __cdecl __cxa_pure_virtual(void) { ExitProcess(1); };
-	extern "C" void __deregister_frame_info() {};
-	extern "C" void __register_frame_info() {};
-	extern int __stack_chk_guard = 696115047 ;
-
-	extern "C" int __stack_chk_fail(){ MessageBoxA(NULL, "__stack_chk_fail", NULL, MB_OK|MB_TOPMOST) ; ExitProcess(1); };
-#endif
 
 #ifdef SUPERTINY
+
+	#ifdef __GNUC__
+		extern "C" void WINAPI entryp() { ki::Startup(); }
+
+		extern "C" void __cdecl __cxa_pure_virtual(void) { ExitProcess(1); };
+		extern "C" void __deregister_frame_info() {};
+		extern "C" void __register_frame_info() {};
+		extern int __stack_chk_guard = 696115047 ;
+		extern "C" int __stack_chk_fail(){ MessageBoxA(NULL, "__stack_chk_fail", NULL, MB_OK|MB_TOPMOST) ; ExitProcess(1); };
+	#endif
 
 	extern "C" int __cdecl _purecall(){return 0;}
 	#ifdef _DEBUG

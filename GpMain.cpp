@@ -950,7 +950,7 @@ void GreenPadWnd::on_openselection()
 {
 #define isAbsolutePath(x) ( x[0] == TEXT('\\') || (x[0] && x[1] == TEXT(':')) )
 	String cmd = TEXT("-c0 \"");
-	aarr<TCHAR> sel = edit_.getCursor().getSelectedStr();
+	aarr<unicode> sel = edit_.getCursor().getSelectedStr();
 	if( !isAbsolutePath( sel ) )
 	{
 		// We got a relative path, get a directorry for it.
@@ -964,7 +964,7 @@ void GreenPadWnd::on_openselection()
 	}
 
 	// Remove trailing CRLFs.
-	size_t slen = my_lstrlen( sel.get() );
+	size_t slen = my_lstrlenW( sel.get() );
 	while( slen-- && (sel[ slen ] == TEXT('\r') || sel[ slen ] == TEXT('\n')) )
 		sel[ slen ] = TEXT('\0');
 
