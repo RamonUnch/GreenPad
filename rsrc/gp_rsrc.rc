@@ -177,6 +177,7 @@ BEGIN
     POPUP "ヘルプ(&H)"
     BEGIN
         MENUITEM "バージョン情報(&A)",    ID_CMD_HELPABOUT
+        MENUITEM "&Context Help...\tF1",         ID_CMD_HELP
     END
 END
 
@@ -431,6 +432,7 @@ BEGIN
     "E",            ID_CMD_DISCARDEXIT,     VIRTKEY, SHIFT, CONTROL, NOINVERT
     "F",            ID_CMD_FIND,            VIRTKEY, CONTROL, NOINVERT
     "G",            ID_CMD_GREP,            VIRTKEY, CONTROL, NOINVERT
+    VK_F1,          ID_CMD_HELP,            VIRTKEY, NOINVERT
     "H",            ID_CMD_FIND,            VIRTKEY, CONTROL, NOINVERT
     "J",            ID_CMD_JUMP,            VIRTKEY, CONTROL, NOINVERT
     "N",            ID_CMD_NEWFILE,         VIRTKEY, CONTROL, NOINVERT
@@ -577,6 +579,7 @@ BEGIN
     POPUP "&Help"
     BEGIN
         MENUITEM "&About",    ID_CMD_HELPABOUT
+        MENUITEM "&Context Help...\tF1",         ID_CMD_HELP
     END
 END
 

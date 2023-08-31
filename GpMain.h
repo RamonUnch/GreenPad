@@ -116,6 +116,8 @@ private:
 	void    on_move( const editwing::DPos& c, const editwing::DPos& s ) override;
 	void    on_jump();
 	void    on_grep();
+	void    on_help();
+	void    on_external_exe_start(const ki::Path& g);
 	void    on_config();
 	void    on_datetime();
 	void    on_doctype( int no );

@@ -353,6 +353,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_FINDPREV:   search_.FindPrev(); break;
 	case ID_CMD_JUMP:       on_jump(); break;
 	case ID_CMD_GREP:       on_grep();break;
+	case ID_CMD_HELP:       on_help();break;
 
 	// View
 	case ID_CMD_NOWRAP:     edit_.getView().SetWrapType( wrap_=-1 ); break;
@@ -934,7 +935,14 @@ void GreenPadWnd::on_jump()
 
 void GreenPadWnd::on_grep()
 {
-	Path g = cfg_.grepExe();
+	on_external_exe_start( cfg_.grepExe() );
+}
+void GreenPadWnd::on_help()
+{
+	on_external_exe_start( cfg_.helpExe() );
+}
+void GreenPadWnd::on_external_exe_start(const Path &g)
+{
 	if( g.len() != 0 )
 	{
 		Path d;
