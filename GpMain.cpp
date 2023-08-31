@@ -948,9 +948,26 @@ void GreenPadWnd::on_jump()
 
 void GreenPadWnd::on_openselection()
 {
-#define isAbsolutePath(x) ( x[0] == TEXT('\\') || (x[0] && x[1] == TEXT(':')) )
+#define isAbsolutePath(x) ( x[0] == L'\\' || (x[0] && x[1] == L':') )
 	String cmd = TEXT("-c0 \"");
 	aarr<unicode> sel = edit_.getCursor().getSelectedStr();
+	// Remove trailing CRLFs.
+	size_t slen = my_lstrlenW( sel.get() );
+	while( slen-- && (sel[ slen ] == L'\r' || sel[ slen ] == L'\n') )
+		sel[ slen ] = L'\0';
+
+#if !defined(TARGET_VER) || TARGET_VER > 303
+	if( !my_instringW( sel.get(), L"http://")
+	||  !my_instringW( sel.get(), L"https://")
+	||  !my_instringW( sel.get(), L"ftp://")
+	||  !my_instringW( sel.get(), L"ftps://") )
+	{
+		// We have an URL.
+		cmd = sel.get();
+		ShellExecute(NULL, TEXT("open"), cmd.c_str(), NULL, NULL, SW_SHOWNORMAL);
+		return;
+	}
+#endif
 	if( !isAbsolutePath( sel ) )
 	{
 		// We got a relative path, get a directorry for it.
@@ -962,11 +979,6 @@ void GreenPadWnd::on_openselection()
 
 		cmd += d;
 	}
-
-	// Remove trailing CRLFs.
-	size_t slen = my_lstrlenW( sel.get() );
-	while( slen-- && (sel[ slen ] == TEXT('\r') || sel[ slen ] == TEXT('\n')) )
-		sel[ slen ] = TEXT('\0');
 
 	cmd += sel.get();
 	cmd += TEXT("\""); // -c0 "Path\To\File.ext"
