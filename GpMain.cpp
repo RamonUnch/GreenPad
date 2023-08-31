@@ -957,10 +957,10 @@ void GreenPadWnd::on_openselection()
 		sel[ slen ] = L'\0';
 
 #if !defined(TARGET_VER) || TARGET_VER > 303
-	if( !my_instringW( sel.get(), L"http://")
-	||  !my_instringW( sel.get(), L"https://")
-	||  !my_instringW( sel.get(), L"ftp://")
-	||  !my_instringW( sel.get(), L"ftps://") )
+	if( my_instringW( sel.get(), L"http://")
+	||  my_instringW( sel.get(), L"https://")
+	||  my_instringW( sel.get(), L"ftp://")
+	||  my_instringW( sel.get(), L"ftps://") )
 	{
 		// We have an URL.
 		cmd = sel.get();
