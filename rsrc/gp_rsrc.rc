@@ -177,6 +177,7 @@ BEGIN
     POPUP "ヘルプ(&H)"
     BEGIN
         MENUITEM "バージョン情報(&A)",    ID_CMD_HELPABOUT
+        MENUITEM "&Context Help...\tF1",         ID_CMD_HELP
     END
 END
 
@@ -578,6 +579,7 @@ BEGIN
     POPUP "&Help"
     BEGIN
         MENUITEM "&About",    ID_CMD_HELPABOUT
+        MENUITEM "&Context Help...\tF1",         ID_CMD_HELP
     END
 END
 
