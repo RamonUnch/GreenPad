@@ -76,6 +76,9 @@ public:
 	//@{ Grep用外部実行ファイル名 //@}
 	const ki::Path& grepExe() const;
 
+	//@{ Help用外部実行ファイル名 //@}
+	const ki::Path& helpExe() const;
+
 	//@{ 同じウインドウで開くモード //@}
 	bool openSame() const;
 
@@ -127,6 +130,7 @@ private:
 	int        undoLimit_;
 	ki::String txtFilter_;
 	ki::Path   grepExe_;
+	ki::Path   helpExe_;
 
 	bool        sharedConfigMode_;
 	bool        inichanged_; // keep track of save to ini.
@@ -231,6 +235,9 @@ inline ki::Path ConfigManager::kwdFile() const
 
 inline const ki::Path& ConfigManager::grepExe() const
 	{ return grepExe_; }
+
+inline const ki::Path& ConfigManager::helpExe() const
+	{ return helpExe_; }
 
 inline bool ConfigManager::openSame() const
 	{ return openSame_; }

@@ -605,20 +605,21 @@ void ConfigManager::LoadIni()
 			"4=C#\r\n"
 			"5=D\r\n"
 			"6=Delphi\r\n"
-			"7=Java\r\n"
-			"8=HTML\r\n"
-			"9=CSS\r\n"
-			"10=Perl\r\n"
-			"11=Ruby\r\n"
-			"12=PHP\r\n"
-			"13=Python\r\n"
-			"14=Lua\r\n"
-			"15=Java Script\r\n"
-			"16=Erlang\r\n"
-			"17=Haskell\r\n"
-			"18=OCaml\r\n"
-			"19=INI\r\n"
-			"20=UnicodeText\r\n"
+			"7=Fortran\r\n"
+			"8=Java\r\n"
+			"9=HTML\r\n"
+			"10=CSS\r\n"
+			"11=Perl\r\n"
+			"12=Ruby\r\n"
+			"13=PHP\r\n"
+			"14=Python\r\n"
+			"15=Lua\r\n"
+			"16=Java Script\r\n"
+			"17=Erlang\r\n"
+			"18=Haskell\r\n"
+			"19=OCaml\r\n"
+			"20=INI\r\n"
+			"21=UnicodeText\r\n"
 			"\r\n"
 
 			"[Assembly]\r\n"
@@ -649,6 +650,10 @@ void ConfigManager::LoadIni()
 			"[Delphi]\r\n"
 			"Pattern=.*\\.pas$\r\n"
 			"Keyword=Delphi.kwd\r\n"
+			"Layout=program.lay\r\n"
+			"[Fortran]\r\n"
+			"Pattern=.*\\.(f|for|f90|f95|f03|f15)$\r\n"
+			"Keyword=Fortran.kwd\r\n"
 			"Layout=program.lay\r\n"
 			"\r\n"
 			"[Java]\r\n"
@@ -735,6 +740,7 @@ void ConfigManager::LoadIni()
 	txtFilter_ = ini_.GetStr( TEXT("TxtFilter"),
 		TEXT("*.txt;*.htm;*.html;*.css;*.js;*.d;*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.php;*.php3;*.ini;*.log;*.inf") );
 	grepExe_   = ini_.GetStr( TEXT("GrepExe"), TEXT("") );
+	helpExe_   = ini_.GetStr( TEXT("HelpExe"), TEXT("") );
 	openSame_  = ini_.GetBool( TEXT("OpenSame"), false );
 	countbyunicode_ = ini_.GetBool( TEXT("CountUni"), false );
 	// By default we have stb on NT3.10.404 Win32s 1.30.159
