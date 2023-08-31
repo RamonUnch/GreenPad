@@ -459,6 +459,28 @@ const char* String::ConvToChar() const
 #endif
 }
 
+#ifdef _UNICODE
+String& String::operator+=( const char* s )
+{
+	int ln = ::MultiByteToWideChar( CP_ACP,  0, s, -1 , 0, 0 );
+	wchar_t* p = new wchar_t[ln+1];
+	::MultiByteToWideChar( CP_ACP,  0, s, -1 , p, ln+1 );
+	CatString(p, ln);
+	delete [] p;
+	return *this;
+}
+#else
+String& String::operator+=( const wchar_t* s )
+{
+	int ln = ::WideCharToMultiByte( CP_ACP,  0, s, -1 , 0, 0, NULL, NULL );
+	char* p = new char[ln+1];
+	::WideCharToMultiByte( CP_ACP,  0, s, -1 , p, ln+1, NULL, NULL );
+	CatString(p, ln);
+	delete [] p;
+	return *this;
+}
+#endif
+
 //=========================================================================
 
 RzsString::RzsString( UINT rsrcID )

@@ -195,6 +195,9 @@ public:
 
 	static int neededCodepage(int cs) A_XPURE;
 
+	const uchar* rawData() const
+		{ return fp_.base(); }
+
 private:
 
 	TextFileRPimpl    *impl_;

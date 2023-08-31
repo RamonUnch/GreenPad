@@ -177,8 +177,7 @@ bool FileR::Open( const TCHAR* fname, bool always)
 	else
 	{
 		// マッピングオブジェクトを作る
-		fmo_ = ::CreateFileMapping(
-			handle_, NULL, PAGE_READONLY, 0, 0, NULL );
+		fmo_ = ::CreateFileMapping( handle_, NULL, PAGE_READONLY, 0, 0, NULL );
 		if( fmo_ == NULL )
 		{
 		#ifdef OLDWIN32S
@@ -186,7 +185,7 @@ bool FileR::Open( const TCHAR* fname, bool always)
 			// So we allocate a buffer for the whole file and use ReadFile().
 			basePtr_ = new BYTE[size_];
 			DWORD nBytesRead=0;
-			BOOL ret = ReadFile( handle_, basePtr_, size_, &nBytesRead,  NULL);
+			BOOL ret = ReadFile( handle_, (void*)basePtr_, size_, &nBytesRead,  NULL);
 			::CloseHandle( handle_ ); // We can already close the handle
 			handle_ = INVALID_HANDLE_VALUE;
 			size_ = nBytesRead; // Update size with what was actually read.
@@ -246,7 +245,13 @@ void FileR::Close()
 		// Via ReadFile (Win32s beta), so we must free the memory.
 		// File handle is already closed.
 		if( basePtr_ != NULL && basePtr_ != &size_ )
-			delete [] (void*)basePtr_;
+		{
+		#ifdef _DEBUG
+			// Zero out in debug mode to detect use after free!
+			mem00( (void*)basePtr_, size_ );
+		#endif
+			delete [] (BYTE*)basePtr_;
+		}
 		basePtr_ = NULL;
 	}
 #endif
