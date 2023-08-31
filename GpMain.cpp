@@ -945,17 +945,23 @@ void GreenPadWnd::on_grep()
 
 		String fcmd;
 		for( int i=0, e=g.len(); i<e; ++i )
+		{
 			if( g[i]==TEXT('%') )
 			{
 				if( g[i+1]==TEXT('1') || g[i+1]==TEXT('D') ) // '1' for bkwd compat
-					++i, fcmd += d;
-				else if( g[i+1]==TEXT('F') )
+					++i, fcmd += d; // File's file path only
+				else if( g[i+1]==TEXT('F') ) // Full file path+name
 					++i, fcmd += filename_;
-				else if( g[i+1]==TEXT('N') )
+				else if( g[i+1]==TEXT('N') ) // File name only
 					++i, fcmd += filename_.name();
+				else if( g[i+1]==TEXT('S') ) // Current selection
+					++i, fcmd += edit_.getCursor().getSelectedStr().get();
 			}
 			else
+			{
 				fcmd += g[i];
+			}
+		}
 
 		PROCESS_INFORMATION psi;
 		STARTUPINFO         sti = {sizeof(STARTUPINFO)};
