@@ -120,9 +120,9 @@ int GpStBar::AutoResize( bool maximized )
 	if( ::GetTextExtentPoint( dc, TEXT("CRLF1"), 5, &s ) ) // Line Ending
 		w[2] = w[3] - s.cx;
 	if( ::GetTextExtentPoint( dc, TEXT("BBBWWW (100)"), 12, &s ) ) // Charset
-		w[1] = w[2] - s.cx;
-	if( ::GetTextExtentPoint( dc, TEXT("U+100000"), 8, &s ) && s.cx < width()/4 ) // Unicode disp.
-		w[0] = w[1] - s.cx;
+		w[0] = w[1] = w[2] - s.cx;
+	if( ::GetTextExtentPoint( dc, TEXT("U+100000"), 8, &s ) ) // Unicode disp.
+		w[0] = Max( (w[1] - s.cx), (long)(width()/3) );
 
 	::ReleaseDC( hwnd(), dc );
 
