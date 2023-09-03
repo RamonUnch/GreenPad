@@ -86,27 +86,42 @@ inline GpStBar::GpStBar()
 inline void GpStBar::SetCsText( const TCHAR* str )
 {
 	// 文字コード表示領域にSetTextする
-	SetText( str_=str, 1 );
+	SetText( str_=str, CS_PART );
 }
 
 inline void GpStBar::SetLbText( int lb )
 {
 	// 改行コード表示領域にSetTextする
 	static const TCHAR* const lbstr[] = {TEXT("CR"),TEXT("LF"),TEXT("CRLF")};
-	SetText( lbstr[lb_=lb], 2 );
+	SetText( lbstr[lb_=lb], LB_PART );
+}
+
+inline void GpStBar::SetUnicode( const unicode *uni )
+{
+	TCHAR buf[ULONG_DIGITS+2+1];
+
+	ulong  cc = uni[0];
+	if( isHighSurrogate(uni[0]) )
+		cc = 0x10000 + ( ((uni[0]-0xD800)&0x3ff)<<10 ) + ( (uni[1]-0xDC00)&0x3ff );
+
+	TCHAR *t = (TCHAR *)LPTR2Hex( buf+2, cc );
+	t--; *t-- = TEXT('+'); *t = TEXT('U');
+	SetText( t, UNI_PART );
 }
 
 int GpStBar::AutoResize( bool maximized )
 {
 	// 文字コード表示領域を確保しつつリサイズ
 	int h = StatusBar::AutoResize( maximized );
-	int w[] = { width()-150, width()-50, width()-5 };
+	int w[] = { width()-150, width()-50, width()-50, width()-5 };
 
 	HDC dc = ::GetDC( hwnd() );
 	SIZE s;
 	if( ::GetTextExtentPoint( dc, TEXT("CRLF1"), 5, &s ) ) // Line Ending
-		w[1] = w[2] - s.cx;
+		w[2] = w[3] - s.cx;
 	if( ::GetTextExtentPoint( dc, TEXT("BBBWWW (100)"), 12, &s ) ) // Charset
+		w[1] = w[2] - s.cx;
+	if( ::GetTextExtentPoint( dc, TEXT("U+100000"), 8, &s ) && s.cx < width()/4 ) // Unicode disp.
 		w[0] = w[1] - s.cx;
 
 	::ReleaseDC( hwnd(), dc );
@@ -1282,6 +1297,8 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 		*end = TEXT('\0');
 	}
 	stb_.SetText( str );
+	const unicode* su = edit_.getDoc().tl(c.tl);
+	stb_.SetUnicode( su+c.ad /*- (c.ad!=0)*/ );
 }
 
 void GreenPadWnd::on_reconv()

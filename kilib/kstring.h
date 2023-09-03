@@ -40,6 +40,7 @@ BOOL my_IsCharLowerW(wchar_t c);
 
 const TCHAR *Int2lStr(TCHAR str[INT_DIGITS+1], int n) A_NONNULL;
 const TCHAR *Ulong2lStr(TCHAR str[ULONG_DIGITS+1], ulong n) A_NONNULL;
+const TCHAR *LPTR2Hex(TCHAR str[ULONG_DIGITS+1], UINT_PTR n) A_NONNULL;
 
 //inline static
 //const char *my_lstrcatA(char *dest, const char * restrict src)
@@ -110,6 +111,12 @@ int my_lstrcmpW(const unicode *X, const unicode *Y)
 {
 	while (*X && *X == *Y) { X++; Y++; }
 	return *(const unicode*)X - *(const unicode*)Y;
+}
+static inline
+int my_lstrncmpW(const unicode *X, const unicode *Y, size_t N)
+{
+	while (--N && *X && *X == *Y) { X++; Y++; }
+	return *X - *Y;
 }
 static inline
 bool my_instringW(const unicode *X, const unicode *Y)

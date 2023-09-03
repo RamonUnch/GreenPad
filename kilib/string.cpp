@@ -140,6 +140,25 @@ const TCHAR *Ulong2lStr(TCHAR str[ULONG_DIGITS+1], ulong n)
 
 	return str+i;
 }
+const TCHAR *LPTR2Hex(TCHAR str[ULONG_DIGITS+1], UINT_PTR n)
+{
+	int i;
+	str[ULONG_DIGITS] = TEXT('\0');
+
+	for( i=ULONG_DIGITS-1; ; --i )
+	{
+		TCHAR rem = n & 15; // MD 16
+		str[i] = (rem > 9)? (rem-10) + 'A' : rem + '0';
+		/*str[i++] = rem + '0' + (rem > 9) * ('A' - '0' - 10); *//* branchless version */
+
+		n >>=4 ; // Divide by 16.
+		if (n==0)
+			break;
+	}
+
+	return str+i;
+}
+
 
 #ifdef OLDWIN32S
 #undef WideCharToMultiByte
