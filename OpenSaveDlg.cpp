@@ -715,12 +715,13 @@ ReopenDlg::ReopenDlg( const CharSetList& csl, int csi )
 void ReopenDlg::on_init()
 {
 	// コンボボックスを埋めて、「自動選択」を選ぶ
+	int csi = csIndex_;
+
 	ComboBox cb( hwnd(), IDC_CODELIST );
 	for( ulong i=0; i<csl_.size(); ++i )
-		if( csl_[i].type & 2 ) // 2:=LOAD
+		if( csl_[i].type & 2 || (int)i == csi ) // 2:=LOAD
 			cb.Add( csl_[i].longName );
 
-	int csi = csIndex_;
 	if( 0 <= csi && csi < (int)csl_.size() )
 	{
 		// Select combobox item
@@ -730,7 +731,9 @@ void ReopenDlg::on_init()
 	{	// Show CP number in the reopen dialog
 		// If selection failed.
 		TCHAR tmp[INT_DIGITS+1];
-		SendMsgToItem( IDC_CODELIST, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(Int2lStr(tmp, csIndex_&0xfffff)) );
+		const TCHAR *numstr = Int2lStr(tmp, csIndex_&0xfffff);
+		cb.Add( numstr );
+		cb.Select( numstr );
 	}
 }
 
