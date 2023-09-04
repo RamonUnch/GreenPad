@@ -109,11 +109,6 @@ void GpStBar::SetUnicode( const unicode *uni )
 	SetText( t, UNI_PART );
 }
 
-inline void GpStBar::SetUnipartText( const unicode *str )
-{
-	SetText( str, UNI_PART );
-}
-
 int GpStBar::AutoResize( bool maximized )
 {
 	// 文字コード表示領域を確保しつつリサイズ
@@ -1012,7 +1007,7 @@ void GreenPadWnd::on_showselectionlen()
 	edit_.getCursor().getCurPos(&a, &b);
 	ulong len = edit_.getDoc().getRangeLength(*a, *b);
 	TCHAR buf[ULONG_DIGITS+1];
-	stb_.SetUnipartText( Ulong2lStr(buf, len) );
+	stb_.SetText( Ulong2lStr(buf, len), GpStBar::UNI_PART );
 }
 void GreenPadWnd::on_grep()
 {

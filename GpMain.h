@@ -24,7 +24,6 @@ public:
 	void SetCsText( const TCHAR* str );
 	void SetLbText( int lb );
 	void SetUnicode( const unicode *uni );
-	void SetUnipartText( const unicode *str );
 private:
 	const TCHAR *str_;
 	int lb_;
