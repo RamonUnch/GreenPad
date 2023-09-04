@@ -96,7 +96,7 @@ inline void GpStBar::SetLbText( int lb )
 	SetText( lbstr[lb_=lb], LB_PART );
 }
 
-inline void GpStBar::SetUnicode( const unicode *uni )
+void GpStBar::SetUnicode( const unicode *uni )
 {
 	TCHAR buf[ULONG_DIGITS+2+1];
 
@@ -105,7 +105,7 @@ inline void GpStBar::SetUnicode( const unicode *uni )
 		cc = 0x10000 + ( ((uni[0]-0xD800)&0x3ff)<<10 ) + ( (uni[1]-0xDC00)&0x3ff );
 
 	TCHAR *t = (TCHAR *)LPTR2Hex( buf+2, cc );
-	t--; *t-- = TEXT('+'); *t = TEXT('U');
+	*--t = TEXT('+'); *--t = TEXT('U');
 	SetText( t, UNI_PART );
 }
 
@@ -1298,7 +1298,7 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 	}
 	stb_.SetText( str );
 	const unicode* su = edit_.getDoc().tl(c.tl);
-	stb_.SetUnicode( su+c.ad /*- (c.ad!=0)*/ );
+	stb_.SetUnicode( su+c.ad /*- (c.ad!=0 && c.ad==edit_.getDoc().len(c.tl) ) */);
 }
 
 void GreenPadWnd::on_reconv()
