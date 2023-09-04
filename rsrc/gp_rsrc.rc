@@ -435,6 +435,7 @@ BEGIN
     "G",            ID_CMD_GREP,            VIRTKEY, CONTROL, NOINVERT
     VK_F1,          ID_CMD_HELP,            VIRTKEY, NOINVERT
     VK_F7,          ID_CMD_OPENSELECTION,   VIRTKEY, NOINVERT
+    VK_F8,          ID_CMD_SELECTIONLEN,    VIRTKEY, NOINVERT    
     "H",            ID_CMD_FIND,            VIRTKEY, CONTROL, NOINVERT
     "J",            ID_CMD_JUMP,            VIRTKEY, CONTROL, NOINVERT
     "N",            ID_CMD_NEWFILE,         VIRTKEY, CONTROL, NOINVERT

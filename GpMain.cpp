@@ -109,6 +109,11 @@ void GpStBar::SetUnicode( const unicode *uni )
 	SetText( t, UNI_PART );
 }
 
+inline void GpStBar::SetUnipartText( const unicode *str )
+{
+	SetText( str, UNI_PART );
+}
+
 int GpStBar::AutoResize( bool maximized )
 {
 	// 文字コード表示領域を確保しつつリサイズ
@@ -370,6 +375,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_GREP:       on_grep();break;
 	case ID_CMD_HELP:       on_help();break;
 	case ID_CMD_OPENSELECTION: on_openselection(); break;
+	case ID_CMD_SELECTIONLEN: on_showselectionlen(); break;
 
 	// View
 	case ID_CMD_NOWRAP:     edit_.getView().SetWrapType( wrap_=-1 ); break;
@@ -1000,6 +1006,14 @@ void GreenPadWnd::on_openselection()
 	BootNewProcess( cmd.c_str() );
 #undef isAbsolutePath
 }
+void GreenPadWnd::on_showselectionlen()
+{
+	const view::VPos *a, *b;
+	edit_.getCursor().getCurPos(&a, &b);
+	ulong len = edit_.getDoc().getRangeLength(*a, *b);
+	TCHAR buf[ULONG_DIGITS+1];
+	stb_.SetUnipartText( Ulong2lStr(buf, len) );
+}
 void GreenPadWnd::on_grep()
 {
 	on_external_exe_start( cfg_.grepExe() );
@@ -1253,6 +1267,11 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 	static int busy_cnt = 0;
 	if( edit_.getDoc().isBusy() && ((++busy_cnt)&0xff) )
 		return;
+	if( c == old_cur_ && s == old_sel_ )
+		return; // Nothing to do
+
+	old_cur_ = c;
+	old_sel_ = s;
 
 	ulong cad = c.ad;
 	if( ! cfg_.countByUnicode() )
