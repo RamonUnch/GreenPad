@@ -715,16 +715,18 @@ ReopenDlg::ReopenDlg( const CharSetList& csl, int csi )
 void ReopenDlg::on_init()
 {
 	// コンボボックスを埋めて、「自動選択」を選ぶ
-	int csi = csIndex_;
-
 	ComboBox cb( hwnd(), IDC_CODELIST );
 	for( ulong i=0; i<csl_.size(); ++i )
-		if( csl_[i].type & 2 || (int)i == csi ) // 2:=LOAD
+		if( csl_[i].type & 2 ) // 2:=LOAD
 			cb.Add( csl_[i].longName );
 
+	int csi = csIndex_;
 	if( 0 <= csi && csi < (int)csl_.size() )
 	{
 		// Select combobox item
+		if ( !(csl_[csi].type & 2) ) // Append if needed.
+			cb.Add( csl_[csi].longName );
+
 		cb.Select( csl_[csi].longName );
 	}
 	else
