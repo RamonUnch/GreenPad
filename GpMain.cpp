@@ -1262,6 +1262,11 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 	static int busy_cnt = 0;
 	if( edit_.getDoc().isBusy() && ((++busy_cnt)&0xff) )
 		return;
+
+	// Update U+XXXXh text in the StatusBar.
+	const unicode* su = edit_.getDoc().tl(c.tl);
+	stb_.SetUnicode( su+c.ad /*- (c.ad!=0 && c.ad==edit_.getDoc().len(c.tl) ) */);
+
 	if( c == old_cur_ && s == old_sel_ )
 		return; // Nothing to do
 
@@ -1311,8 +1316,6 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 		*end = TEXT('\0');
 	}
 	stb_.SetText( str );
-	const unicode* su = edit_.getDoc().tl(c.tl);
-	stb_.SetUnicode( su+c.ad /*- (c.ad!=0 && c.ad==edit_.getDoc().len(c.tl) ) */);
 }
 
 void GreenPadWnd::on_reconv()
@@ -1649,6 +1652,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	edit_.getDoc().ClearAll();
 	stb_.SetText( RzsString(IDS_LOADING).c_str() );
 	edit_.getDoc().OpenFile( tf );
+	stb_.SetText( TEXT("(1,1)") );
 
 	// タイトルバー更新
 	UpdateWindowName();
