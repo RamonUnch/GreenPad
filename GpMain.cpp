@@ -370,6 +370,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_GREP:       on_grep();break;
 	case ID_CMD_HELP:       on_help();break;
 	case ID_CMD_OPENSELECTION: on_openselection(); break;
+	case ID_CMD_SELECTIONLEN: on_showselectionlen(); break;
 
 	// View
 	case ID_CMD_NOWRAP:     edit_.getView().SetWrapType( wrap_=-1 ); break;
@@ -1000,6 +1001,14 @@ void GreenPadWnd::on_openselection()
 	BootNewProcess( cmd.c_str() );
 #undef isAbsolutePath
 }
+void GreenPadWnd::on_showselectionlen()
+{
+	const view::VPos *a, *b;
+	edit_.getCursor().getCurPos(&a, &b);
+	ulong len = edit_.getDoc().getRangeLength(*a, *b);
+	TCHAR buf[ULONG_DIGITS+1];
+	stb_.SetText( Ulong2lStr(buf, len), GpStBar::UNI_PART );
+}
 void GreenPadWnd::on_grep()
 {
 	on_external_exe_start( cfg_.grepExe() );
@@ -1254,6 +1263,16 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 	if( edit_.getDoc().isBusy() && ((++busy_cnt)&0xff) )
 		return;
 
+	// Update U+XXXXh text in the StatusBar.
+	const unicode* su = edit_.getDoc().tl(c.tl);
+	stb_.SetUnicode( su+c.ad /*- (c.ad!=0 && c.ad==edit_.getDoc().len(c.tl) ) */);
+
+	if( c == old_cur_ && s == old_sel_ )
+		return; // Nothing to do
+
+	old_cur_ = c;
+	old_sel_ = s;
+
 	ulong cad = c.ad;
 	if( ! cfg_.countByUnicode() )
 	{
@@ -1297,8 +1316,6 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 		*end = TEXT('\0');
 	}
 	stb_.SetText( str );
-	const unicode* su = edit_.getDoc().tl(c.tl);
-	stb_.SetUnicode( su+c.ad /*- (c.ad!=0 && c.ad==edit_.getDoc().len(c.tl) ) */);
 }
 
 void GreenPadWnd::on_reconv()
@@ -1635,6 +1652,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	edit_.getDoc().ClearAll();
 	stb_.SetText( RzsString(IDS_LOADING).c_str() );
 	edit_.getDoc().OpenFile( tf );
+	stb_.SetText( TEXT("(1,1)") );
 
 	// タイトルバー更新
 	UpdateWindowName();
