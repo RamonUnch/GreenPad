@@ -84,6 +84,9 @@ public:
 	//@{ 生きてる？ //@}
 	bool isAlive() const;
 
+	//@{ Is the window visible? //@}
+	bool isVisible() const;
+
 public:
 
 	//@{ 未処理メッセージを適当に処理 //@}
@@ -170,6 +173,8 @@ inline void Window::getClientRect( RECT* rc ) const
 inline bool Window::isAlive() const
 	{ return FALSE != ::IsWindow( wnd_ ); }
 
+inline bool Window::isVisible() const
+	{ return FALSE != ::IsWindowVisible( wnd_ ); }
 
 
 #endif // __ccdoc__

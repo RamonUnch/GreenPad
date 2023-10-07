@@ -68,7 +68,7 @@ static TCHAR *GetUNCPath(const TCHAR *ifn)
 }
 #endif
 
-static HANDLE CreateFileUNC(
+HANDLE CreateFileUNC(
 	LPCTSTR fname,
 	DWORD dwDesiredAccess,
 	DWORD dwShareMode,
