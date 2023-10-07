@@ -148,6 +148,13 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 			edit_.SetFocus();
 		break;
 
+	// We check if the timestamp was changed when GreenPad's window
+	// gets activated
+	case WM_ACTIVATEAPP:
+		if( (BOOL)wp == TRUE )
+			PostMessage(hwnd(), WMU_CHECKFILETIMESTAMP, 0, 0);
+		return WndImpl::on_message( msg, wp, lp );
+
 	// サイズ変更。子窓を適当に移動。
 	case WM_SIZE:
 		if( wp==SIZE_MAXIMIZED || wp==SIZE_RESTORED )
@@ -301,6 +308,26 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		if( wp == 1787 // Status Bar ID to check before[]
 		&& ((NMHDR*)lp)->code == NM_DBLCLK )
 			on_reopenfile();
+		break;
+
+	case WMU_CHECKFILETIMESTAMP:
+		if( !isUntitled()
+		&&  old_filetime_.dwLowDateTime != 0
+		&&  old_filetime_.dwHighDateTime != 0 )
+		{
+			FILETIME new_filetime = filename_.getLastWriteTime();
+			if( ::CompareFileTime(&old_filetime_, &new_filetime) < 0 )
+			{
+				// Send Up click event in case the window was activated with a click.
+				SendMessage(edit_.getView().hwnd(), WM_LBUTTONUP, 0, GetMessagePos());
+				old_filetime_.dwLowDateTime=old_filetime_.dwHighDateTime=0;
+				if( IDYES == MsgBox(RzsString(IDS_MODIFIEDOUT).c_str(), RzsString(IDS_APPNAME).c_str(), MB_YESNO) )
+					on_refreshfile(); // Reload if asked.
+				// Reset old time stamp either case.
+				// Note: Timestamp must also be updated when Opening/Saving a file.
+				old_filetime_ = filename_.getLastWriteTime();
+			}
+		}
 		break;
 
 	// その他
@@ -1007,7 +1034,10 @@ void GreenPadWnd::on_showselectionlen()
 	edit_.getCursor().getCurPos(&a, &b);
 	ulong len = edit_.getDoc().getRangeLength(*a, *b);
 	TCHAR buf[ULONG_DIGITS+1];
-	stb_.SetText( Ulong2lStr(buf, len), GpStBar::UNI_PART );
+	if( stb_.isVisible() )
+		stb_.SetText( Ulong2lStr(buf, len), GpStBar::UNI_PART );
+	else
+		MsgBox( Ulong2lStr(buf, len), TEXT("Length in UTF-16 chars") );
 }
 void GreenPadWnd::on_grep()
 {
@@ -1260,6 +1290,8 @@ void GreenPadWnd::on_statusBar()
 void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 {
 	static int busy_cnt = 0;
+	if( !stb_.isVisible() )
+		return;
 	if( edit_.getDoc().isBusy() && ((++busy_cnt)&0xff) )
 		return;
 
@@ -1651,6 +1683,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	// 開く
 	edit_.getDoc().ClearAll();
 	stb_.SetText( RzsString(IDS_LOADING).c_str() );
+	old_filetime_ = filename_.getLastWriteTime(); // Save timestamp
 	edit_.getDoc().OpenFile( tf );
 	stb_.SetText( TEXT("(1,1)") );
 
@@ -1755,25 +1788,29 @@ bool GreenPadWnd::Save()
 		save_Csi = resolveCSI(csi_);
 
 	if (!save_Csi) save_Csi = ::GetACP(); // in case
-	TextFileW tf( save_Csi, lb_ );
 
-	if( tf.Open( filename_.c_str() ) )
-	{
+	{ // Reduce scope of tf
+		TextFileW tf( save_Csi, lb_ );
+
+		if( !tf.Open( filename_.c_str() ) )
+		{
+			// Error!
+			DWORD err = GetLastError();
+			String fnerror = filename_ + TEXT("\n\nError #");
+			fnerror += SInt2Str(err).c_str();
+			MsgBox( fnerror.c_str(), RzsString(IDS_SAVEERROR).c_str() );
+			return false;
+		}
 		// 無事ファイルに保存できた場合
 		edit_.getDoc().SaveFile( tf );
-		UpdateWindowName();
-		// [最近使ったファイル]更新
-		if( cfg_.AddMRU( filename_ ) )
-			PostMsgToAllFriends(GPM_MRUCHANGED);
-		return true;
 	}
+	UpdateWindowName();
+	// [最近使ったファイル]更新
+	if( cfg_.AddMRU( filename_ ) )
+		PostMsgToAllFriends(GPM_MRUCHANGED);
 
-	// Error!
-	DWORD err = GetLastError();
-	String fnerror = filename_ + TEXT("\n\nError #");
-	fnerror += SInt2Str(err).c_str();
-	MsgBox( fnerror.c_str(), RzsString(IDS_SAVEERROR).c_str() );
-	return false;
+	old_filetime_ = filename_.getLastWriteTime(); // Save timestamp
+	return true;
 }
 
 
