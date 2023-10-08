@@ -4,6 +4,15 @@
 #include "kstring.h"
 
 DWORD GetFileAttributesUNC(LPCTSTR fname) A_NONNULL;
+HANDLE CreateFileUNC(
+	LPCTSTR fname,
+	DWORD dwDesiredAccess,
+	DWORD dwShareMode,
+	LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	DWORD dwCreationDisposition,
+	DWORD dwFlagsAndAttributes,
+	HANDLE hTemplateFile
+);
 
 #ifndef __ccdoc__
 namespace ki {
@@ -112,6 +121,9 @@ public:
 	bool isReadOnly() const;
 	static bool isReadOnly( const TCHAR *fn );
 
+	FILETIME getLastWriteTime() const;
+	static FILETIME getLastWriteTime( const TCHAR *fn );
+
 public:
 
 	static const TCHAR* name( const TCHAR* str );
@@ -147,6 +159,9 @@ inline bool Path::isReadOnly() const
 inline bool Path::isReadOnly( const TCHAR *fn ) // Static
 	{ DWORD x = GetFileAttributesUNC( fn );
 	  return x!=0xffffffff && (x&FILE_ATTRIBUTE_READONLY)!=0; }
+
+inline FILETIME Path::getLastWriteTime() const
+	{ return getLastWriteTime( c_str() ); }
 
 inline const TCHAR* Path::name() const
 	{ return name(c_str()); }

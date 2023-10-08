@@ -771,6 +771,7 @@ void ConfigManager::LoadIni()
 	useQuickExit_ = ini_.GetBool( TEXT("QuickExit"), false );
 	// Use the old Windows 3.x Open/Save dialog style?
 	useOldOpenSaveDlg_ = ini_.GetBool( TEXT("OldOpenSaveDlg"), false );
+	warnOnModified_    = ini_.GetBool( TEXT("WarnOnModified"), true );
 
 	// Print Margins
 	SetRect(&rcPMargins_, 500, 500, 500, 500);

@@ -410,6 +410,7 @@ BEGIN
     IDS_ERRORNUM            "\n\nError #"
     IDS_CANTOPENDIR         "\nCan not open directory!"
     IDS_INVALIDCP           "Invalid codepage selected!"
+    IDS_MODIFIEDOUT         "File was modified outside of GreenPad!\nRelaod it?"
 END
 
 #endif    // ì˙ñ{åÍ resources
@@ -812,6 +813,7 @@ BEGIN
     IDS_ERRORNUM            "\n\nError #"
     IDS_CANTOPENDIR         "\nCan not open directory!"
     IDS_INVALIDCP           "Invalid codepage selected!"
+    IDS_MODIFIEDOUT         "File was modified outside of GreenPad!\nRelaod it?"
 END
 
 #endif    // âpåÍ (ïƒçë) resources

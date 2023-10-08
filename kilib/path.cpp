@@ -243,3 +243,18 @@ DWORD Path::GetExeName( TCHAR buf[MAX_PATH] )
 	len -=  len > 0 && buf[len-1] == TEXT('\0');
 	return len;
 }
+
+FILETIME Path::getLastWriteTime( const TCHAR *fn )
+{
+	FILETIME ft = {0, 0};
+	HANDLE h = ::CreateFileUNC(fn, 0,
+		FILE_SHARE_READ|FILE_SHARE_WRITE,
+		NULL, OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL
+	);
+	if( h != INVALID_HANDLE_VALUE )
+		GetFileTime(h, NULL, NULL, &ft);
+	CloseHandle(h);
+	return ft;
+}

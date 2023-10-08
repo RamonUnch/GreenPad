@@ -6,7 +6,7 @@
 #include "ConfigManager.h"
 #include "Search.h"
 
-
+#define WMU_CHECKFILETIMESTAMP    (WM_USER+1)
 
 //=========================================================================
 //@{ @pkg Gp.Main //@}
@@ -86,6 +86,7 @@ private:
 	HACCEL           accel_;
 	editwing::DPos   old_cur_;
 	editwing::DPos   old_sel_;
+	FILETIME         old_filetime_;
 
 	ki::Path         filename_;
 	int              csi_;

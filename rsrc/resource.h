@@ -27,6 +27,7 @@
 #define IDS_ERRORNUM                    14
 #define IDS_CANTOPENDIR                 15
 #define IDS_INVALIDCP                   16
+#define IDS_MODIFIEDOUT                 17
 
 #define IDR_MAIN                        103
 #define IDD_OPENFILEHOOK                105

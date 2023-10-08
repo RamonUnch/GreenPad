@@ -111,6 +111,8 @@ void ComboBox::Select( const TCHAR* str )
 	#endif
 	if( i != CB_ERR )
 		SendMsg( CB_SETCURSEL, i );
+//	else
+//		SendMsg( WM_SETTEXT, 0, reinterpret_cast<LPARAM>(str) );
 }
 
 bool ComboBox::PreTranslateMessage( MSG* )
