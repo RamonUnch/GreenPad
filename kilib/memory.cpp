@@ -12,74 +12,42 @@ using namespace ki;
 	static HANDLE g_heap;
 	#endif
 
-	#ifndef _DEBUG
+	#ifdef _DEBUG
+	// デバッグ用に回数計測版(^^;
+	static int allocCounter = 0;
+	static int smallAllocSize = 0;
+	static int smallDeAllocSize = 0;
+	#endif // _DEBUG
 
-		void* __cdecl operator new( size_t siz )
-		{
-			TRYLBL:
+	void* __cdecl operator new( size_t siz )
+	{
+		TRYLBL:
+		#ifdef USE_LOCALALLOC
+		void *ret = ::LocalAlloc( LMEM_FIXED, siz );
+		#else
+		void *ret = ::HeapAlloc( g_heap, 0, siz );
+		#endif
+		if (!ret) {
+			DWORD ans = MessageBox(GetActiveWindow(), TEXT("Unable to allocate memory!"), NULL, MB_ABORTRETRYIGNORE|MB_TASKMODAL);
+			switch(ans) {
+			case IDABORT: ExitProcess(1); break;
+			case IDRETRY: goto TRYLBL; break;
+			}
+		}
+		return ret;
+	}
+
+	void __cdecl operator delete( void* ptr )
+	{
+		if (ptr != NULL)
+		{   // It is not Guarenteed that HeapFree can free NULL.
 			#ifdef USE_LOCALALLOC
-			void *ret = ::LocalAlloc( LMEM_FIXED, siz );
+			::LocalFree( ptr );
 			#else
-			void *ret = ::HeapAlloc( g_heap, 0, siz );
+			::HeapFree( g_heap, 0, ptr );
 			#endif
-			if (!ret) {
-				DWORD ans = MessageBox(GetActiveWindow(), TEXT("Unable to allocate memory!"), NULL, MB_ABORTRETRYIGNORE|MB_TASKMODAL);
-				switch(ans) {
-				case IDABORT: ExitProcess(1); break;
-				case IDRETRY: goto TRYLBL; break;
-				}
-			}
-			return ret;
 		}
-
-		void __cdecl operator delete( void* ptr )
-		{
-			if (ptr != NULL)
-			{   // It is not Guarenteed that HeapFree can free NULL.
-				#ifdef USE_LOCALALLOC
-				::LocalFree( ptr );
-				#else
-				::HeapFree( g_heap, 0, ptr );
-				#endif
-			}
-		}
-
-	#else
-
-		// デバッグ用に回数計測版(^^;
-		static int allocCounter = 0;
-		static int smallAllocSize = 0;
-		static int smallDeAllocSize = 0;
-		void* __cdecl operator new( size_t siz )
-		{
-			void *ret;
-			++allocCounter;
-			#ifdef USE_LOCALALLOC
-			ret = ::LocalAlloc( LMEM_FIXED, siz );
-			#else
-			ret = ::HeapAlloc( g_heap, 0, siz );
-			#endif
-			if( !ret )
-			{
-				MessageBox(GetActiveWindow(), TEXT("Unable to allocate memory!\nEXITTING!"), NULL, MB_OK);
-				ExitProcess(1);
-			}
-			return ret;
-		}
-		void __cdecl operator delete( void* ptr )
-		{
-			if( ptr != NULL )
-			{
-				#ifdef USE_LOCALALLOC
-				::LocalFree( ptr );
-				#else
-				::HeapFree( g_heap, 0, ptr );
-				#endif
-				--allocCounter;
-			}
-		}
-
-	#endif
+	}
 
 	#if _MSC_VER >= 1300 && _MSC_VER != 1500
 	extern "C"
