@@ -160,8 +160,15 @@ void UnReDoChain::NewlyExec( const Command& cmd, Document& doc )
 	Command* nCmd = cmd(doc);
 	if( nCmd != NULL )
 	{
+		Node *nn = new Node(nCmd,lastOp_,&headTail_);
+		if( !nn )
+		{	// Unable to allocate the Node!
+			// delete now the command that can't be Saved...
+			delete nCmd;
+			return;
+		}
 		num_   -= (lastOp_->next_->ChainDelete(savedPos_) - 1);
-		lastOp_ = lastOp_->next_ = new Node(nCmd,lastOp_,&headTail_);
+		lastOp_ = lastOp_->next_ = nn;
 
 		while( limit_ < num_ )
 		{
@@ -753,6 +760,19 @@ void Document::OpenFile( TextFileR& tf )
 	// ‘}“ü, Insertion
 	DPos e(0,0);
 
+//	// Quick UTF16 special direct reading.
+//	if( tf.codepage() == UTF16LE ||  tf.codepage() == UTF16l )
+//	{
+//		DPos p(0,0);
+//		//DWORD otime = GetTickCount();
+//		const unicode *buf = reinterpret_cast<const unicode*>( tf.rawData() );
+//		int bom = *buf == 0xfffe; // Skip BOM
+//		InsertingOperation(p , buf+bom, (tf.size()/2)-bom, e );
+//		Fire_TEXTUPDATE( DPos(0,0), DPos(0,0), e, true, false );
+//		//MessageBox(GetForegroundWindow(),  SInt2Str(GetTickCount()-otime).c_str(), TEXT("Time in ms UTF16:"), 0);
+//		return; // DONE!
+//	}
+
 	// Super small stack buffer in case the malloc fails
 	#define SBUF_SZ 1800
 	unicode sbuf[SBUF_SZ];
@@ -795,9 +815,9 @@ void Document::OpenFile( TextFileR& tf )
 	if( buf != sbuf )
 		delete [] buf;
 
+//	MessageBox(GetForegroundWindow(),  SInt2Str(GetTickCount()-otime).c_str(), TEXT("Time in ms:"), 0);
 	// ƒCƒxƒ“ƒg”­‰Î, Event firing
 	Fire_TEXTUPDATE( DPos(0,0), DPos(0,0), e, true, false );
-//	MessageBox(GetForegroundWindow(),  SInt2Str(GetTickCount()-otime).c_str(), TEXT("Time in ms"), 0);
 }
 
 
