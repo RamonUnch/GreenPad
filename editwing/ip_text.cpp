@@ -512,13 +512,7 @@ bool Document::DeletingOperation
 
 	// Undo操作用バッファ確保, Allocate buffer for Undo operation
 	undobuf = new unicode[undosiz+1];
-	if(!undobuf)
-	{ // Settext to "" if we are unable to allocate memory.
-		undobuf = new unicode[1];
-		undobuf[0] = 0;
-		undosiz=0;
-	}
-	else
+	if( undobuf )
 	{ // We got enough memory...
 		getText( undobuf, s, e );// get text to del for undo
 	}
@@ -652,7 +646,13 @@ Command* Delete::operator()( Document& d ) const
 	d.Fire_TEXTUPDATE( s, e, s, aa, true );
 
 	// 逆操作オブジェクトを返す, Return the reverse operation object
-	return new Insert( s, buf, siz, true );
+	Insert *rev = NULL;
+	if( buf != NULL )
+	{	// Make reverse operation...
+		rev = new Insert( s, buf, siz, true );
+		if( !rev ) delete buf; // Clear Undo buffer on failure
+	}
+	return rev;
 }
 
 
@@ -693,7 +693,13 @@ Command* Replace::operator()( Document& d ) const
 	d.Fire_TEXTUPDATE( s, e, e2, aa, true );
 
 	// 逆操作オブジェクトを返す, Return the reverse operation object
-	return new Replace( s, e2, buf, siz, true );
+	Replace *rev = NULL;
+	if( buf )
+	{	// Make reverse operation...
+		new Replace( s, e2, buf, siz, true );
+		if( !rev ) delete buf; // Clear Undo buffer on failure
+	}
+	return rev;
 }
 
 
@@ -707,6 +713,8 @@ Command* MacroCommand::operator()( Document& doc ) const
 	doc.setBusyFlag(true);
 
 	MacroCommand* undo = new MacroCommand;
+	if( !undo ) return NULL;
+
 	undo->arr_.ForceSize( size() );
 	for( ulong i=0,e=arr_.size(); i<e; ++i )
 		undo->arr_[e-i-1] = (*arr_[i])(doc);
