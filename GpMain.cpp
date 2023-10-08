@@ -151,7 +151,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 	// We check if the timestamp was changed when GreenPad's window
 	// gets activated
 	case WM_ACTIVATEAPP:
-		if( (BOOL)wp == TRUE )
+		if( cfg_.warnOnModified() && (BOOL)wp == TRUE )
 			PostMessage(hwnd(), WMU_CHECKFILETIMESTAMP, 0, 0);
 		return WndImpl::on_message( msg, wp, lp );
 
@@ -887,14 +887,12 @@ void GreenPadWnd::on_print()
 		::EndPage(thePrintDlg.hDC);
 	} while( ++procCopies < totalCopies );
 	#undef myDTFLAGS
+
 	// Close Printer
 	::SelectObject(thePrintDlg.hDC, oldfont);
 	::DeleteObject(printfont);
 	::EndDoc(thePrintDlg.hDC);
 	::DeleteDC(thePrintDlg.hDC);
-
-	::GlobalUnlock(thePrintDlg.hDevNames);
-	::GlobalUnlock(thePrintDlg.hDevMode);
 
 	// ‰ð•ú‚·‚éB
 	::GlobalFree(thePrintDlg.hDevNames);
