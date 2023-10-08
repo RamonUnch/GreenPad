@@ -182,7 +182,7 @@ class MacroCommand A_FINAL: public Command
 {
 public:
 	//@{ コマンドの追加 //@}
-	void Add( Command* cmd ) { arr_.Add(cmd); }
+	void Add( Command* cmd ) { if( cmd ) arr_.Add(cmd); } // do not save NULLs
 
 	//@{ コマンド数 //@}
 	ulong size() const { return arr_.size(); }
