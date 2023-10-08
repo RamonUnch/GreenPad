@@ -654,58 +654,41 @@ void Cursor::QuoteSelectionW(const unicode *qs, bool shi)
 		sel_.ad=0;
 		dm=sel_; dM=cur_;
 	}
-	dm.ad=0;
+	// Skip last line if selected on 0 length
+	if( dM.ad == 0 &&  dm.tl < dM.tl) dM.tl--;
+
 	DPos ocur=cur_, osel=sel_; // save original selection
 
-	uint qsl = my_lstrlenW(qs); // length of quote string.
+	size_t qsl = my_lstrlenW(qs); // length of quote string.
 
-	ulong len = doc_.getRangeLength( dm, dM );
-	unicode *p = new unicode[len+1];
-	if(!p) return;
-	doc_.getText( p, dm, dM );
-
-	ulong nlines = shi?0: 1 + dM.tl - dm.tl; // max number of tabs to add/min to remove ;
-	unicode *pp = new unicode[len + (nlines + 1)*qsl]; // bufer to copy (un)tabified data
-	if(!pp) { delete [] p ; return; } // unable to allocate mem
-	ulong i=0, j=0;
-	if (shi) {
-		// skip a quote?
-		if(my_instringW(p, qs))
-			i+=qsl;
-	} else {
-		// add the quote!
-		my_lstrcpyW(pp, qs);
-		j+=qsl;
-		// shift original selection
-	}
-	for (; i < len; i++)
+	doc::MacroCommand mcr;
+	// For each line
+	for( ulong i = dm.tl; i <= dM.tl; ++i )
 	{
-		pp[j++] = p[i];
-		if((p[i] == L'\n' && (!i || p[i-1] == L'\r')) // DOS
-		|| (p[i] == L'\n' && (!i || p[i-1] != L'\r')) // UNIX
-		|| (p[i] == L'\r' && p[i+1] != '\n')) // MAC
-		{ // We are at the begining of a line
-			if(shi) {
-				// Skip the quote string ?
-				if(my_instringW(&p[i+1], qs)) {
-					i+=qsl;
-				}
-			} else {
-				// add the quote string?
-				if (p[i+1] != '\0') {
-					my_lstrcpyW(&pp[j], qs);
-					j+=qsl;
-				}
+		DPos dps(i, 0); // Start of each line
+		if( shi )
+		{	// Remove Quote
+			const unicode *linebuf = doc_.tl(i);
+			if( my_instringW(linebuf, qs) )
+			{	// Delete the quote string if found at line start
+				DPos dpe(i, qsl);
+				mcr.Add( new doc::Delete(dps, dpe) );
 			}
 		}
+		else
+		{	// Add quote
+			mcr.Add(  new doc::Insert(dps, qs, qsl) );
+		}
 	}
-	pp[j] = L'\0';
-	delete [] p;
-	doc_.Execute( Replace(dm, dM, pp, my_lstrlenW(pp)) );
-	MoveCur(osel, false);
-	MoveCur(ocur, true);
 
-	delete [] pp;
+	if( mcr.size() > 0 )
+	{
+		// Execute command
+		doc_.Execute( mcr );
+		// Restole old selection
+		MoveCur(osel, false);
+		MoveCur(ocur, true);
+	}
 }
 void Cursor::QuoteSelection(bool unquote)
 {
