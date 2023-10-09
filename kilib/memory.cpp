@@ -372,6 +372,7 @@ bool MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
 
 	// メモリブロック情報域をちょこっと確保
 	AutoDeleter a( blocks_ = ::new MemBlock[4] );
+	if( !blocks_ ) return false;
 
 	// ブロックサイズ等計算
 	int npb = BLOCK_SIZ/siz;
@@ -426,6 +427,8 @@ void* MemoryManager::FixedSizeMemBlockPool::Alloc()
 				{
 					// しかも作業領域も満杯なので拡張
 					MemBlock* nb = ::new MemBlock[ blockNum_*2 ];
+					if( !nb )
+						return NULL;
 					memmove( nb, blocks_, sizeof(MemBlock)*(blockNum_) );
 					::delete [] blocks_;
 					blocks_ = nb;
