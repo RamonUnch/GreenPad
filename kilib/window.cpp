@@ -416,7 +416,8 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 		immApp_->GetContext( wnd, &ime );
 		immApp_->GetCompositionStringW( ime, GCS_RESULTSTR, 0, &s, NULL );
 		*str = new unicode[ (*len=s/2)+1 ];
-		immApp_->GetCompositionStringW( ime, GCS_RESULTSTR, s, &s, *str );
+		if( *str )
+			immApp_->GetCompositionStringW( ime, GCS_RESULTSTR, s, &s, *str );
 		immApp_->ReleaseContext( wnd, ime );
 	}
 	else
@@ -432,11 +433,17 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 			if( s > 0 )
 			{
 				char* tmp = new char[s];
-				*str = new unicode[*len=s*2];
-				::ImmGetCompositionStringA( ime,GCS_RESULTSTR,tmp,s );
-				*len = ::MultiByteToWideChar(
-					CP_ACP, MB_PRECOMPOSED, tmp, s, *str, *len );
-				delete [] tmp;
+				if( tmp )
+				{
+					*str = new unicode[*len=s*2];
+					if( *str )
+					{
+						::ImmGetCompositionStringA( ime,GCS_RESULTSTR,tmp,s );
+						*len = ::MultiByteToWideChar(
+							CP_ACP, MB_PRECOMPOSED, tmp, s, *str, *len );
+					}
+					delete [] tmp;
+				}
 			}
 		}
 		else
@@ -447,7 +454,8 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 			if( s > 0 )
 			{
 				*str = new unicode[ (*len=s/2)+1 ];
-				::ImmGetCompositionStringW( ime, GCS_RESULTSTR, *str, s );
+				if( *str )
+					::ImmGetCompositionStringW( ime, GCS_RESULTSTR, *str, s );
 			}
 		}
 
@@ -481,10 +489,12 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 		{	// Use ANSI functions on Win9x
 			len = ::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1, NULL,0 ,NULL,NULL );
 			char* tmp = new char[len];
-
-			::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1,tmp,len,NULL,NULL );
-			::ImmSetCompositionStringA(ime,SCS_SETSTR,tmp,len,NULL,0);
-			delete [] tmp;
+			if( tmp )
+			{
+				::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1,tmp,len,NULL,NULL );
+				::ImmSetCompositionStringA(ime,SCS_SETSTR,tmp,len,NULL,0);
+				delete [] tmp;
+			}
 		}
 		else
 	#endif // !UNICODE || UNICOWS

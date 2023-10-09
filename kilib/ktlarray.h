@@ -175,6 +175,7 @@ public:
 	void Add( const T& obj )
 		{
 			Node* pN = new Node( obj );
+			if( !pN ) return;
 			(top_ == NULL) ? top_=pN : top_->Add( pN );
 		}
 
