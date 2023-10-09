@@ -231,7 +231,7 @@ static bool compare_i(const unicode* a,const unicode* b,ulong l)
 class TagMap
 {
 	Keyword* tag_[3]; // 0:CE 1:CB 2:LB
-	bool esc_, q1_, q2_, incom_, map_[768]; // 128
+	bool esc_, q1_, q2_, map_[768]; // 128
 
 public:
 
@@ -242,7 +242,6 @@ public:
 		: esc_( esc )
 		, q1_ ( q1 )
 		, q2_ ( q2 )
-		, incom_(false)
 	{
 		// '/' で始まる記号は使われているか…？
 		// みたいな、１文字目のみのチェックに使う表を作成
