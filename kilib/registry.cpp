@@ -78,6 +78,7 @@ String IniFile::GetStrinSect( const TCHAR* key, const TCHAR* sect, const TCHAR *
 	for(;;)
 	{
 		TCHAR* x = str.AllocMem(l);
+		if( !x ) return String(TEXT(""));
 		ulong s = ::GetPrivateProfileString( sect, key, defval, x, l, iniName_ );
 		if( s < l-1 )
 			break;

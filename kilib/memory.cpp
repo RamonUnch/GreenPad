@@ -271,7 +271,7 @@ using namespace ki;
 struct ki::MemBlock
 {
 public:
-	void  Construct( byte siz, byte num );
+	bool  Construct( byte siz, byte num );
 	void  Destruct();
 	void* Alloc( byte siz );
 	void  DeAlloc( void* ptr, byte siz );
@@ -283,16 +283,19 @@ private:
 	byte  first_, avail_;
 };
 
-void MemBlock::Construct( byte siz, byte num )
+bool MemBlock::Construct( byte siz, byte num )
 {
 	// 確保
 	buf_   = ::new byte[siz*num];
+	if( !buf_ )
+		return false;
 	first_ = 0;
 	avail_ = num;
 
 	// 連結リスト初期化
 	for( byte i=0,*p=buf_; i<num; p+=siz )
 		*p = ++i;
+	return true;
 }
 
 inline void MemBlock::Destruct()
@@ -355,7 +358,7 @@ inline bool MemBlock::hasThisPtr( const void* ptr, size_t len )
 // 最初にそこを調べることで高速化を図る。
 //
 
-void MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
+bool MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
 {
 	// メモリマネージャが初期化されるまでは、
 	// 普通のauto_ptrも使わない方が無難…
@@ -376,13 +379,15 @@ void MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
 	fixedSize_   = siz;
 
 	// 一個だけブロック作成
-	blocks_[0].Construct( fixedSize_, numPerBlock_ );
+	bool ok = blocks_[0].Construct( fixedSize_, numPerBlock_ );
+	if( !ok ) return false;
 
 	a.Release();
 	lastA_            = 0;
 	lastDA_           = 0;
 	blockNum_         = 1;
 	blockNumReserved_ = 4;
+	return true;
 }
 
 void MemoryManager::FixedSizeMemBlockPool::Destruct()
@@ -428,7 +433,8 @@ void* MemoryManager::FixedSizeMemBlockPool::Alloc()
 				}
 
 				// 新しくブロック構築
-				blocks_[ blockNum_ ].Construct( fixedSize_, numPerBlock_ );
+				bool ok = blocks_[ blockNum_ ].Construct( fixedSize_, numPerBlock_ );
+				if( !ok ) return NULL;
 				lastA_ = blockNum_++;
 				break;
 			}
@@ -584,7 +590,10 @@ void* A_HOT MemoryManager::Alloc( size_t siz )
 	// このサイズのメモリ確保が初めてなら
 	// ここでメモリプールを作成する。
 	if( !pools_[i].isValid() )
-		pools_[i].Construct( static_cast<byte>(siz) );
+	{
+		bool ok = pools_[i].Construct( static_cast<byte>(siz) );
+		if( !ok ) return NULL;
+	}
 
 	// ここで割り当て
 	return pools_[i].Alloc();

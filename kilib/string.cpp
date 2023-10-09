@@ -314,6 +314,7 @@ TCHAR* String::ReallocMem( size_t minimum/*=0*/ )
 String& String::SetString( const TCHAR* str, size_t siz )
 {
 	TCHAR* buf = AllocMem( siz+1 );
+	if(!buf) return *this;
 
 	memmove( buf, str, siz*sizeof(TCHAR) );
 	buf[siz] = TEXT('\0');
@@ -342,16 +343,14 @@ TCHAR* String::AllocMemHelper( size_t minimum, const TCHAR* str, size_t siz )
 
 		StringData* pNew = static_cast<StringData*>
 			(mem().Alloc( sizeof(StringData)+minimum*sizeof(TCHAR) ));
-		if( pNew )
-		{
-			pNew->ref  = 1;
-			pNew->alen = minimum;
-			pNew->len  = siz;
-			memmove( pNew->buf(), str, siz*sizeof(TCHAR) );
-	
-			ReleaseData();
-			data_ = pNew;
-		}
+		if( !pNew ) return NULL;
+		pNew->ref  = 1;
+		pNew->alen = minimum;
+		pNew->len  = siz;
+		memmove( pNew->buf(), str, siz*sizeof(TCHAR) );
+
+		ReleaseData();
+		data_ = pNew;
 	}
 
 	return data_->buf();
@@ -371,12 +370,16 @@ String& String::operator = ( const String& obj )
 String& String::operator = ( const char* s )
 {
 	long len = ::MultiByteToWideChar( CP_ACP, 0, s, -1, NULL, 0 );
-	::MultiByteToWideChar( CP_ACP, 0, s, -1, AllocMem(len+1), len+1 );
+	TCHAR *ns = AllocMem(len+1);
+	if( !ns ) return *this;
+	::MultiByteToWideChar( CP_ACP, 0, s, -1, ns, len+1 );
 #else
 String& String::operator = ( const wchar_t* s )
 {
 	long len = ::WideCharToMultiByte(CP_ACP,0,s,-1,NULL,0,NULL,NULL);
-	::WideCharToMultiByte(CP_ACP,0,s,-1,AllocMem(len+1),len+1,NULL,NULL);
+	TCHAR *ns = AllocMem(len+1);
+	if( !ns ) return *this;
+	::WideCharToMultiByte(CP_ACP,0,s,-1,ns,len+1,NULL,NULL);
 #endif
 	UnlockMem( len );
 	return *this;
@@ -398,6 +401,7 @@ String& String::Load( UINT rsrcID )
 	{
 		siz+= step;
 		buf = AllocMem( siz );
+		if(!buf) return *this;
 		red = app().LoadString( rsrcID, buf, siz );
 	} while( siz - red <= 2 );
 
