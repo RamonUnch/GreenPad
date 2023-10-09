@@ -71,7 +71,7 @@ public:
 	void lDeAlloc(void *ptr, size_t sz)
 		{
 			if( (unicode*)ptr != EmptyLineBuf )
-				ki::mem().DeAlloc( str_, sz );
+				ki::mem().DeAlloc( ptr, sz );
 		}
 
 	//@{ テキスト挿入(指定位置に指定サイズ), Insert text (specified position, specified size)  //@}
