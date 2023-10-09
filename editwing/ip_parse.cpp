@@ -152,13 +152,13 @@ struct CommentDFA
 		{ state = tr_table[state][sym]; }
 
 	// 現在の状態
-	int state;
+	uchar state;
 
 	// 状態遷移テーブル
-	static const int tr_table[5][5];
+	static const uchar tr_table[5][5];
 };
 
-const int CommentDFA::tr_table[5][5] = {
+const uchar CommentDFA::tr_table[5][5] = {
 	{0,3,1,2,4},
 	{1,1,1,1,1},
 	{2,2,2,0,2},
@@ -182,10 +182,13 @@ struct Keyword : public ki::Object
 	static Keyword *New( const unicode *s, ulong l )
 	{
 		Keyword *x = (Keyword *)new BYTE[sizeof(Keyword) + l * sizeof(unicode)];
-		x->next = NULL;
-		x->len  = l;
-		memmove(x->str, s, l*sizeof(unicode));
-		x->str[l] = L'\0';
+		if( x )
+		{
+			x->next = NULL;
+			x->len  = l;
+			memmove(x->str, s, l*sizeof(unicode));
+			x->str[l] = L'\0';
+		}
 		return x;
 	}
 	static void Delete( Keyword *x )
@@ -267,7 +270,7 @@ public:
 	}
 
 	ulong SymbolLoop(
-		const unicode* str, ulong len, ulong& mlen, int& sym )
+		const unicode* str, ulong len, ulong& mlen, uchar& sym )
 	{
 		// 有意味な記号にマッチするまでループ
 		// 返値に、マッチするまでに飛ばした文字数、
@@ -276,13 +279,12 @@ public:
 		// Return value is the number of characters skipped before the match.
 		// And the matched length/symbol are copied in mlen and sym.
 
-		int i;
 		ulong ans=0;
 		for( sym=sXXX, mlen=1; ans<len; ++ans )
 		{
 			if( map_[str[ans]] )
 			{
-				for( i=2; i>=0; --i )
+				for( int i=2; i>=0; --i )
 				{
 					if( tag_[i]!=NULL
 					 && tag_[i]->len <= len-ans
@@ -294,6 +296,7 @@ public:
 						goto symbolfound;
 					}
 				}
+
 				if( str[ans] == L'\'' ) // 一重引用符 - single quote
 				{
 					if( q1_ )
@@ -524,11 +527,11 @@ public:
 
 		// コメント状態遷移追跡用オートマトン
 		CommentDFA dfa[2] = {CommentDFA(false), CommentDFA(true)};
-		int& cmtState  = dfa[line.isLineHeadCmt()].state;
-		int commentbit = cmtState&1;
+		uchar& cmtState  = dfa[line.isLineHeadCmt()].state;
+		uchar commentbit = cmtState&1;
 
 		// 作業領域, workspace
-		int sym;
+		uchar sym;
 		ulong j, k, um, m;
 		uchar t, f;
 
@@ -705,6 +708,12 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 	ulong        taglen[] = {0,0,0};
 	if( siz != 0 )
 	{
+		if( *defbuf != L'0' && *defbuf != L'1')
+		{
+			LOGGER( "Invalid kwd file, (should start with 0 or 1)" );
+			return;
+		}
+
 		// １行目:フラグ
 		//   case? q1? q2? esc?
 		r.getLine();
@@ -725,8 +734,8 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 	if (taglen[2])
 	{// Copy single line comment string (LB) in a convenient buffer.
 		ulong cstrlen=Min(taglen[2], (ulong)countof(CommentStr_));
-		my_lstrcpynW(CommentStr_, tags[2], cstrlen);
-		CommentStr_[len]='\0'; // be sure to NULL terminate
+		memmove(CommentStr_, tags[2], cstrlen*sizeof(*CommentStr_));
+		CommentStr_[cstrlen]='\0'; // be sure to NULL terminate
 	}
 	else
 	{// Default comment string is > when there is no .kwd files.
@@ -735,9 +744,11 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 
 
 	// パーサー作成
-	parser_.reset( new Parser(
+	Parser *prs = new Parser(
 		tags[0], taglen[0], tags[1], taglen[1], tags[2], taglen[2],
-		flags[1], flags[2], flags[3], flags[0] ));
+		flags[1], flags[2], flags[3], flags[0] );
+	if( prs )
+		parser_.reset( prs );
 
 	// ５行目以降：キーワードリスト
 	while( !r.isEmpty() )

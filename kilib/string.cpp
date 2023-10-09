@@ -282,6 +282,11 @@ String::String( const TCHAR* s, long len )
 		// 新規バッファ作成
 		data_ = static_cast<StringData*>
 		    (mem().Alloc( sizeof(StringData)+(len+1)*sizeof(TCHAR) ));
+		if( !data_ )
+		{	// Set NULL string if unable to allocate mem...
+			SetData( null() );
+			return;
+		}
 		data_->ref  = 1;
 		data_->len  = len+1;
 		data_->alen = len+1;
@@ -309,6 +314,7 @@ TCHAR* String::ReallocMem( size_t minimum/*=0*/ )
 String& String::SetString( const TCHAR* str, size_t siz )
 {
 	TCHAR* buf = AllocMem( siz+1 );
+	if(!buf) return *this;
 
 	memmove( buf, str, siz*sizeof(TCHAR) );
 	buf[siz] = TEXT('\0');
@@ -337,6 +343,7 @@ TCHAR* String::AllocMemHelper( size_t minimum, const TCHAR* str, size_t siz )
 
 		StringData* pNew = static_cast<StringData*>
 			(mem().Alloc( sizeof(StringData)+minimum*sizeof(TCHAR) ));
+		if( !pNew ) return NULL;
 		pNew->ref  = 1;
 		pNew->alen = minimum;
 		pNew->len  = siz;
@@ -363,12 +370,16 @@ String& String::operator = ( const String& obj )
 String& String::operator = ( const char* s )
 {
 	long len = ::MultiByteToWideChar( CP_ACP, 0, s, -1, NULL, 0 );
-	::MultiByteToWideChar( CP_ACP, 0, s, -1, AllocMem(len+1), len+1 );
+	TCHAR *ns = AllocMem(len+1);
+	if( !ns ) return *this;
+	::MultiByteToWideChar( CP_ACP, 0, s, -1, ns, len+1 );
 #else
 String& String::operator = ( const wchar_t* s )
 {
 	long len = ::WideCharToMultiByte(CP_ACP,0,s,-1,NULL,0,NULL,NULL);
-	::WideCharToMultiByte(CP_ACP,0,s,-1,AllocMem(len+1),len+1,NULL,NULL);
+	TCHAR *ns = AllocMem(len+1);
+	if( !ns ) return *this;
+	::WideCharToMultiByte(CP_ACP,0,s,-1,ns,len+1,NULL,NULL);
 #endif
 	UnlockMem( len );
 	return *this;
@@ -390,6 +401,7 @@ String& String::Load( UINT rsrcID )
 	{
 		siz+= step;
 		buf = AllocMem( siz );
+		if(!buf) return *this;
 		red = app().LoadString( rsrcID, buf, siz );
 	} while( siz - red <= 2 );
 
@@ -461,7 +473,7 @@ const wchar_t* String::ConvToWChar() const
 #else
 	int ln = ::MultiByteToWideChar( CP_ACP,  0, c_str(), -1 , 0, 0 );
 	wchar_t* p = new wchar_t[ln+1];
-	::MultiByteToWideChar( CP_ACP,  0, c_str(), -1 , p, ln+1 );
+	if( p ) ::MultiByteToWideChar( CP_ACP,  0, c_str(), -1 , p, ln+1 );
 	return p;
 #endif
 }
@@ -471,7 +483,7 @@ const char* String::ConvToChar() const
 #ifdef _UNICODE
 	int ln = ::WideCharToMultiByte( CP_ACP, 0, c_str(), -1, NULL, 0, NULL, NULL );
 	char* p = new char[ln+1];
-	::WideCharToMultiByte( CP_ACP,  0, c_str(), -1 , p, ln+1, NULL, NULL );
+	if( p )::WideCharToMultiByte( CP_ACP,  0, c_str(), -1 , p, ln+1, NULL, NULL );
 	return p;
 #else
 	return c_str();
@@ -483,9 +495,12 @@ String& String::operator+=( const char* s )
 {
 	int ln = ::MultiByteToWideChar( CP_ACP,  0, s, -1 , 0, 0 );
 	wchar_t* p = new wchar_t[ln+1];
-	::MultiByteToWideChar( CP_ACP,  0, s, -1 , p, ln+1 );
-	CatString(p, ln);
-	delete [] p;
+	if( p )
+	{
+		::MultiByteToWideChar( CP_ACP,  0, s, -1 , p, ln+1 );
+		CatString(p, ln);
+		delete [] p;
+	}
 	return *this;
 }
 #else
@@ -493,9 +508,12 @@ String& String::operator+=( const wchar_t* s )
 {
 	int ln = ::WideCharToMultiByte( CP_ACP,  0, s, -1 , 0, 0, NULL, NULL );
 	char* p = new char[ln+1];
-	::WideCharToMultiByte( CP_ACP,  0, s, -1 , p, ln+1, NULL, NULL );
-	CatString(p, ln);
-	delete [] p;
+	if( p )
+	{
+		::WideCharToMultiByte( CP_ACP,  0, s, -1 , p, ln+1, NULL, NULL );
+		CatString(p, ln);
+		delete [] p;
+	}
 	return *this;
 }
 #endif

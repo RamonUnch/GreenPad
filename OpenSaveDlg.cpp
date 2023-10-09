@@ -690,12 +690,15 @@ ki::aarr<TCHAR> OpenFileDlg::ConnectWithNull( const TCHAR *lst[], int num )
 	aarr<TCHAR> a( new TCHAR[TtlLen] );
 
 	TCHAR* p = a.get();
-	for( int i=0; i<num; ++i )
+	if( p )
 	{
-		my_lstrcpy( p, lst[i] );
-		p += (my_lstrlen(lst[i]) + 1);
+		for( int i=0; i<num; ++i )
+		{
+			my_lstrcpy( p, lst[i] );
+			p += (my_lstrlen(lst[i]) + 1);
+		}
+		*p = TEXT('\0');
 	}
-	*p = TEXT('\0');
 
 	return a;
 }

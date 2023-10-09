@@ -219,9 +219,13 @@ bool Canvas::on_view_resize( int cx, int cy )
 void Canvas::on_font_change( const VConfig& vc )
 {
 	HWND hwnd = font_->getWHND();
-	delete font_; // 先にデストラクタを呼ばねばならない…
-	              // ってうわー格好悪ぃーーー(T_T)
-	font_ = new Painter( hwnd, vc );
+	Painter *painter = new Painter( hwnd, vc );
+	if( painter )
+	{
+		delete font_; // 先にデストラクタを呼ばねばならない…
+		              // ってうわー格好悪ぃーーー(T_T)
+		font_ = painter;
+	}
 
 	CalcLNAreaWidth();
 	CalcWrapWidth();

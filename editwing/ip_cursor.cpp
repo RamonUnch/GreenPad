@@ -719,7 +719,8 @@ ki::aarr<unicode> Cursor::getSelectedStr() const
 	// テキスト取得, Get Text
 	ulong len = doc_.getRangeLength( dm, dM );
 	ki::aarr<unicode> ub( new unicode[len+1] );
-	doc_.getText( ub.get(), dm, dM );
+	if( ub.get() )
+		doc_.getText( ub.get(), dm, dM );
 	return ub;
 }
 
@@ -903,14 +904,20 @@ void Cursor::ModSelection(ModProc mfunk)
 
 	ulong len = doc_.getRangeLength( dm, dM );
 	unicode *p = new unicode[len+1];
+	if( !p ) return;
 	doc_.getText( p, dm, dM );
 	unicode *np = mfunk(p);
-	if (np) {
+	if( np ) // Sucess!
+	{
 		doc_.Execute( Replace(cur_, sel_, np, my_lstrlenW(np)) );
 		MoveCur(osel, false);
 		MoveCur(ocur, true);
 	}
+
 	delete [] p;
+//	// Useless for now...
+//	if( np < p || np > p+len+1 )
+//		delete np; // was allocated
 }
 void Cursor::UpperCaseSel()
 {
@@ -1250,6 +1257,7 @@ void Cursor::Reconv()
 	if( isSelected() && ime().IsIME() && ime().CanReconv() )
 	{
 		aarr<unicode> ub = getSelectedStr();
+		if( !ub.get() ) return;
 		ulong len=0;
 		for(len=0; ub[len]; ++len);
 		ime().SetString( caret_.hwnd(), ub.get(), len);
@@ -1279,13 +1287,16 @@ int Cursor::on_ime_reconvertstring( RECONVERTSTRING* rs )
 
 #ifdef _UNICODE
 	aarr<unicode> str = getSelectedStr();
+	if( !str.get() ) return 0;
 #else
 	aarr<char> str;
 	{
 		aarr<unicode> ub = getSelectedStr();
+		if( !ub.get() ) return 0;
 		ulong len;
 		for(len=0; ub[len]; ++len);
 		ki::aarr<char> nw( new TCHAR[(len+1)*3] );
+		if( !nw.get() ) return 0;
 		str = nw;
 		::WideCharToMultiByte( CP_ACP, 0, ub.get(), -1,
 			str.get(), (len+1)*3, NULL, NULL );

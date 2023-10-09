@@ -62,7 +62,7 @@ public:
 private:
 	struct FixedSizeMemBlockPool
 	{
-		void Construct( byte siz );
+		bool Construct( byte siz );
 		void Destruct();
 		void*  Alloc();
 		void DeAlloc( void* ptr );
