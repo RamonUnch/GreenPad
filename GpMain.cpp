@@ -1683,7 +1683,6 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	stb_.SetText( RzsString(IDS_LOADING).c_str() );
 	old_filetime_ = filename_.getLastWriteTime(); // Save timestamp
 	edit_.getDoc().OpenFile( tf );
-	stb_.SetText( TEXT("(1,1)") );
 
 	// タイトルバー更新
 	UpdateWindowName();
@@ -1827,6 +1826,8 @@ GreenPadWnd::GreenPadWnd()
 	#endif
 	, search_  ( *this, edit_ )
 	, charSets_( cfg_.GetCharSetList() )
+	, old_cur_ ( DPos(0,0) )
+	, old_sel_ ( DPos(0,0) )
 	, csi_     ( cfg_.GetNewfileCsi() )
 	, lb_      ( cfg_.GetNewfileLB() )
 {
@@ -1885,6 +1886,7 @@ bool GreenPadWnd::StartUp( const Path& fn, int cs, int ln )
 	}
 
 	// 指定の行へジャンプ
+	stb_.SetText( TEXT("(1,1)") );
 	if( ln != -1 )
 		JumpToLine( ln );
 

@@ -106,7 +106,7 @@ void SearchManager::on_init()
 		#ifdef _UNICODE
 			SetItemText( IDC_FINDBOX, str.get() );
 		#else
-			char *ab = fTCHAR[(len+1)*3];
+			char *ab = new TCHAR[(len+1)*3];
 			if( ab )
 			{
 				::WideCharToMultiByte( CP_ACP, 0, str.get(), -1,
