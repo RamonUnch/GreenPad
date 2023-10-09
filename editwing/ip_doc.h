@@ -33,6 +33,9 @@ class Parser;
 //@}
 //=========================================================================
 
+// Static line buffer for empty lines, this is a small optimization
+// and can be used as fallback in case of alloc failure
+static const unicode *EmptyLineBuf = L"\x7F\x0";
 class Line : public ki::Object
 {
 public:
@@ -41,19 +44,33 @@ public:
 	Line( const unicode* str, ulong len )
 		: alen_( Max(len, (ulong)1) )
 		, len_ ( len )
-		, str_ ( static_cast<unicode*>( ki::mem().Alloc((alen_+1)*2+alen_) ) )
+		, str_ ( len==0? NULL: static_cast<unicode*>( ki::mem().Alloc((alen_+1)*2+alen_) ) )
 		, flg_ ( reinterpret_cast<uchar*>(str_+alen_+1) )
 		, commentBitReady_( 0 )
 		, isLineHeadCommented_( 0 )
 		, commentTransition_( 0 )
 		{
+			if( !str_ )
+			{	// Line is empty or allocation failed.
+				len_ = 0;
+				alen_ = 0;
+				str_ = (unicode*)EmptyLineBuf;
+				flg_ = (uchar*)(EmptyLineBuf+1);
+			}
 			memmove( str_, str, len*2 );
 			str_[ len ] = 0x007f;
 		}
 
 	~Line()
 		{
-		ki::mem().DeAlloc( str_, (alen_+1)*2+alen_ );
+			lDeAlloc( str_, (alen_+1)*2+alen_ );
+		}
+
+	// Internal DeAlloc that does not free the EmptyLineBuf
+	void lDeAlloc(void *ptr, size_t sz)
+		{
+			if( (unicode*)ptr != EmptyLineBuf )
+				ki::mem().DeAlloc( str_, sz );
 		}
 
 	//@{ テキスト挿入(指定位置に指定サイズ), Insert text (specified position, specified size)  //@}
@@ -66,6 +83,7 @@ public:
 				alen_ = Max( alen_+(alen_>>1), len_+siz ); // len_+siz;
 				unicode* tmpS =
 					static_cast<unicode*>( ki::mem().Alloc((alen_+1)*2+alen_) );
+				if( !tmpS ) return;
 				uchar*   tmpF =
 					reinterpret_cast<uchar*>(tmpS+alen_+1);
 				// コピー
@@ -73,7 +91,7 @@ public:
 				memmove( tmpS+at+siz, str_+at, (len_-at+1)*2 );
 				memmove( tmpF,        flg_,             at   );
 				// 古いのを削除
-				ki::mem().DeAlloc( str_, psiz );
+				lDeAlloc( str_, psiz );
 				str_ = tmpS;
 				flg_ = tmpF;
 			}

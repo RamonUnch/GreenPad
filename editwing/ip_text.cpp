@@ -566,7 +566,8 @@ bool Document::InsertingOperation
 		do
 		{
 			r.getLine();
-			text_.InsertAt( ++e.tl, new Line(lineStr,lineLen) );
+			Line *nline = new Line(lineStr, lineLen);
+			if( nline ) text_.InsertAt( ++e.tl, nline );
 		} while( !r.isEmpty() );
 
 		// 一行目の最後尾に残ってた文字列を最終行へ
@@ -696,7 +697,7 @@ Command* Replace::operator()( Document& d ) const
 	Replace *rev = NULL;
 	if( buf )
 	{	// Make reverse operation...
-		new Replace( s, e2, buf, siz, true );
+		rev = new Replace( s, e2, buf, siz, true );
 		if( !rev ) delete buf; // Clear Undo buffer on failure
 	}
 	return rev;
