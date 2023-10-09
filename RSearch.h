@@ -25,7 +25,7 @@ class RegNFA;
 class RSearch A_FINAL: public Searchable
 {
 public:
-	RSearch( const unicode* key, bool caseS, bool down );
+	explicit RSearch( const unicode* key, bool caseS, bool down );
 	~RSearch();
 
 private:

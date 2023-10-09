@@ -106,11 +106,14 @@ void SearchManager::on_init()
 		#ifdef _UNICODE
 			SetItemText( IDC_FINDBOX, str.get() );
 		#else
-			char *ab = new TCHAR[(len+1)*3];
-			::WideCharToMultiByte( CP_ACP, 0, str.get(), -1,
-				ab, (len+1)*3, NULL, NULL );
-			SetItemText( IDC_FINDBOX, ab );
-			delete [] ab;
+			char *ab = fTCHAR[(len+1)*3];
+			if( ab )
+			{
+				::WideCharToMultiByte( CP_ACP, 0, str.get(), -1,
+					ab, (len+1)*3, NULL, NULL );
+				SetItemText( IDC_FINDBOX, ab );
+				delete [] ab;
+			}
 		#endif
 		}
 	}
@@ -224,15 +227,21 @@ void SearchManager::UpdateData()
 	TCHAR* str;
 	LRESULT n = SendMsgToItem( IDC_FINDBOX, WM_GETTEXTLENGTH );
 	str = new TCHAR[n+1];
-	GetItemText( IDC_FINDBOX, n+1, str );
-	findStr_ = str;
-	delete [] str;
+	if( str )
+	{
+		GetItemText( IDC_FINDBOX, n+1, str );
+		findStr_ = str;
+		delete [] str;
+	}
 
 	n = SendMsgToItem( IDC_REPLACEBOX, WM_GETTEXTLENGTH );
 	str = new TCHAR[n+1];
-	GetItemText( IDC_REPLACEBOX, n+1, str );
-	replStr_ = str;
-	delete [] str;
+	if( str )
+	{
+		GetItemText( IDC_REPLACEBOX, n+1, str );
+		replStr_ = str;
+		delete [] str;
+	}
 }
 
 void SearchManager::ConstructSearcher( bool down )
@@ -384,7 +393,7 @@ bool SearchManager::FindNextFromImpl( DPos s, DPos* beg, DPos* end )
 	// ÇPçsÇ∏Ç¬ÉTÅ[, Search one line at a time
 	const doc::Document& d = edit_.getDoc();
 	for( ulong mbg,med,e=d.tln(); s.tl<e; ++s.tl, s.ad=0 )
-		if( searcher_->Search(
+		if( searcher_ && searcher_->Search(
 			d.tl(s.tl), d.len(s.tl), s.ad, &mbg, &med ) )
 		{
 			beg->tl = end->tl = s.tl;
@@ -401,7 +410,7 @@ bool SearchManager::FindPrevFromImpl( DPos s, DPos* beg, DPos* end )
 	const doc::Document& d = edit_.getDoc();
 	for( ulong mbg,med; ; s.ad=d.len(--s.tl) )
 	{
-		if( searcher_->Search(
+		if( searcher_ && searcher_->Search(
 			d.tl(s.tl), d.len(s.tl), s.ad, &mbg, &med ) )
 		{
 			beg->tl = end->tl = s.tl;

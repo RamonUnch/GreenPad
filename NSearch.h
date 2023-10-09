@@ -46,8 +46,11 @@ template<class ComparisonPolicy> class BMSearch
 public:
 	BMSearch( const unicode* key )
 		: keylen_( my_lstrlenW(key) )
-		, key_( my_lstrcpyW( new unicode[keylen_+1], key ) )
 	{
+		key_ =  new unicode[keylen_+1];
+		if( !key_ ) return;
+		my_lstrcpyW( key_, key );
+
 		ki::memFF( lastAppearance_, sizeof(lastAppearance_) );
 		for( int i=0, e=keylen_; i<e; ++i )
 			lastAppearance_[ ComparisonPolicy::map(key[i]) ] = i;
@@ -60,6 +63,7 @@ public:
 
 	int Search( const unicode* str, int strlen )
 	{
+		if( !key_ ) return -2;
 		for( int i=0, e=strlen-keylen_, j, t; i<=e; i+=(j>t?j-t:1) )
 		{
 			for( j=keylen_-1; j>=0; --j )
@@ -95,8 +99,11 @@ template<class ComparisonPolicy> class BMSearchRev
 public:
 	BMSearchRev( const unicode* key )
 		: keylen_( my_lstrlenW(key) )
-		, key_( my_lstrcpyW( new unicode[keylen_+1], key ) )
 	{
+		key_ = new unicode[keylen_+1];
+		if( !key ) return;
+
+		my_lstrcpyW( key_, key );
 		ki::memFF( firstAppearance_, sizeof(firstAppearance_) );
 		for( int i=keylen_-1; i>=0; --i )
 			firstAppearance_[ ComparisonPolicy::map(key[i]) ] = i;
@@ -109,6 +116,7 @@ public:
 
 	int Search( const unicode* str, int strlen )
 	{
+		if( !key_ ) return -1;
 		for( int i=strlen-keylen_-1, j, e, t; i>=0; i-=(t>j?t-j:1) )
 		{
 			for( j=0, e=keylen_; j<e; ++j )
