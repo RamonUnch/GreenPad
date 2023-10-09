@@ -56,6 +56,7 @@ public:
 				alen_ = 0;
 				str_ = (unicode*)EmptyLineBuf;
 				flg_ = (uchar*)(EmptyLineBuf+1);
+				return;
 			}
 			memmove( str_, str, len*2 );
 			str_[ len ] = 0x007f;
