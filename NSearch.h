@@ -63,7 +63,7 @@ public:
 
 	int Search( const unicode* str, int strlen )
 	{
-		if( !key_ ) return -2;
+		if( !key_ ) return -1;
 		for( int i=0, e=strlen-keylen_, j, t; i<=e; i+=(j>t?j-t:1) )
 		{
 			for( j=keylen_-1; j>=0; --j )
