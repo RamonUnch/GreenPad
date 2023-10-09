@@ -232,24 +232,33 @@ inline void RegParser::eat_token()
 inline RegNode* RegParser::make_empty_leaf()
 {
 	RegNode* node = new RegNode;
-	node->type = N_Empty;
+	if( node )
+	{
+		node->type = N_Empty;
+	}
 	return node;
 }
 
 inline RegNode* RegParser::make_char_leaf( wchar_t c )
 {
 	RegNode* node = new RegNode;
-	node->type = N_Char;
-	node->ch   = c;
+	if( node )
+	{
+		node->type = N_Char;
+		node->ch   = c;
+	}
 	return node;
 }
 
 RegNode* RegParser::make_node( RegType t, RegNode* lft, RegNode* rht )
 {
 	RegNode* node = new RegNode;
-	node->type = t;
-	node->left = lft;
-	node->right= rht;
+	if( node )
+	{
+		node->type = t;
+		node->left = lft;
+		node->right= rht;
+	}
 	return node;
 }
 
