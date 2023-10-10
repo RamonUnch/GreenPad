@@ -280,10 +280,12 @@ public:
 	static unicode* WINAPI TrimTrailingSpacesW(unicode *);
 	static unicode* WINAPI StripFirstCharsW(unicode *);
 	static unicode* WINAPI StripLastCharsW(unicode *);
+	static unicode* WINAPI ASCIIOnlyW(unicode *);
 	void InvertCaseSel();
 	void TTSpacesSel();
 	void StripFirstChar();
 	void StripLastChar();
+	void ASCIIFy();
 	// IME
 	void Reconv();
 	void ToggleIME();

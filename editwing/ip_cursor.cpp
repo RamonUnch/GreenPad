@@ -893,6 +893,21 @@ unicode* WINAPI Cursor::StripLastCharsW(unicode *p)
 	return p;
 }
 
+unicode* WINAPI Cursor::ASCIIOnlyW(unicode *str)
+{
+	ulong cnt = 0;
+	for(ulong i=0; str[i] != L'\0'; i++)
+	{
+		if( str[i] > 0x007f )
+		{
+			str[i] = L'?';
+			cnt++;
+		}
+	}
+	return cnt? str: NULL;
+}
+
+
 void Cursor::ModSelection(ModProc mfunk)
 {
 	DPos dm=cur_, dM=sel_;
@@ -956,6 +971,12 @@ void Cursor::StripLastChar()
 {
 	if(cur_==sel_) return;
 	ModSelection(StripLastCharsW);
+}
+
+void Cursor::ASCIIFy()
+{
+	if(cur_==sel_) return;
+	ModSelection( ASCIIOnlyW );
 }
 //-------------------------------------------------------------------------
 // ÉJÅ[É\Éãà⁄ìÆ, Cursor movement

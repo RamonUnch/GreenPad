@@ -382,6 +382,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_TTSPACES:   edit_.getCursor().TTSpacesSel();       break;
 	case ID_CMD_SFCHAR:     edit_.getCursor().StripFirstChar();    break;
 	case ID_CMD_SLCHAR:     edit_.getCursor().StripLastChar();     break;
+	case ID_CMD_ASCIIFY:    edit_.getCursor().ASCIIFy();           break;
 	case ID_CMD_QUOTE:      edit_.getCursor().QuoteSelection(false);break;
 	case ID_CMD_UNQUOTE:    edit_.getCursor().QuoteSelection(true); break;
 	case ID_CMD_DELENDLINE: edit_.getCursor().DelToEndline(false); break;
@@ -920,10 +921,11 @@ void GreenPadWnd::on_initmenu( HMENU menu, bool editmenu_only )
 	::EnableMenuItem( menu, ID_CMD_LOWERCASE, gray_when_unselected );
 	::EnableMenuItem( menu, ID_CMD_INVERTCASE,gray_when_unselected );
 	::EnableMenuItem( menu, ID_CMD_TTSPACES,  gray_when_unselected );
+	::EnableMenuItem( menu, ID_CMD_ASCIIFY,   gray_when_unselected );
 	::EnableMenuItem( menu, ID_CMD_SFCHAR,    gray_when_unselected );
 	::EnableMenuItem( menu, ID_CMD_SLCHAR,    gray_when_unselected );
-	::EnableMenuItem( menu, ID_CMD_QUOTE,     gray_when_unselected );
-	::EnableMenuItem( menu, ID_CMD_UNQUOTE,   gray_when_unselected );
+//	::EnableMenuItem( menu, ID_CMD_QUOTE,     gray_when_unselected );
+//	::EnableMenuItem( menu, ID_CMD_UNQUOTE,   gray_when_unselected );
 
 #ifndef NO_IME
 	::EnableMenuItem( menu, ID_CMD_RECONV, MF_BYCOMMAND|(edit_.getCursor().isSelected() && ime().IsIME() && ime().CanReconv() ? MF_ENABLED : MF_GRAYED) );

@@ -138,7 +138,7 @@
 #define ID_CMD_HELP                     50016
 #define ID_CMD_OPENSELECTION            50017
 #define ID_CMD_SELECTIONLEN             50018
-
+#define ID_CMD_ASCIIFY                  50019
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
