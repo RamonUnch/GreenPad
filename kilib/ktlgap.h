@@ -49,27 +49,31 @@ public:
 		, gs_  ( 0 )
 		, ge_  ( alen_ )
 		, buf_ ( new T[alen_] )
-		{}
+		{ if( !buf_ ) alen_ = ge_ = 0; }
 	~gapbuf()
 		{ delete [] buf_; }
 
 	//@{ —v‘f‘}“ü //@}
 	void InsertAt( ulong i, const T& x )
 		{
+			// Try to get more room if needed.
+			if( gs_+1 >= ge_ )
+				if( !Reallocate( alen_<<1 ) )
+					return;
+
 			MakeGapAt( i );
 			buf_[gs_++] = x;
-
-			if( gs_==ge_ )
-				Reallocate( alen_<<1 );
 		}
 
 	//@{ —v‘f‘}“ü(•¡”) //@}
 	void InsertAt( ulong i, const T* x, ulong len )
 		{
+			if( ge_-gs_ <= len )
+				if( !Reallocate( Max(alen_+len+1, alen_<<1) ) )
+					return;
+
 			MakeGapAt( size() );
 			MakeGapAt( i );
-			if( ge_-gs_ <= len )
-				Reallocate( Max(alen_+len+1, alen_<<1) );
 
 			memmove( buf_+gs_, x, len*sizeof(T) );
 			gs_ += len;
@@ -172,9 +176,10 @@ protected:
 			gs_ = i;
 		}
 
-	void Reallocate( ulong newalen )
+	bool Reallocate( ulong newalen )
 		{
 			T *tmp = new T[newalen], *old=buf_;
+			if( !tmp ) return false;
 			const ulong tail = alen_-ge_;
 
 			memmove( tmp, old, gs_*sizeof(T) );
@@ -184,6 +189,7 @@ protected:
 			buf_  = tmp;
 			ge_   = newalen-tail;
 			alen_ = newalen;
+			return true;
 		}
 
 private:
