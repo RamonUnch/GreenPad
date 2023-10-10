@@ -327,6 +327,7 @@ String& String::CatString( const TCHAR* str, size_t siz )
 {
 	const int plen = len();
 	TCHAR* buf = ReallocMem( plen + siz + 1 );
+	if( !buf ) return *this;
 
 	memmove( buf+plen, str, siz*sizeof(TCHAR) );
 	buf[plen+siz] = TEXT('\0');

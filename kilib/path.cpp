@@ -29,6 +29,7 @@ HRESULT MySHGetSpecialFolderLocation(HWND h, int i, LPITEMIDLIST *idl)
 Path& Path::BeSpecialPath( int nPATH, bool bs )
 {
 	TCHAR* buf = AllocMem( MAX_PATH + 1 );
+	if( !buf ) return *this;
 
 	switch( nPATH )
 	{
