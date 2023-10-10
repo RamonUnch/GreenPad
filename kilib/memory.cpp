@@ -21,6 +21,16 @@ using namespace ki;
 
 	void* __cdecl operator new( size_t siz )
 	{
+		#ifdef _DEBUG
+		#if defined(SIMULATE_LOW_MEM)
+		if(allocCounter>=512)
+		{
+			MessageBox(GetActiveWindow(), TEXT("OUT OF MEMORY!"), NULL, MB_OK|MB_TASKMODAL);
+			return NULL;
+		}
+		#endif
+		++allocCounter;
+		#endif
 		TRYLBL:
 		#ifdef USE_LOCALALLOC
 		void *ret = ::LocalAlloc( LMEM_FIXED, siz );
@@ -45,6 +55,9 @@ using namespace ki;
 			::LocalFree( ptr );
 			#else
 			::HeapFree( g_heap, 0, ptr );
+			#endif
+			#ifdef _DEBUG
+			--allocCounter;
 			#endif
 		}
 	}
