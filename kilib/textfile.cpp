@@ -2263,19 +2263,15 @@ private:
 	NOCOPY(TextFileWPimpl);
 };
 
-//#define WBUF_SIZE 16 // Test with a super small buffer for debugging.
-#define WBUF_SIZE 8192
 struct TextFileWPimplWithBuf: public ki::TextFileWPimpl
 {
+	enum { bsiz_ = 8192, bstep_ = bsiz_ / 4 };
 	explicit TextFileWPimplWithBuf( FileW& w )
 		: ki::TextFileWPimpl( w )
-		, bsiz_  ( WBUF_SIZE )
-		, bstep_ ( bsiz_ >> 2 ) // Quarter of allocated bufer
-		, buf_   ( new char[bsiz_] )
 		{}
 
 	~TextFileWPimplWithBuf( )
-		{ delete [] buf_; };
+		{};
 
 	// This function should assume it will have enough room in buf_
 	virtual void WriteBuf( const unicode* str, ulong len ) = 0;
@@ -2301,9 +2297,7 @@ struct TextFileWPimplWithBuf: public ki::TextFileWPimpl
 	}
 
 protected:
-	const ulong bsiz_;
-	const ulong bstep_;
-	char  *buf_;
+	char  buf_[bsiz_];
 };
 //-------------------------------------------------------------------------
 // Unicodeテキスト
