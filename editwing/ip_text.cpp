@@ -651,7 +651,7 @@ Command* Delete::operator()( Document& d ) const
 	if( buf != NULL )
 	{	// Make reverse operation...
 		rev = new Insert( s, buf, siz, true );
-		if( !rev ) delete buf; // Clear Undo buffer on failure
+		if( !rev ) delete [] buf; // Clear Undo buffer on failure
 	}
 	return rev;
 }
@@ -698,7 +698,7 @@ Command* Replace::operator()( Document& d ) const
 	if( buf )
 	{	// Make reverse operation...
 		rev = new Replace( s, e2, buf, siz, true );
-		if( !rev ) delete buf; // Clear Undo buffer on failure
+		if( !rev ) delete [] buf; // Clear Undo buffer on failure
 	}
 	return rev;
 }
