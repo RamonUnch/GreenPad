@@ -121,6 +121,7 @@ Path& Path::BeShortStyle()
 	if( app().isNewShell() ) // 95/NT4+
 	{
 		TCHAR* buf = ReallocMem( len()+1 );
+		if( !buf ) return *this;
 		::GetShortPathName( buf, buf, len()+1 );
 		UnlockMem();
 	}
@@ -152,6 +153,7 @@ Path& Path::BeShortLongStyle()
 #endif
 	TCHAR  t;
 	TCHAR* buf = ReallocMem( MAX_PATH*2 );
+	if( !buf ) return *this;
 	TCHAR* nam = const_cast<TCHAR*>(name(buf));
 
 	if( nam != buf )
