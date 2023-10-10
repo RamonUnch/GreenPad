@@ -39,7 +39,7 @@ public:
 
 	//@{ 指定テキストで初期化, Initialize with specified text //@}
 	Line( const unicode* str, ulong len )
-		: alen_( Max(len, (ulong)1) )
+		: alen_( len )
 		, len_ ( len )
 		, str_ ( static_cast<unicode*>( ki::mem().Alloc((alen_+1)*2+alen_) ) )
 		, commentBitReady_( 0 )
@@ -69,12 +69,13 @@ public:
 			{
 				// バッファ拡張
 				ulong psiz = (alen_+1)*2+alen_;
-				alen_ = Max( alen_+(alen_>>1), len_+siz ); // len_+siz;
+				ulong nalen = Max( alen_+(alen_>>1), len_+siz ); // len_+siz;
 				unicode* tmpS =
-					static_cast<unicode*>( ki::mem().Alloc((alen_+1)*2+alen_) );
+					static_cast<unicode*>( ki::mem().Alloc((nalen+1)*2+nalen) );
 				if( !tmpS ) return;
 				uchar*   tmpF =
-					reinterpret_cast<uchar*>(tmpS+alen_+1);
+					reinterpret_cast<uchar*>(tmpS+nalen+1);
+				alen_ = nalen;
 				// コピー
 				memmove( tmpS,        str_,             at*2 );
 				memmove( tmpS+at+siz, str_+at, (len_-at+1)*2 );
