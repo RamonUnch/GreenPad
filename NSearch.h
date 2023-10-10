@@ -84,6 +84,8 @@ private:
 	int      keylen_;
 	unicode* key_;
 	int      lastAppearance_[65536];
+private:
+	NOCOPY(BMSearch);
 };
 
 
@@ -136,6 +138,8 @@ private:
 	int      keylen_;
 	unicode* key_;
 	int      firstAppearance_[65536];
+private:
+	NOCOPY(BMSearchRev);
 };
 
 
