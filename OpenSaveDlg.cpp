@@ -33,19 +33,19 @@ using namespace ki;
 	CHARSET_VALUE("íÜçëåÍ(Teletext)",	"Chinese(Teletext)",	"TLTEXT") \
 	CHARSET_VALUE("íÜçëåÍ(Wang)",		"Chinese(Wang)",		"WANG") \
 	CHARSET_VALUE("UTF-1",				"UTF-1",				"UTF1") \
-	CHARSET_VALUE("UTF-1(BOM)",			"UTF-1(BOM)",			"UTF1") \
+	CHARSET_VALUE("UTF-1(BOM)",			"UTF-1(BOM)",			"UTF1b") \
 	CHARSET_VALUE("UTF-5",				"UTF-5",				"UTF5") \
 	CHARSET_VALUE("UTF-7",				"UTF-7",				"UTF7") \
 	CHARSET_VALUE("UTF-8",				"UTF-8",				"UTF8") \
-	CHARSET_VALUE("UTF-8N",				"UTF-8N",				"UTF8") \
+	CHARSET_VALUE("UTF-8(BOM)",			"UTF-8(BOM)",			"UTF8b") \
 	CHARSET_VALUE("UTF-9(1997)",		"UTF-9(1997)",			"UTF9") \
 	CHARSET_VALUE("UTF-9(1997,BOM)",	"UTF-9(1997,BOM)",		"UTF9") \
-	CHARSET_VALUE("UTF-16BE(BOM)",		"UTF-16BE(BOM)",		"U16BE") \
-	CHARSET_VALUE("UTF-16LE(BOM)",		"UTF-16LE(BOM)",		"U16LE") \
+	CHARSET_VALUE("UTF-16BE(BOM)",		"UTF-16BE(BOM)",		"U16BEb") \
+	CHARSET_VALUE("UTF-16LE(BOM)",		"UTF-16LE(BOM)",		"U16LEb") \
 	CHARSET_VALUE("UTF-16BE",			"UTF-16BE",				"U16BE") \
 	CHARSET_VALUE("UTF-16LE",			"UTF-16LE",				"U16LE") \
-	CHARSET_VALUE("UTF-32BE(BOM)",		"UTF-32BE(BOM)",		"U32BE") \
-	CHARSET_VALUE("UTF-32LE(BOM)",		"UTF-32LE(BOM)",		"U32LE") \
+	CHARSET_VALUE("UTF-32BE(BOM)",		"UTF-32BE(BOM)",		"U32BEb") \
+	CHARSET_VALUE("UTF-32LE(BOM)",		"UTF-32LE(BOM)",		"U32LEb") \
 	CHARSET_VALUE("UTF-32BE",			"UTF-32BE",				"U32BE") \
 	CHARSET_VALUE("UTF-32LE",			"UTF-32LE",				"U32LE") \
 	CHARSET_VALUE("SCSU",				"SCSU",					"SCSU") \
@@ -115,8 +115,8 @@ CharSetList::CharSetList()
 	                               EnrollS( UTF1Y,          19 );
 	                               Enroll(  UTF5,           20 );
 	                               Enroll(  UTF7,           21 );
-	                               Enroll(  UTF8,           22 );
-	                               EnrollS( UTF8N,          23 );
+	                               EnrollS( UTF8,           22 );
+	                               Enroll(  UTF8N,          23 );
 	                               Enroll(  UTF9,           24 );
 	                               EnrollS( UTF9Y,          25 );
 	                               EnrollS( UTF16b,         26 );
