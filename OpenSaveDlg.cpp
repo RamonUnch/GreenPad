@@ -115,8 +115,8 @@ CharSetList::CharSetList()
 	                               EnrollS( UTF1Y,          19 );
 	                               Enroll(  UTF5,           20 );
 	                               Enroll(  UTF7,           21 );
-	                               EnrollS( UTF8,           22 );
-	                               Enroll(  UTF8N,          23 );
+	                               Enroll(  UTF8N,          22 );
+	                               EnrollS( UTF8,           23 );
 	                               Enroll(  UTF9,           24 );
 	                               EnrollS( UTF9Y,          25 );
 	                               EnrollS( UTF16b,         26 );
