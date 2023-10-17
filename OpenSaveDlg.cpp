@@ -39,7 +39,7 @@ using namespace ki;
 	CHARSET_VALUE("UTF-8",				"UTF-8",				"UTF8") \
 	CHARSET_VALUE("UTF-8(BOM)",			"UTF-8(BOM)",			"UTF8b") \
 	CHARSET_VALUE("UTF-9(1997)",		"UTF-9(1997)",			"UTF9") \
-	CHARSET_VALUE("UTF-9(1997,BOM)",	"UTF-9(1997,BOM)",		"UTF9") \
+	CHARSET_VALUE("UTF-9(1997,BOM)",	"UTF-9(1997,BOM)",		"UTF9b") \
 	CHARSET_VALUE("UTF-16BE(BOM)",		"UTF-16BE(BOM)",		"U16BEb") \
 	CHARSET_VALUE("UTF-16LE(BOM)",		"UTF-16LE(BOM)",		"U16LEb") \
 	CHARSET_VALUE("UTF-16BE",			"UTF-16BE",				"U16BE") \
@@ -51,7 +51,7 @@ using namespace ki;
 	CHARSET_VALUE("SCSU",				"SCSU",					"SCSU") \
 	CHARSET_VALUE("BOCU",				"BOCU",					"BOCU") \
 	CHARSET_VALUE("FSS-UTF(19920902)",	"FSS-UTF(19920902)",	"FSSUTF") \
-	CHARSET_VALUE("FSS-UTF(19920902,BOM)","FSS-UTF(19920902,BOM)","FSSUTF") \
+	CHARSET_VALUE("FSS-UTF(19920902,BOM)","FSS-UTF(19920902,BOM)","FSSUTFb") \
 	CHARSET_VALUE("‰¢•Ä(DOS)",			"Latin-1(DOS)",			"LN1DOS") \
 	CHARSET_VALUE("‰¢•Ä",				"Latin-1",				"LTN1") \
 	CHARSET_VALUE("’†‰¢(DOS)",			"Latin-2(DOS)",			"LN2DOS") \
@@ -281,8 +281,7 @@ int CharSetList::GetCSIFromComboBox( HWND dlg, const CharSetList& csl, uint Open
 		ulong j;
 		for(j=0; j<csl.size() ;++j)
 		{
-			if( csl[j].type&OpenSaveMask
-			&&( !lstrcmpi(csl[j].longName, buf) || !lstrcmpi(csl[j].shortName, buf) ) )
+			if( !lstrcmpi(csl[j].longName, buf) || !lstrcmpi(csl[j].shortName, buf) )
 				return j; // We found
 		}
 	}
