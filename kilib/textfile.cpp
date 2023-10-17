@@ -499,9 +499,9 @@ struct rSCSU A_FINAL: public rBasicUTF
 	rSCSU( const uchar* b, ulong s )
 		: fb( b )
 		, fe( b+s )
+		, skip( 0 )
 		, active( 0 )
 		, mode( 0 )
-		, skip( 0 )
 		, c( 0 )
 		, d( 0 )
 		{
@@ -511,8 +511,8 @@ struct rSCSU A_FINAL: public rBasicUTF
 		}
 
 	const uchar *fb, *fe;
-	uchar active, mode;
 	ulong skip;
+	uchar active, mode;
 	uchar c, d;
 
 	void Skip() override { fb+=skip; skip=0; }
@@ -2836,9 +2836,11 @@ namespace {
 struct wBOCU1 A_FINAL: public TextFileWPimpl
 {
 	explicit wBOCU1( FileW& w, bool bom ) : TextFileWPimpl(w), cp ( 0 ) , pc ( 0x40 ), diff( 0 )
-	{ // write BOM
+	{ // write BOM + Reset byte in case files are catenated...
 		if( bom )
-			fp_.Write( "\xFB\xEE\x28", 3 );
+			fp_.Write( "\xFB\xEE\x28\xFF", 4 );
+		else
+			fp_.WriteC( '\xFF' ); // Reset byte.
 	}
 
 	unicode cp, pc;
