@@ -503,7 +503,12 @@ struct rSCSU A_FINAL: public rBasicUTF
 		, mode( 0 )
 		, skip( 0 )
 		, c( 0 )
-		, d( 0 ) { SkipBOMIfNeeded(); }
+		, d( 0 )
+		{
+			// Skip 0E FE FF BOM if needed!
+			if( fe-fb>=3 && fb[0] == 0x0e && fb[1] == 0xfe && fb[0] == 0xff )
+				fe += 3;
+		}
 
 	const uchar *fb, *fe;
 	uchar active, mode;
@@ -647,7 +652,12 @@ struct rBOCU1 A_FINAL: public rBasicUTF
 		, fe( b+s )
 		, skip( 0 )
 		, cp( 0 )
-		, pc( 0x40 ) { SkipBOMIfNeeded(); }
+		, pc( 0x40 )
+		{
+			// Skip BOM if needed!
+			if( fe-fb>=3 && fb[0] == 0xfb && fb[1] == 0xee && fb[0] == 0x28 )
+				fe += 3;
+		}
 
 	const uchar *fb, *fe;
 	ulong skip;
@@ -1280,8 +1290,10 @@ int TextFileR::neededCodepage(int cs)
 	case UTF7:  // +65000
 	case UTF8:  // -65001
 	case UTF8N: // +65001
-	case SCSU:  // -60000
-	case BOCU1: // -60001
+	case SCSUY: // -60000
+	case SCSU:  // -60002
+	case BOCU1Y:// -60001
+	case BOCU1: // -60003
 	case 28591: // ISO-8859-1
 //	case WesternOS2: // TODO (1004) internally handeled.
 		return 0 ; // WHITELISTED
@@ -1349,11 +1361,14 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	case UTF32LE: impl_ = new rUtf32LE(buf,siz); break;
 	case UTF1Y:
 	case UTF1:    impl_ = new rUtf1(buf,siz); break;
+	case UTF5Y:
 	case UTF5:    impl_ = new rUtf5(buf,siz); break;
 	case UTF7:    impl_ = new rUtf7(buf,siz); break;
 	case UTF9Y:
 	case UTF9:    impl_ = new rUtf9(buf,siz); break;
+	case SCSUY:
 	case SCSU:    impl_ = new rSCSU(buf,siz); break;
+	case BOCU1Y:
 	case BOCU1:   impl_ = new rBOCU1(buf,siz); break;
 	case OFSSUTFY:
 	case OFSSUTF: impl_ = new rUtfOFSS(buf,siz); break;
@@ -1417,10 +1432,16 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 		cs = (bom2==0xfffe ? UTF16l : UTF16LE);
 	else if( cs==UTF1 || cs==UTF1Y )
 		cs = bom4>>8==0xf7644c ? UTF1Y : UTF1;
+	else if( cs==UTF5 || cs==UTF5Y )
+		cs = bom4==0x56454646 ?  UTF5Y : UTF5;
 	else if( cs==UTF9 || cs==UTF9Y )
 		cs = bom4>>8==0x93fdff ? UTF9Y : UTF9;
 	else if( cs==OFSSUTF || cs==OFSSUTFY )
 		cs = bom4>>8==0xc3bcff ? OFSSUTFY : OFSSUTF;
+	else if( cs==BOCU1 || cs==BOCU1Y )
+		cs = bom4>>8==0xfbee28 ? BOCU1Y : BOCU1;
+	else if( cs==SCSU || cs==SCSUY )
+		cs = bom4>>8==0x0efeff ? SCSUY : SCSU;
 
 	if( cs != AutoDetect )
 		return cs;
@@ -1432,8 +1453,8 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 	if( (bom4>>8) == 0xefbbbf )      cs = UTF8;
 	else if( (bom4>>8) == 0xf7644c ) cs = UTF1Y;
 	else if( (bom4>>8) == 0x93fdff ) cs = UTF9Y;
-	else if( (bom4>>8) == 0x0efeff ) cs = SCSU;
-	else if( (bom4>>8) == 0xfbee28 ) cs = BOCU1;
+	else if( (bom4>>8) == 0x0efeff ) cs = SCSUY;
+	else if( (bom4>>8) == 0xfbee28 ) cs = BOCU1Y;
 	else if( (bom4>>8) == 0xc3bcff ) cs = OFSSUTFY;
 	else if( bom4 == 0x0000feff ) cs = UTF32b;
 	else if( bom4 == 0xfffe0000 ) cs = UTF32l;
@@ -1452,7 +1473,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 	for( uchar c='0'; c<='9'; ++c ) u5sum += freq[c];
 	for( uchar c='A'; c<='V'; ++c ) u5sum += freq[c];
 	if( siz == u5sum )
-		return UTF5;
+		return bom4==0x56454646 ? UTF5Y : UTF5;;
 
 //-- UTF-16/32 detection
 	if( freq[ 0 ] > siz >> 11 ) // More than 1/2048 nulls in content?
@@ -2584,7 +2605,11 @@ struct wUtfOFSS A_FINAL: public TextFileWPimpl
 
 struct wUtf5 A_FINAL: public TextFileWPimpl
 {
-	explicit wUtf5( FileW& w ) : TextFileWPimpl(w) {}
+	explicit wUtf5( FileW& w, bool bom ) : TextFileWPimpl(w)
+	{
+		if( bom )
+			fp_.Write("\x56\x45\x46\x46", 4);
+	}
 	void WriteChar( unicode ch ) override
 	{
 		fp_.NeedSpace(4);
@@ -2658,9 +2683,9 @@ struct wSCSU A_FINAL: public TextFileWPimpl
 		UQU=0xF0  /* Quote a single Unicode character */
 	};
 
-	explicit wSCSU( FileW& w ) : TextFileWPimpl(w), isUnicodeMode(0), win(0)
+	explicit wSCSU( FileW& w, bool bom ) : TextFileWPimpl(w), isUnicodeMode(0), win(0)
 	{
-		WriteChar( 0xfeff ); // Write BOM
+		if( bom ) WriteChar( 0xfeff ); // Write BOM
 	}
 
 	char isUnicodeMode, win;
@@ -2810,9 +2835,10 @@ namespace {
 }
 struct wBOCU1 A_FINAL: public TextFileWPimpl
 {
-	explicit wBOCU1( FileW& w ) : TextFileWPimpl(w), cp ( 0 ) , pc ( 0x40 ), diff( 0 )
+	explicit wBOCU1( FileW& w, bool bom ) : TextFileWPimpl(w), cp ( 0 ) , pc ( 0x40 ), diff( 0 )
 	{ // write BOM
-		fp_.Write( "\xFB\xEE\x28", 3 );
+		if( bom )
+			fp_.Write( "\xFB\xEE\x28", 3 );
 	}
 
 	unicode cp, pc;
@@ -3343,7 +3369,8 @@ bool TextFileW::Open( const TCHAR* fname )
 	case 28591: impl_ = new wWestISO88591( fp_ ); break; // ISO-8859-1
 	case UTF1Y:
 	case UTF1:    impl_ = new wUtf1( fp_, cs_==UTF1Y ); break;
-	case UTF5:    impl_ = new wUtf5( fp_ ); break;
+	case UTF5Y:
+	case UTF5:    impl_ = new wUtf5( fp_, cs_==UTF5Y ); break;
 	case UTF9:
 	case UTF9Y:    impl_ = new wUtf9( fp_, cs_==UTF9Y ); break;
 	case UTF16l:
@@ -3354,8 +3381,10 @@ bool TextFileW::Open( const TCHAR* fname )
 	case UTF32LE: impl_ = new wUtf32LE( fp_, cs_==UTF32l ); break;
 	case UTF32b:
 	case UTF32BE: impl_ = new wUtf32BE( fp_, cs_==UTF32b ); break;
-	case SCSU:    impl_ = new wSCSU( fp_ ); break;
-	case BOCU1:   impl_ = new wBOCU1( fp_ ); break;
+	case SCSUY:
+	case SCSU:    impl_ = new wSCSU( fp_, cs_==SCSUY ); break;
+	case BOCU1Y:
+	case BOCU1:   impl_ = new wBOCU1( fp_, cs_==BOCU1Y ); break;
 	case OFSSUTF:
 	case OFSSUTFY: impl_ = new wUtfOFSS( fp_, cs_==OFSSUTFY ); break;
 	case EucJP:   impl_ = new wEucJp( fp_ ); break;

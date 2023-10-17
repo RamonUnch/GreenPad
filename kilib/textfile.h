@@ -104,6 +104,7 @@ enum charset {
 
 	UTF1       = -1,   // Unicode  (UTF-1)   : BOM無し
 	UTF5       = -2,   // Unicode  (UTF-5)   : BOM無し
+	UTF5Y      = -14,   // Unicode  (UTF-5)   : BOM有り
 	UTF7       = 65000,// Unicode  (UTF-7)   : BOM無し
 	UTF8       =-65001,// Unicode  (UTF-8)   : BOM有り
 	UTF8N      = 65001,// Unicode  (UTF-8N)  : BOM無し
@@ -123,8 +124,10 @@ enum charset {
 
 	DOSUS      = 437,  // DOSLatinUS (CP437)
 
-	SCSU       = -60000,// Standard Compression Scheme for Unicode
-	BOCU1      = -60001 // Binary Ordered Compression for Unicode-1
+	SCSUY      = -60000,// Standard Compression Scheme for Unicode  BOM有り
+	BOCU1Y     = -60001,// Binary Ordered Compression for Unicode-1 BOM有り
+	SCSU       = -60002,// Standard Compression Scheme for Unicode  BOM無し
+	BOCU1      = -60003 // Binary Ordered Compression for Unicode-1 BOM無し
 };
 
 //=========================================================================
