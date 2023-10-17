@@ -923,7 +923,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		case DBCSMODE:
 			// We can use the internal next_LUT[]
 			for( ; p<end; )
-				p += (*p)&0x80? next_LUT[(uchar)(*p)]: 1;
+				p += next_LUT[(uchar)(*p)];
 			break;
 
 		default:
@@ -1415,6 +1415,12 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 		cs = (bom2==0xfeff ? UTF16b : UTF16BE);
 	else if( cs==UTF16l || cs==UTF16LE )
 		cs = (bom2==0xfffe ? UTF16l : UTF16LE);
+	else if( cs==UTF1 || cs==UTF1Y )
+		cs = bom4>>8==0xf7644c ? UTF1Y : UTF1;
+	else if( cs==UTF9 || cs==UTF9Y )
+		cs = bom4>>8==0x93fdff ? UTF9Y : UTF9;
+	else if( cs==OFSSUTF || cs==OFSSUTFY )
+		cs = bom4>>8==0xc3bcff ? OFSSUTFY : OFSSUTF;
 
 	if( cs != AutoDetect )
 		return cs;
