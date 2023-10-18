@@ -746,18 +746,22 @@ struct rBOCU1 A_FINAL: public rBasicUTF
 	}
 };
 
-namespace
-{
-
+//-------------------------------------------------------------------------
+// UTF-EBCDIC
 // Source: https://www.unicode.org/reports/tr16/tr16-8.html
-//
-// UTF-8-Mod I8
+//-------------------------------------------------------------------------
+// Step 1: Apply the ubcd_to_i8[] table
+// Encoding is based on CP1047 (Western), similar to CP37
+// Step2: Decode UTF-8-Mod I8
 // 0-7F         00000000000000xxxxxxx 0xxxxxxx
 // 80-9F        0000000000000100xxxxx 100xxxxx
 // A0-3FF       00000000000yyyyyxxxxx 110yyyyy 101xxxxx
 // 400-3FFF     0000000zzzzyyyyyxxxxx 1110zzzz 101yyyyy 101xxxxx
 // 4000-3FFFF   000wwwzzzzzyyyyyxxxxx 11110www 101zzzzz 101yyyyy 101xxxxx
 // 40000-10FFFF rwwwwwzzzzzyyyyyxxxxx 1111100r 101wwwww 101zzzzz 101yyyyy 101xxxxx
+
+namespace
+{
 
 static const uchar ubcd_to_i8[256] = {
 	 0x00,0x01,0x02,0x03,0x9c,0x09,0x86,0x7f,0x97,0x8d,0x8e,0x0b,0x0c,0x0d,0x0e,0x0f
