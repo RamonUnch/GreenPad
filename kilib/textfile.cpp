@@ -385,7 +385,9 @@ struct rUtf7 A_FINAL: public rBasicUTF
 	rUtf7( const uchar* b, ulong s )
 		: fb( b )
 		, fe( b+s )
-		, rest( -1 ) { fillbuf();  SkipBOMIfNeeded(); }
+		, rest( -1 )
+		, inB64( false )
+		{ fillbuf();  SkipBOMIfNeeded(); }
 
 	const uchar *fb, *fe;
 	unicode buf[3]; // b64を８文字毎に読んでバッファに溜めておく
@@ -506,8 +508,8 @@ struct rSCSU A_FINAL: public rBasicUTF
 		, d( 0 )
 		{
 			// Skip 0E FE FF BOM if needed!
-			if( fe-fb>=3 && fb[0] == 0x0e && fb[1] == 0xfe && fb[0] == 0xff )
-				fe += 3;
+			if( fe-fb>=3 && fb[0] == 0x0e && fb[1] == 0xfe && fb[2] == 0xff )
+				fb += 3;
 		}
 
 	const uchar *fb, *fe;
@@ -655,8 +657,8 @@ struct rBOCU1 A_FINAL: public rBasicUTF
 		, pc( 0x40 )
 		{
 			// Skip BOM if needed!
-			if( fe-fb>=3 && fb[0] == 0xfb && fb[1] == 0xee && fb[0] == 0x28 )
-				fe += 3;
+			if( fe-fb>=3 && fb[0] == 0xfb && fb[1] == 0xee && fb[2] == 0x28 )
+				fb += 3;
 		}
 
 	const uchar *fb, *fe;
