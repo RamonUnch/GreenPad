@@ -140,7 +140,7 @@ CharSetList::CharSetList()
 	                               Enroll(  OFSSUTF,        39 );
 	                               EnrollS( OFSSUTFY,       40 );
 	                               Enroll(  UTFEBCDIC,      41 );
-	                               Enroll(  UTFEBCDICY,     42 );
+	                               EnrollS( UTFEBCDICY,     42 );
 	if( ::IsValidCodePage(850) )   Enroll(  WesternDOS,     43 );
 	/* if( always ) */             Enroll(  Western,        44 );
 	if( ::IsValidCodePage(852) )   Enroll(  CentralDOS,     45 );
