@@ -48,6 +48,22 @@ struct rBasicUTF : public ki::TextFileRPimpl
 		}
 	}
 
+	// Helper that returns 0 or the BOM length
+	static int GetAfterBOM(const uchar *fb, const uchar *fe, const char *boms, int bl)
+	{
+		const uchar *bom = (const uchar *)boms;
+		if(fb+bl <= fe)
+		{
+			for(int i=0; i<bl; i++)
+			{
+				if( fb[i] != bom[i] )
+					return 0;
+			}
+			return bl;
+		}
+
+		return 0;
+	}
 
 	size_t ReadBuf( unicode* buf, ulong siz ) override A_FINAL
 	{
@@ -165,7 +181,7 @@ struct rUtf1 A_FINAL: public rBasicUTF
 	rUtf1( const uchar* b, ulong s )
 		: fb( b )
 		, fe( b+s )
-		, SurrogateLow( 0 ) { SkipBOMIfNeeded(); }
+		, SurrogateLow( 0 ) { fb += GetAfterBOM(fb, fe, "\xF7\x64\x4C", 3); }
 
 	const uchar *fb, *fe;
 	qbyte SurrogateLow;
@@ -230,7 +246,7 @@ struct rUtf9 A_FINAL: public rBasicUTF
 	rUtf9( const uchar* b, ulong s )
 		: fb( b )
 		, fe( b+s )
-		, SurrogateLow( 0 ) { SkipBOMIfNeeded(); }
+		, SurrogateLow( 0 ) { fb += GetAfterBOM(fb, fe, "\x93\xFD\xFF", 3); }
 
 	const uchar *fb, *fe;
 	qbyte SurrogateLow;
@@ -280,7 +296,7 @@ struct rUtfOFSS A_FINAL: public rBasicUTF
 	rUtfOFSS( const uchar* b, ulong s )
 		: fb( b )
 		, fe( b+s )
-		, SurrogateLow( 0 ) { SkipBOMIfNeeded(); }
+		, SurrogateLow( 0 ) { fb += GetAfterBOM(fb, fe, "\xC3\xBC\xFF",3); }
 
 	const uchar *fb, *fe;
 	qbyte SurrogateLow;
@@ -336,7 +352,7 @@ struct rUtf5 A_FINAL: public rBasicUTF
 {
 	rUtf5( const uchar* b, ulong s )
 		: fb( b )
-		, fe( b+s ) { SkipBOMIfNeeded(); }
+		, fe( b+s ) { fb += GetAfterBOM(fb, fe, "\x56\x45\x46\x46", 4); }
 
 	const uchar *fb, *fe;
 
@@ -508,8 +524,7 @@ struct rSCSU A_FINAL: public rBasicUTF
 		, d( 0 )
 		{
 			// Skip 0E FE FF BOM if needed!
-			if( fe-fb>=3 && fb[0] == 0x0e && fb[1] == 0xfe && fb[2] == 0xff )
-				fb += 3;
+			fb += GetAfterBOM(fb, fe, "\x0e\xfe\xff", 3);
 		}
 
 	const uchar *fb, *fe;
@@ -657,8 +672,7 @@ struct rBOCU1 A_FINAL: public rBasicUTF
 		, pc( 0x40 )
 		{
 			// Skip BOM if needed!
-			if( fe-fb>=3 && fb[0] == 0xfb && fb[1] == 0xee && fb[2] == 0x28 )
-				fb += 3;
+			fb += GetAfterBOM(fb, fe, "\xfb\xee\x28", 3);
 		}
 
 	const uchar *fb, *fe;
@@ -790,9 +804,7 @@ struct rUtfEBCDIC A_FINAL: public rBasicUTF
 	, fe( b+s )
 	, SurrogateLow( 0 )
 	{
-		if( fe-fb>=4 && fb[0] == 0xdd && fb[1] == 0x73
-		&& fb[2] == 0x66 && fb[3] == 0x73 )
-			fb += 4;
+		fb += GetAfterBOM(fb, fe, "\xdd\x73\x66\x73", 4);
 	}
 
 	const uchar *fb, *fe;
@@ -831,7 +843,7 @@ struct rUtfEBCDIC A_FINAL: public rBasicUTF
 		else if( c <= 0xDF ) ch = (c&0x1f)<<5  | T(1);
 		else if( c <= 0xEF ) ch = (c&0x0f)<<10 | T(1)<<5 | T(2);
 		else if( c <= 0xF7 ) ch = (c&0x07)<<15 | T(1)<<10| T(2)<<5  | T(3);
-		else if( c <= 0xF9 ) ch = (c&0x01)<<20 | T(1)<<15| T(2)<<10 | T(3)<<5  | T(4);
+		else if( c <= 0xF9 ) ch = (c&0x03)<<20 | T(1)<<15| T(2)<<10 | T(3)<<5  | T(4);
 		else if( c <= 0xFD ) ch = (c&0x01)<<25 | T(1)<<20| T(2)<<15 | T(3)<<10 | T(4)<<5  | T(5);
 		else/*if(c <= 0xFF)*/ch = (c&0x01)<<30 | T(1)<<25| T(2)<<20 | T(3)<<15 | T(4)<<10 | T(5)<<5 | T(6);
 		#undef T
@@ -1003,9 +1015,8 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		, conv( cp==UTF8N && (app().isWin95()||!::IsValidCodePage(65001))
 		                  ? Utf8ToWideChar : MultiByteToWideChar )
 	{
-		if( cp==UTF8N && fe-fb>=3
-		 && b[0]==0xef && b[1]==0xbb && b[2]==0xbf )
-			fb += 3; // BOMスキップ
+		if( cp==UTF8N ) // BOMスキップ
+			fb += rBasicUTF::GetAfterBOM((uchar*)fb, (uchar*)fe, "\xEF\xBB\xBF", 3);
 	}
 
 	size_t ReadBuf( unicode* buf, ulong siz ) override
