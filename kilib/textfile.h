@@ -198,7 +198,10 @@ public:
 	//@{ ‰üs‚ªˆêŒÂ‚àŒ©‚Â‚©‚ç‚È‚©‚Á‚½ƒtƒ‰ƒO //@}
 	bool nolb_found() const;
 
+	void setLBfromFreq(ulong freq[256], uchar cr, uchar lf);
+
 	static int neededCodepage(int cs) A_XPURE;
+	static bool isEBCDIC( int cs ) A_XPURE;
 
 	const uchar* rawData() const
 		{ return fp_.base(); }

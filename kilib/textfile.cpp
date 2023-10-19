@@ -1504,10 +1504,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 
 //-- 改行コード決定 (UTF16/32/7のとき問題あり。UTF5に至っては判定不可…)
 
-	     if( freq['\r'] > freq['\n']*2 ) lb_ = CR;
-	else if( freq['\n'] > freq['\r']*2 ) lb_ = LF;
-	else                                 lb_ = CRLF;
-	nolbFound_ = freq['\r']==0 && freq['\n']==0;
+	setLBfromFreq( freq, '\r', '\n' );
 
 //-- デフォルトコード
 
@@ -1546,7 +1543,21 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 	else if( cs==SCSU || cs==SCSUY )
 		cs = bom4>>8==0x0efeff ? SCSUY : SCSU;
 	else if( cs==UTFEBCDIC || cs==UTFEBCDICY )
+	{
 		cs = bom4==0xdd736673 ? UTFEBCDICY : UTFEBCDIC;
+		setLBfromFreq(freq, '\r', '\x15');//in UTF-EBCDIC LF==x15
+	}
+	else if( isEBCDIC(cs) )
+	{
+		// NON-ASCII EBCDIC mode LF encding is different
+		// Depeding on EBCDIC LF can be x15 or x25.
+		// Technically \x15 is NEL(U+85) not LF(U+0A).
+		// However it seems to get randomly swapped for no reasons.
+		// so you can have 13 15, 13 25, or 15 alone or 25 alone
+		uchar lf = freq['\x15']>freq['\x25']? '\x15' : '\x25';
+		setLBfromFreq(freq, '\r', lf);
+	}
+
 
 	if( cs != AutoDetect )
 		return cs;
@@ -1565,7 +1576,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 	else if( bom4 == 0xfffe0000 ) cs = UTF32l;
 	else if( bom2 == 0xfeff )     cs = UTF16b;
 	else if( bom2 == 0xfffe )     cs = UTF16l;
-	else if( bom4 == 0xdd736673)  cs = UTFEBCDICY;
+	else if( bom4 == 0xdd736673){ cs = UTFEBCDICY; setLBfromFreq(freq, '\r', '\x15'); }
 	else if( bom4 == 0x1b242943 && ::IsValidCodePage(949) ) cs = IsoKR;
 	else if( bom4 == 0x1b242941 && ::IsValidCodePage(936) ) cs = IsoCN;
 	else if( Jp && !bit8 && freq[0x1b]>0 )                  cs = IsoJP;
@@ -1579,7 +1590,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 	for( uchar c='0'; c<='9'; ++c ) u5sum += freq[c];
 	for( uchar c='A'; c<='V'; ++c ) u5sum += freq[c];
 	if( siz == u5sum )
-		return bom4==0x56454646 ? UTF5Y : UTF5;;
+		return bom4==0x56454646 ? UTF5Y : UTF5;
 
 //-- UTF-16/32 detection
 	if( freq[ 0 ] > siz >> 11 ) // More than 1/2048 nulls in content?
@@ -1674,6 +1685,35 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 //-- 判定結果
 
 	return cs ? cs : defCs;
+}
+
+void TextFileR::setLBfromFreq(ulong freq[256], uchar cr, uchar lf)
+{
+	     if( freq[cr] > freq[lf]*2 ) lb_ = CR;
+	else if( freq[lf] > freq[cr]*2 ) lb_ = LF;
+	else                             lb_ = CRLF;
+	nolbFound_ = freq[cr]==0 && freq[lf]==0;
+}
+
+// Just says if cs is part of the EBCDIC encoding familly
+bool TextFileR::isEBCDIC( int cs )
+{
+	static const unsigned short ebcidlst[] = {
+		37, 500, 870, 875, 1026, 1047,
+		//1140--1149
+		20273, 20277, 20278, 20280, 20284, 20285,
+		20290, 20297, 20420, 20423, 20424, 20833,
+		20838, 20871, 20880, 20905, 20924, 21025,
+		50930, 50931, 50933, 50935, 50937, 50939
+	};
+	if( cs == UTFEBCDIC || cs == UTFEBCDICY
+	||( 1140 <= cs && cs <= 1149 ) )
+		return true;
+
+	for( size_t i=0; i<countof(ebcidlst); i++ )
+		if( ebcidlst[i] == cs )
+			return true;
+	return false;
 }
 
 bool TextFileR::IsValidUTF8( const uchar* ptr, ulong siz ) const
