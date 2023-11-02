@@ -392,14 +392,14 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	if( myGetFontUnicodeRanges )
 	{ // We found the function
 		DWORD frlen = myGetFontUnicodeRanges( cdc_, NULL );
-		if( frlen && (fontranges_ = reinterpret_cast<GLYPHSET*>(new BYTE[frlen])) )
+		if( frlen && (fontranges_ = reinterpret_cast<GLYPHSET*>( mem().Alloc(frlen) )) )
 		{
 			mem00(fontranges_, frlen);
 			fontranges_->cbThis = frlen;
 			fontranges_->flAccel = 0;
 			if( frlen != myGetFontUnicodeRanges( cdc_, fontranges_ ) )
 			{ // Failed!
-				delete [] (reinterpret_cast<BYTE*>(fontranges_));
+				mem().DeAlloc( fontranges_, fontranges_->cbThis );
 				fontranges_ = NULL;
 			}
 		}
@@ -456,7 +456,7 @@ Painter::~Painter()
 	::DeleteObject( pen_ );
 	::DeleteObject( brush_ );
 	if( fontranges_ )
-		delete [] (reinterpret_cast<BYTE*>(fontranges_)); // As BYTES...
+		mem().DeAlloc( fontranges_, fontranges_->cbThis );
 //	delete [] widthTable_;
 }
 
@@ -801,7 +801,7 @@ void ViewImpl::DrawTXT( const VDrawInfo &v, Painter& p )
 		{
 			// 作業用変数３, Working Variable 3
 			end = rlend(tl,rl);
-			if( a.bottom<=v.YMIN )
+			if( a.bottom<=v.YMIN || a.top < 0 )
 				continue;
 
 			// テキストデータ描画, text data rendering
