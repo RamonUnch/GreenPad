@@ -144,10 +144,10 @@ CharSetList::CharSetList()
 	if( ::IsValidCodePage(850) )   Enroll(  WesternDOS,     43 );
 	/* if( always ) */             Enroll(  Western,        44 );
 	if( ::IsValidCodePage(852) )   Enroll(  CentralDOS,     45 );
-	if( ::IsValidCodePage(28592) ) Enroll(  Central,        46 );
+	if( ::IsValidCodePage(1250) )  Enroll(  Central,        46 );
 	if( ::IsValidCodePage(855) )   Enroll(  CyrillicIBM,    47 );
 	if( ::IsValidCodePage(866) )   Enroll(  CyrillicDOS,    48 );
-	if( ::IsValidCodePage(28595) ) Enroll(  Cyrillic,       49 );
+	if( ::IsValidCodePage(1251) )  Enroll(  Cyrillic,       49 );
 	if( ::IsValidCodePage(20866) ) Enroll(  Koi8R,          50 );
 	if( ::IsValidCodePage(21866) ) Enroll(  Koi8U,          51 );
 	if( ::IsValidCodePage(874) )   Enroll(  Thai,           52 );
@@ -158,7 +158,7 @@ CharSetList::CharSetList()
 	if( ::IsValidCodePage(1258) )  Enroll( Vietnamese,      57 );
 	if( ::IsValidCodePage(737) )   Enroll(  GreekIBM,       58 );
 	if( ::IsValidCodePage(869) )   Enroll(  GreekMSDOS,     59 );
-	if( ::IsValidCodePage(28597) ) Enroll(  Greek,          60 );
+	if( ::IsValidCodePage(1253) )  Enroll(  Greek,          60 );
 	if( ::IsValidCodePage(720) )   Enroll(  ArabicIBM,      61 );
 	if( ::IsValidCodePage(864) )   Enroll(  ArabicMSDOS,    62 );
 	if( ::IsValidCodePage(1256) )  Enroll(  Arabic,         63 );
