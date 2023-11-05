@@ -181,7 +181,7 @@ struct Keyword : public ki::Object
 
 	static Keyword *New( const unicode *s, ulong l )
 	{
-		Keyword *x = (Keyword *)new BYTE[sizeof(Keyword) + l * sizeof(unicode)];
+		Keyword *x = (Keyword *)mem().Alloc( sizeof(Keyword) + l*sizeof(unicode) );
 		if( x )
 		{
 			x->next = NULL;
@@ -192,7 +192,10 @@ struct Keyword : public ki::Object
 		return x;
 	}
 	static void Delete( Keyword *x )
-		{ delete [] (BYTE*)x; }
+	{
+		if( x )
+			mem().DeAlloc( x, sizeof(Keyword) + x->len*sizeof(unicode) );
+	}
 };
 
 

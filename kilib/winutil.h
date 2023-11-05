@@ -499,6 +499,24 @@ inline Mutex::~Mutex()
 
 
 //=========================================================================
+// Simple Timer 
+//=========================================================================
+class Timer
+{
+public:
+	Timer(const TCHAR *name)
+		: name_   ( name )
+		, otime_  ( GetTickCount() )
+		{}
+	~Timer()
+	{
+		DWORD time = GetTickCount() - otime_;
+		LOGGERF(TEXT("%s: %lu ms"), name_, time);
+	}
+private:
+	const TCHAR *name_;
+	const DWORD otime_;
+};
 
 }      // namespace ki
 #endif // _KILIB_WINUTIL_H_

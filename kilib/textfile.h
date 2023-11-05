@@ -141,7 +141,9 @@ enum charset {
 enum lbcode {
 	CR   = 0,
 	LF   = 1,
-	CRLF = 2
+	CRLF = 2,
+	NL   = 3,
+	CRNL = 4
 };
 
 struct TextFileRPimpl;
@@ -190,7 +192,7 @@ public:
 	int linebreak() const;
 
 	//@{ 読み込み状況 (0:EOF, 1:EOL, 2:EOB) //@}
-	int state() const;
+//	int state() const;
 
 	//@{ ファイルサイズ //@}
 	ulong size() const;

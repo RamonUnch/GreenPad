@@ -14,12 +14,13 @@ using namespace ki;
 struct ki::TextFileRPimpl: public Object
 {
 	inline TextFileRPimpl()
-		: state(EOL) {}
+//		: state(EOL)
+		{}
 
 	virtual size_t ReadBuf( unicode* buf, ulong siz )
 		= 0;
 
-	enum { EOF=0, EOL=1, EOB=2 } state;
+//	enum { EOF=0, EOL=1, EOB=2 } state;
 
 	virtual ~TextFileRPimpl() {}
 };
@@ -67,7 +68,7 @@ struct rBasicUTF : public ki::TextFileRPimpl
 
 	size_t ReadBuf( unicode* buf, ulong siz ) override A_FINAL
 	{
-		state = EOF;
+//		state = EOF;
 
 		// 改行が出るまで読む
 		unicode *w=buf, *e=buf+siz-1;
@@ -78,7 +79,7 @@ struct rBasicUTF : public ki::TextFileRPimpl
 
 			if( ++w==e )
 			{
-				state = EOB;
+//				state = EOB;
 				break;
 			}
 		}
@@ -132,7 +133,8 @@ struct rUtf32 A_FINAL: public rBasicUTF
 	rUtf32( const uchar* b, ulong s )
 		: fb( reinterpret_cast<const qbyte*>(b) )
 		, fe( reinterpret_cast<const qbyte*>(b+(s/sizeof(qbyte))*sizeof(qbyte)) )
-		, state(0) { SkipBOMIfNeeded(); }
+		, state(0)
+		{ SkipBOMIfNeeded(); }
 
 	const qbyte *fb, *fe;
 	int state;
@@ -1024,7 +1026,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		// バッファの終端か、ファイルの終端の近い方まで読み込む
 		// Read to the end of the buffer or near the end of the file
 		const char *p, *end = Min( fb+siz/2-2, fe );
-		state = (end==fe ? EOF : EOB);
+//		state = (end==fe ? EOF : EOB);
 
 		// 改行が出るまで進む
 		p=fb;
@@ -1317,7 +1319,7 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 
 		// バッファの終端か、ファイルの終端の近い方まで読み込む
 		const uchar *p, *end = Min( fb+siz/2-2, fe );
-		state = (end==fe ? EOF : EOB);
+//		state = (end==fe ? EOF : EOB);
 
 		// 改行が出るまで進む
 		for( p=fb; p<end; ++p )
@@ -1380,10 +1382,10 @@ size_t TextFileR::ReadBuf( unicode* buf, ulong siz )
 	return impl_->ReadBuf( buf, siz );
 }
 
-int TextFileR::state() const
-{
-	return impl_->state;
-}
+//int TextFileR::state() const
+//{
+//	return impl_->state;
+//}
 
 void TextFileR::Close()
 {
