@@ -47,34 +47,36 @@ void Document::DelHandler( const DocEvHandler* eh )
 		}
 }
 
-//void Document::acc_Fire_TEXTUPDATE_begin()
-//{
-//	acc_textupdate_mode = true;
-//	acc_s_ = DPos(-1, -1);
-//	acc_e2_ = DPos(0,0);
-//	acc_reparsed_ = acc_nmlcmd_ = false;
-//}
-//void Document::acc_Fire_TEXTUPDATE_end()
-//{
-//	acc_textupdate_mode = false;
-//	Fire_TEXTUPDATE( acc_s_, acc_e2_, acc_e2_, acc_reparsed_, acc_nmlcmd_ );
-//}
+// Start accumulating the coordinates to send to Fire_TEXTUPDATE() function
+// because it is slow. It is used for the MacroCommand, and it can speeds up
+// find/replace by more than a hundred in a big file.
+void Document::acc_Fire_TEXTUPDATE_begin()
+{
+	acc_textupdate_mode = true;
+	acc_s_ = DPos(-1, -1);
+	acc_e2_ = DPos(0,0);
+	acc_reparsed_ = acc_nmlcmd_ = false;
+}
+// End the above and send Fire_TEXTUPDATE() for real.
+void Document::acc_Fire_TEXTUPDATE_end()
+{
+	acc_textupdate_mode = false;
+	Fire_TEXTUPDATE( acc_s_, acc_e2_, acc_e2_, acc_reparsed_, acc_nmlcmd_ );
+}
 
 void Document::Fire_TEXTUPDATE
 	( const DPos& s, const DPos& e, const DPos& e2, bool reparsed, bool nmlcmd )
 {
-//	if( acc_textupdate_mode )
-//	{
-//		acc_s_  = Min(acc_s_, s);
-//		acc_e2_ = Max(acc_e2_, e2);
-//		acc_reparsed_ = acc_reparsed_ || reparsed;
-//		acc_nmlcmd_   = acc_nmlcmd_ || nmlcmd;
-//		//LOGGERF( TEXT("s=%u,%lu, e=%lu,%lu, e2=%lu,%lu, rp=%d, nm=%d")
-//		//       , s.tl, s.ad, e.tl, e.ad, e2.tl, e2.ad, (int)reparsed, (int)nmlcmd );
-//		LOGGERF( TEXT("s=%u,%lu, e2=%lu,%lu, rp=%d, nm=%d")
-//		       , acc_s_.tl, acc_s_.ad,  acc_e2_.tl, acc_e2_.ad, (int)reparsed, (int)nmlcmd );
-//	}
-//	else
+	if( acc_textupdate_mode )
+	{	// Accumulate positions.
+		acc_s_  = Min(acc_s_, s);
+		acc_e2_ = Max(acc_e2_, e2);
+		acc_reparsed_ = acc_reparsed_ || reparsed;
+		acc_nmlcmd_   = acc_nmlcmd_ || nmlcmd;
+		//LOGGERF( TEXT("s=%u,%lu, e2=%lu,%lu, rp=%d, nm=%d")
+		//     , acc_s_.tl, acc_s_.ad,  acc_e2_.tl, acc_e2_.ad, (int)reparsed, (int)nmlcmd );
+	}
+	else
 	{
 		AutoLock lk(this);
 
@@ -745,10 +747,10 @@ Command* MacroCommand::operator()( Document& doc ) const
 	if( !undo ) return NULL;
 	undo->arr_.ForceSize( size() );
 
-//	doc.acc_Fire_TEXTUPDATE_begin();
+	doc.acc_Fire_TEXTUPDATE_begin();
 	for( ulong i=0,e=arr_.size(); i<e; ++i )
 		undo->arr_[e-i-1] = (*arr_[i])(doc);
-//	doc.acc_Fire_TEXTUPDATE_end();
+	doc.acc_Fire_TEXTUPDATE_end();
 
 	doc.setBusyFlag(false);
 	return undo;
