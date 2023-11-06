@@ -1012,13 +1012,15 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 	rMBCS( const uchar* b, ulong s, int c )
 		: fb( reinterpret_cast<const char*>(b) )
 		, fe( reinterpret_cast<const char*>(b+s) )
-		, cp( c==UTF8 ? UTF8N : c )
+		, cp( c==UTF8 ? UTF8N : c==GB18030Y ? GB18030 : c )
 		, next( GetCharNextExA( cp ) )
 		, conv( cp==UTF8N && (app().isWin95()||!::IsValidCodePage(65001))
 		                  ? Utf8ToWideChar : MultiByteToWideChar )
 	{
 		if( cp==UTF8N ) // BOMスキップ
 			fb += rBasicUTF::GetAfterBOM((uchar*)fb, (uchar*)fe, "\xEF\xBB\xBF", 3);
+		if( cp==GB18030 )
+			fb += rBasicUTF::GetAfterBOM((uchar*)fb, (uchar*)fe, "\x84\x31\x95\x33", 4);
 	}
 
 	size_t ReadBuf( unicode* buf, ulong siz ) override
@@ -1551,6 +1553,8 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 		cs = bom4>>8==0x93fdff ? UTF9Y : UTF9;
 	else if( cs==OFSSUTF || cs==OFSSUTFY )
 		cs = bom4>>8==0xc3bcff ? OFSSUTFY : OFSSUTF;
+	else if( cs==GB18030 || cs==GB18030Y )
+		cs = bom4 == 0x84319533 ? GB18030Y : GB18030;
 	else if( cs==BOCU1 || cs==BOCU1Y )
 		cs = bom4>>8==0xfbee28 ? BOCU1Y : BOCU1;
 	else if( cs==SCSU || cs==SCSUY )
@@ -1566,7 +1570,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 		// Depeding on EBCDIC LF can be x15 or x25.
 		// Technically \x15 is NEL(U+85) not LF(U+0A).
 		// However it seems to get randomly swapped for no reasons.
-		// so you can have 13 15, 13 25, or 15 alone or 25 alone
+		// so you can have 0D 15, 0D 25, or 15 alone or 25 alone
 		uchar lf = freq['\x15']>freq['\x25']? '\x15' : '\x25';
 		setLBfromFreq(freq, '\r', lf);
 	}
@@ -1589,6 +1593,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 	else if( bom4 == 0xfffe0000 ) cs = UTF32l;
 	else if( bom2 == 0xfeff )     cs = UTF16b;
 	else if( bom2 == 0xfffe )     cs = UTF16l;
+	else if( bom4 == 0x84319533 ) cs = GB18030Y;
 	else if( bom4 == 0xdd736673){ cs = UTFEBCDICY; setLBfromFreq(freq, '\r', '\x15'); }
 	else if( bom4 == 0x1b242943 && ::IsValidCodePage(949) ) cs = IsoKR;
 	else if( bom4 == 0x1b242941 && ::IsValidCodePage(936) ) cs = IsoCN;
@@ -3307,6 +3312,12 @@ struct wMBCS A_FINAL: public TextFileWPimpl
 			// BOM書き込み
 			cp_ = UTF8N;
 			fp_.Write( "\xEF\xBB\xBF", 3 );
+		}
+		if( cp == GB18030Y )
+		{
+			// BOM書き込み
+			cp_ = GB18030;
+			fp_.Write( "\x84\x31\x95\x33", 4 );
 		}
 	}
 

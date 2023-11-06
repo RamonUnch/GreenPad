@@ -93,7 +93,8 @@ enum charset {
 	IBM5550    = 20003,// ’†‘Œê‚W (”É‘ÌŽš IBM5550)
 	Teletext   = 20004,// ’†‘Œê‚X (”É‘ÌŽš Teletext)
 	Wang       = 20005,// ’†‘Œê‚P‚O (”É‘ÌŽš Wang)
-	GB18030    = 54936,// ’†‘Œê‚P‚P (ŠÈ‘ÌŽš GB18030 >> GBK >> EUC-CN)
+	GB18030    = 54936,// ’†‘Œê‚P‚P (ŠÈ‘ÌŽš GB18030 >> GBK >> EUC-CN) BOM–³‚µ
+	GB18030Y   =-54936,// ’†‘Œê‚P‚P (ŠÈ‘ÌŽš GB18030 >> GBK >> EUC-CN) BOM—L‚è
 	MacTW      = 10002,// ’†‘Œê‚P‚Q (”É‘ÌŽš x-mac-taiwan ` Big5)
 	MacCN      = 10008,// ’†‘Œê‚P‚R (ŠÈ‘ÌŽš x-mac-prc ` GB2312)
 
