@@ -58,29 +58,29 @@ using namespace ki;
 	CHARSET_VALUE("FSS-UTF(19920902,BOM)","FSS-UTF(19920902,BOM)","FSSUTFb") \
 	CHARSET_VALUE("UTF-EBCDIC",			"UTF-EBCDIC",			"UEBCDIC") \
 	CHARSET_VALUE("UTF-EBCDIC(BOM)",	"UTF-EBCDIC(BOM)",		"UEBCDICb") \
-	CHARSET_VALUE("欧米(DOS)",			"Latin-1(DOS)",			"LN1DOS") \
 	CHARSET_VALUE("欧米",				"Latin-1",				"LTN1") \
-	CHARSET_VALUE("中欧(DOS)",			"Latin-2(DOS)",			"LN2DOS") \
+	CHARSET_VALUE("欧米(DOS)",			"Latin-1(DOS)",			"LN1DOS") \
 	CHARSET_VALUE("中欧",				"Latin-2",				"LTN2") \
+	CHARSET_VALUE("中欧(DOS)",			"Latin-2(DOS)",			"LN2DOS") \
+	CHARSET_VALUE("キリル語",				"Cyrillic",			"CYRL") \
 	CHARSET_VALUE("キリル語(IBM)",		"Cyrillic(IBM)",		"CYRIBM") \
 	CHARSET_VALUE("キリル語(MS-DOS)",	"Cyrillic(MS-DOS)",		"CYRDOS") \
-	CHARSET_VALUE("キリル語(Windows)",	"Cyrillic(Windows)",	"CYRL") \
 	CHARSET_VALUE("キリル語(KOI8-R)",	"Cyrillic(KOI8-R)",		"KO8R") \
 	CHARSET_VALUE("キリル語(KOI8-U)",	"Cyrillic(KOI8-U)",		"KO8U") \
 	CHARSET_VALUE("タイ語",				"Thai",					"THAI") \
-	CHARSET_VALUE("トルコ語(DOS)",		"Turkish(DOS)",			"TRKDOS") \
 	CHARSET_VALUE("トルコ語",			"Turkish",				"TRK") \
-	CHARSET_VALUE("バルト語(IBM)",		"Baltic(IBM)",			"BALIBM") \
+	CHARSET_VALUE("トルコ語(DOS)",		"Turkish(DOS)",			"TRKDOS") \
 	CHARSET_VALUE("バルト語",			"Baltic",				"BALT") \
+	CHARSET_VALUE("バルト語(IBM)",		"Baltic(IBM)",			"BALIBM") \
 	CHARSET_VALUE("ベトナム語",			"Vietnamese",			"VTNM") \
+	CHARSET_VALUE("ギリシャ語",			"Greek",				"GRK") \
 	CHARSET_VALUE("ギリシャ語(IBM)",	"Greek(IBM)",			"GRKIBM") \
 	CHARSET_VALUE("ギリシャ語(MS-DOS)",	"Greek(MS-DOS)",		"GRKDOS") \
-	CHARSET_VALUE("ギリシャ語",			"Greek",				"GRK") \
+	CHARSET_VALUE("アラビア語",			"Arabic",				"ARA") \
 	CHARSET_VALUE("アラビア語(IBM)",	"Arabic(IBM)",			"ARAIBM") \
 	CHARSET_VALUE("アラビア語(MS-DOS)",	"Arabic(MS-DOS)",		"ARADOS") \
-	CHARSET_VALUE("アラビア語",			"Arabic",				"ARA") \
-	CHARSET_VALUE("ヘブライ語(DOS)",	"Hebrew(DOS)",			"HEBDOS") \
 	CHARSET_VALUE("ヘブライ語",			"Hebrew",				"HEB") \
+	CHARSET_VALUE("ヘブライ語(DOS)",	"Hebrew(DOS)",			"HEBDOS") \
 	CHARSET_VALUE("ポルトガル語(DOS)",	"Portuguese(DOS)",		"PRT") \
 	CHARSET_VALUE("アイスランド語(DOS)","Icelandic(DOS)",		"ICE") \
 	CHARSET_VALUE("フランス語(カナダ)(DOS)","Canadian French(DOS)","CFR") \
@@ -143,29 +143,29 @@ CharSetList::CharSetList()
 	                               EnrollS( OFSSUTFY,       41 );
 	                               Enroll(  UTFEBCDIC,      42 );
 	                               EnrollS( UTFEBCDICY,     43 );
-	if( ::IsValidCodePage(850) )   Enroll(  WesternDOS,     44 );
-	/* if( always ) */             Enroll(  Western,        45 );
-	if( ::IsValidCodePage(852) )   Enroll(  CentralDOS,     46 );
-	if( ::IsValidCodePage(1250) )  Enroll(  Central,        47 );
-	if( ::IsValidCodePage(855) )   Enroll(  CyrillicIBM,    48 );
-	if( ::IsValidCodePage(866) )   Enroll(  CyrillicDOS,    49 );
-	if( ::IsValidCodePage(1251) )  Enroll(  Cyrillic,       50 );
+	/* if( always ) */             Enroll(  Western,        44 );
+	if( ::IsValidCodePage(850) )   Enroll(  WesternDOS,     45 );
+	if( ::IsValidCodePage(1250) )  Enroll(  Central,        46 );
+	if( ::IsValidCodePage(852) )   Enroll(  CentralDOS,     47 );
+	if( ::IsValidCodePage(1251) )  Enroll(  Cyrillic,       48 );
+	if( ::IsValidCodePage(855) )   Enroll(  CyrillicIBM,    49 );
+	if( ::IsValidCodePage(866) )   Enroll(  CyrillicDOS,    50 );
 	if( ::IsValidCodePage(20866) ) Enroll(  Koi8R,          51 );
 	if( ::IsValidCodePage(21866) ) Enroll(  Koi8U,          52 );
 	if( ::IsValidCodePage(874) )   Enroll(  Thai,           53 );
-	if( ::IsValidCodePage(857) )   Enroll(  TurkishDOS,     54 );
-	if( ::IsValidCodePage(1254) )  Enroll(  Turkish,        55 );
-	if( ::IsValidCodePage(775) )   Enroll(  BalticIBM,      56 );
-	if( ::IsValidCodePage(1257) )  Enroll(  Baltic,         57 );
+	if( ::IsValidCodePage(1254) )  Enroll(  Turkish,        54 );
+	if( ::IsValidCodePage(857) )   Enroll(  TurkishDOS,     55 );
+	if( ::IsValidCodePage(1257) )  Enroll(  Baltic,         56 );
+	if( ::IsValidCodePage(775) )   Enroll(  BalticIBM,      57 );
 	if( ::IsValidCodePage(1258) )  Enroll( Vietnamese,      58 );
-	if( ::IsValidCodePage(737) )   Enroll(  GreekIBM,       59 );
-	if( ::IsValidCodePage(869) )   Enroll(  GreekMSDOS,     60 );
-	if( ::IsValidCodePage(1253) )  Enroll(  Greek,          61 );
-	if( ::IsValidCodePage(720) )   Enroll(  ArabicIBM,      62 );
-	if( ::IsValidCodePage(864) )   Enroll(  ArabicMSDOS,    63 );
-	if( ::IsValidCodePage(1256) )  Enroll(  Arabic,         64 );
-	if( ::IsValidCodePage(862) )   Enroll(  HebrewDOS,      65 );
-	if( ::IsValidCodePage(1255) )  Enroll(  Hebrew,         66 );
+	if( ::IsValidCodePage(1253) )  Enroll(  Greek,          59 );
+	if( ::IsValidCodePage(737) )   Enroll(  GreekIBM,       60 );
+	if( ::IsValidCodePage(869) )   Enroll(  GreekMSDOS,     61 );
+	if( ::IsValidCodePage(1256) )  Enroll(  Arabic,         62 );
+	if( ::IsValidCodePage(720) )   Enroll(  ArabicIBM,      63 );
+	if( ::IsValidCodePage(864) )   Enroll(  ArabicMSDOS,    64 );
+	if( ::IsValidCodePage(1255) )  Enroll(  Hebrew,         65 );
+	if( ::IsValidCodePage(862) )   Enroll(  HebrewDOS,      66 );
 	if( ::IsValidCodePage(860) )   Enroll(  Portuguese,     67 );
 	if( ::IsValidCodePage(861) )   Enroll(  Icelandic,      68 );
 	if( ::IsValidCodePage(863) )   Enroll(  CanadianFrench, 69 );
