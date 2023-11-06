@@ -36,7 +36,10 @@ public:
 		: alen_( Max( allocSize, (ulong)1 ) )
 		, len_ ( 0 )
 		, buf_ ( static_cast<T*>(mem().Alloc(alen_*sizeof(T))) )
-		{}
+		{
+			if( !buf_ )
+				alen_=0;
+		}
 
 	~storage()
 		{ mem().DeAlloc( buf_, alen_*sizeof(T) ); }

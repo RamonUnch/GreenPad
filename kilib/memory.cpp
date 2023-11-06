@@ -37,11 +37,13 @@ using namespace ki;
 		#else
 		void *ret = ::HeapAlloc( g_heap, 0, siz );
 		#endif
-		if (!ret) {
+		static uchar ignorecnt=0;
+		if (!ret && ignorecnt < 8) {
 			DWORD ans = MessageBox(GetActiveWindow(), TEXT("Unable to allocate memory!"), NULL, MB_ABORTRETRYIGNORE|MB_TASKMODAL);
 			switch(ans) {
 			case IDABORT: ExitProcess(1); break;
-			case IDRETRY: goto TRYLBL; break;
+			case IDRETRY: ignorecnt = 0; goto TRYLBL; break;
+			case IDIGNORE: ignorecnt++; break;
 			}
 		}
 		return ret;

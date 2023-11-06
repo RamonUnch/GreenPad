@@ -1035,7 +1035,7 @@ void GreenPadWnd::on_showselectionlen()
 	ulong len = edit_.getDoc().getRangeLength(*a, *b);
 	TCHAR buf[ULONG_DIGITS+1];
 	if( stb_.isVisible() )
-		stb_.SetText( Ulong2lStr(buf, len), GpStBar::UNI_PART );
+		stb_.SetText( Ulong2lStr(buf, len) );
 	else
 		MsgBox( Ulong2lStr(buf, len), TEXT("Length in UTF-16 chars") );
 }
@@ -1685,6 +1685,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	stb_.SetText( RzsString(IDS_LOADING).c_str() );
 	old_filetime_ = filename_.getLastWriteTime(); // Save timestamp
 	edit_.getDoc().OpenFile( tf );
+	stb_.SetText( TEXT("(1,1)") );
 
 	// タイトルバー更新
 	UpdateWindowName();
@@ -1884,11 +1885,11 @@ bool GreenPadWnd::StartUp( const Path& fn, int cs, int ln )
 		ReloadConfig( fn.len()==0 );
 		LOGGER( "GreenPadWnd::StartUp reloadconfig end" );
 		UpdateWindowName();
+		stb_.SetText( TEXT("(1,1)") );
 		LOGGER( "GreenPadWnd::StartUp updatewindowname end" );
 	}
 
 	// 指定の行へジャンプ
-	stb_.SetText( TEXT("(1,1)") );
 	if( ln != -1 )
 		JumpToLine( ln );
 

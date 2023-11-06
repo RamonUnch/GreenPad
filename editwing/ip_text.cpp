@@ -47,14 +47,41 @@ void Document::DelHandler( const DocEvHandler* eh )
 		}
 }
 
+//void Document::acc_Fire_TEXTUPDATE_begin()
+//{
+//	acc_textupdate_mode = true;
+//	acc_s_ = DPos(-1, -1);
+//	acc_e2_ = DPos(0,0);
+//	acc_reparsed_ = acc_nmlcmd_ = false;
+//}
+//void Document::acc_Fire_TEXTUPDATE_end()
+//{
+//	acc_textupdate_mode = false;
+//	Fire_TEXTUPDATE( acc_s_, acc_e2_, acc_e2_, acc_reparsed_, acc_nmlcmd_ );
+//}
+
 void Document::Fire_TEXTUPDATE
 	( const DPos& s, const DPos& e, const DPos& e2, bool reparsed, bool nmlcmd )
 {
-	AutoLock lk(this);
+//	if( acc_textupdate_mode )
+//	{
+//		acc_s_  = Min(acc_s_, s);
+//		acc_e2_ = Max(acc_e2_, e2);
+//		acc_reparsed_ = acc_reparsed_ || reparsed;
+//		acc_nmlcmd_   = acc_nmlcmd_ || nmlcmd;
+//		//LOGGERF( TEXT("s=%u,%lu, e=%lu,%lu, e2=%lu,%lu, rp=%d, nm=%d")
+//		//       , s.tl, s.ad, e.tl, e.ad, e2.tl, e2.ad, (int)reparsed, (int)nmlcmd );
+//		LOGGERF( TEXT("s=%u,%lu, e2=%lu,%lu, rp=%d, nm=%d")
+//		       , acc_s_.tl, acc_s_.ad,  acc_e2_.tl, acc_e2_.ad, (int)reparsed, (int)nmlcmd );
+//	}
+//	else
+	{
+		AutoLock lk(this);
 
-	// 全部にイベント通知
-	for( ulong i=0, ie=pEvHan_.size(); i<ie; ++i )
-		pEvHan_[i]->on_text_update( s, e, e2, reparsed, nmlcmd );
+		// 全部にイベント通知
+		for( ulong i=0, ie=pEvHan_.size(); i<ie; ++i )
+			pEvHan_[i]->on_text_update( s, e, e2, reparsed, nmlcmd );
+	}
 }
 
 void Document::Fire_KEYWORDCHANGE()
@@ -125,7 +152,6 @@ ulong UnReDoChain::Node::ChainDelete(Node*& savedPos_ref)
 		return 0;
 	if( savedPos_ref == this )
 		savedPos_ref = NULL;
-	//dptr<Node> d(this);
 	ulong ret = 1 + next_->ChainDelete(savedPos_ref);
 	delete this; // Delete this node.
 	return ret;
@@ -511,7 +537,7 @@ bool Document::DeletingOperation
 	undosiz = getRangeLength( s, e );
 
 	// Undo操作用バッファ確保, Allocate buffer for Undo operation
-	undobuf = new unicode[undosiz+1];
+	undobuf = reinterpret_cast<unicode*>( mem().Alloc( (undosiz+1)*2 ) );
 	if( undobuf )
 	{ // We got enough memory...
 		getText( undobuf, s, e );// get text to del for undo
@@ -607,7 +633,7 @@ Insert::Insert( const DPos& s, const unicode* str, ulong len, bool del )
 Insert::~Insert()
 {
 	if( del_ )
-		delete [] const_cast<unicode*>(buf_);
+		mem().DeAlloc( const_cast<unicode*>(buf_), (len_+1)*2 );
 }
 
 Command* Insert::operator()( Document& d ) const
@@ -651,7 +677,8 @@ Command* Delete::operator()( Document& d ) const
 	if( buf != NULL )
 	{	// Make reverse operation...
 		rev = new Insert( s, buf, siz, true );
-		if( !rev ) delete [] buf; // Clear Undo buffer on failure
+		if( !rev ) // Clear Undo buffer on failure
+			mem().DeAlloc( buf, (siz+1)*2 );
 	}
 	return rev;
 }
@@ -675,7 +702,7 @@ Replace::Replace(
 Replace::~Replace()
 {
 	if( del_ )
-		delete const_cast<unicode*>(buf_);
+		mem().DeAlloc( const_cast<unicode*>(buf_), (len_+1)*2 );
 }
 
 Command* Replace::operator()( Document& d ) const
@@ -698,7 +725,8 @@ Command* Replace::operator()( Document& d ) const
 	if( buf )
 	{	// Make reverse operation...
 		rev = new Replace( s, e2, buf, siz, true );
-		if( !rev ) delete [] buf; // Clear Undo buffer on failure
+		if( !rev ) // Clear Undo buffer on failure
+			mem().DeAlloc( buf, (siz+1)*2 );
 	}
 	return rev;
 }
@@ -715,10 +743,12 @@ Command* MacroCommand::operator()( Document& doc ) const
 
 	MacroCommand* undo = new MacroCommand;
 	if( !undo ) return NULL;
-
 	undo->arr_.ForceSize( size() );
+
+//	doc.acc_Fire_TEXTUPDATE_begin();
 	for( ulong i=0,e=arr_.size(); i<e; ++i )
 		undo->arr_[e-i-1] = (*arr_[i])(doc);
+//	doc.acc_Fire_TEXTUPDATE_end();
 
 	doc.setBusyFlag(false);
 	return undo;
@@ -806,19 +836,12 @@ void Document::OpenFile( TextFileR& tf )
 		buf_sz = SBUF_SZ;
 	}
 //	DWORD otime = GetTickCount();
-	for( ulong i=0; tf.state(); )
+	size_t L;
+	for( ulong i=0; L = tf.ReadBuf( buf, buf_sz ); )
 	{
-		if( size_t L = tf.ReadBuf( buf, buf_sz ) )
-		{
-			DPos p(i,0xffffffff);
-			InsertingOperation( p, buf, (ulong)L, e );
-			i = tln() - 1;
-		}
-		if( tf.state() == 1 )
-		{
-			DPos p(i++,0xffffffff);
-			InsertingOperation( p, L"\n", 1, e );
-		}
+		DPos p(i,0xffffffff);
+		InsertingOperation( p, buf, (ulong)L, e );
+		i = tln() - 1;
 	}
 
 	if( buf != sbuf )
