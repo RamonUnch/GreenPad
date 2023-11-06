@@ -405,7 +405,7 @@ struct rUtf7 A_FINAL: public rBasicUTF
 		, fe( b+s )
 		, rest( -1 )
 		, inB64( false )
-		{ fillbuf();  SkipBOMIfNeeded(); }
+		{ fillbuf();  /*SkipBOMIfNeeded();*/ }
 
 	const uchar *fb, *fe;
 	unicode buf[3]; // b64を８文字毎に読んでバッファに溜めておく
