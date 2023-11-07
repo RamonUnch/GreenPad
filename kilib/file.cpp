@@ -263,8 +263,7 @@ void FileR::Close()
 //=========================================================================
 
 FileW::FileW()
-	: BUFSIZE( 32768 )
-	, handle_( INVALID_HANDLE_VALUE )
+	: handle_( INVALID_HANDLE_VALUE )
 	, buf_   ( new uchar[BUFSIZE] )
 	, bPos_  ( 0 )
 {
@@ -285,6 +284,8 @@ void FileW::Flush()
 
 bool FileW::Open( const TCHAR* fname, bool creat )
 {
+	if( buf_==NULL ) // Internal buffer allocation failed!
+		return false;
 	Close();
 
 	TCHAR *UNCPath = (TCHAR *)fname;

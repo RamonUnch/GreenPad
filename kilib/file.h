@@ -109,7 +109,7 @@ public:
 
 private:
 
-	const int    BUFSIZE;
+	enum { BUFSIZE = 32768 };
 	HANDLE       handle_;
 	uchar* const buf_;
 	size_t       bPos_;
