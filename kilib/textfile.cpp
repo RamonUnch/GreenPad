@@ -177,6 +177,7 @@ typedef rUtf32<false> rUtf32LE;
 
 //-------------------------------------------------------------------------
 // UTF-1
+// https://web.archive.org/web/20150318032101/http://kikaku.itscj.ipsj.or.jp/ISO-IR/178.pdf
 //-------------------------------------------------------------------------
 struct rUtf1 A_FINAL: public rBasicUTF
 {
@@ -233,7 +234,8 @@ struct rUtf1 A_FINAL: public rBasicUTF
 };
 
 //-------------------------------------------------------------------------
-// UTF-9 (draft-abela-utf9-00)
+// UTF-9 (draft-abela-utf9-00), J. Abela, 23 December 1997
+// https://www.ietf.org/archive/id/draft-abela-utf9-00.txt
 //-------------------------------------------------------------------------
 //    UCS-4 range (hex)     UTF-9 octet sequence (binary)
 //    0000 0000-0000 007F   0xxxxxxx
@@ -342,6 +344,9 @@ struct rUtfOFSS A_FINAL: public rBasicUTF
 
 //-------------------------------------------------------------------------
 // UTF-5
+// P.-C. Wur, Computer Standards & Interfaces, 23 2001 457-466
+// DOI: 10.1016/S0920-5489(01)00086-1
+// https://archive.ph/20120721050018/http://tools.ietf.org/html/draft-jseng-utf5
 //     0-  F : 1bbbb
 //    10- FF : 1bbbb 0bbbb
 //   100-FFF : 1bbbb 0bbbb 0bbbb
@@ -361,7 +366,7 @@ struct rUtf5 A_FINAL: public rBasicUTF
 	// 16êiï∂éöÇ©ÇÁêÆêîílÇ÷ïœä∑
 	inline byte conv( uchar x )
 	{
-		if( '0'<=x && x<='9' ) return x-'0';
+		if(/*'0'<=x &&*/x<='9' ) return x-'0';
 		else                   return x-'A'+0x0A;
 	}
 
