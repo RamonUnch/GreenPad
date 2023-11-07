@@ -26,10 +26,35 @@ public:
 	void SetStatusBarVisible(bool b=true);
 	void SetParent(HWND parent);
 
+	int GetText( TCHAR* str, int part = 0 );
+	int GetTextLen( int part );
+
+
 public:
 
 	int width() const;
 	bool isStatusBarVisible() const;
+
+public:
+	class SaveRestoreText
+	{
+	public:
+		SaveRestoreText(ki::StatusBar &stb, int part=0)
+		: stb_ ( stb )
+		, part_( part )
+		{
+			buf_[0] = TEXT('\0');
+			stb_.GetText( buf_, part_ );
+		}
+		~SaveRestoreText()
+		{
+			stb_.SetText( buf_, part_ );
+		}
+	private:
+		TCHAR buf_[256];
+		ki::StatusBar& stb_;
+		int part_;
+	};
 
 private:
 	bool Create();

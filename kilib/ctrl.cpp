@@ -96,6 +96,44 @@ void StatusBar::SetText( const TCHAR* str, int part )
 #endif
 }
 
+int StatusBar::GetTextLen( int part )
+{
+#if defined(UNICODE) && defined(TARGET_VER) && TARGET_VER <= 350
+	if ( app().isNTOSVerLarger(MKVER(3,50,711)) )
+		return SendMsg( SB_GETTEXTLENGTHW, part, 0 );
+	else
+		return SendMsg( SB_GETTEXTLENGTHA, part, 0 );
+#else
+	return SendMsg( SB_GETTEXTLENGTH, part, 0 );
+#endif
+}
+int StatusBar::GetText( TCHAR* str, int part )
+{
+	int len = GetTextLen(part);
+	if( len >= 255 )
+	{
+		str[0] = TEXT('\0');
+		return 0;
+	}
+#if defined(UNICODE) && defined(TARGET_VER) && TARGET_VER <= 350
+	if ( app().isNTOSVerLarger(MKVER(3,50,711)) )
+	{	// Unicode in UNICOWS mode to be used on NT only from 3.5 build 711
+		SendMsg( SB_GETTEXTW, part, reinterpret_cast<LPARAM>(str) );
+	}
+	else
+	{	// Use ANSI version NT3.1 and Win9x (convert string).
+		char buf[256];
+		SendMsg( SB_GETTEXTA, part, reinterpret_cast<LPARAM>(buf) );
+		len = ::MultiByteToWideChar( CP_ACP, 0, buf, len+1, str, 255 );
+		str[len] = L'\0';
+	}
+#else
+	SendMsg( SB_GETTEXT, part, reinterpret_cast<LPARAM>(str) );
+#endif
+	return len;
+}
+
+
 
 //=========================================================================
 
