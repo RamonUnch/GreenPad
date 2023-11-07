@@ -428,7 +428,8 @@ namespace {
 		return c*s;
 	}
 }
-
+// Brightness approximation, that does not take gamma into account.
+#define COLBRIGHTNESS(x) ( (218*GetRValue(x) + 732*GetGValue(x) + 74*GetBValue(x))>>10 )
 void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 {
   // １．省略値として…
@@ -448,13 +449,15 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 	else
 	{
 		// 組み込みのデフォルト設定をロード, Load built-in default settings
+		COLORREF bgcol = ::GetSysColor(COLOR_WINDOW); // RGB(255,255,255);
+		bool brightmode = COLBRIGHTNESS(bgcol) > 128;
 		dt->vc.SetTabStep( 4 );
 		dt->vc.color[TXT] =
-		dt->vc.color[LN]  =
-		dt->vc.color[CMT] = ::GetSysColor(COLOR_WINDOWTEXT); // RGB(0,0,0);
-		dt->vc.color[KWD] = RGB(0,90,230);
-		dt->vc.color[BG]  = ::GetSysColor(COLOR_WINDOW); // RGB(255,255,255);
-		dt->vc.color[CTL] = RGB(230,190,230);
+		dt->vc.color[LN]  = ::GetSysColor(COLOR_WINDOWTEXT); // RGB(0,0,0);
+		dt->vc.color[CMT] = brightmode? RGB(0,128,0): RGB(255,255,128);
+		dt->vc.color[KWD] = brightmode? RGB(0,32,192): RGB(128,255,255);
+		dt->vc.color[BG]  = bgcol;
+		dt->vc.color[CTL] = brightmode? RGB(192,160,192) : RGB(80,64,80);
 
 		dt->vc.sc[scEOF] = true;  // Show end of file with [EOF]
 		dt->vc.sc[scEOL] = true;  // Show End of line with '/'
