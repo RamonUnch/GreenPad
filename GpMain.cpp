@@ -1714,6 +1714,7 @@ bool GreenPadWnd::ShowSaveDlg()
 	aarr<TCHAR> filt = SaveFileDlg::ConnectWithNull( flst, countof(flst) );
 
 	SaveFileDlg sfd( charSets_, csi_, lb_, cfg_.useOldOpenSaveDlg() );
+	StatusBar::SaveRestoreText SaveRest(stb_);
 	stb_.SetText( TEXT("Saving file...") );
 	if( !sfd.DoModal( hwnd(), filt.get(), filename_.c_str() ) )
 		return false;
