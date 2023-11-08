@@ -8,6 +8,7 @@ using namespace ki;
 //=========================================================================
 
 Argv::Argv( const TCHAR* cmd )
+: arg_ ( 4 )
 {
 	TCHAR *p, endc;
 
