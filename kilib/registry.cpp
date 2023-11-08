@@ -104,15 +104,20 @@ Path IniFile::GetPath( const TCHAR* key, const TCHAR *defval ) const
 
 	// UTF-decoder
 	String buf;
-	for(uint i=0; 4*i+4<s.len(); ++i)
+	for(uint i=1; i<s.len(); ++i)
 	{
-		unsigned short v = 0;
-		for(int j=1; j<=4; ++j)
+		unsigned short v = s[i];
+		// Percent escape sequence %xxxx
+		if( v == L'%' && i+4 < s.len() )
 		{
-			int ch = s[4*i+j];
-			if( '0'<=ch && ch<='9' ) v = 16*v + ch-'0';
-			if( 'a'<=ch && ch<='z' ) v = 16*v + ch-'a'+10;
-			if( 'A'<=ch && ch<='Z' ) v = 16*v + ch-'A'+10;
+			for(int j=1; j<=4; ++j)
+			{
+				int ch = s[i+j];
+				if( '0'<=ch && ch<='9' ) v = 16*v + ch-'0';
+				if( 'A'<=ch && ch<='F' ) v = 16*v + ch-'A'+10;
+				if( 'a'<=ch && ch<='f' ) v = 16*v + ch-'a'+10;
+			}
+			i+=4;
 		}
 		buf += (wchar_t) v;
 	}
@@ -184,15 +189,25 @@ bool IniFile::PutPath( const TCHAR* key, const Path& val )
 		return PutStr( key , val.c_str() );
 
 	// UTF-encoder
-	const TCHAR* hex = TEXT("0123456789abcdef");
+	static const TCHAR hex[] = {
+		'0','1','2','3','4','5','6','7',
+		'8','9','a','b','c','d','e','f' };
 	String buf = TEXT("#");
 	for(unsigned i=0; i!=val.len(); ++i)
 	{
 		unsigned short u = (unsigned short) val[i];
-		buf += hex[(u>>12) & 0xf];
-		buf += hex[(u>> 8) & 0xf];
-		buf += hex[(u>> 4) & 0xf];
-		buf += hex[(u>> 0) & 0xf];
+		if( u > 127 || u == L'%' )
+		{	// Unicode, save as %xxxx
+			buf += L'%';
+			buf += hex[(u>>12) & 0xf];
+			buf += hex[(u>> 8) & 0xf];
+			buf += hex[(u>> 4) & 0xf];
+			buf += hex[(u>> 0) & 0xf];
+		}
+		else
+		{
+			buf += u; // ASCII, save as-is
+		}
 	}
 	return PutStr( key, buf.c_str() );
 #else
