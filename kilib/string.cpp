@@ -498,7 +498,7 @@ bool String::isCompatibleWithACP(const TCHAR *uni, size_t len)
 		return true;
 
 	BOOL err = FALSE;
-	int mblen = ::WideCharToMultiByte( CP_ACP, 0, uni, len+1, NULL, 0, NULL, &err );
+	int mblen = ::WideCharToMultiByte( CP_ACP, 0, uni, len, NULL, 0, NULL, &err );
 
 	if( err || !mblen )
 	{	// String is incompatible with CP_ACP for sure.
@@ -511,15 +511,15 @@ bool String::isCompatibleWithACP(const TCHAR *uni, size_t len)
 
 	char *mbbuf = new char[mblen];
 	if( !mbbuf ) return false;
-	mblen = ::WideCharToMultiByte( CP_ACP, 0, uni, len+1, mbbuf, mblen, NULL, NULL );
+	mblen = ::WideCharToMultiByte( CP_ACP, 0, uni, len, mbbuf, mblen, NULL, NULL );
 	if( !mblen ) return false;
 
-	wchar_t *backconv = new wchar_t[len+1];
+	wchar_t *backconv = new wchar_t[len];
 	if( !backconv ) return false;
-	size_t backconvlen = ::MultiByteToWideChar(CP_ACP, 0, mbbuf, mblen, backconv, len+1);
+	size_t backconvlen = ::MultiByteToWideChar(CP_ACP, 0, mbbuf, mblen, backconv, len);
 	delete [] mbbuf;
 
-	if( backconvlen != len || my_lstrcmpW( uni, backconv ) )
+	if( backconvlen != len || my_lstrncmpW( uni, backconv, len ) )
 		compatible = false; // Not matching
 	delete [] backconv;
 
