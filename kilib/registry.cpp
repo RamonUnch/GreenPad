@@ -183,9 +183,7 @@ bool IniFile::PutRect( const TCHAR* key, const RECT *rc  )
 bool IniFile::PutPath( const TCHAR* key, const Path& val )
 {
 #ifdef _UNICODE
-	BOOL err = FALSE;
-	::WideCharToMultiByte( CP_ACP, 0, val.c_str(), -1, NULL, 0, NULL, &err );
-	if( !err )
+	if( val.isCompatibleWithACP() )
 		return PutStr( key , val.c_str() );
 
 	// UTF-encoder

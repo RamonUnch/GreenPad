@@ -388,7 +388,7 @@ String& String::operator = ( const wchar_t* s )
 
 String& String::Load( UINT rsrcID )
 {
-	const int step=256;
+	enum { step=256 };
 
 	// 256バイトの固定長バッファへまず読んでみる
 	TCHAR tmp[step], *buf;
@@ -488,6 +488,42 @@ const char* String::ConvToChar() const
 	return p;
 #else
 	return c_str();
+#endif
+}
+
+bool String::isCompatibleWithACP(const TCHAR *uni, size_t len)
+{
+#ifdef _UNICODE
+	if( len ==0 )
+		return true;
+
+	BOOL err = FALSE;
+	int mblen = ::WideCharToMultiByte( CP_ACP, 0, uni, len, NULL, 0, NULL, &err );
+
+	if( err || !mblen )
+	{	// String is incompatible with CP_ACP for sure.
+		return false;
+	}
+	// Double check that we get the same unicode string when converting back.
+	// Because WC_NO_BEST_FIT_CHARS requires Windows 2000/XP
+	// Some losses are thus invisible to the err flag!
+	bool compatible = true;
+	char *mbbuf = new char[mblen];
+	if( !mbbuf ) return false;
+	mblen = ::WideCharToMultiByte( CP_ACP, 0, uni, len, mbbuf, mblen, NULL, NULL );
+	if( !mblen ) return false;
+
+	TCHAR *backconv = new TCHAR[len];
+	if( !backconv ) return false;
+	size_t backconvlen = ::MultiByteToWideChar(CP_ACP, 0, mbbuf, mblen, backconv, len);
+	if( backconvlen != len || my_lstrcmpW( uni, backconv ) )
+		compatible = false; // not matching
+	delete [] backconv;
+	delete [] mbbuf;
+
+	return compatible;
+#else
+	return true; // TCHAR == char so it is always OK.
 #endif
 }
 
