@@ -191,7 +191,7 @@ bool IniFile::PutPath( const TCHAR* key, const Path& val )
 		'0','1','2','3','4','5','6','7',
 		'8','9','a','b','c','d','e','f' };
 	String buf = TEXT("#");
-	for(unsigned i=0; i!=val.len(); ++i)
+	for(size_t i=0; i<val.len(); ++i)
 	{
 		unsigned short u = (unsigned short) val[i];
 		if( u > 127 || u == L'%' )

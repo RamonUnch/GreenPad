@@ -498,7 +498,7 @@ bool String::isCompatibleWithACP(const TCHAR *uni, size_t len)
 		return true;
 
 	BOOL err = FALSE;
-	int mblen = ::WideCharToMultiByte( CP_ACP, 0, uni, len, NULL, 0, NULL, &err );
+	int mblen = ::WideCharToMultiByte( CP_ACP, 0, uni, len+1, NULL, 0, NULL, &err );
 
 	if( err || !mblen )
 	{	// String is incompatible with CP_ACP for sure.
@@ -508,22 +508,24 @@ bool String::isCompatibleWithACP(const TCHAR *uni, size_t len)
 	// Because WC_NO_BEST_FIT_CHARS requires Windows 2000/XP
 	// Some losses are thus invisible to the err flag!
 	bool compatible = true;
+
 	char *mbbuf = new char[mblen];
 	if( !mbbuf ) return false;
-	mblen = ::WideCharToMultiByte( CP_ACP, 0, uni, len, mbbuf, mblen, NULL, NULL );
+	mblen = ::WideCharToMultiByte( CP_ACP, 0, uni, len+1, mbbuf, mblen, NULL, NULL );
 	if( !mblen ) return false;
 
-	TCHAR *backconv = new TCHAR[len];
+	wchar_t *backconv = new wchar_t[len+1];
 	if( !backconv ) return false;
-	size_t backconvlen = ::MultiByteToWideChar(CP_ACP, 0, mbbuf, mblen, backconv, len);
-	if( backconvlen != len || my_lstrcmpW( uni, backconv ) )
-		compatible = false; // not matching
-	delete [] backconv;
+	size_t backconvlen = ::MultiByteToWideChar(CP_ACP, 0, mbbuf, mblen, backconv, len+1);
 	delete [] mbbuf;
+
+	if( backconvlen != len || my_lstrcmpW( uni, backconv ) )
+		compatible = false; // Not matching
+	delete [] backconv;
 
 	return compatible;
 #else
-	return true; // TCHAR == char so it is always OK.
+	return true;
 #endif
 }
 
