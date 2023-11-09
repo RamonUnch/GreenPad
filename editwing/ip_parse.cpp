@@ -685,6 +685,9 @@ public:
 Document::Document( )
 	: pEvHan_ ( 2 )
 	, busy_   ( false )
+	, acc_textupdate_mode_ ( false )
+	, acc_reparsed_ ( false )
+	, acc_nmlcmd_ (false )
 {
 	text_.Add( new Line(L"",0) ); // 最初は一行だけ
 	SetKeyword( NULL, 0 );        // キーワード無し

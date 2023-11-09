@@ -432,15 +432,15 @@ private:
 	ki::gapbufobj<Line>                text_;   // テキストデータ
 	mutable ki::storage<DocEvHandler*> pEvHan_; // イベント通知先
 	UnReDoChain                    urdo_;   // アンドゥリドゥ
-//	editwing::DPos acc_s_, acc_e2_;
+	editwing::DPos acc_s_, acc_e2_;
 	bool busy_;
-//	bool acc_textupdate_mode;
-//	bool acc_reparsed_;
-//	bool acc_nmlcmd_;
-//
-//public:
-//	void acc_Fire_TEXTUPDATE_begin();
-//	void acc_Fire_TEXTUPDATE_end();
+	bool acc_textupdate_mode_;
+	bool acc_reparsed_;
+	bool acc_nmlcmd_;
+
+public:
+	void acc_Fire_TEXTUPDATE_begin();
+	void acc_Fire_TEXTUPDATE_end();
 private:
 
 	// 変更通知
