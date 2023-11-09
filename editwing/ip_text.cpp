@@ -839,8 +839,7 @@ void Document::OpenFile( TextFileR& tf )
 	}
 //	DWORD otime = GetTickCount();
 	size_t L;
-	ulong i=0;
-	for( i=0; L = tf.ReadBuf( buf, buf_sz ); )
+	for( ulong i=0; L = tf.ReadBuf( buf, buf_sz ); )
 	{
 		DPos p( i, len(e.tl) ); // end of document
 		InsertingOperation( p, buf, (ulong)L, e, /*reparse=*/false );
