@@ -281,6 +281,9 @@ public:
 	//@{ ConvTo(W)Charの返値バッファの解放 //@}
 	void FreeWCMem( const wchar_t* wc ) const;
 	void FreeCMem( const char* str ) const;
+	
+	static bool isCompatibleWithACP(const TCHAR *uni, size_t len);
+	bool isCompatibleWithACP() const;
 
 public:
 
@@ -458,6 +461,9 @@ inline void String::FreeCMem( const char* str ) const
 #else // _MBCS or _SBCS
 	{}
 #endif
+
+inline bool String::isCompatibleWithACP() const
+{ return isCompatibleWithACP( c_str(), len() ); }
 
 
 
