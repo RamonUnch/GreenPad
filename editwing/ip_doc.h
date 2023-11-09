@@ -434,7 +434,7 @@ private:
 	UnReDoChain                    urdo_;   // ƒAƒ“ƒhƒDƒŠƒhƒD
 	editwing::DPos acc_s_, acc_e2_;
 	bool busy_;
-	bool acc_textupdate_mode;
+	bool acc_textupdate_mode_;
 	bool acc_reparsed_;
 	bool acc_nmlcmd_;
 
