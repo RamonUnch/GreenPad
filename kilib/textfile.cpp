@@ -85,7 +85,7 @@ struct rBasicUTF : public ki::TextFileRPimpl
 		}
 
 		// If the end of the buffer contains half a DOS CRLF
-		if( *(w-1)==L'\r' && PeekC() == L'\n' )
+		if(buf<w && *(w-1)==L'\r' && PeekC() == L'\n' )
 			Skip();
 
 		// “Ç‚ñ‚¾•¶Žš”
@@ -1075,7 +1075,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 
 		// If the end of the buffer contains half a DOS CRLF
 		// we do not translate it.
-		const char *pp = p - ( p < fe && *(p-1)=='\r' && *(p) =='\n' );
+		const char *pp = p - ( p < fe && p > fb && *(p-1)=='\r' && *(p) =='\n' );
 
 		// Unicode‚Ö•ÏŠ·, convertion to Unicode
 		ulong len;
@@ -1356,7 +1356,7 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 		outofloop:
 
 		// If the end of the buffer contains half a DOS CRLF
-		if( *(p-1)=='\r' && *p=='\n' )
+		if( p > fb && *(p-1)=='\r' && *p=='\n' )
 			++p;
 		fb = p;
 
