@@ -564,7 +564,7 @@ bool Document::DeletingOperation
 }
 
 bool Document::InsertingOperation
-	( DPos& s, const unicode* str, ulong len, DPos& e )
+	( DPos& s, const unicode* str, ulong len, DPos& e, bool reparse )
 {
 	AutoLock lk( this );
 
@@ -613,9 +613,8 @@ bool Document::InsertingOperation
 	}
 
 	// çƒâêÕ, Reanalysis
-	return ReParse( s.tl, e.tl );
+	return reparse && ReParse( s.tl, e.tl );
 }
-
 
 
 //-------------------------------------------------------------------------
@@ -815,19 +814,6 @@ void Document::OpenFile( TextFileR& tf )
 	// ë}ì¸, Insertion
 	DPos e(0,0);
 
-//	// Quick UTF16 special direct reading.
-//	if( tf.codepage() == UTF16LE ||  tf.codepage() == UTF16l )
-//	{
-//		DPos p(0,0);
-//		//DWORD otime = GetTickCount();
-//		const unicode *buf = reinterpret_cast<const unicode*>( tf.rawData() );
-//		int bom = *buf == 0xfffe; // Skip BOM
-//		InsertingOperation(p , buf+bom, (tf.size()/2)-bom, e );
-//		Fire_TEXTUPDATE( DPos(0,0), DPos(0,0), e, true, false );
-//		//MessageBox(GetForegroundWindow(),  SInt2Str(GetTickCount()-otime).c_str(), TEXT("Time in ms UTF16:"), 0);
-//		return; // DONE!
-//	}
-
 	// Super small stack buffer in case the malloc fails
 	#define SBUF_SZ 1800
 	unicode sbuf[SBUF_SZ];
@@ -855,10 +841,12 @@ void Document::OpenFile( TextFileR& tf )
 	size_t L;
 	for( ulong i=0; L = tf.ReadBuf( buf, buf_sz ); )
 	{
-		DPos p(i,0xffffffff);
-		InsertingOperation( p, buf, (ulong)L, e );
+		DPos p( i, len(e.tl) ); // end of document
+		InsertingOperation( p, buf, (ulong)L, e, /*reparse=*/false );
 		i = tln() - 1;
 	}
+	// Parse All lines, because we skipped it
+	ReParse( 0, tln()-1 );
 
 	if( buf != sbuf )
 		delete [] buf;
