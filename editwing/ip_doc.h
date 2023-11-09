@@ -457,7 +457,7 @@ private:
 
 	// ‘}“üEíœì‹Æ
 	bool InsertingOperation(
-		DPos& stt, const unicode* str, ulong len, DPos& undoend );
+		DPos& stt, const unicode* str, ulong len, DPos& undoend, bool reparse=true );
 	bool DeletingOperation(
 		DPos& stt, DPos& end, unicode*& undobuf, ulong& undosiz );
 
