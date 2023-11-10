@@ -188,52 +188,6 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 			cfg_.RememberWnd(this);
 		}
 		break;
-	#if 0
-	case WM_NCCALCSIZE: {
-		#ifdef FORCE_RTL_LAYOUT
-		if ( WS_EX_LAYOUTRTL & GetWindowLongPtr(hwnd(), GWL_EXSTYLE) )
-			return WndImpl::on_message( msg, wp, lp );
-		#endif
-		// Handle WM_NCCALCSIZE to avoid ugly resizing
-		// TODO: handle properly the right to left layout mode...
-		int ret = WndImpl::on_message( msg, wp, lp );
-		NCCALCSIZE_PARAMS *nc = (NCCALCSIZE_PARAMS *)lp;
-		RECT wnd;
-		GetWindowRect(hwnd(), &wnd);
-		if( wp && (wnd.left != nc->lppos->x || wnd.top != nc->lppos->y))
-		{ // Resized from the top or left (or both)
-			// Window will BitBlt between those two rects:
-			CopyRect(&nc->rgrc[1], &wnd); // Destination
-			CopyRect(&nc->rgrc[2], &wnd); // Source
-			POINT pt = { 0, 0 };
-			ClientToScreen(hwnd(), &pt); // client coord
-			pt.x -= wnd.left;
-			pt.y -= wnd.top;
-
-			// Calculat right and bottom margins
-			long rmargin = GetSystemMetrics(SM_CXVSCROLL)+GetSystemMetrics(SM_CXSIZEFRAME)+GetSystemMetrics(SM_CXEDGE);
-			long bmargin = GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYEDGE);
-			RECT rcSB;
-			if (stb_.isStatusBarVisible() && GetWindowRect(stb_.hwnd(), &rcSB))
-				bmargin += rcSB.bottom-rcSB.top; // Add height of status bar if present.
-			if(GetWindowLongPtr(edit_.getView().hwnd(), GWL_STYLE)&WS_HSCROLL)
-				bmargin += GetSystemMetrics(SM_CYHSCROLL); // Add HSCOLL bar height if needed.
-
-			// Adjust rects so that it does not include SB nor scrollbars.
-			nc->rgrc[2].right  -= Max(rmargin, (wnd.right-wnd.left) - nc->lppos->cx + rmargin);
-			nc->rgrc[2].bottom -= Max(bmargin, (wnd.bottom-wnd.top) - nc->lppos->cy + bmargin);
-
-			// Do not include caption+menu in BitBlt
-			nc->rgrc[1].left = nc->lppos->x + pt.x;
-			nc->rgrc[1].top  = nc->lppos->y + pt.y;
-			nc->rgrc[2].top  += pt.y;
-			nc->rgrc[2].left += pt.x;
-
-			return WVR_VALIDRECTS;
-		}
-		return ret;
-		}break;
-	#endif
 
 //	case WM_ERASEBKGND:{
 //		// Uncomment to see in black the area that will be repainted
