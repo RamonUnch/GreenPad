@@ -401,21 +401,24 @@ bool ConfigManager::DoDialog( const ki::Window& parent )
 //-------------------------------------------------------------------------
 
 namespace {
-	static ulong ToByte( const unicode* str )
+	static ulong ToByte( const unicode str[2] )
 	{
 		ulong c = str[0];
-			 if( L'a' <= str[0] ) c -= (L'a' - 10);
+		if     ( L'a' <= str[0] ) c -= (L'a' - 10);
 		else if( L'A' <= str[0] ) c -= (L'A' - 10);
 		else                      c -=  L'0';
 		c = c*16 + str[1];
-			 if( L'a' <= str[1] ) c -= (L'a' - 10);
+		if     ( L'a' <= str[1] ) c -= (L'a' - 10);
 		else if( L'A' <= str[1] ) c -= (L'A' - 10);
 		else                      c -=  L'0';
 		return c;
 	}
 	static ulong GetColor( const unicode* str )
 	{
-		return ToByte(str) + (ToByte(str+2)<<8) + (ToByte(str+4)<<16);
+		ulong val = 0;
+		for(int i=0; i<=2 && str && str[1]; ++i,str+=2 )
+			val += ToByte(str) << (i*8);
+		return val;
 	}
 	static int GetInt( const unicode* str )
 	{
@@ -745,7 +748,7 @@ void ConfigManager::LoadIni()
 	grepExe_   = ini_.GetStr( TEXT("GrepExe"), TEXT("") );
 	helpExe_   = ini_.GetStr( TEXT("HelpExe"), TEXT("") );
 	openSame_  = ini_.GetBool( TEXT("OpenSame"), false );
-	countbyunicode_ = ini_.GetBool( TEXT("CountUni"), false );
+	countbyunicode_ = ini_.GetBool( TEXT("CountUni"), true );
 	// By default we have stb on NT3.10.404 Win32s 1.30.159
 	// And chicago builds that are not too early.
 	bool havestb =  app().isNTOSVerLarger( MKVER(3,10,404) )
