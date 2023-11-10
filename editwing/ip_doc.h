@@ -32,7 +32,14 @@ class Parser;
 // U+007f is included to speed up the parsing process
 //@}
 //=========================================================================
-
+#ifdef USE_ORIGINAL_MEMMAN
+	// be sure to align alloc evenly because unicode is 2 bytes long
+	// and we append bytes, but alignement should remain 2bytes
+	// Otherwise some functions might fail such as TextOutW
+	#define EVEN(x) ( ((x)+1)&(~1ul) )
+#else
+	#define EVEN(x) (x)
+#endif
 class Line : public ki::Object
 {
 public:
@@ -41,7 +48,7 @@ public:
 	Line( const unicode* str, ulong len )
 		: alen_( len )
 		, len_ ( len )
-		, str_ ( static_cast<unicode*>( ki::mem().Alloc((alen_+1)*2+alen_) ) )
+		, str_ ( static_cast<unicode*>( ki::mem().Alloc(EVEN((alen_+1)*2+alen_)) ) )
 		, commentBitReady_( 0 )
 		, isLineHeadCommented_( 0 )
 		, commentTransition_( 0 )
@@ -58,7 +65,7 @@ public:
 
 	~Line()
 		{
-			ki::mem().DeAlloc( str_, (alen_+1)*2+alen_ );
+			ki::mem().DeAlloc( str_, EVEN((alen_+1)*2+alen_) );
 		}
 
 	//@{ テキスト挿入(指定位置に指定サイズ), Insert text (specified position, specified size)  //@}
@@ -71,7 +78,7 @@ public:
 				ulong psiz = (alen_+1)*2+alen_;
 				ulong nalen = Max( alen_+(alen_>>1), len_+siz ); // len_+siz;
 				unicode* tmpS =
-					static_cast<unicode*>( ki::mem().Alloc((nalen+1)*2+nalen) );
+					static_cast<unicode*>( ki::mem().Alloc( EVEN((nalen+1)*2+nalen) ) );
 				if( !tmpS ) return;
 				uchar*   tmpF =
 					reinterpret_cast<uchar*>(tmpS+nalen+1);
@@ -81,7 +88,7 @@ public:
 				memmove( tmpS+at+siz, str_+at, (len_-at+1)*2 );
 				memmove( tmpF,        flgs,             at   );
 				// 古いのを削除
-				ki::mem().DeAlloc( str_, psiz );
+				ki::mem().DeAlloc( str_, EVEN(psiz) );
 				str_ = tmpS;
 			}
 			else
@@ -176,6 +183,7 @@ private:
 	uchar commentTransition_;
 };
 
+#undef EVEN
 
 
 //=========================================================================
