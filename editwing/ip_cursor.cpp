@@ -642,6 +642,7 @@ void Cursor::DelToStartline( bool wide )
 
 //-------------------------------------------------------------------------
 // Add the quote string at the begining of each line.
+// Pass NULL, true to Strip first char
 //-------------------------------------------------------------------------
 void Cursor::QuoteSelectionW(const unicode *qs, bool shi)
 {
@@ -656,7 +657,7 @@ void Cursor::QuoteSelectionW(const unicode *qs, bool shi)
 	// Skip last line if selected on 0 length
 	if( dM.ad == 0 &&  dm.tl < dM.tl) dM.tl--;
 
-	size_t qsl = my_lstrlenW(qs); // length of quote string.
+	int qsl = qs? my_lstrlenW(qs): 1; // length of quote string.
 
 	doc::MacroCommand mcr;
 	// For each line
@@ -666,7 +667,7 @@ void Cursor::QuoteSelectionW(const unicode *qs, bool shi)
 		if( shi )
 		{	// Remove Quote
 			const unicode *linebuf = doc_.tl(i);
-			if( my_instringW(linebuf, qs) )
+			if( !qs || my_instringW(linebuf, qs) )
 			{	// Delete the quote string if found at line start
 				DPos dpe(i, qsl);
 				mcr.Add( new doc::Delete(dps, dpe) );
@@ -683,6 +684,7 @@ void Cursor::QuoteSelectionW(const unicode *qs, bool shi)
 		// Execute command
 		doc_.Execute( mcr );
 		// Restole old selection
+		if( shi ) qsl = -qsl;
 		if( osel.ad ) osel.ad += qsl;
 		if( ocur.ad ) ocur.ad += qsl;
 		MoveCur(osel, false);
@@ -859,24 +861,7 @@ unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str)
 
 	return j!=0 ? &str[j]: NULL; // New string start
 }
-unicode* WINAPI Cursor::StripFirstCharsW(unicode *p)
-{	// Remove first char of each line
 
-	size_t  i, j, len = my_lstrlenW(p);
-	for (i=0, j=0; i < len; )
-	{
-		if((p[i] == L'\n' && (!i || p[i-1] == L'\r')) // DOS
-		|| (p[i] == L'\n' && (!i || p[i-1] != L'\r')) // UNIX
-		|| (p[i] == L'\r' && p[i+1] != '\n')) // MAC
-		{
-			i+=p[i+1] != L'\0';
-		}
-
-		p[j++] = p[++i];
-	}
-	p[j] = L'\0';
-	return p;
-}
 unicode* WINAPI Cursor::StripLastCharsW(unicode *p)
 {	// Remove last char of each line
 
@@ -956,15 +941,11 @@ void Cursor::InvertCaseSel()
 void Cursor::TTSpacesSel()
 {
 	ModSelection(TrimTrailingSpacesW);
+
 }
 void Cursor::StripFirstChar()
 {
-	if(cur_==sel_) return;
-	if(cur_ < sel_)
-		cur_.ad=0;
-	else
-		sel_.ad=0;
-	ModSelection(StripFirstCharsW);
+	QuoteSelectionW( NULL, true );
 }
 void Cursor::StripLastChar()
 {

@@ -278,7 +278,6 @@ public:
 	void LowerCaseSel();
 	static unicode* WINAPI InvertCaseW(unicode *);
 	static unicode* WINAPI TrimTrailingSpacesW(unicode *);
-	static unicode* WINAPI StripFirstCharsW(unicode *);
 	static unicode* WINAPI StripLastCharsW(unicode *);
 	static unicode* WINAPI ASCIIOnlyW(unicode *);
 	void InvertCaseSel();
