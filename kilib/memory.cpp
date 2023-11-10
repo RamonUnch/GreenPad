@@ -17,6 +17,7 @@ using namespace ki;
 	static int allocCounter = 0;
 	static int smallAllocSize = 0;
 	static int smallDeAllocSize = 0;
+	static ulong smallAllocs_hist[SMALL_MAX];
 	#endif // _DEBUG
 
 	void* __cdecl operator new( size_t siz )
@@ -528,8 +529,10 @@ inline bool MemoryManager::FixedSizeMemBlockPool::isValid()
 	return (blockNum_ != 0);
 }
 
-
-
+#ifdef _DEBUG
+#include "log.h"
+#include "kstring.h"
+#endif
 //-------------------------------------------------------------------------
 
 //
@@ -549,7 +552,9 @@ MemoryManager::MemoryManager()
 	// Because we only use single thread (may change later)
 	// g_heap = ::HeapCreate( HEAP_NO_SERIALIZE, 1, 0 );
 #endif
-
+#if defined(SUPERTINY) && defined(_DEBUG)
+	mem00(smallAllocs_hist, sizeof(smallAllocs_hist));
+#endif
 	// メモリプールをZEROクリア
 	#ifndef STACK_MEM_POOLS
 	static MemoryManager::FixedSizeMemBlockPool staticpools[ SMALL_MAX ];
@@ -583,16 +588,24 @@ MemoryManager::~MemoryManager()
 		              , allocCounter, smallAllocSize, smallDeAllocSize, smallAllocSize-smallDeAllocSize );
 		::MessageBox( GetActiveWindow(), buf, TEXT("MemoryLeak!"), MB_OK|MB_TOPMOST );
 	}
+	LOGGER( "small allocs histogram:" );
+	TCHAR tmp[ULONG_DIGITS+1];
+	for(int i=0; i<SMALL_MAX; i++)
+		LOGGERS( Ulong2lStr(tmp, smallAllocs_hist[i]) );
 #endif // _DEBUG
 #endif // SUPERTINY
 }
 
-//#include "log.h"
 void* A_HOT MemoryManager::Alloc( size_t siz )
 {
+//#ifdef MEM_ALIGN
+//	siz = (siz+MEM_ALIGN-1) & ~(MEM_ALIGN-1);
+//#endif
 #if defined(SUPERTINY) && defined(_DEBUG)
 	++allocCounter;
 	smallAllocSize += siz;
+	if( siz < SMALL_MAX )
+		smallAllocs_hist[siz]++;
 //	LOGGERF( TEXT("Alloc(%lu) - %lu tot"), siz, smallAllocSize );
 #endif
 
@@ -619,6 +632,9 @@ void* A_HOT MemoryManager::Alloc( size_t siz )
 
 void A_HOT MemoryManager::DeAlloc( void* ptr, size_t siz )
 {
+//#ifdef MEM_ALIGN
+//	siz = (siz+MEM_ALIGN-1) & ~(MEM_ALIGN-1);
+//#endif
 #if defined(SUPERTINY) && defined(_DEBUG)
 	--allocCounter;
 	smallDeAllocSize += siz;
@@ -654,6 +670,7 @@ MemoryManager::MemoryManager()
 #endif
 	// 唯一のインスタンスは私です
 	pUniqueInstance_ = this;
+
 }
 
 MemoryManager::~MemoryManager()
