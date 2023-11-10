@@ -192,9 +192,6 @@ public:
 	//@{ 改行コード (0:CR, 1:LF, 2:CRLF) //@}
 	int linebreak() const;
 
-	//@{ 読み込み状況 (0:EOF, 1:EOL, 2:EOB) //@}
-//	int state() const;
-
 	//@{ ファイルサイズ //@}
 	ulong size() const;
 

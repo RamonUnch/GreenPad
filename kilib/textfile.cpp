@@ -14,13 +14,10 @@ using namespace ki;
 struct ki::TextFileRPimpl: public Object
 {
 	inline TextFileRPimpl()
-//		: state(EOL)
 		{}
 
 	virtual size_t ReadBuf( unicode* buf, ulong siz )
 		= 0;
-
-//	enum { EOF=0, EOL=1, EOB=2 } state;
 
 	virtual ~TextFileRPimpl() {}
 };
@@ -68,8 +65,6 @@ struct rBasicUTF : public ki::TextFileRPimpl
 
 	size_t ReadBuf( unicode* buf, ulong siz ) override A_FINAL
 	{
-//		state = EOF;
-
 		// 改行が出るまで読む
 		unicode *w=buf, *e=buf+siz-1;
 
@@ -78,10 +73,7 @@ struct rBasicUTF : public ki::TextFileRPimpl
 			*w = GetC();
 
 			if( ++w==e )
-			{
-//				state = EOB;
 				break;
-			}
 		}
 
 		// If the end of the buffer contains half a DOS CRLF
@@ -1033,7 +1025,6 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		// バッファの終端か、ファイルの終端の近い方まで読み込む
 		// Read to the end of the buffer or near the end of the file
 		const char *p, *end = Min( fb+siz/2-2, fe );
-//		state = (end==fe ? EOF : EOB);
 
 		// 改行が出るまで進む
 		p=fb;
@@ -1326,14 +1317,11 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 
 		// バッファの終端か、ファイルの終端の近い方まで読み込む
 		const uchar *p, *end = Min( fb+siz/2-2, fe );
-//		state = (end==fe ? EOF : EOB);
 
 		// 改行が出るまで進む
 		for( p=fb; p<end; ++p )
 			switch( *p )
 			{
-//			case '\r':
-//			case '\n': state =   EOL; goto outofloop;
 			case 0x0F:    GL = &G[0]; break;
 			case 0x0E:    GL = &G[1]; break;
 			case 0x8E: gWhat =     2; break;
@@ -1388,11 +1376,6 @@ size_t TextFileR::ReadBuf( unicode* buf, ulong siz )
 {
 	return impl_->ReadBuf( buf, siz );
 }
-
-//int TextFileR::state() const
-//{
-//	return impl_->state;
-//}
 
 void TextFileR::Close()
 {
