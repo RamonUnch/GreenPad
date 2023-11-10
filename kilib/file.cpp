@@ -20,7 +20,7 @@ static TCHAR *GetUNCPath(const TCHAR *ifn)
 	if (len > MAX_PATH) // len includes the terminating '\0'.
 	{
 		TCHAR *buf = new TCHAR [(len + 16) * sizeof(TCHAR)];
-		if (!buf) return (TCHAR* )ifn;
+		if (!buf) return const_cast<TCHAR*>(ifn);
 		int buffstart = 0;
 		if (ifn[0] == '\\' && ifn[1] == '\\')
 		{
@@ -77,7 +77,7 @@ HANDLE CreateFileUNC(
 	DWORD dwFlagsAndAttributes,
 	HANDLE hTemplateFile)
 {
-	TCHAR *UNCPath = (TCHAR *)fname;
+	TCHAR *UNCPath = const_cast<TCHAR*>(fname);
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
 	if( app().isNT() )
@@ -103,7 +103,7 @@ HANDLE CreateFileUNC(
 
 DWORD GetFileAttributesUNC(LPCTSTR fname)
 {
-	TCHAR *UNCPath = (TCHAR *)fname;
+	TCHAR *UNCPath = const_cast<TCHAR*>(fname);
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
 	if( app().isNT() )
@@ -288,7 +288,7 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 		return false;
 	Close();
 
-	TCHAR *UNCPath = (TCHAR *)fname;
+	TCHAR *UNCPath = const_cast<TCHAR*>(fname);
 #ifdef UNICODE
 	// UNC are supported only un Unicode mode on Windows NT
 	if( app().isNT() )
@@ -377,7 +377,7 @@ void FileW::WriteInCodepageFromUnicode( int cp, const unicode* str, size_t len )
 		size_t uniwrite = (bremain>>2) - (0xD800 <= str[(bremain>>2)-1] && str[(bremain>>2)-1] <= 0xDBFF);
 
 		// Fill the buffer to the end (kinda).
-		bPos_ += ::WideCharToMultiByte( cp, 0, str, uniwrite, (char*)(buf_+bPos_), bremain, NULL, NULL ) ;
+		bPos_ += ::WideCharToMultiByte( cp, 0, str, uniwrite, reinterpret_cast<char*>(buf_+bPos_), bremain, NULL, NULL ) ;
 		len  -= uniwrite;
 		str  += uniwrite;
 
@@ -385,5 +385,5 @@ void FileW::WriteInCodepageFromUnicode( int cp, const unicode* str, size_t len )
 	}
 
 	// We have room to write len bytes directly to the tail of the buffer.
-	bPos_ += ::WideCharToMultiByte( cp, 0, str, len, (char*)(buf_+bPos_), bremain, NULL, NULL ) ;
+	bPos_ += ::WideCharToMultiByte( cp, 0, str, len, reinterpret_cast<char*>(buf_+bPos_), bremain, NULL, NULL ) ;
 }

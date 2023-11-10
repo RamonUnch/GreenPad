@@ -145,7 +145,7 @@ Path& Path::BeShortLongStyle()
 	TCHAR fp[MAX_PATH];
 	if( my_lstrchr( fd.cFileName, TEXT('?') )
 	|| !my_lstrcpy( fp, c_str() )
-	|| !my_lstrcpy( (char*)name(fp), fd.cFileName)
+	|| !my_lstrcpy( const_cast<char*>(name(fp)), fd.cFileName)
 	|| ::GetFileAttributes( fp ) == 0xFFFFFFFF )
 	{ // Unable to find long file name.
 		return *this;

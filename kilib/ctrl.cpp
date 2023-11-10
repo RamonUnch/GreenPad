@@ -31,7 +31,7 @@ bool StatusBar::Create( )
 		WS_CHILD|WS_VISIBLE|SBARS_SIZEGRIP , // window style
 		0, 0, 0, 0, //x, y, w, h
 		parent_, // handle to parent or owner window
-		(struct HMENU__ *)1787, // handle to menu or child-window identifier
+		reinterpret_cast<HMENU>(1787), // handle to menu or child-window identifier
 		app().hinst(), // handle to application instance
 		NULL // pointer to window-creation data
 	);
