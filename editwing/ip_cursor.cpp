@@ -645,19 +645,16 @@ void Cursor::DelToStartline( bool wide )
 //-------------------------------------------------------------------------
 void Cursor::QuoteSelectionW(const unicode *qs, bool shi)
 {
+	DPos ocur=cur_, osel=sel_; // save original selection
 	// Set cursors at begining of line
 	DPos dm, dM;
 	if( cur_ < sel_ ) {
-		cur_.ad = 0;
 		dm=cur_; dM=sel_;
 	} else {
-		sel_.ad=0;
 		dm=sel_; dM=cur_;
 	}
 	// Skip last line if selected on 0 length
 	if( dM.ad == 0 &&  dm.tl < dM.tl) dM.tl--;
-
-	DPos ocur=cur_, osel=sel_; // save original selection
 
 	size_t qsl = my_lstrlenW(qs); // length of quote string.
 
@@ -686,6 +683,8 @@ void Cursor::QuoteSelectionW(const unicode *qs, bool shi)
 		// Execute command
 		doc_.Execute( mcr );
 		// Restole old selection
+		if( osel.ad ) osel.ad += qsl;
+		if( ocur.ad ) ocur.ad += qsl;
 		MoveCur(osel, false);
 		MoveCur(ocur, true);
 	}
