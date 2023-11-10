@@ -392,14 +392,15 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	if( myGetFontUnicodeRanges )
 	{ // We found the function
 		DWORD frlen = myGetFontUnicodeRanges( cdc_, NULL );
-		if( frlen && (fontranges_ = reinterpret_cast<GLYPHSET*>( mem().Alloc(frlen) )) )
+		LOGGERF(TEXT("GetFontUnicodeRanges->frlen=%lu"), frlen );
+		if( frlen && (fontranges_ = reinterpret_cast<GLYPHSET*>( new BYTE[frlen] )) )
 		{
 			mem00(fontranges_, frlen);
 			fontranges_->cbThis = frlen;
 			fontranges_->flAccel = 0;
 			if( frlen != myGetFontUnicodeRanges( cdc_, fontranges_ ) )
 			{ // Failed!
-				mem().DeAlloc( fontranges_, fontranges_->cbThis );
+				delete [] reinterpret_cast<BYTE*>(fontranges_);
 				fontranges_ = NULL;
 			}
 		}
@@ -456,7 +457,7 @@ Painter::~Painter()
 	::DeleteObject( pen_ );
 	::DeleteObject( brush_ );
 	if( fontranges_ )
-		mem().DeAlloc( fontranges_, fontranges_->cbThis );
+		delete [] reinterpret_cast<BYTE*>(fontranges_);
 //	delete [] widthTable_;
 }
 
@@ -497,22 +498,18 @@ inline void Painter::StringOut
 				}
 			}
 		}
-		BOOL ret = ::TextOutA( dc_, x, y, psText, dwNum );
-		#ifdef USE_ORIGINAL_MEMMAN
-		if( !ret ) ::TextOutA( dc_, x, y, psText, dwNum ); // What the fuck?
-		#endif
+		::TextOutA( dc_, x, y, psText, dwNum );
 		if (psText != psTXT1K)
 			delete [] psText;
 	}
 	else
 #endif // WIN32S
 	{
-	    // It seems that when USING ORIGINAL MEMMAN TextOutW can Fail
-	    // and we must draw the text twice. There must be some race condition
-	    // and I cannot figure it out.
+		// If unicode text is not 2bytes-aligned then TextOutW can randomly fail
+		// To avoid this we must be careful in the Line class...
 		BOOL ret = ::TextOutW( dc_, x, y, str, len );
-		#ifdef USE_ORIGINAL_MEMMAN
-		if( !ret ) ::TextOutW( dc_, x, y, str, len ); // What the fuck?
+		#ifdef _DEBUG
+			if(!ret) LOGGER("TextOutW failed!");
 		#endif
 	}
 }
@@ -880,10 +877,6 @@ void ViewImpl::DrawTXT( const VDrawInfo &v, Painter& p )
 					if( clr != (flg[i]&3) )
 						p.SetColor( clr=(flg[i]&3) );
 					p.StringOut( str+i, i2-i, x+v.XBASE, a.top );
-					//p.StringOut( str+i, i2-i, x+v.XBASE, a.top );
-					// âΩåÃÇæÇ©ÇQìxï`Ç´ÇµÇ»Ç¢Ç∆Ç§Ç‹Ç≠Ç¢Ç©ÇÒÅc
-					// RAMON: I take care of it in the StringOut function.
-					// If TextOut fails, I paint a second time.
 					break;
 				}
 			}
