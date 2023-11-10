@@ -1709,21 +1709,25 @@ void TextFileR::setLBfromFreq(ulong freq[256], uchar cr, uchar lf)
 // Just says if cs is part of the EBCDIC encoding familly
 bool TextFileR::isEBCDIC( int cs )
 {
-	static const unsigned short ebcidlst[] = {
-		37, 500, 870, 875, 1026, 1047,
-		//1140--1149
-		20273, 20277, 20278, 20280, 20284, 20285,
-		20290, 20297, 20420, 20423, 20424, 20833,
-		20838, 20871, 20880, 20905, 20924, 21025,
-		50930, 50931, 50933, 50935, 50937, 50939
-	};
-	if( cs == UTFEBCDIC || cs == UTFEBCDICY
-	||( 1140 <= cs && cs <= 1149 ) )
+//	static const unsigned short ebcidlst[] = {
+//		37, 500, 870, 875, 1026, 1047,
+//		//1140--1149
+//		20273, 20277, 20278, 20280, 20284, 20285,
+//		20290, 20297, 20420, 20423, 20424, 20833,
+//		20838, 20871, 20880, 20905, 20924, 21025,
+//		50930, 50931, 50933, 50935, 50937, 50939
+//	};
+	if( cs == UTFEBCDIC || cs == UTFEBCDICY )
 		return true;
 
-	for( size_t i=0; i<countof(ebcidlst); i++ )
-		if( ebcidlst[i] == cs )
-			return true;
+	// Detect EBCDIC based on translation
+	if( 0 < cs && cs < 65535 && ::IsValidCodePage( cs ) )
+	{
+		wchar_t tr[4];
+		int ret = ::MultiByteToWideChar( cs, 0, "\x81\x40\xF0", 4, tr, 4 );//"a 0"
+		return ret==4 && tr[0]==L'a' && tr[1]==L' ' && tr[2]==L'0';
+	}
+
 	return false;
 }
 
