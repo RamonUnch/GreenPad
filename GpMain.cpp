@@ -22,7 +22,7 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 	if( quotedexe ) fcmd += TEXT("\" ");
 	else fcmd += TEXT(" ");
 	fcmd += cmd;
-//	MessageBox(NULL, (TCHAR*)fcmd.c_str(), (TCHAR*)Path(Path::ExeName).c_str(), MB_OK);
+//	MessageBox(NULL, fcmd.c_str(), Path(Path::ExeName).c_str(), MB_OK);
 
 #ifdef UNICOWS
 	if( app().isNT() )
@@ -32,7 +32,7 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 		::GetStartupInfoW( &stiw );
 		const wchar_t *p = fcmd.ConvToWChar();
 		if( !p ) return;
-		if( ::CreateProcessW( NULL, (wchar_t *)p,
+		if( ::CreateProcessW( NULL, const_cast<wchar_t*>(p),
 				NULL, NULL, 0, NORMAL_PRIORITY_CLASS, NULL, NULL,
 				&stiw, &psi ) )
 		{
@@ -48,7 +48,7 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 		::GetStartupInfoA( &stia );
 		const char *p = fcmd.ConvToChar();
 		if( !p ) return;
-		if( ::CreateProcessA(NULL, (char *)p,
+		if( ::CreateProcessA(NULL, const_cast<char*>(p),
 				NULL, NULL, 0, NORMAL_PRIORITY_CLASS, NULL, NULL,
 				&stia, &psi ) )
 		{
@@ -61,7 +61,7 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 	PROCESS_INFORMATION psi;
 	STARTUPINFO         sti;
 	::GetStartupInfo( &sti );
-	if( ::CreateProcess( NULL, (TCHAR*)fcmd.c_str(),
+	if( ::CreateProcess( NULL, const_cast<TCHAR*>(fcmd.c_str()),
 			NULL, NULL, 0, NORMAL_PRIORITY_CLASS, NULL, NULL,
 			&sti, &psi ) )
 	{
@@ -104,7 +104,7 @@ void GpStBar::SetUnicode( const unicode *uni )
 	if( isHighSurrogate(uni[0]) )
 		cc = 0x10000 + ( ((uni[0]-0xD800)&0x3ff)<<10 ) + ( (uni[1]-0xDC00)&0x3ff );
 
-	TCHAR *t = (TCHAR *)LPTR2Hex( buf+2, cc );
+	TCHAR *t = const_cast<TCHAR*>(LPTR2Hex( buf+2, cc ));
 	*--t = TEXT('+'); *--t = TEXT('U');
 	SetText( t, UNI_PART );
 }
@@ -173,7 +173,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 			edit_.getView().SetFont( cfg_.vConfig() );
 
 			// Resize the window to the advised RECT
-			RECT *rc = (RECT *)lp;
+			RECT *rc = reinterpret_cast<RECT *>(lp);
 			::SetWindowPos( hwnd(), NULL,
 				rc->left, rc->top, rc->right-rc->left, rc->bottom-rc->top,
 				SWP_NOZORDER | SWP_NOACTIVATE);
@@ -260,7 +260,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 	// NOTIFY
 	case WM_NOTIFY:
 		if( wp == 1787 // Status Bar ID to check before[]
-		&& ((NMHDR*)lp)->code == NM_DBLCLK )
+		&& (reinterpret_cast<NMHDR*>(lp))->code == NM_DBLCLK )
 			on_reopenfile();
 		break;
 
@@ -1131,7 +1131,8 @@ struct MyFindWindowExstruct {
 };
 static BOOL CALLBACK MyFindWindowExProc(HWND hwnd, LPARAM lParam)
 {
-	struct MyFindWindowExstruct *param=(MyFindWindowExstruct *)lParam;
+	struct MyFindWindowExstruct *param =
+		reinterpret_cast<MyFindWindowExstruct*>(lParam);
 	param->ret = NULL;
 	// Skip windows before we reach the after HWND.
 	if (param->after) {
@@ -1429,7 +1430,7 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 	Path kwd = cfg_.kwdFile();
 	FileR fp;
 	if( kwd.len()!=0 && kwd.isFile() && fp.Open(kwd.c_str()) )
-		edit_.getDoc().SetKeyword((const unicode*)fp.base(),fp.size()/sizeof(unicode));
+		edit_.getDoc().SetKeyword(reinterpret_cast<const unicode*>(fp.base()),fp.size()/sizeof(unicode));
 	else
 		edit_.getDoc().SetKeyword(NULL,0);
 	LOGGER("GreenPadWnd::ReloadConfig KeywordLoaded, end");

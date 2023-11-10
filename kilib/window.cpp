@@ -579,7 +579,7 @@ int __cdecl Window::MsgBoxf( LPCTSTR fmt, ... ) const
 		NULL,
 		lerr,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language */
-		(TCHAR *) &lpMsgBuf, /* &, because FORMAT_MESSAGE_ALLOCATE_BUFFER */
+		reinterpret_cast<TCHAR*>(&lpMsgBuf), /* &, because FORMAT_MESSAGE_ALLOCATE_BUFFER */
 		0, NULL
 	);
 

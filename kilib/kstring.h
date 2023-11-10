@@ -110,7 +110,7 @@ static inline
 int my_lstrcmpW(const unicode *X, const unicode *Y)
 {
 	while (*X && *X == *Y) { X++; Y++; }
-	return *(const unicode*)X - *(const unicode*)Y;
+	return *X - *Y;
 }
 static inline
 int my_lstrncmpW(const unicode *X, const unicode *Y, size_t N)
