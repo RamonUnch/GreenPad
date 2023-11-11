@@ -252,11 +252,12 @@ struct rUtf9 A_FINAL: public rBasicUTF
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
 
-		if( *fb >= 0x98 && *fb <= 0x9F )      { fb+=5; }
-		else if( *fb >= 0x94 && *fb <= 0x97 ) { fb+=4; }
-		else if( *fb >= 0x90 && *fb <= 0x93 ) { fb+=3; }
-		else if( *fb >= 0x80 && *fb <= 0x8F ) { fb+=2; }
-		else /* 0~0x7F,0xA0~0xFF */           {  ++fb; }
+		if     ( *fb<=0x7F ) fb+=1; // 00-7F
+		else if( *fb>=0xA0 ) fb+=1; // A0-FF
+		else if( *fb<=0x8F ) fb+=2; // 80-8F
+		else if( *fb<=0x93 ) fb+=3; // 90-93
+		else if( *fb<=0x97 ) fb+=4; // 94-97
+		else                 fb+=5; // 97-9F
 	}
 	unicode PeekC() override
 	{
@@ -268,12 +269,15 @@ struct rUtf9 A_FINAL: public rBasicUTF
 			SurrogateLow = 0;
 			return (unicode)ch;
 		}
-
-		if( *fb >= 0x98 && *fb <= 0x9F )      { ch = (((*fb & 0x07) << 28) + ((*(fb+1) & 0x7F) << 21) + ((*(fb+2) & 0x7F) << 14) + ((*(fb+3) & 0x7F) << 7) + (*(fb+4) & 0x7F)); }
-		else if( *fb >= 0x94 && *fb <= 0x97 ) { ch = (((*fb & 0x03) << 21) + ((*(fb+1) & 0x7F) << 14) + ((*(fb+2) & 0x7F) << 7) + (*(fb+3) & 0x7F)); }
-		else if( *fb >= 0x90 && *fb <= 0x93 ) { ch = (((*fb & 0x03) << 14) + ((*(fb+1) & 0x7F) << 7) + (*(fb+2) & 0x7F)); }
-		else if( *fb >= 0x80 && *fb <= 0x8F ) { ch = (((*fb & 0x7F) << 7) + (*(fb+1) & 0x7F)); }
-		else /* 0~0x7F,0xA0~0xFF */           { ch = (*fb); }
+		// Trailing byte helper
+		#define T(x) (*(fb+x) & 0x7F)
+		if     ( *fb<=0x7F ) ch = *fb; // 00-7F
+		else if( *fb>=0xA0 ) ch = *fb; // A0-FF
+		else if( *fb<=0x8F ) ch = ((*fb & 0x7F) << 7 ) + T(1); // 80-8F
+		else if( *fb<=0x93 ) ch = ((*fb & 0x03) << 14) + (T(1) << 7)  + T(2); // 90-94
+		else if( *fb<=0x97 ) ch = ((*fb & 0x03) << 21) + (T(1) << 14) + (T(2) << 7)  + T(3); // 94-97
+		else                 ch = ((*fb & 0x07) << 28) + (T(1) << 21) + (T(2) << 14) + (T(3) << 7) + T(4); // 94-9F
+		#undef T
 
 		if( ch >= 0x10000 )
 		{
@@ -286,6 +290,12 @@ struct rUtf9 A_FINAL: public rBasicUTF
 
 //-------------------------------------------------------------------------
 // Old FSS-UTF (/usr/ken/utf/xutf from dump of Sep 2 1992)
+//    Bits  Hex Min Hex Max  Byte Sequence in Binary
+// 1    7  00000000-0000007f 0zzzzzzz
+// 2   13  00000080-0000207f 10zzzzzz 1yyyyyyy
+// 3   19  00002080-0008207f 110zzzzz 1yyyyyyy 1xxxxxxx
+// 4   25  00082080-0208207f 1110zzzz 1yyyyyyy 1xxxxxxx 1wwwwwww
+// 5   31  02082080-7fffffff 11110zzz 1yyyyyyy 1xxxxxxx 1wwwwwww 1vvvvvvv
 //-------------------------------------------------------------------------
 struct rUtfOFSS A_FINAL: public rBasicUTF
 {
@@ -302,11 +312,12 @@ struct rUtfOFSS A_FINAL: public rBasicUTF
 	{
 		if( SurrogateLow ) return; // don't go further if leftover exists
 
-		if( *fb >= 0xf0 && *fb <= 0xf8 )      { fb+=5; }
-		else if( *fb >= 0xe0 && *fb <= 0xf0 ) { fb+=4; }
-		else if( *fb >= 0xc0 && *fb <= 0xe0 ) { fb+=3; }
-		else if( *fb >= 0x80 && *fb <= 0xc0 ) { fb+=2; }
-		else /* 0~0x7F,0xA0~0xFF */           {  ++fb; }
+		if      ( *fb < 0x80 ) fb+=1; // 00-7F
+		else if ( *fb < 0xC0 ) fb+=2; // 80-BF
+		else if ( *fb < 0xE0 ) fb+=3; // C0-DF
+		else if ( *fb < 0xF0 ) fb+=4; // E0-EF
+		else if ( *fb < 0xF8 ) fb+=5; // F0-F7
+		else /* fb <= 0xFF*/   fb+=1; // F8-FF BAD! skip.
 	}
 	unicode PeekC() override
 	{
@@ -319,11 +330,14 @@ struct rUtfOFSS A_FINAL: public rBasicUTF
 			return (unicode)ch;
 		}
 
-		if( *fb >= 0xf0 && *fb <= 0xf8 )      { ch = (((*fb & 0x07) << 28) + ((*(fb+1) & 0x7F) << 21) + ((*(fb+2) & 0x7F) << 14) + ((*(fb+3) & 0x7F) << 7) + (*(fb+4) & 0x7F) + 0x2082080); }
-		else if( *fb >= 0xe0 && *fb <= 0xf0 ) { ch = (((*fb & 0x0f) << 21) + ((*(fb+1) & 0x7F) << 14) + ((*(fb+2) & 0x7F) << 7) + (*(fb+3) & 0x7F) + 0x0082080); }
-		else if( *fb >= 0xc0 && *fb <= 0xe0 ) { ch = (((*fb & 0x1f) << 14) + ((*(fb+1) & 0x7F) << 7) + (*(fb+2) & 0x7F) + 0x0002080); }
-		else if( *fb >= 0x80 && *fb <= 0xc0 ) { ch = (((*fb & 0x3f) << 7) + (*(fb+1) & 0x7F) + 0x0000080); }
-		else /* 0~0x7F,0xA0~0xFF */           { ch = (*fb); }
+		#define T(x) (*(fb+x) & 0x7F)
+		if      ( *fb < 0x80 ) ch = *fb; // 00-7F
+		else if ( *fb < 0xC0 ) ch = ((*fb & 0x3f) << 7)  + T(1) + 0x0000080;
+		else if ( *fb < 0xE0 ) ch = ((*fb & 0x1f) << 14) + (T(1) << 7) + T(2) + 0x0002080;
+		else if ( *fb < 0xF0 ) ch = ((*fb & 0x0f) << 21) + (T(1) << 14) + (T(2) << 7) + T(3) + 0x0082080;
+		else if ( *fb < 0xF8 ) ch = ((*fb & 0x07) << 28) + (T(1) << 21) + (T(2) << 14) + (T(3) << 7) + T(4) + 0x2082080;
+		else /* fb <= 0xFF*/   ch = *fb; // F8-FF Invalid sequence, just copy...
+		#undef T
 
 		if( ch >= 0x10000 )
 		{
