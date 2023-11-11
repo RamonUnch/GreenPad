@@ -470,7 +470,7 @@ private:
 		DPos& stt, DPos& end, unicode*& undobuf, ulong& undosiz );
 
 	// ƒpƒ‰ƒŒƒ‹ƒŠ[ƒh
-	virtual void StartThread();
+	//virtual void StartThread();
 
 private:
 

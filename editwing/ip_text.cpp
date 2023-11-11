@@ -857,9 +857,9 @@ void Document::OpenFile( TextFileR& tf )
 }
 
 
+/*
 void Document::StartThread()
 {
-/*
 	// ToDo:
 	aptr<TextFileR> tf = currentOpeningFile_;
 
@@ -877,6 +877,6 @@ void Document::StartThread()
 		// ƒCƒxƒ“ƒg”­‰Î
 		Fire_TEXTUPDATE( s, s, e, true, false );
 	}
-*/
-}
 
+}
+*/
