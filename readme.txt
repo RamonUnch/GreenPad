@@ -1,5 +1,5 @@
-=<> GreenPad ver 1.19
-=<> RamonUnch builds 2023/07/07
+=<> GreenPad ver 1.20
+=<> RamonUnch builds 2023/12/10
 
 <<What's This?>>
 
@@ -12,7 +12,7 @@
     * Proportional Fonts
     * Syntax Highlighting
     * Searching with Regular Expressions
-  while keeping the size of .exe very small (around 130KB!).
+  while keeping the size of .exe very small (around 150KB!).
 
   Freeware, distributed under the NYSL licence.
   Original source code is available at: http://www.kmonos.net/lib/gp.en.html
@@ -42,13 +42,12 @@
    in term of application support.
 
 <<To Do List>>
+  * Implement UTF-6, Punycode, and other UTF-encodings
   * Build for all possible CPUs: MIPS, PowerPC, Alpha, ARM, ARM64.
     roytam1 already made a MIPS compatible build.
   * Handle WS_EX_LAYOUTRTL for left to right scripts such as Hebrew.
   * Handle more complete regular expression and especially capture groups
     for proper find replace.
-  * Optimize Find/Replace so that it does not take for ever to replace
-    a word in a big file.
   * Handle binary files properly: We will need to flag each line with the
     carriage return type CRLF, LF or CR.
   * Handle per-monitor dpi awareness. This will require to reload the
@@ -59,6 +58,44 @@
   * Improve printer configuration.
   * Fix more bugs, handle low memory situations better.
   * Optimize memory usage so that larger files can be loaded.
+
+<<What's New in 1.20 (by RamonUnch, 2023/12/10)>>
+ < NEW >
+  * Added UTF-EBCDIC, Unicode IBM encoding, both save and read.
+  * Added F1 for contextual help, command line can be configured with the
+    `HelpExe` string in the ini file (similar to GrepExe).
+  * Added the %S parameter to command line (Ctrl+G or F1) that expands to
+    the current selection.
+  * Added the F7 command to open the selection in GreenPad, handles
+    relative or full path names. Also opens URLs in default browser.
+  * Added the Reduce To ASCII option (Alt+R). Non-ASCII characters will
+    be replaced by '?' in the current selection.
+  * Added a statusbar display for the codepoint of the character under
+    the cursor in the Unicode form U+HEX
+  * Added F8 to display current selection length in UTF-16 characters.
+    Statusbar is used if present, a message box is used otherwise.
+  * Warn if the currently opened file was modified outside of GreenPad.
+    A message will open on focusing. To disable set `WarnOnModified=0`
+    in the ini file.
+
+ < FIXED >
+  * Optimized Find/Replace so that it does not take for ever to replace
+    a word in a big file, (MacroCommand optimization)
+  * Otimized loading time for long lines. Up to a 250MB line is fine now.
+  * Allow saving all UTF encoding with or without BOM excep for UTF7.
+  * Missing Auto-detection based on BOM for GB18030 and UTF7.
+  * Short or long name of character encoding can now be directly
+    typed in the combo box (ie. Open/Save/ReOpen dialogs).
+  * Edit menu entries get properly grayed out when selection is empty.
+  * Reduce memory overhead for a line (4 bytes in 32bit mode).
+  * Avoids most crashes when memory allocation fails.
+    WIP: Line and WLine classes remain problematic.
+  * Fixed very slow drawing at the end of a long wrapping line.
+  * Use a percent-escape encoding scheme for Unicode characters when saving
+    filename in the ini file (MRU). This makes them much more readable.
+  * Fixed bad detection of local codepage compatible string, making MRU
+    files impossible to open in some cases.
+  * Fixed cursor position change when using Quote/UnQuote selection option.
 
 <<What's New in 1.19 (by RamonUnch, 2023/07/07)>>
  < NEW >
@@ -391,12 +428,18 @@ TODO:
 <<Keyboard Shortcuts>>
 
         Ctrl+R   Reopen
+        Ctrl+L   Open elevated
   Shift+Ctrl+S   Save as...
+           F12   Save as...
         Ctrl+Y   Redo
-            F5   Insert date & time
+            F5   Reload file
+            F6   Insert date & time
+            F7   Open selection
+            F8   Display selection length
 
         Ctrl+F   Find
             F3   Find next
+            F2   Find prev
       Shift+F3   Find prev
         Ctrl+H   Replace
         Ctrl+J   Jump to line #
@@ -510,6 +553,7 @@ TODO:
       %D is automatically replaced by the current directory
       %F is replaced with the full path of the current file.
       %N is replaced with the name (without path info) of the current file.
+      %S is replaced by the current selection in GreenPad.
 
   * Command Line Options ?
 
@@ -520,13 +564,18 @@ TODO:
     opens a file named "aaaa.txt" assuming the Shift_JIS encoding,
     and brings its 543rd line to the view area. CharacterSet number
     supported by default is:
-       iso-8859-1  = -1
+       UTF1        = -1
        UTF5        = -2
        UTF8        = -65001
+       UTF9        = -11
        UTF16BE     = -5
        UTF16LE     = -6
        UTF32BE     = -9
        UTF32LE     = -10
+       FSS-UTF     = -12
+       UTF-EBCDIC  = -15
+       SCSU        = -60002
+       BOCU        = -60003
      If you have installed "Language Support" for your Windows,
      the character sets of installed languages become
      readable/writable in GreenPad. You should consult with
