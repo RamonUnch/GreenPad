@@ -297,6 +297,14 @@ int CharSetList::GetCSIFromComboBox( HWND dlg, const CharSetList& csl, uint Open
 			if( !lstrcmpi(csl[j].longName, buf) || !lstrcmpi(csl[j].shortName, buf) )
 				return j; // We found
 		}
+
+		// Unable to find a match, try with some canonical names
+		if( !lstrcmpi(buf, TEXT("UTF16")) )
+			return csl.findCsi( UTF16LE ); // BOM-free UTF-16 LE
+		if( !lstrcmpi(buf, TEXT("UTF32")) )
+			return csl.findCsi( UTF32LE ); // BOM-free UTF-32 LE
+		if( !lstrcmpi(buf, TEXT("LATIN")) )
+			return csl.findCsi( Western ); // Windows 1252 for Latin
 	}
 	// Failed to select any cs, return -1
 	return -1;
