@@ -771,6 +771,7 @@ inline void ViewImpl::Inv( int y, int xb, int xe, Painter& p )
 
 void ViewImpl::DrawTXT( const VDrawInfo &v, Painter& p )
 {
+	if( doc_.isBusy() ) return;
 	// ’è”‚P, Constant 1
 //	const int   TAB = p.T();
 	const int     H = p.H();

@@ -824,7 +824,7 @@ void Document::OpenFile( TextFileR& tf )
 	// static unicode buf[2097152]; // 4MB on x64
 #else
 	// static unicode buf[131072]; // 256KB on i386
-	size_t buf_sz = 131072;
+	size_t buf_sz = 32768;
 #endif
 	// Do not allocate more mem than twice the file size in bytes.
 	// Should help with loaing small files on Win32s.
@@ -839,6 +839,7 @@ void Document::OpenFile( TextFileR& tf )
 	}
 //	DWORD otime = GetTickCount();
 	size_t L;
+	setBusyFlag(true);
 	for( ulong i=0; L = tf.ReadBuf( buf, buf_sz ); )
 	{
 		DPos p( i, len(e.tl) ); // end of document
@@ -847,11 +848,12 @@ void Document::OpenFile( TextFileR& tf )
 	}
 	// Parse All lines, because we skipped it
 	ReParse( 0, tln()-1 );
+	setBusyFlag(false);
 
 	if( buf != sbuf )
 		delete [] buf;
 
-//	MessageBox(GetForegroundWindow(),  SInt2Str(GetTickCount()-otime).c_str(), TEXT("Time in ms:"), 0);
+//	MessageBox(GetActiveWindow(),  SInt2Str(GetTickCount()-otime).c_str(), TEXT("Time in ms:"), 0);
 	// ƒCƒxƒ“ƒg”­‰Î, Event firing
 	Fire_TEXTUPDATE( DPos(0,0), DPos(0,0), e, true, false );
 }
