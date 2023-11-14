@@ -77,9 +77,18 @@ public:
 				// バッファ拡張
 				ulong psiz = (alen_+1)*2+alen_;
 				ulong nalen = Max( alen_+(alen_>>1), len_+siz ); // len_+siz;
-				unicode* tmpS =
-					static_cast<unicode*>( ki::mem().Alloc( EVEN((nalen+1)*2+nalen) ) );
-				if( !tmpS ) return;
+				unicode* tmpS;
+				TRYAGAIN:
+					tmpS = static_cast<unicode*>( ki::mem().Alloc( EVEN((nalen+1)*2+nalen) ) );
+				if( !tmpS )
+				{
+					if( nalen > len_+siz )
+					{	// Try again with minimal buffer size...
+						nalen = len_+siz;
+						goto TRYAGAIN;
+					}
+					return;
+				}
 				uchar*   tmpF =
 					reinterpret_cast<uchar*>(tmpS+nalen+1);
 				alen_ = nalen;
