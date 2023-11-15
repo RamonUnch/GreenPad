@@ -194,6 +194,25 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 	case WM_CHAR:
 		cur().on_char( (TCHAR)wp );
 		break;
+	
+	case 0x0109: // WM_UNICHAR
+		if( wp != 0xffff /*UNICODE_NOCHAR*/ )
+		{	// A valid UTF-32 character was sent in wp.
+			if( wp < 0xFFFF )
+			{
+				cur().on_char( (TCHAR)wp );
+			}
+			else
+			{
+				// Send High then low surrogate
+				unicode sp[2];
+				sp[0] = 0xD800 + (((wp-0x10000) >> 10)&0x3ff);
+				sp[1] = 0xDC00 + ( (wp-0x10000)       &0x3ff);
+				cur().Input( sp, 2 );
+			}
+			return FALSE; // Message Processed.
+		}
+		return TRUE;
 
 	case WM_INPUTLANGCHANGE:
 		cur().on_inputlangchange( (HKL)lp );
