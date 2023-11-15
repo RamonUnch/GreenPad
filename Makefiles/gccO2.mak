@@ -1,9 +1,9 @@
 
-NAME       = gcc32s
+NAME       = gccO2
 OBJ_SUFFIX = o
 
 ###############################################################################
-TARGET = release/GPad32sg.exe
+TARGET = release/GreenPad_gccO2.exe
 INTDIR = obj\$(NAME)
 
 all: PRE $(TARGET)
@@ -36,7 +36,8 @@ OBJS = \
  $(INTDIR)/ConfigManager.$(OBJ_SUFFIX) \
  $(INTDIR)/app.$(OBJ_SUFFIX)
 
-LIBS = -nostdlib -Wl,-e_entryp@0 -flto -fuse-linker-plugin -flto-partition=none \
+LIBS = -nostdlib -lgcc -Wl,-e_entryp@0 -flto -fuse-linker-plugin -flto-partition=none \
+ -L. -lunicows \
  -lkernel32 \
  -luser32   \
  -lgdi32    \
@@ -44,11 +45,37 @@ LIBS = -nostdlib -Wl,-e_entryp@0 -flto -fuse-linker-plugin -flto-partition=none 
  -ladvapi32 \
  -lcomdlg32 \
  -lcomctl32 \
+ -lole32    \
  -luuid     \
  -limm32    \
  -Wl,-dynamicbase,-nxcompat,--no-seh,--enable-auto-import,--disable-stdcall-fixup \
- -Wl,--tsaware,--large-address-aware,-s -s \
- -Wl,--major-subsystem-version=3,--minor-subsystem-version=10
+ -Wl,--disable-reloc-section,--disable-runtime-pseudo-reloc \
+ -Wl,--tsaware,--large-address-aware,-s -s\
+
+WARNINGS = \
+   -Wall \
+   -Wno-register \
+   -Wno-parentheses \
+   -Wformat-overflow=2 \
+   -Wuninitialized \
+   -Winit-self \
+   -Wnull-dereference \
+   -Wnonnull \
+   -Wno-unknown-pragmas \
+   -Wstack-usage=4096 \
+   -Wsuggest-override \
+   -Wno-alloc-size-larger-than \
+
+
+DEFINES = -DSTDFAX_FPATH \
+    -D_WIN32_WINNT=0x400 \
+    -D_UNICODE -DUNICODE -DUNICOWS \
+    -UDEBUG -U_DEBUG \
+    -DUSEGLOBALIME \
+    -DSUPERTINY \
+    -DTARGET_VER=350 \
+    -DUSE_ORIGINAL_MEMMAN \
+
 
 PRE:
 	-@if not exist release   mkdir release
@@ -56,58 +83,30 @@ PRE:
 	-@if not exist $(INTDIR) mkdir $(INTDIR)
 ###############################################################################
 
-WARNINGS = \
-   -Wall \
-   -Wextra \
-   -Wno-unused-parameter \
-   -Wno-cast-function-type \
-   -Wno-implicit-fallthrough \
-   -Wno-register \
-   -Wno-parentheses \
-   -Wno-missing-field-initializers \
-   -Wformat-overflow=2 \
-   -Wuninitialized \
-   -Wtype-limits \
-   -Winit-self \
-   -Wnull-dereference \
-   -Wnonnull \
-   -Wno-unknown-pragmas \
-   -Wstack-usage=4096 \
-   -Wsuggest-override \
-   -Wsuggest-final-types \
-   -Wsuggest-final-methods \
-   -Wsign-promo \
-   -Wdisabled-optimization \
+RES = $(INTDIR)/gp_rsrc.o
 
-DEFINES = -D_MBCS \
-	-DNO_ASMTHUNK \
-	-DWIN32S \
-	-UDEBUG -U_DEBUG \
-	-DUSEGLOBALIME \
-	-DSUPERTINY \
-	-DTARGET_VER=310 \
-	-DUSE_ORIGINAL_MEMMAN \
-	-DSHORT_TABLEWIDTH
+VPATH    = editwing:kilib
+# -DSUPERTINY  -flto -fuse-linker-plugin -Wno-narrowing  -fwhole-program  -fno-tree-loop-distribute-patterns
 
-CXXFLAGS = -fwhole-program  -pie -fpie \
-	-nostdlib -m32 -c -Os \
+CXXFLAGS = \
+	-nostdlib -m32 -c -O2 \
 	-march=i386 \
 	-mtune=generic \
 	-mno-stack-arg-probe \
 	-momit-leaf-frame-pointer \
 	-mpreferred-stack-boundary=2 \
-	-flto -fuse-linker-plugin -flto-partition=none \
+	-flto -fuse-linker-plugin \
 	-fmerge-all-constants \
 	-fallow-store-data-races \
 	-fno-tree-loop-distribute-patterns \
 	-fomit-frame-pointer \
 	-fno-stack-check \
-	-fipa-pta \
 	-fno-stack-protector \
 	-fno-threadsafe-statics \
 	-fno-use-cxa-get-exception-ptr \
 	-fno-access-control \
 	-fno-enforce-eh-specs \
+	-fno-nonansi-builtins \
 	-fnothrow-opt \
 	-fno-optional-diags \
 	-fno-use-cxa-atexit \
@@ -120,20 +119,16 @@ CXXFLAGS = -fwhole-program  -pie -fpie \
 	$(WARNINGS) $(DEFINES) \
 	-idirafter kilib
 
-RES = $(INTDIR)/gp_rsrc.o
-
-VPATH    = editwing:kilib
-
-LOPT     = -m32 -mwindows -pie
+LOPT     = -m32 -mwindows
 
 ifneq ($(NOCHARSET),1)
-CXXFLAGS += -finput-charset=cp932 -fexec-charset=cp1252
+CXXFLAGS += -finput-charset=cp932 -fexec-charset=cp932
 endif
 
 $(TARGET) : $(OBJS) $(RES)
-	g++ $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS) -fno-ident
+	g++ $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS) gcckinka.lk
 #	strip -s $(TARGET)
 $(INTDIR)/%.o: rsrc/%.rc
-	windres -DTARGET_VER=310 -Fpe-i386 -l=0x411 -I rsrc $< -O coff -o$@
+	windres -DTARGET_VER=350 -Fpe-i386 -l=0x411 -I rsrc $< -O coff -o$@
 $(INTDIR)/%.o: %.cpp
 	g++ $(CXXFLAGS) -o$@ $<

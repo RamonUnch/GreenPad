@@ -1,12 +1,16 @@
 
-NAME       = gcc32s
+NAME       = clang
 OBJ_SUFFIX = o
 
 ###############################################################################
-TARGET = release/GPad32sg.exe
-INTDIR = obj\$(NAME)
+TARGET = release/GreenPad_clang.exe
+INTDIR = obj/$(NAME)
 
 all: PRE $(TARGET)
+
+MINGWI=-ID:\Straw\gcc12\i686-w64-mingw32\include
+MINGWL=-LD:\Straw\gcc12\i686-w64-mingw32\lib
+
 
 OBJS = \
  $(INTDIR)/thread.$(OBJ_SUFFIX)       \
@@ -36,7 +40,8 @@ OBJS = \
  $(INTDIR)/ConfigManager.$(OBJ_SUFFIX) \
  $(INTDIR)/app.$(OBJ_SUFFIX)
 
-LIBS = -nostdlib -Wl,-e_entryp@0 -flto -fuse-linker-plugin -flto-partition=none \
+LIBS = -nostdlib -Wl,-e_entryp@0 \
+ -L. \
  -lkernel32 \
  -luser32   \
  -lgdi32    \
@@ -44,11 +49,42 @@ LIBS = -nostdlib -Wl,-e_entryp@0 -flto -fuse-linker-plugin -flto-partition=none 
  -ladvapi32 \
  -lcomdlg32 \
  -lcomctl32 \
+ -lole32    \
  -luuid     \
  -limm32    \
- -Wl,-dynamicbase,-nxcompat,--no-seh,--enable-auto-import,--disable-stdcall-fixup \
+ -Wl,-dynamicbase,-nxcompat,--no-seh,--enable-auto-import \
  -Wl,--tsaware,--large-address-aware,-s -s \
- -Wl,--major-subsystem-version=3,--minor-subsystem-version=10
+ $(MINGWL)
+
+WARNINGS = \
+   -Wall \
+   -Wextra \
+   -Wno-pragma-pack \
+   -Wno-expansion-to-defined \
+   -Wno-macro-redefined \
+   -Wno-unused-parameter \
+   -Wno-unused-value \
+   -Wno-missing-field-initializers \
+   -Wno-implicit-fallthrough \
+   -Wno-register \
+   -Wno-parentheses \
+   -Wno-ignored-attributes \
+   -Wuninitialized \
+   -Wtype-limits \
+   -Winit-self \
+   -Wnull-dereference \
+   -Wnonnull \
+   -Wno-unknown-pragmas
+
+
+DEFINES = -D_WIN32_WINNT=0x400 \
+    -D_UNICODE -DUNICODE \
+    -UDEBUG -U_DEBUG \
+    -DSUPERTINY \
+    -DTARGET_VER=310 \
+    -DUSEGLOBALIME \
+    -DUSE_ORIGINAL_MEMMAN 
+
 
 PRE:
 	-@if not exist release   mkdir release
@@ -56,84 +92,56 @@ PRE:
 	-@if not exist $(INTDIR) mkdir $(INTDIR)
 ###############################################################################
 
-WARNINGS = \
-   -Wall \
-   -Wextra \
-   -Wno-unused-parameter \
-   -Wno-cast-function-type \
-   -Wno-implicit-fallthrough \
-   -Wno-register \
-   -Wno-parentheses \
-   -Wno-missing-field-initializers \
-   -Wformat-overflow=2 \
-   -Wuninitialized \
-   -Wtype-limits \
-   -Winit-self \
-   -Wnull-dereference \
-   -Wnonnull \
-   -Wno-unknown-pragmas \
-   -Wstack-usage=4096 \
-   -Wsuggest-override \
-   -Wsuggest-final-types \
-   -Wsuggest-final-methods \
-   -Wsign-promo \
-   -Wdisabled-optimization \
-
-DEFINES = -D_MBCS \
-	-DNO_ASMTHUNK \
-	-DWIN32S \
-	-UDEBUG -U_DEBUG \
-	-DUSEGLOBALIME \
-	-DSUPERTINY \
-	-DTARGET_VER=310 \
-	-DUSE_ORIGINAL_MEMMAN \
-	-DSHORT_TABLEWIDTH
-
-CXXFLAGS = -fwhole-program  -pie -fpie \
-	-nostdlib -m32 -c -Os \
-	-march=i386 \
-	-mtune=generic \
-	-mno-stack-arg-probe \
-	-momit-leaf-frame-pointer \
-	-mpreferred-stack-boundary=2 \
-	-flto -fuse-linker-plugin -flto-partition=none \
-	-fmerge-all-constants \
-	-fallow-store-data-races \
-	-fno-tree-loop-distribute-patterns \
-	-fomit-frame-pointer \
-	-fno-stack-check \
-	-fipa-pta \
-	-fno-stack-protector \
-	-fno-threadsafe-statics \
-	-fno-use-cxa-get-exception-ptr \
-	-fno-access-control \
-	-fno-enforce-eh-specs \
-	-fnothrow-opt \
-	-fno-optional-diags \
-	-fno-use-cxa-atexit \
-	-fno-exceptions \
-	-fno-dwarf2-cfi-asm \
-	-fno-asynchronous-unwind-tables \
-	-fno-extern-tls-init \
-	-fno-rtti \
-	-fno-ident \
-	$(WARNINGS) $(DEFINES) \
-	-idirafter kilib
-
 RES = $(INTDIR)/gp_rsrc.o
 
 VPATH    = editwing:kilib
+# -DSUPERTINY  -flto -fuse-linker-plugin -Wno-narrowing  -fwhole-program  -fno-tree-loop-distribute-patterns
 
-LOPT     = -m32 -mwindows -pie
+#CXXFLAGS = \
+#	-nostdlib -m32 -c -O1 \
+#	-march=i386 \
+#	-mtune=generic \
+#	-mno-stack-arg-probe \
+#	-momit-leaf-frame-pointer \
+#	-fmerge-all-constants \
+#	-fomit-frame-pointer \
+#	-fno-stack-check \
+#	-fno-stack-protector \
+#	-fno-threadsafe-statics \
+#	-fno-access-control \
+#	-fno-use-cxa-atexit \
+#	-fno-exceptions \
+#	-fno-dwarf2-cfi-asm \
+#	-fno-asynchronous-unwind-tables \
+#	-fno-rtti \
+#	$(WARNINGS) $(DEFINES) $(MINGWI) \
+#	-idirafter kilib
+
+
+CXXFLAGS = \
+	-nostdlib -m32 -c -O1 \
+	-march=i386 \
+	-mtune=generic \
+	-fno-access-control \
+	-fno-use-cxa-atexit \
+	-fno-exceptions \
+	-fno-dwarf2-cfi-asm \
+	-fno-rtti \
+	$(WARNINGS) $(DEFINES) $(MINGWI) \
+	-idirafter kilib
+
+LOPT     = -m32 -mwindows
 
 ifneq ($(NOCHARSET),1)
-CXXFLAGS += -finput-charset=cp932 -fexec-charset=cp1252
+#CXXFLAGS += -finput-charset=932 -fexec-charset=932
 endif
 
 $(TARGET) : $(OBJS) $(RES)
-	g++ $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS) -fno-ident
+	clang $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS)
 #	strip -s $(TARGET)
+
 $(INTDIR)/%.o: rsrc/%.rc
 	windres -DTARGET_VER=310 -Fpe-i386 -l=0x411 -I rsrc $< -O coff -o$@
+
 $(INTDIR)/%.o: %.cpp
-	g++ $(CXXFLAGS) -o$@ $<
+	clang $(CXXFLAGS) -o$@ $<

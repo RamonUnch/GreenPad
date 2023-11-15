@@ -1,4 +1,4 @@
-NAME       = wcc
+NAME       = wccAXP
 OBJ_SUFFIX = obj
 
 ###############################################################################
@@ -53,22 +53,22 @@ PRE:
 ###############################################################################
 
 RES = $(INTDIR)\gp_rsrc.res
-DEF = /DNDEBUG /DUNICODE /D_UNICODE /DUSEGLOBALIME /DUSE_ORIGINAL_MEMMAN /DTARGET_VER=310
+DEF = /DNDEBUG /DUNICODE /D_UNICODE /DNO_IME /DSTDFAX_FPATH /DTARGET_VER=310 /DNO_ASMTHUNK
 
-COPT = $(DEF) -bt=nt /GA /GF /FD /Fd$(INTDIR) /Ikilib /W3 /MT /c /3r /zk0 /d0 /xds /os /za /s /Wcd=391 /Wcd=014
+COPT = $(DEF) -bt=nt /FD /Fd$(INTDIR) /Ikilib /W3 /c /zk0 /xds /otexan /za /s /Wcd=391 /Wcd=014
 # /nodefaultlib
 LOPT = /release
 ROPT = $(DEF) /L 0x411 /I "rsrc" /DTARGET_VER=310
 
 $(TARGET) : $(OBJS) $(RES)
-	link386 $(LOPT) /OUT:$(TARGET) /SUBSYSTEM:WINDOWS $(OBJS) $(RES) $(LIBS)
+	wclAXP $(LOPT) /OUT:$(TARGET) /SUBSYSTEM:WINDOWS $(OBJS) $(RES) $(LIBS)
 
 {rsrc}.rc{$(INTDIR)}.res:
 	rc $(ROPT) /Fo$@ $**
 
 {.}.cpp{$(INTDIR)}.obj:
-	wcl386 $(COPT) /Fo$@ $**
+	wclAXP $(COPT) /Fo$@ $**
 {kilib}.cpp{$(INTDIR)}.obj:
-	wcl386 $(COPT) /Fo$@ $**
+	wclAXP $(COPT) /Fo$@ $**
 {editwing}.cpp{$(INTDIR)}.obj:
-	wcl386 $(COPT) /Fo$@ $**
+	wclAXP $(COPT) /Fo$@ $**

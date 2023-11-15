@@ -70,7 +70,7 @@ CXXFLAGS = -nostdlib -m64 -c -Os -mno-stack-arg-probe -momit-leaf-frame-pointer 
  -flto -fuse-linker-plugin -flto-partition=none \
  -fomit-frame-pointer -fno-stack-check -fno-stack-protector -fno-threadsafe-statics -fno-use-cxa-get-exception-ptr \
  -fno-access-control -fno-enforce-eh-specs -fno-nonansi-builtins -fnothrow-opt -fno-optional-diags -fno-use-cxa-atexit \
- -fno-exceptions -fno-dwarf2-cfi-asm -fno-asynchronous-unwind-tables -fno-extern-tls-init -fno-rtti \
+ -fno-exceptions -fno-dwarf2-cfi-asm -fno-asynchronous-unwind-tables -fno-extern-tls-init -fno-rtti -fno-ident \
  -Wno-narrowing -Wno-int-to-pointer-cast -Wstack-usage=4096 \
  -idirafter kilib -D_UNICODE -DUNICODE -UDEBUG -U_DEBUG -DUSEGLOBALIME -DSUPERTINY -DUSE_ORIGINAL_MEMMAN
 LOPT     = -m64 -mwindows
@@ -80,7 +80,7 @@ CXXFLAGS += -finput-charset=cp932 -fexec-charset=cp932
 endif
 
 $(TARGET) : $(OBJS) $(RES)
-	g++ $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS)
+	g++ $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS) -fno-ident
 #	strip -s $(TARGET)
 $(INTDIR)/%.o: rsrc/%.rc
 	windres -Fpe-x86-64 -l=0x411 -I rsrc $< -O coff -o$@

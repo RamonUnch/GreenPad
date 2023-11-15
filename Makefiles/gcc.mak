@@ -54,19 +54,35 @@ LIBS = -nostdlib -lgcc -Wl,-e_entryp@0 -flto -fuse-linker-plugin -flto-partition
 
 WARNINGS = \
    -Wall \
+   -Wextra \
+   -Wc++11-compat \
+   -Wc++14-compat \
+   -Wc++17-compat \
+   -Wc++20-compat \
+   -Wpedantic \
+   -Wdelete-incomplete \
+   -Wno-unused-parameter \
+   -Wno-cast-function-type \
+   -Wno-implicit-fallthrough \
    -Wno-register \
    -Wno-parentheses \
+   -Wno-missing-field-initializers \
    -Wformat-overflow=2 \
    -Wuninitialized \
+   -Wtype-limits \
    -Winit-self \
    -Wnull-dereference \
    -Wnonnull \
    -Wno-unknown-pragmas \
    -Wstack-usage=4096 \
-   -Wsuggest-override
+   -Wsuggest-override \
+   -Wsuggest-final-types \
+   -Wsuggest-final-methods \
+   -Wdisabled-optimization \
+   -Wunsafe-loop-optimizations
 
-DEFINES = -DSTDFAX_FPATH \
-    -D_WIN32_WINNT=0x400 \
+
+DEFINES = -D_WIN32_WINNT=0x400 \
     -D_UNICODE -DUNICODE -DUNICOWS \
     -UDEBUG -U_DEBUG \
     -DUSEGLOBALIME \
@@ -85,36 +101,47 @@ RES = $(INTDIR)/gp_rsrc.o
 
 VPATH    = editwing:kilib
 # -DSUPERTINY  -flto -fuse-linker-plugin -Wno-narrowing  -fwhole-program  -fno-tree-loop-distribute-patterns
-
-CXXFLAGS = \
-	-nostdlib -m32 -c -Os \
+ANA = -fanalyzer -Wanalyzer-too-complex
+# 	-fno-nonansi-builtins
+CXXFLAGS = -fwhole-program \
+	-nostdlib -nostdinc++ -m32 -c -Os \
+	-fno-common \
 	-march=i386 \
 	-mtune=generic \
 	-mno-stack-arg-probe \
 	-momit-leaf-frame-pointer \
 	-mpreferred-stack-boundary=2 \
-	-flto -fuse-linker-plugin \
+	-flto -fuse-linker-plugin -flto-partition=none \
 	-fmerge-all-constants \
 	-fallow-store-data-races \
 	-fno-tree-loop-distribute-patterns \
 	-fomit-frame-pointer \
 	-fno-stack-check \
+	-fipa-pta \
+	-fgcse-sm \
+	-fgcse-las \
+	-fimplicit-constexpr \
+	-fdevirtualize-at-ltrans \
 	-fno-stack-protector \
 	-fno-threadsafe-statics \
 	-fno-use-cxa-get-exception-ptr \
 	-fno-access-control \
 	-fno-enforce-eh-specs \
-	-fno-nonansi-builtins \
 	-fnothrow-opt \
 	-fno-optional-diags \
 	-fno-use-cxa-atexit \
 	-fno-exceptions \
+	-fno-unwind-tables \
 	-fno-dwarf2-cfi-asm \
 	-fno-asynchronous-unwind-tables \
 	-fno-extern-tls-init \
 	-fno-rtti \
+	-fno-ident \
+	-funsafe-loop-optimizations \
 	$(WARNINGS) $(DEFINES) \
 	-idirafter kilib
+
+# -ftrivial-auto-var-init=zero
 
 LOPT     = -m32 -mwindows
 
@@ -123,9 +150,10 @@ CXXFLAGS += -finput-charset=cp932 -fexec-charset=cp932
 endif
 
 $(TARGET) : $(OBJS) $(RES)
-	g++ $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS)
+	g++ $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS) -fno-ident
 #	strip -s $(TARGET)
 $(INTDIR)/%.o: rsrc/%.rc
 	windres -DTARGET_VER=350 -Fpe-i386 -l=0x411 -I rsrc $< -O coff -o$@
 $(INTDIR)/%.o: %.cpp
-	g++ $(CXXFLAGS) -o$@ $<
+	@echo CC $@ $<
+	@g++ $(CXXFLAGS) -o$@ $<

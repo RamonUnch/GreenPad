@@ -1,5 +1,5 @@
 
-NAME       = gccdb
+NAME       = clangdb
 OBJ_SUFFIX = o
 
 ###############################################################################
@@ -7,6 +7,8 @@ TARGET = release/GreenPad_$(NAME).exe
 INTDIR = obj\$(NAME)
 
 all: PRE $(TARGET)
+MINGWI=-ID:\Straw\gcc12\i686-w64-mingw32\include
+MINGWL=-LD:\Straw\gcc12\i686-w64-mingw32\lib
 
 OBJS = \
  $(INTDIR)/thread.$(OBJ_SUFFIX)       \
@@ -36,10 +38,8 @@ OBJS = \
  $(INTDIR)/ConfigManager.$(OBJ_SUFFIX) \
  $(INTDIR)/app.$(OBJ_SUFFIX)
 
-# -DSUPERTINY  -fpermissive -flto -fuse-linker-plugin
-#,--disable-reloc-section,--disable-runtime-pseudo-reloc
-LIBS = \
- -L. -lunicows \
+LIBS = -static \
+ -L. \
  -lkernel32 \
  -luser32   \
  -lgdi32    \
@@ -50,10 +50,9 @@ LIBS = \
  -lole32    \
  -luuid     \
  -limm32    \
- -Wl,-nxcompat,--no-seh,--enable-auto-import \
- -Wl,--disable-reloc-section \
+ $(MINGWL)  \
+ -Wl,-dynamicbase,-nxcompat,--no-seh \
  -Wl,--tsaware,--large-address-aware
-
 
 # -Wl,--print-map \
 # -static-libstdc++ \
@@ -67,48 +66,22 @@ PRE:
 RES = $(INTDIR)/gp_rsrc.o
 
 VPATH    = editwing:kilib
-# -DSUPERTINY  -flto -fuse-linker-plugin -Wno-narrowing  -fwhole-program
-#  -fstack-protector-all -fstack-protector-strong -fstack-check
 
-WARNINGS = \
-   -Wall \
-   -Wextra \
-   -Wno-unused-parameter \
-   -Wno-missing-field-initializers \
-   -Wno-cast-function-type \
-   -Wno-implicit-fallthrough \
-   -Wno-register \
-   -Wno-parentheses \
-   -Wformat-overflow=2 \
-   -Wuninitialized \
-   -Wtype-limits \
-   -Winit-self \
-   -Wnull-dereference \
-   -Wnonnull \
-   -Wno-unknown-pragmas \
-   -Wstack-usage=4000 \
-   -Wsuggest-override
-
-# -Wanalyzer-too-complex -Wanalyzer-possible-null-argument -Wanalyzer-use-of-uninitialized-value
-#ANA = -fanalyzer -Wno-analyzer-use-of-uninitialized-value -Wno-analyzer-possible-null-argument -Wno-analyzer-malloc-leak
-# -Wno-analyzer-possible-null-argument -Wno-analyzer-use-of-uninitialized-value
-
-CXXFLAGS = -m32 -g -c -Og -fno-inline-functions -fno-inline -fno-stack-protector -fomit-frame-pointer \
- -march=i386 -mpreferred-stack-boundary=2 -mno-stack-arg-probe -Warray-bounds=2 \
- -idirafter kilib \
- -D_UNICODE -DUNICODE -UDEBUG -U_DEBUG -DUSEGLOBALIME -DUNICOWS -DTARGET_VER=350 \
- $(ANA) $(WARNINGS)
-
+CXXFLAGS = -m32 -g -c -Og  \
+ -march=i386 -mno-stack-arg-probe $(MINGWI) \
+ -Wall -Wno-parentheses -Wno-unknown-pragmas \
+ -idirafter kilib -DNOWINBASEINTERLOCK \
+ -D_UNICODE -DUNICODE -UDEBUG -U_DEBUG -DUSEGLOBALIME -DTARGET_VER=310
 LOPT     = -m32
 
 ifneq ($(NOCHARSET),1)
-CXXFLAGS += -finput-charset=cp932 -fexec-charset=cp932
+#CXXFLAGS += -finput-charset=cp932 -fexec-charset=cp932
 endif
 
 $(TARGET) : $(OBJS) $(RES)
-	g++ $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS)
+	clang $(LOPT) -o$(TARGET) $(OBJS) $(RES) $(LIBS)
 
 $(INTDIR)/%.o: rsrc/%.rc
-	windres -Fpe-i386 -l=0x411 -I rsrc $< -O coff -o$@
+	windres -DTARGET_VER=310 -Fpe-i386 -l=0x411 -I rsrc $< -O coff -o$@
 $(INTDIR)/%.o: %.cpp
-	g++ $(CXXFLAGS) -o$@ $<
+	clang $(CXXFLAGS) -o$@ $<
