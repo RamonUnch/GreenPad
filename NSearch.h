@@ -103,7 +103,7 @@ public:
 		: keylen_( my_lstrlenW(key) )
 	{
 		key_ = new unicode[keylen_+1];
-		if( !key ) return;
+		if( !key_ ) return;
 
 		my_lstrcpyW( key_, key );
 		ki::memFF( firstAppearance_, sizeof(firstAppearance_) );
