@@ -1106,14 +1106,15 @@ void GreenPadWnd::on_datetime()
 void GreenPadWnd::on_insertuni()
 {
 	struct InsertUnicode A_FINAL: public DlgImpl {
-		InsertUnicode(HWND w) : DlgImpl(IDD_INSUNI), utf32_(0), w_(w) { GoModal(w); }
+		InsertUnicode(HWND w) : DlgImpl(IDD_INSUNI), utf32_(0xffffffff), w_(w) { GoModal(w); }
 		void on_init() override
-			{ SetCenter(hwnd(),w_); ::SetFocus(item(IDC_LINEBOX)); }
+			{ SetCenter(hwnd(),w_); ::SetFocus(item(IDC_UNIBOX)); }
 		bool on_ok() override
 		{
 			TCHAR str[32]; str[0] = TEXT('\0');
 			::GetWindowText( item(IDC_LINEBOX), str, countof(str) );
-			utf32_ = Hex2Ulong(str);
+			if( *str )
+				utf32_ = Hex2Ulong(str);
 			return true;
 		}
 		qbyte utf32_;

@@ -135,7 +135,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "“úŽž‚Ì‘}“ü(&T)\tF6",          ID_CMD_DATETIME
         MENUITEM "Insert Date&&&Time\tF6",      ID_CMD_DATETIME
-        MENUITEM "Insert Unicode...\tCtrl+I",   ID_CMD_INSERTUNI
+        MENUITEM "Insert &Hex Unicode...\tCtrl+I",   ID_CMD_INSERTUNI
         MENUITEM SEPARATOR
         MENUITEM "Upper Ca&se\tAlt+U",          ID_CMD_UPPERCASE
         MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
@@ -554,7 +554,7 @@ BEGIN
         MENUITEM "Select &All\tCtrl+A",         ID_CMD_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Insert Date&&&Time\tF6",      ID_CMD_DATETIME
-        MENUITEM "Insert Unicode...\tCtrl+I",   ID_CMD_INSERTUNI
+        MENUITEM "Insert &Hex Unicode...\tCtrl+I",   ID_CMD_INSERTUNI
         MENUITEM SEPARATOR
         MENUITEM "Upper Ca&se\tAlt+U",          ID_CMD_UPPERCASE
         MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE

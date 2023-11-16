@@ -13,8 +13,7 @@ using namespace ki;
 
 struct ki::TextFileRPimpl: public Object
 {
-	inline TextFileRPimpl()
-		{}
+//	inline TextFileRPimpl() {}
 
 	virtual size_t ReadBuf( unicode* buf, ulong siz )
 		= 0;
