@@ -625,18 +625,13 @@ void Cursor::Del( bool wide )
 // of the line and paste them after the \r.
 void Cursor::Return()
 {   // User pressed the Enter!
+	const unicode cr = L'\r';
 	DPos pos = Min(cur_, sel_);
-	DPos mp1 = DPos(pos.tl, 0); // begining of line.
-	ulong len = doc_.getRangeLength( mp1, pos )+1;
-	unicode *p = new unicode[len+1]; // room for the \r and \0...
-	if(!p) return; // new failed!
-	p[0] = L'\r'; // put the \r
-	doc_.getText( &p[1], mp1, pos );
-	ulong i;
-	for (i=1; i<len && (p[i] == L' ' || p[i] == L'\t'); i++);
-	p[i] = '\0'; // Null terminate before the nonspaces.
+	const unicode *p = doc_.tl(pos.tl);
+	ulong i, len = pos.ad;
+	for( i=0; i<len && (p[i] == L' ' || p[i] == L'\t');  ++i );
+	Input(&cr, 1);
 	Input(p, i);
-	delete [] p;
 }
 
 void Cursor::DelToEndline( bool wide )
