@@ -627,11 +627,12 @@ void Cursor::Return()
 {   // User pressed the Enter!
 	const unicode cr = L'\r';
 	DPos pos = Min(cur_, sel_);
+	Input(&cr, 1);
 	const unicode *p = doc_.tl(pos.tl);
 	ulong i, len = pos.ad;
 	for( i=0; i<len && (p[i] == L' ' || p[i] == L'\t');  ++i );
-	Input(&cr, 1);
-	Input(p, i);
+	if( i )
+		Input(p, i);
 }
 
 void Cursor::DelToEndline( bool wide )
