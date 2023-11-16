@@ -151,7 +151,7 @@ struct CommentDFA
 	void transit( uchar sym )
 		{ state = tr_table[state][sym]; }
 
-	static void SetQEequalQB(bool set)
+	static void SetCEequalCB(bool set)
 	{
 		// Is CE == CB then we must go from
 		// iBc -> Ntx when we see CB
@@ -458,7 +458,7 @@ public:
 		, tag_( cb, cblen, ce, celen, lb, lblen, q1, q2, esc )
 	{
 		if( cb && ce ) // In case begin and end comment strings are the same i.e.: Python
-			CommentDFA::SetQEequalQB( cblen==celen && !my_lstrncmpW(ce, cb, cblen) );
+			CommentDFA::SetCEequalCB( cblen==celen && !my_lstrncmpW(ce, cb, cblen) );
 	}
 
 	// 初期化２：キーワード追加
