@@ -126,7 +126,7 @@ namespace {
 // 5x5の２次元配列で与えて管理する。
 //-------------------------------------------------------------------------
 
-enum CommentDFASymbol{ sCB, sCE, sLB, sQ1, sQ2, sXXX };
+enum CommentDFASymbol{ sCE, sCB, sLB, sQ1, sQ2, sXXX };
 struct CommentDFA
 {
 	// <状態>
@@ -148,22 +148,30 @@ struct CommentDFA
 		: state( inComment ? 3 : 0 ) {}
 
 	// 入力符号を与えて状態遷移
-	void transit( int sym )
+	void transit( uchar sym )
 		{ state = tr_table[state][sym]; }
+
+	static void SetCEequalCB(bool set)
+	{
+		// Is CE == CB then we must go from
+		// iBc -> Ntx when we see CB
+		tr_table[/*iBc*/3][/*QB*/1] = set? 0: 3;
+	}
 
 	// 現在の状態
 	uchar state;
 
 	// 状態遷移テーブル
-	static const uchar tr_table[5][5];
+	static uchar tr_table[5][5];
 };
 
-const uchar CommentDFA::tr_table[5][5] = {
-	{0,3,1,2,4},
-	{1,1,1,1,1},
-	{2,2,2,0,2},
-	{0,3,3,3,3},
-	{4,4,4,4,0},
+uchar CommentDFA::tr_table[5][5] = {
+// state                  // CE,  CB,  LB,  Q1,  Q2
+/* 000 Ntx */{0,3,1,2,4}, // Ntx, iBc, iLc, iQ1, iQ2
+/* 001 iLc */{1,1,1,1,1}, // iLc, iLc, iLc, iLc, iLc
+/* 010 iQ1 */{2,2,2,0,2}, // iQ1, iQ1, iQ1, Ntx, iQ1
+/* 011 iBc */{0,3,3,3,3}, // Ntx,    , iBc, iBc, iBc
+/* 100 iQ2 */{4,4,4,4,0}, // iQ2, iQ2, iQ2, iQ2, Ntx
 };
 
 
@@ -449,6 +457,8 @@ public:
 		: kwd_( casesensitive )
 		, tag_( cb, cblen, ce, celen, lb, lblen, q1, q2, esc )
 	{
+		if( cb && ce ) // In case begin and end comment strings are the same i.e.: Python
+			CommentDFA::SetCEequalCB( cblen==celen && !my_lstrncmpW(ce, cb, cblen) );
 	}
 
 	// 初期化２：キーワード追加
@@ -640,16 +650,16 @@ public:
 	void SetCommentBit( Line& line )
 	{
 		CommentDFA dfa( line.isLineHeadCmt()==1 );
-		ulong commentbit = dfa.state&1;
+		uchar commentbit = dfa.state&1;
 
 		// ループ～
 		// const unicode* str = line.str();
 		uchar*         flg = line.flg();
-		ulong       j,k,ie = line.size();
+		ulong         j,ie = line.size();
 		for( ulong i=0; i<ie; i=j )
 		{
 			// Tokenの終端を得る, Get the end of the Token
-			k = (flg[i]>>5);
+			uchar k = (flg[i]>>5);
 			j = i + k;
 			if( j >= ie )
 				j = ie;
