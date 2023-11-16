@@ -38,6 +38,7 @@
 #define IDD_CONFIG                      110
 #define IDD_ADDDOCTYPE                  111
 #define IDD_ABOUTDLG                    112
+#define IDD_INSUNI                      113
 
 #define IDC_ABOUTSTR                    1000
 #define IDC_ABOUTURL                    1001
@@ -49,6 +50,7 @@
 #define IDC_IGNORECASE                  1006
 #define IDC_REGEXP                      1007
 #define IDC_LINEBOX                     1007
+#define IDC_UNIBOX                      1007
 #define IDC_BACKSEARCH                  1008
 #define ID_FINDPREV                     1008
 #define IDC_LATEST_NUM                  1010
@@ -139,6 +141,7 @@
 #define ID_CMD_OPENSELECTION            50017
 #define ID_CMD_SELECTIONLEN             50018
 #define ID_CMD_ASCIIFY                  50019
+#define ID_CMD_INSERTUNI                50020
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED

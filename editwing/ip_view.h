@@ -8,7 +8,7 @@ namespace view {
 #endif
 
 #ifdef SHORT_TABLEWIDTH
-#define CW_INTTYPE short
+#define CW_INTTYPE uchar
 #else
 #define CW_INTTYPE int
 #endif
@@ -85,7 +85,7 @@ public:
 	CW_INTTYPE W( const unicode* pch ) const // 1.08 サロゲートペア回避, Avoid Surrogate Pair
 	{
 		unicode ch = *pch;
-		if( widthTable_[ ch ] == -1 )
+		if( widthTable_[ ch ] == (CW_INTTYPE)-1 )
 		{
 			if( isHighSurrogate(ch) )
 			{	// We cannot save the width of chars from the extended

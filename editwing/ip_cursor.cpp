@@ -492,6 +492,23 @@ void Cursor::Input( const unicode* str, ulong len )
 		doc_.Execute( Replace( cur_, sel_, str, len ) );
 }
 
+void Cursor::InputUTF32( qbyte utf32 )
+{
+	if( utf32 <= 0xFFFF )
+	{
+		unicode u16 = static_cast<unicode>( utf32 );
+		Input( &u16, 1 );
+	}
+	else
+	{
+		// Send High then low surrogate
+		unicode sp[2];
+		sp[0] = static_cast<unicode>( 0xD800 + (((utf32-0x10000) >> 10)&0x3ff) );
+		sp[1] = static_cast<unicode>( 0xDC00 + ( (utf32-0x10000)       &0x3ff) );
+		Input( sp, 2 );
+	}
+}
+
 void Cursor::Input( const char* str, ulong len )
 {
 	unicode* ustr = new unicode[ len*4 ];
@@ -504,7 +521,7 @@ void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
 {
 	VPos np;
 	view_.GetVPos( x, y, &np );
-	bool curbeforesel = cur_ < sel_;
+	const bool curbeforesel = cur_ < sel_;
 	VPos rsel = Min(cur_, sel_);
 	VPos rcur = Max(cur_, sel_);
 
@@ -647,13 +664,10 @@ void Cursor::DelToStartline( bool wide )
 void Cursor::QuoteSelectionW(const unicode *qs, bool shi)
 {
 	DPos ocur=cur_, osel=sel_; // save original selection
-	// Set cursors at begining of line
-	DPos dm, dM;
-	if( cur_ < sel_ ) {
-		dm=cur_; dM=sel_;
-	} else {
-		dm=sel_; dM=cur_;
-	}
+	DPos dm=cur_, dM=sel_;
+	if( cur_ > sel_ )
+		dm=sel_, dM=cur_;
+
 	// Skip last line if selected on 0 length
 	if( dM.ad == 0 &&  dm.tl < dM.tl) dM.tl--;
 

@@ -325,6 +325,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_SELECTALL:  edit_.getCursor().Home(true,false);
 	                        edit_.getCursor().End(true,true);   break;
 	case ID_CMD_DATETIME:   on_datetime();                      break;
+	case ID_CMD_INSERTUNI:  on_insertuni();                     break;
 #ifndef NO_IME
 	case ID_CMD_RECONV:     on_reconv();                        break;
 	case ID_CMD_TOGGLEIME:  on_toggleime();                     break;
@@ -1102,7 +1103,28 @@ void GreenPadWnd::on_datetime()
 	edit_.getCursor().Input( tmp, my_lstrlen(tmp) );
 #endif
 }
+void GreenPadWnd::on_insertuni()
+{
+	struct InsertUnicode A_FINAL: public DlgImpl {
+		InsertUnicode(HWND w) : DlgImpl(IDD_INSUNI), utf32_(0), w_(w) { GoModal(w); }
+		void on_init() override
+			{ SetCenter(hwnd(),w_); ::SetFocus(item(IDC_LINEBOX)); }
+		bool on_ok() override
+		{
+			TCHAR str[32]; str[0] = TEXT('\0');
+			::GetWindowText( item(IDC_LINEBOX), str, countof(str) );
+			utf32_ = Hex2Ulong(str);
+			return true;
+		}
+		qbyte utf32_;
+		HWND w_;
+	} dlg(hwnd());
 
+	if( IDOK == dlg.endcode() && dlg.utf32_ != 0xffffffff )
+	{
+		edit_.getCursor().InputUTF32( dlg.utf32_ );
+	}
+}
 void GreenPadWnd::on_doctype( int no )
 {
 	if( HMENU m = ::GetSubMenu( ::GetSubMenu(::GetMenu(hwnd()),3),4 ) )

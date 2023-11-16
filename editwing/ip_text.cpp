@@ -824,7 +824,7 @@ void Document::OpenFile( TextFileR& tf )
 	// static unicode buf[2097152]; // 4MB on x64
 #else
 	// static unicode buf[131072]; // 256KB on i386
-	size_t buf_sz = 32768;
+	size_t buf_sz = 88000;
 #endif
 	// Do not allocate more mem than twice the file size in bytes.
 	// Should help with loaing small files on Win32s.
