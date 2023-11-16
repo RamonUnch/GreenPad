@@ -159,6 +159,23 @@ const TCHAR *LPTR2Hex(TCHAR str[ULONG_DIGITS+1], UINT_PTR n)
 	return str+i;
 }
 
+ulong Hex2Ulong( const TCHAR *str )
+{
+	ulong u=0;
+	if( !*str ) return 0;
+
+	while(1)
+	{
+		const TCHAR c = *str;
+		u += c<=TEXT('9') ? c-TEXT('0'):
+		     c<=TEXT('F') ? c+10-'A': c+10-'a';
+		if( *++str )
+			u <<= 4;
+		else
+			break;
+	}
+	return u;
+}
 
 #ifdef OLDWIN32S
 #undef WideCharToMultiByte

@@ -127,6 +127,7 @@ private:
 	void    on_external_exe_start(const ki::Path& g);
 	void    on_config();
 	void    on_datetime();
+	void    on_insertuni();
 	void    on_doctype( int no );
 	void    on_nextwnd();
 	void    on_prevwnd();

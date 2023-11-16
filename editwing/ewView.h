@@ -251,6 +251,7 @@ public:
 	void InputAt( const unicode *str, ulong len, int x, int y );
 	void InputAt( const char *str, ulong len, int x, int y );
 	void InputChar( unicode ch );
+	void InputUTF32( qbyte utf32 );
 	void Del(bool wide);
 	void DelBack(bool wide);
 	void DelToEndline( bool wide );
