@@ -1594,7 +1594,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 	else if( bom4 == 0xfffe0000 ) cs = UTF32l;
 	else if( bom2 == 0xfeff )     cs = UTF16b;
 	else if( bom2 == 0xfffe )     cs = UTF16l;
-	else if( !bit8 && !freq[0] && freq['+'] >= freq['-']
+	else if( !bit8 && !freq[0]
 	    &&(  bom4 == 0x2b2f7638
 	      || bom4 == 0x2b2f7639
 	      || bom4 == 0x2b2f762b
