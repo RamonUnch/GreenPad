@@ -1652,7 +1652,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 		for( int i = 14; i <= 31; i++)
 			if( freq[ i ] )
 				goto nonASCII;
-		if( !freq[ 127 ] )
+		if( freq[ 127 ] )
 			goto nonASCII;
 
 		// File is ASCII => use CP_ACP.
