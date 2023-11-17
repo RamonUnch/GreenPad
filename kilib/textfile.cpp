@@ -3166,28 +3166,42 @@ struct wUTF8 A_FINAL: public TextFileWPimpl
 
 
 
+namespace {
+	static const uchar mime[64] = {
+	'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
+	'Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f',
+	'g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v',
+	'w','x','y','z','0','1','2','3','4','5','6','7','8','9','+','/'};
+
+	static const uchar moredirect[13] = {
+		'\t','\n','\r', ' ', // UTF-7 Rule 3 (RFC 2152)
+		'\'', '(', ')', ',', '-', '.', '/', ':', '?'}; // Always OK
+}
 struct wUTF7 A_FINAL: public TextFileWPimpl
 {
-	explicit wUTF7( FileW& w ) : TextFileWPimpl(w) {}
+	bool direct[128];
+	explicit wUTF7( FileW& w ) : TextFileWPimpl(w)
+	{
+		mem00( direct, sizeof(direct) );
+		// A-Z, a-Z, 0-9, /, are directly encoded.
+		for( size_t i=0; i < countof(mime) ; i++ )
+			direct[mime[i]] = true;
+		// More directtly encoded chars.
+		for( size_t i=0; i < countof(moredirect) ; i++ )
+			direct[moredirect[i]] = true;
+	}
 
 	void WriteLine( const unicode* str, ulong len ) override
 	{
-		static const uchar mime[64] = {
-		'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
-		'Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f',
-		'g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v',
-		'w','x','y','z','0','1','2','3','4','5','6','7','8','9','+','/'};
-
 		// XxxxxxYyyyyyZzzz | zzWwwwwwUuuuuuVv | vvvvTtttttSsssss
 		bool mode_m = false;
 		while( len )
 		{
-			if( *str <= 0x7f )
+			if( *str <= 0x7f && direct[*str] )
 			{
-				fp_.NeedSpace(2);
-				fp_.WriteCN( static_cast<uchar>(*str) );
+				fp_.WriteC( static_cast<uchar>(*str) );
 				if( *str == L'+' )
-					fp_.WriteCN( '-' );
+					fp_.WriteC( '-' );
 				++str, --len;
 			}
 			else
@@ -3669,7 +3683,7 @@ bool TextFileW::Open( const TCHAR* fname )
 		&&  (!app().isNT() || !::IsValidCodePage(65001)) )
 			impl_ = new wUTF8( fp_, cs_ );
 		else if( cs_==UTF7
-		&&     ( !app().isNT() || !::IsValidCodePage(65000)) )
+		&&    ( !app().isNT() || !::IsValidCodePage(65000)) )
 			impl_ = new wUTF7( fp_ );
 		else
 #endif
