@@ -159,20 +159,14 @@ const TCHAR *LPTR2Hex(TCHAR str[ULONG_DIGITS+1], UINT_PTR n)
 	return str+i;
 }
 
-ulong Hex2Ulong( const TCHAR *str )
+ulong Hex2Ulong( const TCHAR *s )
 {
 	ulong u=0;
-	if( !*str ) return 0;
-
-	while(1)
+	while(*s >= '0')
 	{
-		const TCHAR c = *str;
-		u += c<=TEXT('9') ? c-TEXT('0'):
-		     c<=TEXT('F') ? c+10-'A': c+10-'a';
-		if( *++str )
-			u <<= 4;
-		else
-			break;
+		u = u << 4 | ( *s<=TEXT('9') ? *s-TEXT('0'):
+		               *s<=TEXT('F') ? *s+10-'A': *s+10-'a' );
+		++s;
 	}
 	return u;
 }
