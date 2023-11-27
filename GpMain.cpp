@@ -1113,8 +1113,18 @@ void GreenPadWnd::on_insertuni()
 		{
 			TCHAR str[32]; str[0] = TEXT('\0');
 			::GetWindowText( item(IDC_LINEBOX), str, countof(str) );
-			if( *str )
-				utf32_ = Hex2Ulong(str);
+			if( !*str )
+				return true;
+			if( str[0] == TEXT('.') )
+				// .decimal
+				utf32_ = String::GetInt(str+1);
+			else if( str[0] == TEXT('o') || str[0] == TEXT('O') )
+				// Octal
+				utf32_ = Octal2Ulong(str+1);
+			else
+				// heXadecimal (default)
+				utf32_ = Hex2Ulong( str + (str[0] == TEXT('x') || str[0] == TEXT('X')) );
+
 			return true;
 		}
 		qbyte utf32_;
