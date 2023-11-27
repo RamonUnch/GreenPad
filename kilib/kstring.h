@@ -42,6 +42,7 @@ const TCHAR *Int2lStr(TCHAR str[INT_DIGITS+1], int n) A_NONNULL;
 const TCHAR *Ulong2lStr(TCHAR str[ULONG_DIGITS+1], ulong n) A_NONNULL;
 const TCHAR *LPTR2Hex(TCHAR str[ULONG_DIGITS+1], UINT_PTR n) A_NONNULL;
 ulong Hex2Ulong( const TCHAR *str ) A_NONNULL;
+ulong Octal2Ulong( const TCHAR *s ) A_NONNULL;
 
 //inline static
 //const char *my_lstrcatA(char *dest, const char * restrict src)

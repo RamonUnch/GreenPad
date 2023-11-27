@@ -171,6 +171,17 @@ ulong Hex2Ulong( const TCHAR *s )
 	return u;
 }
 
+ulong Octal2Ulong( const TCHAR *s )
+{
+	ulong u=0;
+	while(*s >= '0')
+	{
+		u = u << 3 | *s-TEXT('0');
+		++s;
+	}
+	return u;
+}
+
 #ifdef OLDWIN32S
 #undef WideCharToMultiByte
 #undef MultiByteToWideChar
