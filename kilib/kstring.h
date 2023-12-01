@@ -165,6 +165,17 @@ int my_lstrcmpiAsciiW(const wchar_t *X, const wchar_t *Y)
 }
 
 static inline
+int looseStrCmp( LPCTSTR a, LPCTSTR b )
+{
+#if defined(WIN32S) || ( defined(TARGET_VER) && TARGET_VER < 310 )
+	return my_lstrcmpiAscii( a, b ); // fallback...
+#else
+	enum { FLAGS =  NORM_IGNORECASE|NORM_IGNOREKANATYPE|NORM_IGNORENONSPACE|NORM_IGNORESYMBOLS|NORM_IGNOREWIDTH };
+	return CompareString( LOCALE_USER_DEFAULT, FLAGS, a, -1, b, -1) - 2; // 2 -> 0
+#endif
+}
+
+static inline
 wchar_t *my_lstrcpynW(wchar_t *out, const wchar_t * restrict in, size_t outlen)
 {
 	size_t i;
