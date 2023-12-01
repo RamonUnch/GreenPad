@@ -339,36 +339,29 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 
 	// Create a pen that is a 16th of font height. (min is 1px)
 	pen_ = ::CreatePen( PS_SOLID, height_/16, vc.color[CTL] );
-	::SelectObject( cdc_, pen_   );
+	::SelectObject( cdc_, pen_ );
 
 
 	// 文字幅テーブル初期化（ASCII範囲の文字以外は遅延処理）
 	memFF( widthTable_, 65536*sizeof(*widthTable_) );
-#ifdef WIN32S
-	{ // Ascii only characters, so the ansi version should always be fine.
-		#ifndef SHORT_TABLEWIDTH
-		::GetCharWidthA( cdc_, 0, 127, widthTable_ );
+	{ // Ascii only characters
+		#ifdef WIN32S
+			#define GETCHARWIDTH GetCharWidthA
 		#else
-		int width[128];
-		::GetCharWidthA( cdc_, 0, 127, width );
-		for( int i=0; i <= 127 ; i++)
-			widthTable_[i] = (CW_INTTYPE)width[i];
+			#define GETCHARWIDTH GetCharWidthW
 		#endif
-	}
-#else // NT/9x
-	{
-		#ifndef SHORT_TABLEWIDTH
-		::GetCharWidthW( cdc_, 0, 127, widthTable_ );
-		#else
-		int width[128];
-		::GetCharWidthW( cdc_, 0, 127, width );
-		int i;
-		for( i=0; i <= 127 - ' '; i++)
-			widthTable_[i] = (CW_INTTYPE)width[i];
-		#endif
-	}
-#endif // WIN32S
 
+		#ifndef SHORT_TABLEWIDTH
+		::GETCHARWIDTH( cdc_, 0, 127, widthTable_ );
+		#else
+		int width[128];
+		::GETCHARWIDTH( cdc_, 0, 127, width );
+		for( int i=0; i <= 127 ; i++)
+			widthTable_[i] = static_cast<CW_INTTYPE>(width[i]);
+		#endif
+
+		#undef GETCHARWIDTH
+	}
 	const unicode zsp[2] = { 0x3000, 0x0000 }; // L'　'
 	W(zsp); // Initialize width of L'　'
 
