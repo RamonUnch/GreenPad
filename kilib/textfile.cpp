@@ -1968,7 +1968,7 @@ int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
 		for (size_t i =0; i < countof(cslist); i++)
 		{
 			// Pure ASCII case insensitive comparison.
-			if(0 == my_lstrcmpiASCII(charset,cslist[i].str))
+			if(0 == my_lstrcmpiAsciiA(charset,cslist[i].str))
 			{
 				cs = cslist[i].cs;
 				break;

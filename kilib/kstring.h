@@ -13,6 +13,7 @@
 	#define my_lstrchr my_lstrchrW
 //	#define my_lstrcat my_lstrcatW
 	#define my_lstrkpy my_lstrkpyW
+	#define my_lstrcmpiAscii my_lstrcmpiAsciiW
 #else
 	#define my_lstrcpy my_lstrcpyA
 	#define my_lstrcpyn my_lstrcpynA
@@ -21,6 +22,7 @@
 	#define my_lstrchr my_lstrchrA
 //	#define my_lstrcat my_lstrcatA
 	#define my_lstrkpy my_lstrkpyA
+	#define my_lstrcmpiAscii my_lstrcmpiAsciiA
 #endif
 
 #ifdef OLDWIN32S
@@ -146,13 +148,20 @@ int my_lstrcmpA(const char *X, const char *Y)
 	return *(const unsigned char*)X - *(const unsigned char*)Y;
 }
 
-#define tolowerASCII(x) ( (x) | ('A'<(x) && (x)<'Z') << 5 )
+#define tolowerASCII(x) ( (x) | ('A'<=(x) && (x)<='Z') << 5 )
 static inline
-int my_lstrcmpiASCII(const char *X, const char *Y)
+int my_lstrcmpiAsciiA(const char *X, const char *Y)
 {
 	while ( *X && tolowerASCII(*X) == tolowerASCII(*Y) ) { X++; Y++; }
 	return tolowerASCII( *(const unsigned char*)X )
 	     - tolowerASCII( *(const unsigned char*)Y );
+}
+static inline
+int my_lstrcmpiAsciiW(const wchar_t *X, const wchar_t *Y)
+{
+	while ( *X && tolowerASCII(*X) == tolowerASCII(*Y) ) { X++; Y++; }
+	return tolowerASCII( *X )
+	     - tolowerASCII( *Y );
 }
 
 static inline
@@ -283,7 +292,7 @@ public:
 	//@{ ConvTo(W)Charの返値バッファの解放 //@}
 	void FreeWCMem( const wchar_t* wc ) const;
 	void FreeCMem( const char* str ) const;
-	
+
 	static bool isCompatibleWithACP(const TCHAR *uni, size_t len);
 	bool isCompatibleWithACP() const;
 
