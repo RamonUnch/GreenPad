@@ -3,8 +3,8 @@
 // Used by kilib.rc
 //
 
-#define VER_FILEVERSION      1,2,0
-#define VER_FILEVERSIONSTR  "1.20"
+#define VER_FILEVERSION      1,2,1
+#define VER_FILEVERSIONSTR  "1.21"
 
 #include "dlgs.h"
 #define IDS_ASKTOSAVE                   1
