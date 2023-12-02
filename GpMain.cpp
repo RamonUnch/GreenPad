@@ -1283,9 +1283,20 @@ void GreenPadWnd::on_move( const DPos& c, const DPos& s )
 	if( edit_.getDoc().isBusy() && ((++busy_cnt)&0xff) )
 		return;
 
-	// Update U+XXXXh text in the StatusBar.
-	const unicode* su = edit_.getDoc().tl(c.tl);
-	stb_.SetUnicode( su+c.ad /*- (c.ad!=0 && c.ad==edit_.getDoc().len(c.tl) ) */);
+	if( c == s )
+	{
+		// Update U+XXXXh text in the StatusBar.
+		const unicode* su = edit_.getDoc().tl(c.tl);
+		stb_.SetUnicode( su+c.ad /*- (c.ad!=0 && c.ad==edit_.getDoc().len(c.tl) ) */);
+	}
+	else
+	{
+		TCHAR buf[ULONG_DIGITS+1];
+		ulong N = s.tl == c.tl
+			? Max(c.ad, s.ad) - Min(c.ad, s.ad)
+			: Max(c.tl, s.tl) - Min(c.tl, s.tl);
+		stb_.SetText( Ulong2lStr(buf, N), GpStBar::UNI_PART );
+	}
 
 	if( c == old_cur_ && s == old_sel_ )
 		return; // Nothing to do
