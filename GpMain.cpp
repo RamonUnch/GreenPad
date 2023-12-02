@@ -927,18 +927,33 @@ void GreenPadWnd::on_drop( HDROP hd )
 
 void GreenPadWnd::on_jump()
 {
+	const view::VPos *cur, *sel;
+	edit_.getCursor().getCurPosUnordered(&cur, &sel);
 	struct JumpDlg A_FINAL: public DlgImpl {
-		JumpDlg(HWND w) : DlgImpl(IDD_JUMP), w_(w) { GoModal(w); }
-		void on_init() override {
-			SetCenter(hwnd(),w_); ::SetFocus(item(IDC_LINEBOX)); }
-		bool on_ok() override {
+		JumpDlg( HWND w, int curpos )
+			: DlgImpl( IDD_JUMP )
+			, LineNo( curpos ),
+			w_( w )
+			{ GoModal(w); }
+		void on_init() override
+		{
+			SetCenter(hwnd(),w_); ::SetFocus(item(IDC_LINEBOX));
+		}
+		bool on_ok() override
+		{
 			TCHAR str[32];
 			::GetWindowText( item(IDC_LINEBOX), str, countof(str) );
-			LineNo = String::GetInt(str);
+			if     ( str[0] == TEXT('+') )
+				LineNo += String::GetInt(str+1); // relative
+			else if( str[0] == TEXT('-') )
+				LineNo -= String::GetInt(str+1); // relative
+			else
+				LineNo = String::GetInt(str);
 			return true;
 		}
-		int LineNo; HWND w_;
-	} dlg(hwnd());
+		int LineNo;
+		HWND w_;
+	} dlg( hwnd(), cur->tl+1 );
 
 	if( IDOK == dlg.endcode() )
 		JumpToLine( dlg.LineNo );
