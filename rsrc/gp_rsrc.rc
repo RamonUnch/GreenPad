@@ -135,17 +135,20 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "ì˙éûÇÃë}ì¸(&T)\tF6",          ID_CMD_DATETIME
         MENUITEM "Insert Date&&&Time\tF6",      ID_CMD_DATETIME
-        MENUITEM "Insert &Hex Unicode...\tCtrl+I",   ID_CMD_INSERTUNI
+        MENUITEM "Insert U&nicode...\tCtrl+I",   ID_CMD_INSERTUNI
         MENUITEM SEPARATOR
-        MENUITEM "Upper Ca&se\tAlt+U",          ID_CMD_UPPERCASE
-        MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
-        MENUITEM "I&nvert Case\tAlt+I",         ID_CMD_INVERTCASE
-        MENUITEM "R&educe to ASCII\tAlt+R",     ID_CMD_ASCIIFY
-        MENUITEM "Tri&m Trailing Spaces\tAlt+W",ID_CMD_TTSPACES
-        MENUITEM "Strip &First Characters\tAlt+Z",ID_CMD_SFCHAR
-        MENUITEM "Strip &Last Characters\tAlt+A",ID_CMD_SLCHAR
-        MENUITEM "&Quote\tAlt+Q",               ID_CMD_QUOTE
-        MENUITEM "Unqu&ote\tAlt+N",             ID_CMD_UNQUOTE
+        POPUP "&Modify"
+        BEGIN
+            MENUITEM "&Upper Case\tAlt+U",          ID_CMD_UPPERCASE
+            MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
+            MENUITEM "&Invert Case\tAlt+I",         ID_CMD_INVERTCASE
+            MENUITEM "&Reduce to ASCII\tAlt+R",     ID_CMD_ASCIIFY
+            MENUITEM "Trim &Trailing Spaces\tAlt+W",ID_CMD_TTSPACES
+            MENUITEM "Strip &First Characters\tAlt+Z",ID_CMD_SFCHAR
+            MENUITEM "Strip L&ast Characters\tAlt+A",ID_CMD_SLCHAR
+            MENUITEM "&Quote\tAlt+Q",               ID_CMD_QUOTE
+            MENUITEM "U&nquote\tAlt+N",             ID_CMD_UNQUOTE
+        END
       # ifndef NO_IME
         MENUITEM SEPARATOR
         MENUITEM "çƒïœä∑(&V)",              ID_CMD_RECONV
@@ -554,17 +557,20 @@ BEGIN
         MENUITEM "Select &All\tCtrl+A",         ID_CMD_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Insert Date&&&Time\tF6",      ID_CMD_DATETIME
-        MENUITEM "Insert &Hex Unicode...\tCtrl+I",   ID_CMD_INSERTUNI
+        MENUITEM "Insert U&nicode...\tCtrl+I",   ID_CMD_INSERTUNI
         MENUITEM SEPARATOR
-        MENUITEM "Upper Ca&se\tAlt+U",          ID_CMD_UPPERCASE
-        MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
-        MENUITEM "I&nvert Case\tAlt+I",         ID_CMD_INVERTCASE
-        MENUITEM "R&educe to ASCII\tAlt+R",     ID_CMD_ASCIIFY
-        MENUITEM "Tri&m Trailing Spaces\tAlt+W",ID_CMD_TTSPACES
-        MENUITEM "Strip &First Characters\tAlt+Z",ID_CMD_SFCHAR
-        MENUITEM "Strip &Last Characters\tAlt+A",ID_CMD_SLCHAR
-        MENUITEM "&Quote\tAlt+Q",               ID_CMD_QUOTE
-        MENUITEM "Unqu&ote\tAlt+N",             ID_CMD_UNQUOTE
+        POPUP "&Modify"
+        BEGIN
+            MENUITEM "&Upper Case\tAlt+U",          ID_CMD_UPPERCASE
+            MENUITEM "&Lower Case\tAlt+L",          ID_CMD_LOWERCASE
+            MENUITEM "&Invert Case\tAlt+I",         ID_CMD_INVERTCASE
+            MENUITEM "&Reduce to ASCII\tAlt+R",     ID_CMD_ASCIIFY
+            MENUITEM "Trim &Trailing Spaces\tAlt+W",ID_CMD_TTSPACES
+            MENUITEM "Strip &First Characters\tAlt+Z",ID_CMD_SFCHAR
+            MENUITEM "Strip L&ast Characters\tAlt+A",ID_CMD_SLCHAR
+            MENUITEM "&Quote\tAlt+Q",               ID_CMD_QUOTE
+            MENUITEM "U&nquote\tAlt+N",             ID_CMD_UNQUOTE
+        END
 
       # ifndef NO_IME
         MENUITEM SEPARATOR
