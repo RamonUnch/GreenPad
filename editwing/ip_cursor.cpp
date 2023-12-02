@@ -151,7 +151,7 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::Document& dc )
 	keyRepTime_ = 15; // Default in case SystemParametersInfo fails
 	::SystemParametersInfo( SPI_GETKEYBOARDSPEED, 0, &keyRepTime_, 0 );
 	keyRepTime_ = 33 + keyRepTime_ * 11;
-	keyRepTime_ >>= 2;
+	keyRepTime_ >>= 3;
 	cur_.tl = cur_.ad = cur_.vl = cur_.rl = 0;
 	cur_.vx = cur_.rx = 0; sel_ = cur_;
 }
@@ -833,10 +833,11 @@ void Cursor::Paste()
 //-------------------------------------------------------------------------
 // More Edit functions
 //-------------------------------------------------------------------------
-unicode* WINAPI Cursor::InvertCaseW(unicode *str)
+unicode* WINAPI Cursor::InvertCaseW(unicode *str, size_t *lenp)
 {
 	if(!str) return NULL;
-	for(ulong i=0; str[i] != L'\0'; i++)
+	size_t len = *lenp;
+	for(size_t i=0; i<len; i++)
 	{
 		if(my_IsCharLowerW(str[i]))
 			str[i] = my_CharUpperSingleW(str[i]);
@@ -846,13 +847,47 @@ unicode* WINAPI Cursor::InvertCaseW(unicode *str)
 	return str;
 }
 
-unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str)
+unicode* WINAPI Cursor::UpperCaseW(unicode *str, size_t *lenp)
+{
+	if(!str) return NULL;
+	const size_t len = *lenp;
+#if defined(UNICOWS) || !defined(_UNICODE)
+	if( app().isNT() )
+		CharUpperBuffW( str, len);
+	else
+		for( size_t i=0; i<len; ++i )
+			str[i] = my_CharUpperSingleW(str[i]);
+	return str;
+#else
+	CharUpperBuffW(str, len);
+	return str;
+#endif
+}
+
+unicode* WINAPI Cursor::LowerCaseW(unicode *str, size_t *lenp)
+{
+	if(!str) return NULL;
+	const size_t len = *lenp;
+#if defined(UNICOWS) || !defined(_UNICODE)
+	if( app().isNT() )
+		CharLowerBuffW( str, len);
+	else
+		for( size_t i=0; i<len; ++i )
+			str[i] = my_CharLowerSingleW(str[i]);
+	return str;
+#else
+	CharLowerBuffW(str, len);
+	return str;
+#endif
+}
+
+unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str, size_t *lenp)
 {
 
-	long i, j;
+	long i, j, len=*lenp, new_len=0;
 	bool trim = true;
 	// Go through the string backward
-	for (i = my_lstrlenW(str)-1, j = i; i >= 0; i--)
+	for (i = len-1, j = i; i >= 0; i--)
 	{
 		if (trim) { // we trim
 			if (str[i] == ' ' || str[i] == '\t') {
@@ -865,17 +900,18 @@ unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str)
 				trim = true; // restart just after the CR|LF
 			}
 		}
+		++new_len;
 		str[j--] = str[i];
 	}
 	j++;
-
+	*lenp = new_len;
 	return j!=0 ? &str[j]: NULL; // New string start
 }
 
-unicode* WINAPI Cursor::StripLastCharsW(unicode *p)
+unicode* WINAPI Cursor::StripLastCharsW(unicode *p, size_t *lenp)
 {	// Remove last char of each line
 
-	size_t  i, j, len = my_lstrlenW(p);
+	size_t  i, j, len=*lenp;
 	for (i=0, j=0; i < len; )
 	{
 		// Skip if the next character is a CR or LF, while preserving CRLF
@@ -884,13 +920,14 @@ unicode* WINAPI Cursor::StripLastCharsW(unicode *p)
 		p[j++] = p[i++];
 	}
 	p[j] = L'\0';
+	*lenp = j-1;
 	return p;
 }
 
-unicode* WINAPI Cursor::ASCIIOnlyW(unicode *str)
+unicode* WINAPI Cursor::ASCIIOnlyW(unicode *str, size_t *lenp)
 {
-	ulong cnt = 0;
-	for(ulong i=0; str[i] != L'\0'; i++)
+	size_t cnt = 0, len = *lenp;
+	for(ulong i=0; i<len; i++)
 	{
 		if( str[i] > 0x007f )
 		{
@@ -901,7 +938,6 @@ unicode* WINAPI Cursor::ASCIIOnlyW(unicode *str)
 	return cnt? str: NULL;
 }
 
-
 void Cursor::ModSelection(ModProc mfunk)
 {
 	DPos dm=cur_, dM=sel_;
@@ -911,14 +947,14 @@ void Cursor::ModSelection(ModProc mfunk)
 	else if (cur_==sel_)
 		return; // Nothing to do.
 
-	ulong len = doc_.getRangeLength( dm, dM );
+	size_t len = doc_.getRangeLength( dm, dM );
 	unicode *p = new unicode[len+1];
 	if( !p ) return;
 	doc_.getText( p, dm, dM );
-	unicode *np = mfunk(p);
+	unicode *np = mfunk(p, &len); // IN and OUT len!!!
 	if( np ) // Sucess!
 	{
-		doc_.Execute( Replace(cur_, sel_, np, my_lstrlenW(np)) );
+		doc_.Execute( Replace(cur_, sel_, np, len) );
 		MoveCur(osel, false);
 		MoveCur(ocur, true);
 	}
@@ -930,19 +966,11 @@ void Cursor::ModSelection(ModProc mfunk)
 }
 void Cursor::UpperCaseSel()
 {
-#if defined(UNICOWS) || !defined(_UNICODE)
-	ModSelection(app().isNT()? CharUpperW: my_CharUpperW);
-#else
-	ModSelection(CharUpperW);
-#endif
+	ModSelection(UpperCaseW);
 }
 void Cursor::LowerCaseSel()
 {
-#if defined(UNICOWS) || !defined(_UNICODE)
-	ModSelection(app().isNT()? CharLowerW: my_CharLowerW);
-#else
-	ModSelection(CharLowerW);
-#endif
+	ModSelection(LowerCaseW);
 }
 void Cursor::InvertCaseSel()
 {
@@ -959,13 +987,11 @@ void Cursor::StripFirstChar()
 }
 void Cursor::StripLastChar()
 {
-	if(cur_==sel_) return;
 	ModSelection(StripLastCharsW);
 }
 
 void Cursor::ASCIIFy()
 {
-	if(cur_==sel_) return;
 	ModSelection( ASCIIOnlyW );
 }
 //-------------------------------------------------------------------------
