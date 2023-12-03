@@ -389,7 +389,12 @@ DPos Document::findMatchingBrace( const DPos &dp ) const
 				backside=1;
 				goto tryagain; // Try again!
 			}
-			// No brace to match
+			// No brace to match, just go to next " '  * /
+			if( q == L'\"' || q == L'\'' || q == L'*' )
+			{
+				if( findNextBrace( np, q, q ) )
+					return np;
+			}
 			return dp;
 	}
 
