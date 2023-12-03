@@ -8,9 +8,9 @@ using doc::Insert;
 using doc::Delete;
 using doc::Replace;
 
-static ulong countLines( const unicode *str, size_t len )
+static size_t countLines( const unicode *str, size_t len )
 {
-	ulong nl = 0;
+	size_t nl = 0;
 	while( len-- )
 	{
 		if( *str == L'\r' )
@@ -26,9 +26,9 @@ static ulong countLines( const unicode *str, size_t len )
 	}
 	return nl;
 }
-static ulong lastLineLength( const unicode *str, size_t len )
+static size_t lastLineLength( const unicode *str, size_t len )
 {
-	ulong lll = 0;
+	size_t lll = 0;
 	while( len-- )
 	{
 		if( str[len] == L'\r' || str[len] == L'\n' )
