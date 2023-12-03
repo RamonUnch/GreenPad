@@ -220,7 +220,6 @@ private:
 //	ÉJÅ[É\Éã
 //@}
 //=========================================================================
-typedef unicode *(WINAPI *ModProc)(unicode* str);
 class Cursor : public ki::Object
 {
 public:
@@ -274,13 +273,16 @@ public:
 	void SetROMode( bool bRO );
 
 	// More Edit
+	typedef unicode *(WINAPI *ModProc)(unicode* str, size_t *len);
+	static unicode* WINAPI InvertCaseW(unicode *, size_t *len);
+	static unicode* WINAPI UpperCaseW(unicode *, size_t *len);
+	static unicode* WINAPI LowerCaseW(unicode *, size_t *len);
+	static unicode* WINAPI TrimTrailingSpacesW(unicode *, size_t *len);
+	static unicode* WINAPI StripLastCharsW(unicode *, size_t *len);
+	static unicode* WINAPI ASCIIOnlyW(unicode *, size_t *len);
 	void ModSelection(ModProc funk);
 	void UpperCaseSel();
 	void LowerCaseSel();
-	static unicode* WINAPI InvertCaseW(unicode *);
-	static unicode* WINAPI TrimTrailingSpacesW(unicode *);
-	static unicode* WINAPI StripLastCharsW(unicode *);
-	static unicode* WINAPI ASCIIOnlyW(unicode *);
 	void InvertCaseSel();
 	void TTSpacesSel();
 	void StripFirstChar();
