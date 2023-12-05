@@ -454,8 +454,8 @@ void String::TrimRight( size_t siz )
 int String::GetInt( const TCHAR* x )
 {
 	int n=0;
-	bool minus = (*x==TEXT('-'));
-	x += minus;
+	bool minus = *x==TEXT('-');
+	x += minus || *x==TEXT('+'); // skip eventual '+'
 	for( ; *x!=TEXT('\0'); x=next(x) )
 	{
 		if( *x<TEXT('0') || TEXT('9')<*x )
