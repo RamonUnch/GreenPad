@@ -366,16 +366,16 @@ public:
 	, dwEffect_ ( 0 )
 	{
 		// Dynamically load DoDragDrop() from OLE32.DLL
-		#define FUNK_TYPE ( HRESULT (WINAPI *)(IDataObject *, IDropSource *, DWORD, DWORD *) )
+		typedef HRESULT (WINAPI *ddd_t)(IDataObject *, IDropSource *, DWORD, DWORD *);
+		static ddd_t dyn_DoDragDrop = (ddd_t)1;
+
 		ki::app().InitModule( App::OLE );
-		static HRESULT (WINAPI *dyn_DoDragDrop)(IDataObject *, IDropSource *, DWORD, DWORD *)=FUNK_TYPE(-1);
-		if( dyn_DoDragDrop == FUNK_TYPE(-1) )
+		if( dyn_DoDragDrop == (ddd_t)1 )
 		{
 			dyn_DoDragDrop = NULL;
 			if( app().hOle32() )
-				dyn_DoDragDrop = FUNK_TYPE GetProcAddress( app().hOle32(), "DoDragDrop" );
+				dyn_DoDragDrop = (ddd_t)GetProcAddress( app().hOle32(), "DoDragDrop" );
 		}
-		#undef FUNK_TYPE
 
 		if( dyn_DoDragDrop )
 		{
@@ -499,7 +499,7 @@ inline Mutex::~Mutex()
 
 
 //=========================================================================
-// Simple Timer 
+// Simple Timer
 //=========================================================================
 class Timer
 {

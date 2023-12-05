@@ -8,9 +8,9 @@
 using namespace ki;
 
 #ifndef NO_OLE32
-typedef HRESULT (WINAPI * Initialize_funk)(LPVOID r);
 static HRESULT MyOleInitialize(LPVOID r)
 {
+	typedef HRESULT (WINAPI * Initialize_funk)(LPVOID r);
 	Initialize_funk func = (Initialize_funk)GetProcAddress(app().hOle32(), "OleInitialize");
 
 	if (func) { // We got the function!
@@ -59,15 +59,14 @@ HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsCont
 }
 HRESULT MyCoLockObjectExternal(IUnknown * pUnk, BOOL fLock, BOOL fLastUnlockReleases)
 {
-	#define FUNK_TYPE ( HRESULT (WINAPI *)(IUnknown *, BOOL, BOOL) )
+	typedef HRESULT (WINAPI *funk_t)(IUnknown *, BOOL, BOOL);
+	static funk_t funk = (funk_t)1;
 
-	static HRESULT (WINAPI *dyn_CoLockObjectExternal)(IUnknown *, BOOL, BOOL) = FUNK_TYPE(-1);
-	if( dyn_CoLockObjectExternal == FUNK_TYPE(-1))
-		dyn_CoLockObjectExternal = FUNK_TYPE GetProcAddress(app().hOle32(), "CoLockObjectExternal");
+	if( funk == (funk_t)1)
+		funk = (funk_t)GetProcAddress(app().hOle32(), "CoLockObjectExternal");
 
-	if( dyn_CoLockObjectExternal )
-		return dyn_CoLockObjectExternal(pUnk, fLock, fLastUnlockReleases);
-	#undef FUNK_TYPE
+	if( funk )
+		return funk(pUnk, fLock, fLastUnlockReleases);
 
 	return E_NOTIMPL;
 }
