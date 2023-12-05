@@ -966,13 +966,17 @@ void GreenPadWnd::on_jump()
 		}
 		int newnumber( int number, const TCHAR *str )
 		{
-			if     ( str[0] == TEXT('+') )
-				number += String::GetInt(str+1); // relative
-			else if( str[0] == TEXT('-') )
-				number -= String::GetInt(str+1); // relative
+			if( str[0] == TEXT('+') || str[0] == TEXT('-'))
+			{
+				number += String::GetInt(str); // relative
+				// prevent warparound for relative movements
+				if( number <= 0 ) number = 1;
+			}
 			else
+			{
 				number = String::GetInt(str);
-			return number<0? 0: number;
+			}
+			return number;
 		}
 
 		int LineNo;
