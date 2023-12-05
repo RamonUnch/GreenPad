@@ -930,10 +930,11 @@ void GreenPadWnd::on_jump()
 	const view::VPos *cur, *sel;
 	edit_.getCursor().getCurPosUnordered(&cur, &sel);
 	struct JumpDlg A_FINAL: public DlgImpl {
-		JumpDlg( HWND w, int curpos )
+		JumpDlg( HWND w, int cur_line, int cur_col )
 			: DlgImpl( IDD_JUMP )
-			, LineNo( curpos ),
-			w_( w )
+			, LineNo ( cur_line )
+			, ColNo  ( cur_col  )
+			, w_( w )
 			{ GoModal(w); }
 		void on_init() override
 		{
@@ -941,22 +942,46 @@ void GreenPadWnd::on_jump()
 		}
 		bool on_ok() override
 		{
-			TCHAR str[32];
+			// Jump to <+/->LINE,<+/->COLUMN
+			// Use + or - for relative movement.
+			TCHAR str[64], *pcol=NULL;
 			::GetWindowText( item(IDC_LINEBOX), str, countof(str) );
-			if     ( str[0] == TEXT('+') )
-				LineNo += String::GetInt(str+1); // relative
-			else if( str[0] == TEXT('-') )
-				LineNo -= String::GetInt(str+1); // relative
+			for( TCHAR *p=str; *p ;p++  )
+			{
+				if( *p == TEXT(',') )
+				{
+					*p = TEXT('\0'); // NULL separator
+					pcol = ++p;
+					break;
+				}
+			}
+			if( *str != TEXT(',') )
+				LineNo = newnumber( LineNo, str );
+
+			if( pcol )
+				ColNo = newnumber( ColNo, pcol );
 			else
-				LineNo = String::GetInt(str);
+				ColNo = 1; // Set column number to 1 if undef.
 			return true;
 		}
+		int newnumber( int number, const TCHAR *str )
+		{
+			if     ( str[0] == TEXT('+') )
+				number += String::GetInt(str+1); // relative
+			else if( str[0] == TEXT('-') )
+				number -= String::GetInt(str+1); // relative
+			else
+				number = String::GetInt(str);
+			return number<0? 0: number;
+		}
+
 		int LineNo;
+		int ColNo;
 		HWND w_;
-	} dlg( hwnd(), cur->tl+1 );
+	} dlg( hwnd(), cur->tl+1, cur->ad+1 );
 
 	if( IDOK == dlg.endcode() )
-		JumpToLine( dlg.LineNo );
+		edit_.getCursor().MoveCur( DPos(dlg.LineNo-1, dlg.ColNo-1), false );
 }
 
 void GreenPadWnd::on_openselection()
