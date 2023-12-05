@@ -67,15 +67,15 @@ static BOOL WINAPI myIsDBCSLeadByteEx_fb(UINT cp, BYTE ch)
 #if !defined(UNICOWS)
 static int myGetLocaleInfo(LCID Locale, LCTYPE LCType, LPTSTR lpLCData, int cchData)
 {
-	#define FUNK_TYPE ( int (WINAPI *)(LCID Locale, LCTYPE LCType, LPTSTR lpLCData, int cchData) )
-	static int (WINAPI *funk)(LCID Locale, LCTYPE LCType, LPTSTR lpLCData, int cchData) = FUNK_TYPE 1;
+	typedef int (WINAPI *funk_t)(LCID Locale, LCTYPE LCType, LPTSTR lpLCData, int cchData);
+	static funk_t funk=(funk_t)1;
 
-	if (funk == FUNK_TYPE 1)
+	if (funk == (funk_t)1)
 	{
 	#ifdef UNICODE
-		funk = FUNK_TYPE GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetLocaleInfoW");
+		funk = reinterpret_cast<funk_t>( GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetLocaleInfoW") );
 	#else
-		funk = FUNK_TYPE GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetLocaleInfoA");
+		funk = reinterpret_cast<funk_t>( GetProcAddress(GetModuleHandle(TEXT("KERNEL32.DLL")), "GetLocaleInfoA") );
 	#endif
 	}
 
@@ -84,7 +84,6 @@ static int myGetLocaleInfo(LCID Locale, LCTYPE LCType, LPTSTR lpLCData, int cchD
 
 	/* Fallback */
 	return 0;
-	#undef FUNK_TYPE
 
 }
 #undef GetLocaleInfo

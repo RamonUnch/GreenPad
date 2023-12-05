@@ -13,11 +13,10 @@ static DWORD myGetDpiForWindow(HWND hwnd, HDC hdc)
 #ifdef PM_DPIAWARE
 	if( app().getOSVer() >= 0x0A00 ) // Win10.00
 	{	// Supported wince Windows 10, version 1607 [desktop apps only]
-		#define FUNK_TYPE ( UINT (WINAPI *)(const HWND hwnd) )
-		static UINT (WINAPI *funk)(const HWND hwnd) = FUNK_TYPE (-1);
-		if (funk == FUNK_TYPE (-1)) /* First time */
-			funk = FUNK_TYPE GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "GetDpiForWindow");
-		#undef FUNK_TYPE
+		typedef UINT (WINAPI *funk_t)(const HWND hwnd);
+		static funk_t funk = (funk_t)1;
+		if (funk == (funk_t)1) /* First time */
+			funk = (funk_t)GetProcAddress(GetModuleHandle(TEXT("USER32.DLL")), "GetDpiForWindow");
 
 		if (funk)
 		{	// We know we have the function
@@ -282,7 +281,7 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 static CW_INTTYPE wtable[65536]; // static width table
 static const uchar ctlMap[32] = {
 	'0','1','2','3','4','5','6','7',
-	'8','>','A','B','C','D','E','F',
+	'8','9','A','B','C','D','E','F',
 	'G','H','I','J','K','L','M','N',
 	'O','P','Q','R','S','T','U','V',
 };
