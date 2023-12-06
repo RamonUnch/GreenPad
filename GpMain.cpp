@@ -408,7 +408,7 @@ void GreenPadWnd::on_newfile()
 void GreenPadWnd::on_openfile()
 {
 	Path fn;
-	int  cs;
+	int  cs = 0;
 	if( ShowOpenDlg( &fn, &cs ) )
 		Open( fn, cs, true );
 }
@@ -1877,6 +1877,7 @@ GreenPadWnd::GreenPadWnd()
 	, old_sel_ ( DPos(0,0) )
 	, csi_     ( cfg_.GetNewfileCsi() )
 	, lb_      ( cfg_.GetNewfileLB() )
+	, wrap_    ( -1 )
 {
 	LOGGER( "GreenPadWnd::Construct begin" );
 
