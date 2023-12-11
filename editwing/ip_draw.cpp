@@ -364,6 +364,17 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	const unicode zsp[2] = { 0x3000, 0x0000 }; // L'　'
 	W(zsp); // Initialize width of L'　'
 
+#ifdef WIN32S
+	if( !useOutA_ )
+#endif
+	{	// Initialize width of U+FFFF on unicode drawing,
+		// because GetCharWidthW(0xFFFF) crashes on Win95!
+		SIZE sz;
+		const unicode uniundef = 0xFFFF;
+		::GetTextExtentPointW( cdc_, &uniundef, 1, &sz );
+		widthTable_[ uniundef ] = static_cast<CW_INTTYPE>(sz.cx);
+	}
+
 	// 下位サロゲートは文字幅ゼロ (Lower surrogates have zero character width)
 	mem00( widthTable_+0xDC00, (0xE000 - 0xDC00)*sizeof(*widthTable_) );
 	// 数字の最大幅を計算, Calculate maximum width of numbers
