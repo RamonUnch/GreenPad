@@ -134,8 +134,8 @@ public:
 			}
 			else
 #endif
-			{ // Windows 9x/NT
-				if( isInFontRange( ch ) )
+			{ // Windows 9x/NT. GetCharWidthW(0xFFFF) crashes on Win95!
+				if( isInFontRange( ch ) && ch != 0xFFFF )
 				{
 					#ifndef SHORT_TABLEWIDTH
 					::GetCharWidthW( cdc_, ch, ch, widthTable_+ch );
