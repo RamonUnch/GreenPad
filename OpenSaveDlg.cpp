@@ -295,7 +295,7 @@ int CharSetList::GetCSIFromComboBox( HWND dlg, const CharSetList& csl, uint Open
 		for(j=0; j<csl.size() ;++j)
 		{
 			if( !my_lstrcmpiAscii(csl[j].shortName, buf)
-			||  !looseStrCmp(csl[j].longName, buf) )
+				||  !looseStrCmp(csl[j].longName, buf) )
 				return j; // We found
 		}
 
@@ -395,8 +395,8 @@ static void CommonDialogPrepareBuffers( const TCHAR* fnm, TCHAR* filepath, TCHAR
 	{
 		// Limit to MAX_PATH because fnm can be longer
 		// And SHELL API does not handle UNC anyway!
-		my_lstrcpyn( filepath, fnm, MAX_PATH );
-		my_lstrcpyn( filename, fnm, MAX_PATH );
+		my_lstrcpyn( filepath, fnm, MAX_PATH-1 );
+		my_lstrcpyn( filename, fnm, MAX_PATH-1 );
 
 		int i = 0;
 		int j = -1;
