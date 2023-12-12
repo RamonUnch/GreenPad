@@ -1636,13 +1636,13 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 		bool networkpath = false;;
 		if( fn[0] == TEXT('\\') && fn[1] == TEXT('\\') )
 		{
-			if( fn[3] != '?' && fn[3] != '.' )
+			if( fn[2] != '?' && fn[2] != '.' ) // \\server style
 			{
 				networkpath = true;
 			}
-			else if( fn[3] == '?' && fn[4] == '\\') // \\?\ style
+			else if( fn[3] == '\\' ) // \\?\ style
 			{
-				if( fn[5] == ':') // \\?\X:
+				if( fn[4] && fn[5] == ':') // \\?\X:
 				{
 					drivestart = 4;
 					networkpath = false;
@@ -1688,7 +1688,7 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 
 
 	// ©•ª“à•”‚ÌŠÇ—î•ñ‚ğXV, Update internal management information
-	if( fn[0]==TEXT('\\') || (fn[0]==TEXT('\\')&&fn[1]==TEXT('\\')) || fn[1]==TEXT(':') )
+	if( fn[0]==TEXT('\\') || (fn[0] && fn[1]==TEXT(':')) )
 		// Absolute path: '\file', 'x:\file', '\\share\file', '\\?\...', 'c:\\file' etc.
 		filename_ = fn;
 	else
