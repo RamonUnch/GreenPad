@@ -1,5 +1,5 @@
-=<> GreenPad ver 1.20
-=<> RamonUnch builds 2023/12/10
+=<> GreenPad ver 1.21
+=<> RamonUnch builds 2023/12/18
 
 <<What's This?>>
 
@@ -59,7 +59,30 @@
   * Fix more bugs, handle low memory situations better.
   * Optimize memory usage so that larger files can be loaded.
 
-<<What's New in 1.20 (by RamonUnch, 2023/12/10)>>
+<<What's New in 1.21 (by RamonUnch, 2023/12/18)>>
+ < NEW >
+   * Ability to insert Unicode code-point with Ctrl+I shortcut.
+     Default format is hexa, you can use decimal with a dot '.' prefix
+     or octal with the 'o' or 'O' prefix. Example: C9 = xC9 = .201 = o311
+     and will input the LATIN CAPITAL LETTER E WITH ACUTE.
+   * Loosen even more the code-page selection if a string is directly typed.
+   * Selection width (if single line) or selection height will be now
+     displayed in the Unicode code-point section of the status-bar.
+   * Jump dialog now can handle relative movements and can also handle column
+     selection, use '+10' to go down 10 lines, 3,8 goes to line 3 col 8 etc.
+   * Edit menu was re-organized with a Modify sub-menu.
+   * Ctrl+B will go to next quote if a quote is at the left of the cursor.
+   * Added WM_UNICHAR handler.
+
+ < FIXED >
+   * Crash when using long path file name and trying to open the save dialog.
+   * Crash on Windows 95 when a file contains U+FFFF. #178
+   * Fix multi-line comment when start and end strings are the same (Python).
+   * Fixed quick ASCII auto detection
+   * Fixed internal UTF7 writer to comply with RFC 2152 + rule 3 (1997).
+   * Fixed the ASCII character width for builds targeting NT3.1/Win32s.
+
+<<What's New in 1.20 (by RamonUnch, 2023/11/12)>>
  < NEW >
   * Added UTF-EBCDIC, Unicode IBM encoding, both save and read.
   * Added F1 for contextual help, command line can be configured with the
