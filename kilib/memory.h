@@ -69,12 +69,12 @@ private:
 		bool isValid();
 	private:
 		MemBlock* blocks_;
-		int       blockNum_;
-		int       blockNumReserved_;
+		INT_PTR   blockNum_;
+		INT_PTR   blockNumReserved_;
 		byte      fixedSize_;
 		byte      numPerBlock_;
-		int       lastA_;
-		int       lastDA_;
+		INT_PTR   lastA_;
+		INT_PTR   lastDA_;
 	};
 	#ifdef STACK_MEM_POOLS
 	FixedSizeMemBlockPool pools_[ SMALL_MAX ];

@@ -467,8 +467,8 @@ void* MemoryManager::FixedSizeMemBlockPool::Alloc()
 void MemoryManager::FixedSizeMemBlockPool::DeAlloc( void* ptr )
 {
 	// 該当ブロックを探索
-	const int mx=blockNum_-1, ln=fixedSize_*numPerBlock_;
-	for( int u=lastDA_, d=lastDA_-1;; )
+	const INT_PTR mx=blockNum_-1, ln=fixedSize_*numPerBlock_;
+	for( INT_PTR u=lastDA_, d=lastDA_-1;; )
 	{
 		if( u>=0 )
 			if( blocks_[u].hasThisPtr(ptr,ln) )
@@ -503,7 +503,7 @@ void MemoryManager::FixedSizeMemBlockPool::DeAlloc( void* ptr )
 	if( blocks_[lastDA_].isEmpty( numPerBlock_ ) )
 	{
 		// しかも一番後ろのブロックでなかったら
-		int end = blockNum_-1;
+		INT_PTR end = blockNum_-1;
 		if( lastDA_ != end )
 		{
 			// 一番後ろが空だったら解放
