@@ -149,8 +149,7 @@ Cursor::Cursor( HWND wnd, ViewImpl& vw, doc::Document& dc )
 	// kb speed in in ms = 33 + KEYBOARDSPEED * 11; more or less
 	keyRepTime_ = 15; // Default in case SystemParametersInfo fails
 	::SystemParametersInfo( SPI_GETKEYBOARDSPEED, 0, &keyRepTime_, 0 );
-	keyRepTime_ = 33 + keyRepTime_ * 11;
-	keyRepTime_ >>= 3;
+	keyRepTime_ = Min( (33 + keyRepTime_ * 11)>>3, 8 );
 	cur_.tl = cur_.ad = cur_.vl = cur_.rl = 0;
 	cur_.vx = cur_.rx = 0; sel_ = cur_;
 }
@@ -672,19 +671,21 @@ void Cursor::QuoteSelectionW(const unicode *qs, bool shi)
 	// For each line
 	for( ulong i = dm.tl; i <= dM.tl; ++i )
 	{
-		DPos dps(i, 0); // Start of each line
 		if( shi )
 		{	// Remove Quote
 			const unicode *linebuf = doc_.tl(i);
-			if( !qs || my_instringW(linebuf, qs) )
+			ulong j=0;
+			if ( qs ) // Skip eventual spaces and tabs at linestart
+				for( j=0; j < doc_.len(i) && (linebuf[j] == '\t' || linebuf[j] == ' '); ++j );
+
+			if( !qs || my_instringW(linebuf+j, qs) )
 			{	// Delete the quote string if found at line start
-				DPos dpe(i, qsl);
-				mcr.Add( new doc::Delete(dps, dpe) );
+				mcr.Add( new doc::Delete(DPos(i, j), DPos(i, j+qsl)) );
 			}
 		}
 		else
 		{	// Add quote
-			mcr.Add(  new doc::Insert(dps, qs, qsl) );
+			mcr.Add(  new doc::Insert(DPos(i, 0), qs, qsl) );
 		}
 	}
 
@@ -978,7 +979,6 @@ void Cursor::InvertCaseSel()
 void Cursor::TTSpacesSel()
 {
 	ModSelection(TrimTrailingSpacesW);
-
 }
 void Cursor::StripFirstChar()
 {
