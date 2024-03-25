@@ -675,7 +675,7 @@ void Cursor::QuoteSelectionW(const unicode *qs, bool shi)
 		{	// Remove Quote
 			const unicode *linebuf = doc_.tl(i);
 			ulong j=0;
-			if ( qs ) // Skip eventual spaces and tabs at linestart
+			if ( qs && *qs > L' ' ) // Skip eventual spaces and tabs at linestart
 				for( j=0; j < doc_.len(i) && (linebuf[j] == '\t' || linebuf[j] == ' '); ++j );
 
 			if( !qs || my_instringW(linebuf+j, qs) )
