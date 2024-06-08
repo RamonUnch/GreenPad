@@ -354,7 +354,8 @@ class KeywordMap
 public:
 
 	KeywordMap( bool bCaseSensitive )
-		: compare_( bCaseSensitive ? compare_s : compare_i )
+		: dustbox_( 32 )
+		, compare_( bCaseSensitive ? compare_s : compare_i )
 		, hash    ( bCaseSensitive ? hash_s : hash_i )
 	{
 		// ハッシュ表初期化
@@ -540,7 +541,7 @@ public:
 
 		// コメント状態遷移追跡用オートマトン
 		CommentDFA dfa[2] = {CommentDFA(false), CommentDFA(true)};
-		uchar& cmtState  = dfa[line.isLineHeadCmt()].state;
+		const uchar& cmtState  = dfa[line.isLineHeadCmt()].state;
 		uchar commentbit = cmtState&1;
 
 		// 作業領域, workspace
@@ -699,7 +700,7 @@ Document::Document( )
 	, acc_reparsed_ ( false )
 	, acc_nmlcmd_ (false )
 {
-	text_.Add( new Line(L"",0) ); // 最初は一行だけ
+	text_.Add( Line(L"",0) ); // 最初は一行だけ
 	SetKeyword( NULL, 0 );        // キーワード無し
 }
 
@@ -716,8 +717,8 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 		++defbuf, --siz;
 
 	// 読み込み準備
-	const unicode* str;
-	ulong          len;
+	const unicode* str=NULL;
+	ulong          len=0;
 	UniReader r( defbuf, siz, &str, &len );
 	bool          flags[] = {false,false,false,false};
 	const unicode* tags[] = {NULL,NULL,NULL};

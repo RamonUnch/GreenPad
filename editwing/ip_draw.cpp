@@ -194,6 +194,13 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		cur().on_char( (TCHAR)wp );
 		break;
 
+//	// Handle Edit-like mesages.
+//	case WM_CUT:        cur().Cut();       break;
+//	case WM_COPY:       cur().Copy();      break;
+//	case WM_PASTE:      cur().Paste();     break;
+//	case WM_CLEAR:  if( cur().isSelected() ){ cur().Del(false); } break;
+//	case WM_UNDO:       doc_.Undo();       break;
+
 	case 0x0109: // WM_UNICHAR
 		if( wp != 0xffff /*UNICODE_NOCHAR*/ )
 		{	// A valid UTF-32 character was sent in wp.

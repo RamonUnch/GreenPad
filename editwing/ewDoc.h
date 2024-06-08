@@ -193,6 +193,8 @@ public:
 		for( ulong i=0,e=arr_.size(); i<e; ++i )
 			delete arr_[i];
 	}
+	
+	MacroCommand() : arr_(20) {}
 
 private:
 	Command* operator()( Document& doc ) const override;

@@ -302,7 +302,7 @@ private:
 //@}
 //=========================================================================
 
-struct WLine : public ki::storage<ulong>
+struct WLine: public ki::storage<ulong, false>
 {
 	// [0]   : その行の折り返し無しでの横幅を格納
 	// [1-n] : n行目の終端のindexを格納。
@@ -310,10 +310,12 @@ struct WLine : public ki::storage<ulong>
 	//   例えば "aaabbb" という論理行を "aaab" "bb" と折るなら
 	//   {48, 4, 6} などという長さ３の配列となる。
 
-	WLine() : ki::storage<ulong>(2) {}
+	explicit WLine(size_t sz) : ki::storage<ulong, false>(sz) {}
+	WLine() {}
+
 	ulong& width()      { return (*this)[0]; }
 	ulong width() const { return (*this)[0]; }
-	ulong rln() const   { return size()-1; }
+	ulong rln() const   { return (*this).size()-1; }
 };
 
 
@@ -452,7 +454,7 @@ private:
 	const doc::Document&   doc_;
 	Canvas           cvs_;
 	Cursor           cur_;
-	ki::gapbufobj<WLine> wrap_;
+	ki::gapbufobjnoref<WLine> wrap_;
 	ulong            vlNum_;
 	ulong            textCx_;
 	short            accdelta_;

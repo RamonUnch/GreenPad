@@ -20,8 +20,8 @@ namespace ki {
 //@}
 //=========================================================================
 
-template <typename T>
-class A_WUNUSED storage : public Object
+template <typename T, bool clean_on_destroy=true>
+class A_WUNUSED storage
 {
 public:
 
@@ -32,7 +32,7 @@ public:
 	//		最初に確保する"メモリの"サイズ。
 	//		"配列の"サイズではないことに注意。
 	//@}
-	explicit storage( ulong allocSize=20 )
+	explicit storage( ulong allocSize )
 		: alen_( Max( allocSize, (ulong)1 ) )
 		, len_ ( 0 )
 		, buf_ ( static_cast<T*>(mem().Alloc(alen_*sizeof(T))) )
@@ -41,8 +41,13 @@ public:
 				alen_=0;
 		}
 
+	storage() {} // Empty constructor
+
 	~storage()
-		{ mem().DeAlloc( buf_, alen_*sizeof(T) ); }
+		{ if (clean_on_destroy) mem().DeAlloc( buf_, alen_*sizeof(T) ); }
+
+	void Clear()
+		{ mem().DeAlloc( buf_, alen_*sizeof(T) ); };
 
 	//@{ 末尾に要素を追加 //@}
 	bool Add( const T& obj )
@@ -106,10 +111,6 @@ private:
 	ulong alen_;
 	ulong len_;
 	T*    buf_;
-
-private:
-
-	NOCOPY(storage);
 };
 
 

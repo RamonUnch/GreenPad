@@ -386,22 +386,22 @@ int ViewImpl::InsertMulti( ulong ti_s, ulong ti_e )
 	ulong dy=0, cx=0;
 	for( ulong i=ti_s; i<=ti_e; ++i )
 	{
-		WLine* pwl = new WLine;
-		pwl->Add( CalcLineWidth( doc_.tl(i), doc_.len(i) ) );
+		WLine pwl(2);
+		pwl.Add( CalcLineWidth( doc_.tl(i), doc_.len(i) ) );
 
-		if( pwl->width() < cvs_.wrapWidth() )
+		if( pwl.width() < cvs_.wrapWidth() )
 		{
 			// Ý’è‚µ‚½Ü‚è•Ô‚µ•‚æ‚è’Z‚¢ê‡‚Íˆês‚ÅÏ‚ÞB
-			pwl->Add( doc_.len(i) );
+			pwl.Add( doc_.len(i) );
 			dy++;
-			if( cx < pwl->width() )
-				cx = pwl->width();
+			if( cx < pwl.width() )
+				cx = pwl.width();
 		}
 		else
 		{
 			// •¡”s‚É‚È‚éê‡
-			ModifyWrapInfo( doc_.tl(i), doc_.len(i), *pwl, 0 );
-			dy += pwl->rln();
+			ModifyWrapInfo( doc_.tl(i), doc_.len(i), pwl, 0 );
+			dy += pwl.rln();
 		}
 
 		wrap_.InsertAt( i, pwl );

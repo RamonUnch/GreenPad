@@ -582,8 +582,8 @@ bool Document::InsertingOperation
 
 	// 指定文字列を改行で切り分ける準備
 	// Prepare to separate the specified string with a newline.
-	const unicode* lineStr;
-	ulong lineLen;
+	const unicode* lineStr=NULL;
+	ulong lineLen=0;
 	UniReader r( str, len, &lineStr, &lineLen );
 
 	// 一行目…, The first line...
@@ -597,18 +597,17 @@ bool Document::InsertingOperation
 		do
 		{
 			r.getLine();
-			Line *nline = new Line(lineStr, lineLen);
-			if( nline ) text_.InsertAt( ++e.tl, nline );
+			text_.InsertAt( ++e.tl, Line(lineStr, lineLen) );
 		} while( !r.isEmpty() );
 
 		// 一行目の最後尾に残ってた文字列を最終行へ
 		// Move the remaining string from the end
 		// of the first line to the last line.
 		Line& fl = text_[s.tl];
-		Line& ed = text_[e.tl];
 		const ulong ln = fl.size()-e.ad;
 		if( ln )
 		{
+			Line& ed = text_[e.tl];
 			ed.InsertToTail( fl.str()+e.ad, ln );
 			fl.RemoveToTail( e.ad );
 		}
@@ -850,11 +849,32 @@ void Document::OpenFile( TextFileR& tf )
 		DPos p( i, len(e.tl) ); // end of document
 		InsertingOperation( p, buf, (ulong)L, e, /*reparse=*/false );
 		i = tln() - 1;
+
+		// Process Messages to avoid locking on large files
+//		MSG msg;
+//		while ( PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE ) )
+//		{
+//			BOOL result = GetMessage(&msg, NULL, 0, 0);
+//			if (result == 0) // WM_QUIT
+//			{
+//				PostQuitMessage(msg.wParam);
+//				goto fail;
+//			}
+//			else if (result == -1) // ERROR
+//			{
+//				goto fail;
+//			}
+//			else
+//			{
+//				TranslateMessage(&msg);
+//				DispatchMessage(&msg);
+//			}
+//		}
 	}
 	// Parse All lines, because we skipped it
 	ReParse( 0, tln()-1 );
 	setBusyFlag(false);
-
+//	fail:
 	if( buf != sbuf )
 		delete [] buf;
 
