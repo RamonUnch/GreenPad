@@ -316,63 +316,118 @@ int CharSetList::GetCSIFromComboBox( HWND dlg, const CharSetList& csl, uint Open
 //------------------------------------------------------------------------
 // 「開く」ダイアログ
 //------------------------------------------------------------------------
-#if defined(__MINGW32__) && !defined(_WIN64)
-// Mingw has bad headers!
-typedef struct mytagOFNA {
-   DWORD        lStructSize;
-   HWND         hwndOwner;
-   HINSTANCE    hInstance;
-   LPCSTR       lpstrFilter;
-   LPSTR        lpstrCustomFilter;
-   DWORD        nMaxCustFilter;
-   DWORD        nFilterIndex;
-   LPSTR        lpstrFile;
-   DWORD        nMaxFile;
-   LPSTR        lpstrFileTitle;
-   DWORD        nMaxFileTitle;
-   LPCSTR       lpstrInitialDir;
-   LPCSTR       lpstrTitle;
-   DWORD        Flags;
-   WORD         nFileOffset;
-   WORD         nFileExtension;
-   LPCSTR       lpstrDefExt;
-   LPARAM       lCustData;
-   LPOFNHOOKPROC lpfnHook;
-   LPCSTR       lpTemplateName;
-} myOPENFILENAMEA, *myLPOPENFILENAMEA;
 
-typedef struct mytagOFNW {
-   DWORD        lStructSize;
-   HWND         hwndOwner;
-   HINSTANCE    hInstance;
-   LPCWSTR      lpstrFilter;
-   LPWSTR       lpstrCustomFilter;
-   DWORD        nMaxCustFilter;
-   DWORD        nFilterIndex;
-   LPWSTR       lpstrFile;
-   DWORD        nMaxFile;
-   LPWSTR       lpstrFileTitle;
-   DWORD        nMaxFileTitle;
-   LPCWSTR      lpstrInitialDir;
-   LPCWSTR      lpstrTitle;
-   DWORD        Flags;
-   WORD         nFileOffset;
-   WORD         nFileExtension;
-   LPCWSTR      lpstrDefExt;
-   LPARAM       lCustData;
-   LPOFNHOOKPROC lpfnHook;
-   LPCWSTR      lpTemplateName;
-} myOPENFILENAMEW, *myLPOPENFILENAMEW;
+// Mingw has bad headers!
+typedef struct oldtagOFNA {
+	DWORD        lStructSize;
+	HWND         hwndOwner;
+	HINSTANCE    hInstance;
+	LPCSTR       lpstrFilter;
+	LPSTR        lpstrCustomFilter;
+	DWORD        nMaxCustFilter;
+	DWORD        nFilterIndex;
+	LPSTR        lpstrFile;
+	DWORD        nMaxFile;
+	LPSTR        lpstrFileTitle;
+	DWORD        nMaxFileTitle;
+	LPCSTR       lpstrInitialDir;
+	LPCSTR       lpstrTitle;
+	DWORD        Flags;
+	WORD         nFileOffset;
+	WORD         nFileExtension;
+	LPCSTR       lpstrDefExt;
+	LPARAM       lCustData;
+	LPOFNHOOKPROC lpfnHook;
+	LPCSTR       lpTemplateName;
+} oldOPENFILENAMEA, *oldLPOPENFILENAMEA;
+
+typedef struct oldtagOFNW {
+	DWORD        lStructSize;
+	HWND         hwndOwner;
+	HINSTANCE    hInstance;
+	LPCWSTR      lpstrFilter;
+	LPWSTR       lpstrCustomFilter;
+	DWORD        nMaxCustFilter;
+	DWORD        nFilterIndex;
+	LPWSTR       lpstrFile;
+	DWORD        nMaxFile;
+	LPWSTR       lpstrFileTitle;
+	DWORD        nMaxFileTitle;
+	LPCWSTR      lpstrInitialDir;
+	LPCWSTR      lpstrTitle;
+	DWORD        Flags;
+	WORD         nFileOffset;
+	WORD         nFileExtension;
+	LPCWSTR      lpstrDefExt;
+	LPARAM       lCustData;
+	LPOFNHOOKPROC lpfnHook;
+	LPCWSTR      lpTemplateName;
+} oldOPENFILENAMEW, *oldLPOPENFILENAMEW;
+
+typedef struct newtagOFNA {
+	DWORD lStructSize;
+	HWND hwndOwner;
+	HINSTANCE hInstance;
+	LPCSTR lpstrFilter;
+	LPSTR lpstrCustomFilter;
+	DWORD nMaxCustFilter;
+	DWORD nFilterIndex;
+	LPSTR lpstrFile;
+	DWORD nMaxFile;
+	LPSTR lpstrFileTitle;
+	DWORD nMaxFileTitle;
+	LPCSTR lpstrInitialDir;
+	LPCSTR lpstrTitle;
+	DWORD Flags;
+	WORD nFileOffset;
+	WORD nFileExtension;
+	LPCSTR lpstrDefExt;
+	LPARAM lCustData;
+	LPOFNHOOKPROC lpfnHook;
+	LPCSTR lpTemplateName;
+	void *pvReserved;
+	DWORD dwReserved;
+	DWORD FlagsEx;
+} newOPENFILENAMEA,*newLPOPENFILENAMEA;
+
+typedef struct newtagOFNW {
+	DWORD lStructSize;
+	HWND hwndOwner;
+	HINSTANCE hInstance;
+	LPCWSTR lpstrFilter;
+	LPWSTR lpstrCustomFilter;
+	DWORD nMaxCustFilter;
+	DWORD nFilterIndex;
+	LPWSTR lpstrFile;
+	DWORD nMaxFile;
+	LPWSTR lpstrFileTitle;
+	DWORD nMaxFileTitle;
+	LPCWSTR lpstrInitialDir;
+	LPCWSTR lpstrTitle;
+	DWORD Flags;
+	WORD nFileOffset;
+	WORD nFileExtension;
+	LPCWSTR lpstrDefExt;
+	LPARAM lCustData;
+	LPOFNHOOKPROC lpfnHook;
+	LPCWSTR lpTemplateName;
+	void *pvReserved;
+	DWORD dwReserved;
+	DWORD FlagsEx;
+} newOPENFILENAMEW,*newLPOPENFILENAMEW;
+
+
 #ifdef UNICODE
-typedef myOPENFILENAMEW myOPENFILENAME;
-typedef myLPOPENFILENAMEW myLPOPENFILENAME;
+typedef oldOPENFILENAMEW oldOPENFILENAME;
+typedef oldLPOPENFILENAMEW oldLPOPENFILENAME;
+typedef newOPENFILENAMEW newOPENFILENAME;
+typedef newLPOPENFILENAMEW newLPOPENFILENAME;
 #else
-typedef myOPENFILENAMEA myOPENFILENAME;
-typedef myLPOPENFILENAMEA myLPOPENFILENAME;
+typedef oldOPENFILENAMEA oldOPENFILENAME;
+typedef oldLPOPENFILENAMEA oldLPOPENFILENAME;
+typedef newOPENFILENAMEA newOPENFILENAME;
+typedef newLPOPENFILENAMEA newLPOPENFILENAME;
 #endif // UNICODE
-#else
-#define myOPENFILENAME OPENFILENAME
-#endif // __MINGW32__
 
 namespace
 {
@@ -430,7 +485,8 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 
 	CommonDialogPrepareBuffers(fnm, filepath, filename_);
 
-	myOPENFILENAME ofn = {sizeof(ofn)};
+	newOPENFILENAME ofn = {0};
+	ofn.lStructSize = app().getOSVer() >= 0x500? sizeof(newOPENFILENAME): sizeof(oldOPENFILENAME);
 	ofn.hwndOwner      = wnd;
 	ofn.hInstance      = app().hinst();
 	ofn.lpstrFilter    = fltr;
@@ -563,7 +619,8 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 
 	CommonDialogPrepareBuffers(fnm, filepath, filename_);
 
-	myOPENFILENAME ofn = {sizeof(ofn)};
+	newOPENFILENAME ofn = {0};
+	ofn.lStructSize = app().getOSVer() >= 0x500? sizeof(newOPENFILENAME): sizeof(oldOPENFILENAME);
 	ofn.hwndOwner      = wnd;
 	ofn.hInstance      = app().hinst();
 	ofn.lpstrFilter    = fltr;
@@ -702,10 +759,10 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 // ユーティリティー
 //------------------------------------------------------------------------
 
-ki::aarr<TCHAR> OpenFileDlg::ConnectWithNull( const TCHAR *lst[], int num )
+ki::aarr<TCHAR> OpenFileDlg::ConnectWithNull( const TCHAR *lst[], size_t num )
 {
-	int TtlLen = 1;
-	for( int i=0; i<num; ++i )
+	size_t TtlLen = 1;
+	for( size_t i=0; i<num; ++i )
 		TtlLen += (my_lstrlen(lst[i]) + 1);
 
 	aarr<TCHAR> a( new TCHAR[TtlLen] );
@@ -713,7 +770,7 @@ ki::aarr<TCHAR> OpenFileDlg::ConnectWithNull( const TCHAR *lst[], int num )
 	TCHAR* p = a.get();
 	if( p )
 	{
-		for( int i=0; i<num; ++i )
+		for( size_t i=0; i<num; ++i )
 		{
 			my_lstrcpy( p, lst[i] );
 			p += (my_lstrlen(lst[i]) + 1);
