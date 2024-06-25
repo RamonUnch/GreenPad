@@ -187,9 +187,10 @@ struct Keyword : public ki::Object
 	ulong len;
 	unicode     str[1];
 
-	static Keyword *New( const unicode *s, ulong l )
+	static Keyword *New(DArena *ar,  const unicode *s, ulong l )
 	{
-		Keyword *x = reinterpret_cast<Keyword *>(new BYTE[ (sizeof(Keyword) + l*sizeof(unicode)) ]);
+//		Keyword *x = reinterpret_cast<Keyword *>(new BYTE[ (sizeof(Keyword) + l*sizeof(unicode)) ]);
+		Keyword *x = reinterpret_cast<Keyword *>( ar->alloc( (sizeof(Keyword)-2 + l*sizeof(unicode)) ) );
 		if( x )
 		{
 			x->next = NULL;
@@ -199,11 +200,11 @@ struct Keyword : public ki::Object
 		}
 		return x;
 	}
-	static void Delete( Keyword *x )
-	{
-		if( x )
-			delete [] reinterpret_cast<BYTE*>(x);
-	}
+//	static void Delete( Keyword *x )
+//	{
+//		if( x )
+//			delete [] reinterpret_cast<BYTE*>(x);
+//	}
 };
 
 
@@ -243,6 +244,8 @@ class TagMap
 {
 	Keyword* tag_[3]; // 0:CE 1:CB 2:LB
 	bool esc_, q1_, q2_, map_[768]; // 128
+	BYTE arbuf[64];
+	DArena ar;
 
 public:
 
@@ -253,6 +256,7 @@ public:
 		: esc_( esc )
 		, q1_ ( q1 )
 		, q2_ ( q2 )
+		, ar ( arbuf, sizeof(arbuf) )
 	{
 		// '/' で始まる記号は使われているか…？
 		// みたいな、１文字目のみのチェックに使う表を作成
@@ -261,18 +265,18 @@ public:
 		map_[L'\''] = q1;
 		map_[L'\"'] = q2;
 		map_[L'\\'] = esc;
-		if( celen!=0 ){ map_[*ce]=true; tag_[0]=Keyword::New(ce,celen); }
-		if( cblen!=0 ){ map_[*cb]=true; tag_[1]=Keyword::New(cb,cblen); }
-		if( lblen!=0 ){ map_[*lb]=true; tag_[2]=Keyword::New(lb,lblen); }
+		if( celen!=0 ){ map_[*ce]=true; tag_[0]=Keyword::New(&ar, ce,celen); }
+		if( cblen!=0 ){ map_[*cb]=true; tag_[1]=Keyword::New(&ar, cb,cblen); }
+		if( lblen!=0 ){ map_[*lb]=true; tag_[2]=Keyword::New(&ar, lb,lblen); }
 	}
 
-	~TagMap()
-	{
-		// キーワード解放,
-		Keyword::Delete( tag_[0] );
-		Keyword::Delete( tag_[1] );
-		Keyword::Delete( tag_[2] );
-	}
+//	~TagMap()
+//	{
+//		// キーワード解放,
+//		Keyword::Delete( tag_[0] );
+//		Keyword::Delete( tag_[1] );
+//		Keyword::Delete( tag_[2] );
+//	}
 
 	bool does_esc()
 	{
@@ -348,13 +352,17 @@ public:
 class KeywordMap
 {
 	Keyword*          backet_[HTABLE_SIZE];
-	storage<Keyword*> dustbox_;
+	//storage<Keyword*> dustbox_;
+	DArena ar;
+	size_t elems_;
 	bool (*compare_)(const unicode*,const unicode*,ulong);
 	uint  (*hash)( const unicode* a, ulong al );
 public:
 
 	KeywordMap( bool bCaseSensitive )
-		: dustbox_( 32 )
+		: /*dustbox_( 32 )*/
+		  ar ( 65536 )
+		, elems_ ( 0 )
 		, compare_( bCaseSensitive ? compare_s : compare_i )
 		, hash    ( bCaseSensitive ? hash_s : hash_i )
 	{
@@ -362,17 +370,19 @@ public:
 		mem00( backet_, sizeof(backet_) );
 	}
 
-	~KeywordMap()
-	{
-		// 解放
-		for( ulong i=0; i<dustbox_.size(); ++i )
-			Keyword::Delete( dustbox_[i] );
-	}
+	void Trim() { ar.trim(); }
+
+//	~KeywordMap()
+//	{
+//		// 解放
+//		for( ulong i=0; i<dustbox_.size(); ++i )
+//			Keyword::Delete( dustbox_[i] );
+//	}
 
 	void AddKeyword( const unicode* str, ulong len )
 	{
 		// データ登録
-		Keyword* x = Keyword::New(str,len);
+		Keyword* x = Keyword::New(&ar, str,len);
 		int      h = hash(str,len);
 
 		if( backet_[h] == NULL )
@@ -391,13 +401,14 @@ public:
 		}
 
 		// データクリア用のリストにも入れておく
-		dustbox_.Add(x);
+		//dustbox_.Add(x);
+		++elems_;
 	}
 
 	uchar inline isKeyword( const unicode* str, ulong len )
 	{
 		// 登録されているキーワードと一致するか？
-		if( dustbox_.size() ) // Nothing to do for empty keyword list.
+		if( elems_ ) // Nothing to do for empty keyword list.
 			for( Keyword* p=backet_[hash(str,len)]; p!=NULL; p=p->next )
 				if( p->len==len && compare_( p->str, str, len ) )
 					return 2; // We must set the c bit of aaabbbcd
@@ -461,6 +472,8 @@ public:
 		if( cb && ce ) // In case begin and end comment strings are the same i.e.: Python
 			CommentDFA::SetCEequalCB( cblen==celen && !my_lstrncmpW(ce, cb, cblen) );
 	}
+
+	void Trim() { kwd_.Trim(); }
 
 	// 初期化２：キーワード追加
 	void AddKeyword( const unicode* str, ulong len )
@@ -774,7 +787,7 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 		if( len != 0 )
 			parser_->AddKeyword( str, len );
 	}
-
+	parser_->Trim();
 	// 全行解析し直し
 	ReParse( 0, tln()-1 );
 
