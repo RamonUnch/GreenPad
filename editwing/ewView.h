@@ -284,6 +284,7 @@ public:
 	void UpperCaseSel();
 	void LowerCaseSel();
 	void InvertCaseSel();
+	void TitleCaseSel();
 	void TTSpacesSel();
 	void StripFirstChar();
 	void StripLastChar();

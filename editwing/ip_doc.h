@@ -40,7 +40,7 @@ class Parser;
 #else
 	#define EVEN(x) (x)
 #endif
-class Line : public ki::Object
+class Line //: public ki::Object
 {
 public:
 
@@ -62,8 +62,12 @@ public:
 			memmove( str_, str, len*2 );
 			str_[ len ] = 0x007f;
 		}
-
-	~Line()
+	Line() {}
+//	~Line()
+//		{
+//			ki::mem().DeAlloc( str_, EVEN((alen_+1)*2+alen_) );
+//		}
+	void Clear()
 		{
 			ki::mem().DeAlloc( str_, EVEN((alen_+1)*2+alen_) );
 		}
@@ -446,7 +450,7 @@ private:
 
 	ki::uptr<Parser>                   parser_; // 文字列解析役
 	unicode                        CommentStr_[8];
-	ki::gapbufobj<Line>                text_;   // テキストデータ
+	ki::gapbufobjnoref<Line>           text_;   // テキストデータ
 	mutable ki::storage<DocEvHandler*> pEvHan_; // イベント通知先
 	UnReDoChain                    urdo_;   // アンドゥリドゥ
 	editwing::DPos acc_s_, acc_e2_;

@@ -347,7 +347,7 @@ String& String::SetString( const TCHAR* str, size_t siz )
 
 String& String::CatString( const TCHAR* str, size_t siz )
 {
-	const int plen = len();
+	const size_t plen = len();
 	TCHAR* buf = ReallocMem( plen + siz + 1 );
 	if( !buf ) return *this;
 

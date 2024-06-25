@@ -559,7 +559,7 @@ void Window::ProcessMsg()
 
 //-------------------------------------------------------------------------
 
-int __cdecl Window::MsgBoxf( LPCTSTR fmt, ... ) const
+int __cdecl Window::MsgBoxf( HWND hwnd,  LPCTSTR title, LPCTSTR fmt, ... )
 {
 	va_list arglist;
 	TCHAR str[512];
@@ -589,7 +589,7 @@ int __cdecl Window::MsgBoxf( LPCTSTR fmt, ... ) const
 
 	/* Free the buffer using LocalFree. */
 	LocalFree( lpMsgBuf );
-	return MsgBox( str );
+	return ::MessageBox( hwnd, str, title, 0 );
 }
 
 void Window::SetCenter( HWND hwnd, HWND rel )

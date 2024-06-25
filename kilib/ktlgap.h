@@ -75,7 +75,7 @@ public:
 			MakeGapAt( size() );
 			MakeGapAt( i );
 
-			memmove( buf_+gs_, x, len*sizeof(T) );
+			memmove( (char*)(buf_+gs_), (char*)x, len*sizeof(T) );
 			gs_ += len;
 		}
 
@@ -126,14 +126,14 @@ public:
 			{
 				// ëOîº
 				copyed += Min( len, gs_-i );
-				memmove( x, buf_+i, copyed*sizeof(T) );
+				memmove( (char*)x, (char*)(buf_+i), copyed*sizeof(T) );
 				x   += copyed;
 				len -= copyed;
 				i   += copyed;
 			}
 
 			// å„îº
-			memmove( x, buf_+(i-gs_)+ge_, len*sizeof(T) );
+			memmove( (char*)x, (char*)(buf_+(i-gs_)+ge_), len*sizeof(T) );
 			return copyed + len;
 		}
 
@@ -165,12 +165,12 @@ protected:
 			if( i<gs_ )
 			{
 				ge_ -= (gs_-i);
-				memmove( buf_+ge_, buf_+i, (gs_-i)*sizeof(T) );
+				memmove( (char*)(buf_+ge_), (char*)(buf_+i), (gs_-i)*sizeof(T) );
 			}
 			else if( i>gs_ )
 			{
 				int j = i+(ge_-gs_);
-				memmove( buf_+gs_, buf_+ge_, (j-ge_)*sizeof(T) );
+				memmove( (char*)(buf_+gs_), (char*)(buf_+ge_), (j-ge_)*sizeof(T) );
 				ge_ = j;
 			}
 			gs_ = i;
@@ -182,8 +182,8 @@ protected:
 			if( !tmp ) return false;
 			const ulong tail = alen_-ge_;
 
-			memmove( tmp, old, gs_*sizeof(T) );
-			memmove( tmp+newalen-tail, old+ge_, tail*sizeof(T) );
+			memmove( (char*)tmp, (char*)old, gs_*sizeof(T) );
+			memmove( (char*)(tmp+newalen-tail), (char*)(old+ge_), tail*sizeof(T) );
 			delete [] old;
 
 			buf_  = tmp;
@@ -264,6 +264,64 @@ public:
 private:
 
 	NOCOPY(gapbufobj);
+};
+
+
+template<class T>
+class A_WUNUSED gapbufobjnoref : public gapbuf<T>
+{
+public:
+
+	explicit gapbufobjnoref( ulong alloc_size=32 )
+		: gapbuf<T>( alloc_size )
+		{ }
+
+	void RemoveAt( ulong i, ulong len=1 )
+		{
+			ulong& gs_ = gapbuf<T>::gs_;
+			ulong& ge_ = gapbuf<T>::ge_;
+			T*&    buf_= gapbuf<T>::buf_;
+
+			if( i <= gs_ && gs_ <= i+len )
+			{
+				// ëOîºÇçÌèú
+				for( ulong j=i, ed=gs_; j<ed; ++j )
+					buf_[j].Clear();
+
+				len -= (gs_-i);
+				gs_  = i;
+			}
+			else
+			{
+				gapbuf<T>::MakeGapAt( i );
+			}
+
+			// å„îºÇçÌèú
+			for( ulong j=ge_, ed=ge_+len; j<ed; ++j )
+				buf_[j].Clear();
+			ge_ = ge_+len;
+		}
+
+	~gapbufobjnoref()
+		{ RemoveAt( 0, gapbuf<T>::size() ); }
+
+	void RemoveAll( ulong i )
+		{ RemoveAt( 0, gapbuf<T>::size() ); }
+
+	void RemoveToTail( ulong i )
+		{ RemoveAt( i, gapbuf<T>::size()-i ); }
+
+public:
+
+	T& operator[]( ulong i )
+		{ return gapbuf<T>::operator[](i); }
+
+	const T& operator[]( ulong i ) const
+		{ return gapbuf<T>::operator[](i); }
+
+private:
+
+	NOCOPY(gapbufobjnoref);
 };
 
 
