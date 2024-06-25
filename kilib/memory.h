@@ -170,6 +170,95 @@ public:
 
 
 //=========================================================================
+// Stupid arena allocator
+//struct Arena
+//{
+//	Arena(BYTE *buf=NULL, size_t capacity=0)
+//		: sta ( buf )
+//		, end ( buf + capacity )
+//	{ }
+//
+//	void SetBuf(BYTE *buf, size_t capacity)
+//		{ sta = buf; end = buf+capacity; }
+//
+//	void *alloc(size_t sz)
+//	{
+//		size_t pad = (UINT_PTR)end & 7;
+//		if( sz+pad > size_t(end - sta) )
+//			return NULL; // OOM
+//
+//		return reinterpret_cast<void*>(end -= sz + pad);
+//	}
+//
+//	BYTE *sta;
+//	BYTE *end;
+//};
+#pragma warning(disable: 4146)
+struct DArena
+{
+	// Dynamic mode
+	DArena( size_t reserved )
+		: sta ( (BYTE*)::VirtualAlloc(NULL, reserved, MEM_RESERVE, PAGE_READWRITE) )
+		//, end ( sta )
+		, dim ( pagesize() )
+		, res ( reserved )
+	{
+		end = sta = (BYTE*)::VirtualAlloc(sta, dim, MEM_COMMIT, PAGE_READWRITE);
+		if( !sta ) // Alloc failed
+			dim = 0;
+	}
+
+	// Fixed mode
+	DArena( BYTE *buf, size_t count)
+		: sta ( buf )
+		, end ( sta )
+		, dim ( count )
+		, res ( 0 )
+	{ }
+
+	void *alloc(size_t sz)
+	{
+		size_t pad = -(UINT_PTR)end & 7;
+		if( sz+pad > dim - (end - sta) )
+		{
+			if( !res || !sta ) return NULL;
+			size_t ps = pagesize();
+			if( !::VirtualAlloc(sta, dim + ps, MEM_COMMIT, PAGE_READWRITE) )
+				return NULL; // Unable to map!!!!
+			dim += ps;
+		}
+		BYTE *ret = end;
+		end += sz + pad;
+		return reinterpret_cast<void*>(ret);
+	}
+
+	void trim()
+	{
+		res = dim;
+		::VirtualFree(sta+dim, 0, MEM_RELEASE);
+	}
+
+	~DArena()
+	{
+		if( res )
+		{
+			::VirtualFree(sta, dim, MEM_DECOMMIT);
+			::VirtualFree(sta, 0, MEM_RELEASE);
+		}
+	}
+	
+	size_t pagesize()
+	{
+		SYSTEM_INFO si; si.dwPageSize = 4096;
+		GetSystemInfo(&si);
+		return si.dwPageSize;
+	}
+
+	BYTE *sta;
+	BYTE *end;
+	size_t dim;
+	size_t res;
+};
 
 }      // namespace ki
 #endif // _KILIB_MEMORY_H_

@@ -376,18 +376,8 @@ inline bool MemBlock::hasThisPtr( const void* ptr, size_t len )
 
 bool MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
 {
-	// メモリマネージャが初期化されるまでは、
-	// 普通のauto_ptrも使わない方が無難…
-	struct AutoDeleter
-	{
-		explicit AutoDeleter( MemBlock* p ) : ptr_(p) {}
-		~AutoDeleter() { ::delete [] ptr_; }
-		void Release() { ptr_ = NULL; }
-		MemBlock* ptr_;
-	};
-
 	// メモリブロック情報域をちょこっと確保
-	AutoDeleter a( blocks_ = ::new MemBlock[4] );
+	blocks_ = ::new MemBlock[4];
 	if( !blocks_ ) return false;
 
 	// ブロックサイズ等計算
@@ -397,9 +387,12 @@ bool MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
 
 	// 一個だけブロック作成
 	bool ok = blocks_[0].Construct( fixedSize_, numPerBlock_ );
-	if( !ok ) return false;
-
-	a.Release();
+	if( !ok )
+	{
+		::delete [] blocks_; // free on failure
+		return false;
+	}
+	// All good.
 	lastA_            = 0;
 	lastDA_           = 0;
 	blockNum_         = 1;
