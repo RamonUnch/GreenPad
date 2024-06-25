@@ -45,13 +45,13 @@ class Line //: public ki::Object
 public:
 
 	//@{ 指定テキストで初期化, Initialize with specified text //@}
-	Line( const unicode* str, ulong len )
-		: alen_( len )
+	Line( const unicode* str, size_t len )
+		: commentBitReady_( 0 )
+		, isLineHeadCommented_( 0 )
+		, alen_( len )
+		, commentTransition_( 0 )
 		, len_ ( len )
 		, str_ ( static_cast<unicode*>( ki::mem().Alloc(EVEN((alen_+1)*2+alen_)) ) )
-		, commentBitReady_( 0 )
-		, isLineHeadCommented_( 0 )
-		, commentTransition_( 0 )
 		{
 			if( !str_ )
 			{	// Allocation failed!
@@ -73,14 +73,14 @@ public:
 		}
 
 	//@{ テキスト挿入(指定位置に指定サイズ), Insert text (specified position, specified size)  //@}
-	void InsertAt( ulong at, const unicode* buf, ulong siz )
+	void InsertAt( size_t at, const unicode* buf, size_t siz )
 		{
 			uchar *flgs = flg(); // str_+alen_+1;
 			if( len_+siz > alen_ )
 			{
 				// バッファ拡張
-				ulong psiz = (alen_+1)*2+alen_;
-				ulong nalen = Max( alen_+(alen_>>1), len_+siz ); // len_+siz;
+				size_t psiz = (alen_+1)*2+alen_;
+				size_t nalen = Max( (size_t)(alen_+(alen_>>1)), len_+siz ); // len_+siz;
 				unicode* tmpS;
 				TRYAGAIN:
 					tmpS = static_cast<unicode*>( ki::mem().Alloc( EVEN((nalen+1)*2+nalen) ) );
@@ -114,13 +114,13 @@ public:
 		}
 
 	//@{ テキスト挿入(末尾に) //@}
-	void InsertToTail( const unicode* buf, ulong siz )
+	void InsertToTail( const unicode* buf, size_t siz )
 		{
 			InsertAt( len_, buf, siz );
 		}
 
 	//@{ テキスト削除(指定位置から指定サイズ) //@}
-	void RemoveAt( ulong at, ulong siz )
+	void RemoveAt( size_t at, size_t siz )
 		{
 			uchar *flgs = flg();
 			memmove( str_+at, str_+at+siz, (len_-siz-at+1)*2 );
@@ -129,27 +129,27 @@ public:
 		}
 
 	//@{ テキスト削除(指定位置から末尾まで) //@}
-	void RemoveToTail( ulong at )
+	void RemoveToTail( size_t at )
 		{
 			if( at < len_ )
 				str_[ len_=at ] = 0x007f;
 		}
 
 	//@{ バッファにコピー(指定位置から指定サイズ) //@}
-	ulong CopyAt( ulong at, ulong siz, unicode* buf )
+	size_t CopyAt( size_t at, size_t siz, unicode* buf )
 		{
 			memmove( buf, str_+at, siz*sizeof(unicode) );
 			return siz;
 		}
 
 	//@{ バッファにコピー(指定位置から末尾まで) //@}
-	ulong CopyToTail( ulong at, unicode* buf )
+	size_t CopyToTail( size_t at, unicode* buf )
 		{
 			return CopyAt( at, len_-at, buf );
 		}
 
 	//@{ 長さ //@}
-	ulong size() const
+	size_t size() const
 		{ return len_; }
 
 	//@{ テキスト //@}
@@ -178,7 +178,7 @@ public:
 		{
 			isLineHeadCommented_ = start;
 			commentBitReady_     = false;
-			return (commentTransition_>>start)&1;
+			return ((uchar)commentTransition_>>start)&1;
 		}
 	// for parser
 	void SetTransitFlag( uchar flag )
@@ -187,13 +187,14 @@ public:
 		{ commentBitReady_   = true; }
 
 private:
-	ulong    alen_;
-	ulong    len_;
+	// 32 bit mode: max_line_length = 2^30 * 3 = 3GB
+	// Which is larger than the max 2GB adress space.
+	size_t   commentBitReady_:      1;
+	size_t   isLineHeadCommented_:  1;
+	size_t   alen_: sizeof(size_t)*8-2;
+	size_t   commentTransition_:    2;
+	size_t   len_:  sizeof(size_t)*8-2;
 	unicode* str_;
-
-	uchar commentBitReady_;
-	uchar isLineHeadCommented_;
-	uchar commentTransition_;
 };
 
 #undef EVEN
