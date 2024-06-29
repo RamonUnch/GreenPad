@@ -51,25 +51,26 @@ public:
 		, alen_( len )
 		, commentTransition_( 0 )
 		, len_ ( len )
-		, str_ ( static_cast<unicode*>( ki::mem().Alloc(EVEN((alen_+1)*2+alen_)) ) )
+		, str_ ( len==0? empty_buf() :static_cast<unicode*>( ki::mem().Alloc(EVEN((alen_+1)*2+alen_)) ) )
 		{
 			if( !str_ )
 			{	// Allocation failed!
 				len_ = 0;
 				alen_ = 0;
+				str_ = empty_buf();
 				return;
 			}
 			memmove( str_, str, len*2 );
 			str_[ len ] = 0x007f;
 		}
+
+	// Dummy empty constructor to allocate array of lines
 	Line() {}
-//	~Line()
-//		{
-//			ki::mem().DeAlloc( str_, EVEN((alen_+1)*2+alen_) );
-//		}
-	void Clear()
+
+	void Clear() // Manually destroy line
 		{
-			ki::mem().DeAlloc( str_, EVEN((alen_+1)*2+alen_) );
+			if( str_ != empty_buf() )
+				ki::mem().DeAlloc( str_, EVEN((alen_+1)*2+alen_) );
 		}
 
 	//@{ テキスト挿入(指定位置に指定サイズ), Insert text (specified position, specified size)  //@}
@@ -101,7 +102,8 @@ public:
 				memmove( tmpS+at+siz, str_+at, (len_-at+1)*2 );
 				memmove( tmpF,        flgs,             at   );
 				// 古いのを削除
-				ki::mem().DeAlloc( str_, EVEN(psiz) );
+				if( str_ != empty_buf() )
+					ki::mem().DeAlloc( str_, EVEN(psiz) );
 				str_ = tmpS;
 			}
 			else
@@ -195,6 +197,9 @@ private:
 	size_t   commentTransition_:    2;
 	size_t   len_:  sizeof(size_t)*8-2;
 	unicode* str_;
+
+	static unicode* empty_buf()
+		{ static unicode empty[2] = { 0x7F, 0 }; return empty; }
 };
 
 #undef EVEN
