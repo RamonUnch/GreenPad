@@ -1331,7 +1331,7 @@ int Cursor::on_ime_reconvertstring( RECONVERTSTRING* rs )
 		if( !ub.get() ) return 0;
 		ulong len;
 		for(len=0; ub[len]; ++len);
-		ki::aarr<char> nw( new TCHAR[(len+1)*3] );
+		ki::aarr<char> nw( (len+1)*3 );
 		if( !nw.get() ) return 0;
 		str = nw;
 		::WideCharToMultiByte( CP_ACP, 0, ub.get(), -1,
