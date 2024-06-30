@@ -474,12 +474,12 @@ inline void String::FreeWCMem( const wchar_t* wc ) const
 #ifdef _UNICODE
 	{}
 #else // _MBCS or _SBCS
-	{ delete [] const_cast<wchar_t*>(wc); }
+	{ free(const_cast<wchar_t*>(wc)); }
 #endif
 
 inline void String::FreeCMem( const char* str ) const
 #ifdef _UNICODE
-	{ delete [] const_cast<char*>(str); }
+	{ free( const_cast<char*>(str) ); }
 #else // _MBCS or _SBCS
 	{}
 #endif

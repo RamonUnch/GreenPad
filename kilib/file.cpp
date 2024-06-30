@@ -19,7 +19,7 @@ static TCHAR *GetUNCPath(const TCHAR *ifn)
 	// this also mean we do not have to check for Win9x/NT versions.
 	if (len > MAX_PATH) // len includes the terminating '\0'.
 	{
-		TCHAR *buf = new TCHAR [(len + 16) * sizeof(TCHAR)];
+		TCHAR *buf = (TCHAR *)malloc((len + 16) * sizeof(TCHAR));
 		if (!buf) return const_cast<TCHAR*>(ifn);
 		int buffstart = 0;
 		if (ifn[0] == '\\' && ifn[1] == '\\')
@@ -61,7 +61,7 @@ static TCHAR *GetUNCPath(const TCHAR *ifn)
 		else
 		{
 			// Unable to get full path name for ifn
-			delete [] buf;
+			free( buf );
 		}
 	}
 	return (TCHAR *)ifn;
@@ -96,7 +96,7 @@ HANDLE CreateFileUNC(
 	);
 #ifdef UNICODE
 	if( UNCPath != fname ) // Was allocated...
-		delete [] UNCPath;
+		free( UNCPath );
 #endif
 	return hFile;
 }
@@ -114,7 +114,7 @@ DWORD GetFileAttributesUNC(LPCTSTR fname)
 
 #ifdef UNICODE
 	if( UNCPath != fname ) // Was allocated...
-		delete [] UNCPath;
+		free( UNCPath );
 #endif
 	return ret;
 }
@@ -183,7 +183,7 @@ bool FileR::Open( const TCHAR* fname, bool always)
 		#ifdef OLDWIN32S
 			// We cannot use CreateFileMapping() on old Win32s beta
 			// So we allocate a buffer for the whole file and use ReadFile().
-			basePtr_ = new BYTE[size_];
+			basePtr_ = (BYTE *)malloc( size_ );
 			DWORD nBytesRead=0;
 			BOOL ret = ReadFile( handle_, (void*)basePtr_, size_, &nBytesRead,  NULL);
 			::CloseHandle( handle_ ); // We can already close the handle
@@ -250,7 +250,7 @@ void FileR::Close()
 			// Zero out in debug mode to detect use after free!
 			mem00( (void*)basePtr_, size_ );
 		#endif
-			delete [] (BYTE*)basePtr_;
+			free( basePtr_ );
 		}
 		basePtr_ = NULL;
 	}
@@ -264,7 +264,7 @@ void FileR::Close()
 
 FileW::FileW()
 	: handle_( INVALID_HANDLE_VALUE )
-	, buf_   ( new uchar[BUFSIZE] )
+	, buf_   ( (uchar *)malloc( sizeof(uchar) * BUFSIZE ) )
 	, bPos_  ( 0 )
 {
 }
@@ -272,7 +272,7 @@ FileW::FileW()
 FileW::~FileW()
 {
 	Close();
-	delete [] buf_;
+	free( buf_ );
 }
 
 void FileW::Flush()
@@ -320,7 +320,7 @@ bool FileW::Open( const TCHAR* fname, bool creat )
 
 #ifdef UNICODE
 	if( UNCPath != fname ) // Was allocated...
-		delete [] UNCPath;
+		free( UNCPath );
 #endif
 
 	if( handle_ == INVALID_HANDLE_VALUE )

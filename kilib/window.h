@@ -200,8 +200,10 @@ public:
 	//@{ 位置指定 //@}
 	void SetPos( HWND wnd, int x, int y );
 
-	//@{ 確定文字列ゲット。受け取ったら delete すること。 //@}
+	//@{ 確定文字列ゲット。受け取ったら FreeString すること。 //@}
 	void GetString( HWND wnd, unicode** str, ulong* len );
+	
+	static void FreeString( unicode *str ) { free( str ); }
 
 	//@{ 再変換 //@}
 	void SetString( HWND wnd, unicode* str, ulong len );

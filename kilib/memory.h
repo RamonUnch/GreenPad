@@ -159,10 +159,10 @@ class Object
 #ifdef USE_ORIGINAL_MEMMAN
 public:
 
-	static void* operator new( size_t siz )
+	static void* operator new( size_t siz ) noexcept
 		{ return mem().Alloc( siz ); }
 
-	static void operator delete( void* ptr, size_t siz )
+	static void operator delete( void* ptr, size_t siz ) noexcept
 		{ mem().DeAlloc( ptr, siz ); }
 #endif
 };

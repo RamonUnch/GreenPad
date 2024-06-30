@@ -20,7 +20,8 @@ using namespace ki;
 	static ulong smallAllocs_hist[SMALL_MAX];
 	#endif // _DEBUG
 
-	void* __cdecl operator new( size_t siz )
+	static uchar ignorecnt=0;
+	void *__cdecl malloc( size_t siz ) noexcept
 	{
 		#ifdef _DEBUG
 		#if defined(SIMULATE_LOW_MEM)
@@ -38,7 +39,6 @@ using namespace ki;
 		#else
 		void *ret = ::HeapAlloc( g_heap, 0, siz );
 		#endif
-		static uchar ignorecnt=0;
 		if (!ret && ignorecnt < 8) {
 			DWORD ans = MessageBox(GetActiveWindow(), TEXT("Unable to allocate memory!"), NULL, MB_ABORTRETRYIGNORE|MB_TASKMODAL);
 			switch(ans) {
@@ -48,9 +48,10 @@ using namespace ki;
 			}
 		}
 		return ret;
+
 	}
 
-	void __cdecl operator delete( void* ptr )
+	void __cdecl free( void *ptr ) noexcept
 	{
 		if (ptr != NULL)
 		{   // It is not Guarenteed that HeapFree can free NULL.
@@ -63,7 +64,33 @@ using namespace ki;
 			--allocCounter;
 			#endif
 		}
+
 	}
+
+	void *__cdecl realloc(void *ptr, size_t siz ) noexcept
+	{
+		TRYLBL:
+		#ifdef USE_LOCALALLOC
+		void *ret = ::LocalReAlloc( ptr, LMEM_FIXED, siz );
+		#else
+		void *ret = ::HeapReAlloc( g_heap, 0, ptr, siz );
+		#endif
+		if (!ret && ignorecnt < 8) {
+			DWORD ans = MessageBox(GetActiveWindow(), TEXT("Unable to reallocate memory!"), NULL, MB_ABORTRETRYIGNORE|MB_TASKMODAL);
+			switch(ans) {
+			case IDABORT: ExitProcess(1); break;
+			case IDRETRY: ignorecnt = 0; goto TRYLBL; break;
+			case IDIGNORE: ignorecnt++; break;
+			}
+		}
+		return ret;
+	}
+
+	void* __cdecl operator new( size_t siz ) noexcept
+		{ return malloc( siz ); }
+
+	void __cdecl operator delete( void* ptr ) noexcept
+		{ free( ptr ); }
 
 	#if _MSC_VER >= 1300 && _MSC_VER != 1500
 	extern "C"
@@ -251,19 +278,19 @@ using namespace ki;
 	#endif
 
 	#ifdef __GNUC__
-	void operator delete(void * ptr, size_t size)
+	void operator delete(void * ptr, size_t size) noexcept
 	{
-		::operator delete(ptr);;
+		::operator delete(ptr);
 	}
-	void operator delete [] (void * ptr)
+	void operator delete [] (void * ptr) noexcept
 	{
-		::operator delete(ptr);;
+		::operator delete(ptr);
 	}
-	void operator delete [](void * ptr, size_t size)
+	void operator delete [](void * ptr, size_t size) noexcept
 	{
-		::operator delete(ptr);;
+		::operator delete(ptr);
 	}
-	void* operator new[](size_t sz)
+	void* operator new[](size_t sz) noexcept
 	{
 		return ::operator new(sz);
 	}
@@ -302,7 +329,7 @@ private:
 bool MemBlock::Construct( byte siz, byte num )
 {
 	// 確保
-	buf_   = ::new byte[siz*num];
+	buf_   = (byte *)malloc( siz*num );
 	if( !buf_ )
 		return false;
 	first_ = 0;
@@ -317,7 +344,7 @@ bool MemBlock::Construct( byte siz, byte num )
 inline void MemBlock::Destruct()
 {
 	// 解放
-	::delete [] buf_;
+	::free( buf_ );
 }
 
 void* MemBlock::Alloc( byte siz )
@@ -377,7 +404,7 @@ inline bool MemBlock::hasThisPtr( const void* ptr, size_t len )
 bool MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
 {
 	// メモリブロック情報域をちょこっと確保
-	blocks_ = ::new MemBlock[4];
+	blocks_ = (MemBlock *)malloc( sizeof(MemBlock) * 4 );
 	if( !blocks_ ) return false;
 
 	// ブロックサイズ等計算
@@ -389,7 +416,7 @@ bool MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
 	bool ok = blocks_[0].Construct( fixedSize_, numPerBlock_ );
 	if( !ok )
 	{
-		::delete [] blocks_; // free on failure
+		free( blocks_ ); // free on failure
 		return false;
 	}
 	// All good.
@@ -407,7 +434,7 @@ void MemoryManager::FixedSizeMemBlockPool::Destruct()
 		blocks_[i].Destruct();
 
 	// ブロック情報保持領域のメモリも解放
-	::delete [] blocks_;
+	free( blocks_ );
 	blockNum_ = 0;
 }
 
@@ -435,11 +462,11 @@ void* MemoryManager::FixedSizeMemBlockPool::Alloc()
 				if( blockNum_ == blockNumReserved_ )
 				{
 					// しかも作業領域も満杯なので拡張
-					MemBlock* nb = ::new MemBlock[ blockNum_*2 ];
+					MemBlock* nb = (MemBlock *)malloc( sizeof(MemBlock) * blockNum_*2 );
 					if( !nb )
 						return NULL;
 					memmove( nb, blocks_, sizeof(MemBlock)*(blockNum_) );
-					::delete [] blocks_;
+					free( blocks_ );
 					blocks_ = nb;
 					blockNumReserved_ *= 2;
 				}
@@ -606,7 +633,7 @@ void* A_HOT MemoryManager::Alloc( size_t siz )
 	// デフォルトの new 演算子に任せる
 	uint i = static_cast<uint>( siz-1 );
 	if( i >= SMALL_MAX )
-		return ::operator new( siz );
+		return malloc( siz );
 
 	// マルチスレッド対応
 	AutoLock al(this);
@@ -639,7 +666,7 @@ void A_HOT MemoryManager::DeAlloc( void* ptr, size_t siz )
 	uint i = static_cast<uint>( siz-1 );
 	if( i >= SMALL_MAX )
 	{
-		::operator delete( ptr );
+		::free( ptr );
 		return; // VCで return void が出来ないとは…
 	}
 
@@ -681,11 +708,11 @@ MemoryManager::~MemoryManager()
 
 void* MemoryManager::Alloc( size_t siz )
 {
-	return ::operator new(siz);
+	return ::malloc(siz);
 }
 void MemoryManager::DeAlloc( void* ptr, size_t siz )
 {
-	::operator delete(ptr);
+	::free(ptr);
 }
 
 #endif

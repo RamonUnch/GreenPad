@@ -51,7 +51,7 @@ public:
 		friend class Clipboard;
 
 		mutable unicode*        str_;
-		enum Tp { NEW, GALLOC } mem_;
+		enum Tp { MALLOC, GALLOC } mem_;
 
 		Text( unicode* s, Tp m ) : str_(s), mem_(m) {}
 		void operator=( const Text& );
@@ -63,8 +63,8 @@ public:
 			{
 				if( str_ != NULL )
 				{
-					if( mem_==NEW ) delete [] str_;
-					else      GlobalUnlock( str_ );
+					if( mem_==MALLOC ) free( str_ );
+					else       GlobalUnlock( str_ );
 				}
 			}
 		const unicode* data() const { return str_; }
@@ -239,7 +239,7 @@ public:
 		, m_nIndex      ( 0 )
 		, m_nNumFormats ( nNumFormats )
 	{
-		m_pFormatEtc = new FORMATETC[nNumFormats];
+		m_pFormatEtc = (FORMATETC *)malloc( sizeof(FORMATETC) * nNumFormats );
 		if( !m_pFormatEtc ) return;
 
 		// copy the FORMATETC structures
@@ -253,7 +253,7 @@ public:
 	{
 		if(m_pFormatEtc)
 		{
-			delete [] m_pFormatEtc;
+			free( m_pFormatEtc );
 		}
 	}
 

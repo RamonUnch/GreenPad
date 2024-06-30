@@ -914,12 +914,12 @@ void GreenPadWnd::on_drop( HDROP hd )
 		// Get length of the i string for array size.
 		UINT len = ::myDragQueryFile( hd, i, NULL, 0)+1;
 		len = Max(len, (UINT)MAX_PATH); // ^ the Above may fail on NT3.1
-		TCHAR *str = new TCHAR [len];
+		TCHAR *str = (TCHAR *)malloc( sizeof(TCHAR) * len );
 		if( str )
 		{
 			::myDragQueryFile( hd, i, str, len );
 			Open( str, AutoDetect );
-			delete [] str;
+			free( str );
 		}
 	}
 	::DragFinish( hd );
@@ -1057,7 +1057,7 @@ void GreenPadWnd::on_external_exe_start(const Path &g)
 			d = Path(Path::Cur);
 
 		String fcmd;
-		for( int i=0, e=g.len(); i<e; ++i )
+		for( size_t i=0, e=g.len(); i<e; ++i )
 		{
 			if( g[i]==TEXT('%') )
 			{
@@ -1598,7 +1598,7 @@ BOOL GreenPadWnd::PostMsgToAllFriends(UINT msg)
 bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, bool always )
 {
 	//MsgBox(fn.c_str(), TEXT("File:"), 0);
-	LOGGERS( fn );
+	LOGGERS( fn.c_str() );
 	// ファイルを開けなかったらそこでおしまい。
 	TextFileR tf(cs);
 
@@ -1727,7 +1727,9 @@ bool GreenPadWnd::OpenByMyself( const ki::Path& fn, int cs, bool needReConf, boo
 	edit_.getDoc().ClearAll();
 	stb_.SetText( RzsString(IDS_LOADING).c_str() );
 	old_filetime_ = filename_.getLastWriteTime(); // Save timestamp
+	//::EnableWindow(edit_.hwnd(), FALSE);
 	edit_.getDoc().OpenFile( tf );
+	//::EnableWindow(edit_.hwnd(), TRUE);
 	stb_.SetText( TEXT("(1,1)") );
 
 	// タイトルバー更新

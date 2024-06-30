@@ -765,7 +765,7 @@ ki::aarr<TCHAR> OpenFileDlg::ConnectWithNull( const TCHAR *lst[], size_t num )
 	for( size_t i=0; i<num; ++i )
 		TtlLen += (my_lstrlen(lst[i]) + 1);
 
-	aarr<TCHAR> a( new TCHAR[TtlLen] );
+	aarr<TCHAR> a( TtlLen );
 
 	TCHAR* p = a.get();
 	if( p )
