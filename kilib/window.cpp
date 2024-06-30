@@ -415,7 +415,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 		HIMC ime = NULL;
 		immApp_->GetContext( wnd, &ime );
 		immApp_->GetCompositionStringW( ime, GCS_RESULTSTR, 0, &s, NULL );
-		*str = new unicode[ (*len=s/2)+1 ];
+		*str = (unicode *)malloc( sizeof(unicode) *((*len=s/2)+1) );
 		if( *str )
 			immApp_->GetCompositionStringW( ime, GCS_RESULTSTR, s, &s, *str );
 		immApp_->ReleaseContext( wnd, ime );
@@ -435,7 +435,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 				char* tmp = (char *)malloc( sizeof(char) * s );
 				if( tmp )
 				{
-					*str = new unicode[*len=s*2];
+					*str = (unicode *)malloc( sizeof(unicode) * (*len=s*2) );
 					if( *str )
 					{
 						::ImmGetCompositionStringA( ime,GCS_RESULTSTR,tmp,s );
@@ -453,7 +453,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 			long s = ::ImmGetCompositionStringW( ime,GCS_RESULTSTR,NULL,0 );
 			if( s > 0 )
 			{
-				*str = new unicode[ (*len=s/2)+1 ];
+				*str = (unicode *)malloc( sizeof(unicode) * ((*len=s/2)+1) );
 				if( *str )
 					::ImmGetCompositionStringW( ime, GCS_RESULTSTR, *str, s );
 			}

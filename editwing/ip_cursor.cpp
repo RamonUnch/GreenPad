@@ -429,7 +429,7 @@ void Cursor::on_ime_composition( LPARAM lp )
 		if( str )
 		{
 			pEvHan_->on_ime( *this, str, len );
-			delete [] str;
+			ime().FreeString( str );
 		}
 	}
 #endif // NO_IME
@@ -729,7 +729,7 @@ ki::aarr<unicode> Cursor::getSelectedStr() const
 
 	// テキスト取得, Get Text
 	ulong len = doc_.getRangeLength( dm, dM );
-	ki::aarr<unicode> ub( new unicode[len+1] );
+	ki::aarr<unicode> ub( len+1 );
 	if( ub.get() )
 		doc_.getText( ub.get(), dm, dM );
 	return ub;
