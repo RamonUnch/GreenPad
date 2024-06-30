@@ -12,7 +12,7 @@ Argv::Argv( const TCHAR* cmd )
 {
 	TCHAR *p, endc;
 
-	buf_ = (p=new TCHAR[my_lstrlen(cmd)+1]);
+	buf_ = p = (TCHAR*)malloc( sizeof(TCHAR) * (my_lstrlen(cmd)+1) );
 	if( !p ) return;
 	my_lstrcpy( p, cmd );
 

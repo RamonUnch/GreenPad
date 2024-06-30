@@ -835,7 +835,7 @@ void Document::OpenFile( TextFileR& tf )
 	buf_sz = Min( buf_sz, (size_t)(tf.size()+16)<<1 );
 	unicode *buf=NULL;
 	if( buf_sz > SBUF_SZ )
-		buf = new unicode[buf_sz];
+		buf = (unicode *)malloc( sizeof(unicode) * buf_sz );
 	if( !buf )
 	{
 		buf = sbuf;
@@ -876,7 +876,7 @@ void Document::OpenFile( TextFileR& tf )
 	setBusyFlag(false);
 //	fail:
 	if( buf != sbuf )
-		delete [] buf;
+		free( buf );
 
 //	MessageBox(GetActiveWindow(),  SInt2Str(GetTickCount()-otime).c_str(), TEXT("Time in ms:"), 0);
 	// ƒCƒxƒ“ƒg”­‰Î, Event firing

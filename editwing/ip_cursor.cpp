@@ -509,11 +509,11 @@ void Cursor::InputUTF32( qbyte utf32 )
 
 void Cursor::Input( const char* str, ulong len )
 {
-	unicode* ustr = new unicode[ len*4 ];
+	unicode* ustr = (unicode *)malloc( len * 4 * sizeof(unicode) );
 	if(!ustr) return;
 	len = ::MultiByteToWideChar( CP_ACP, 0, str, len, ustr, len*4 );
 	Input( ustr, len );
-	delete [] ustr;
+	free( ustr );
 }
 void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
 {
@@ -585,11 +585,11 @@ void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
 }
 void Cursor::InputAt( const char* str, ulong len, int x, int y )
 {
-	unicode* ustr = new unicode[ len*4 ];
+	unicode* ustr = (unicode *)malloc( len * 4 * sizeof(unicode) );
 	if(!ustr) return;
 	len = ::MultiByteToWideChar( CP_ACP, 0, str, len, ustr, len*4 );
 	InputAt( ustr, len, x, y );
-	delete [] ustr;
+	free( ustr );
 }
 
 void Cursor::DelBack( bool wide )
@@ -798,7 +798,7 @@ void Cursor::Copy()
 				, NULL, MB_OK|MB_TASKMODAL|MB_TOPMOST) ;
 			return;
 		}
-		unicode *p = new unicode[len+1];
+		unicode *p = (unicode *)malloc( sizeof(unicode) * (len+1) );
 		if(!p) return;
 		doc_.getText( p, dm, dM );
 		// Replace null characters by spaces when copying.
@@ -810,7 +810,7 @@ void Cursor::Copy()
 		::WideCharToMultiByte( CP_ACP, 0, p, len+1,
 			static_cast<char*>(::GlobalLock(h)), (len+1)*3, NULL, NULL );
 		::GlobalUnlock( h );
-		delete [] p;
+		free( p );
 		if( !clp.SetData( CF_TEXT, h ) )
 			GlobalFree(h); // Could not set data
 	}
@@ -948,7 +948,7 @@ void Cursor::ModSelection(ModProc mfunk)
 		return; // Nothing to do.
 
 	size_t len = doc_.getRangeLength( dm, dM );
-	unicode *p = new unicode[len+1];
+	unicode *p = (unicode *)malloc( sizeof(unicode) * (len+1) );
 	if( !p ) return;
 	doc_.getText( p, dm, dM );
 	unicode *np = mfunk(p, &len); // IN and OUT len!!!
@@ -959,7 +959,7 @@ void Cursor::ModSelection(ModProc mfunk)
 		MoveCur(ocur, true);
 	}
 
-	delete [] p;
+	free( p );
 //	// Useless for now...
 //	if( np < p || np > p+len+1 )
 //		delete np; // was allocated
@@ -1242,12 +1242,12 @@ bool Cursor::on_drag_start( short x, short y )
 			const VPos dm = Min(cur_, sel_);
 			const VPos dM = Max(cur_, sel_);
 			ulong len = doc_.getRangeLength( dm, dM );
-			unicode *p = new unicode[len+1];
+			unicode *p = (unicode *)malloc( sizeof(unicode) * (len+1) );
 			if( p )
 			{
 				doc_.getText( p, dm, dM );
 				OleDnDSourceTxt doDrag(p, len);
-				delete [] p;
+				free( p );
 				if( doDrag.getEffect() == DROPEFFECT_MOVE )
 					doc_.Execute( Delete( cur_, sel_ ) );
 			}

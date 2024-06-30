@@ -166,7 +166,7 @@ public:
 	{
 		if( fontranges_ )
 		{
-			WCRANGE *range = fontranges_->ranges;
+			const WCRANGE *range = fontranges_->ranges;
 			for(uint i=0; i < fontranges_->cRanges; i++)
 			{
 				if( range[i].wcLow <= ch && ch <= range[i].wcLow + range[i].cGlyphs)

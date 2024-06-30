@@ -495,7 +495,7 @@ const wchar_t* String::ConvToWChar() const
 	return c_str();
 #else
 	int ln = ::MultiByteToWideChar( CP_ACP,  0, c_str(), -1 , 0, 0 );
-	wchar_t* p = new wchar_t[ln+1];
+	wchar_t* p = (wchar_t *)malloc( sizeof(wchar_t) * (ln+1) );
 	if( p ) ::MultiByteToWideChar( CP_ACP,  0, c_str(), -1 , p, ln+1 );
 	return p;
 #endif
@@ -505,7 +505,7 @@ const char* String::ConvToChar() const
 {
 #ifdef _UNICODE
 	int ln = ::WideCharToMultiByte( CP_ACP, 0, c_str(), -1, NULL, 0, NULL, NULL );
-	char* p = new char[ln+1];
+	char* p = (char *)malloc( sizeof(char) * (ln+1) );
 	if( p )::WideCharToMultiByte( CP_ACP,  0, c_str(), -1 , p, ln+1, NULL, NULL );
 	return p;
 #else
@@ -531,19 +531,19 @@ bool String::isCompatibleWithACP(const TCHAR *uni, size_t len)
 	// Some losses are thus invisible to the err flag!
 	bool compatible = true;
 
-	char *mbbuf = new char[mblen];
+	char *mbbuf = (char *)malloc( sizeof(char) * mblen );
 	if( !mbbuf ) return false;
 	mblen = ::WideCharToMultiByte( CP_ACP, 0, uni, len, mbbuf, mblen, NULL, NULL );
 	if( !mblen ) return false;
 
-	wchar_t *backconv = new wchar_t[len];
+	wchar_t *backconv = (wchar_t *)malloc( sizeof(wchar_t) * len );
 	if( !backconv ) return false;
 	size_t backconvlen = ::MultiByteToWideChar(CP_ACP, 0, mbbuf, mblen, backconv, len);
-	delete [] mbbuf;
+	free( mbbuf );
 
 	if( backconvlen != len || my_lstrncmpW( uni, backconv, len ) )
 		compatible = false; // Not matching
-	delete [] backconv;
+	free( backconv );
 
 	return compatible;
 #else
@@ -555,12 +555,12 @@ bool String::isCompatibleWithACP(const TCHAR *uni, size_t len)
 String& String::operator+=( const char* s )
 {
 	int ln = ::MultiByteToWideChar( CP_ACP,  0, s, -1 , 0, 0 );
-	wchar_t* p = new wchar_t[ln+1];
+	wchar_t* p = (wchar_t *)malloc( sizeof(wchar_t) * (ln+1) );
 	if( p )
 	{
 		::MultiByteToWideChar( CP_ACP,  0, s, -1 , p, ln+1 );
 		CatString(p, ln);
-		delete [] p;
+		free( p );
 	}
 	return *this;
 }
@@ -568,12 +568,12 @@ String& String::operator+=( const char* s )
 String& String::operator+=( const wchar_t* s )
 {
 	int ln = ::WideCharToMultiByte( CP_ACP,  0, s, -1 , 0, 0, NULL, NULL );
-	char* p = new char[ln+1];
+	char* p = (char *)malloc( sizeof(char) * (ln+1) );
 	if( p )
 	{
 		::WideCharToMultiByte( CP_ACP,  0, s, -1 , p, ln+1, NULL, NULL );
 		CatString(p, ln);
-		delete [] p;
+		free( p );
 	}
 	return *this;
 }

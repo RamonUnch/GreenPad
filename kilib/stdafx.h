@@ -64,6 +64,7 @@
 #else
 	#define A_FINAL
 	#define override
+	#define noexcept
 #endif
 
 #include <windows.h>

@@ -432,7 +432,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 			long s = ::ImmGetCompositionStringA(ime,GCS_RESULTSTR,NULL,0);
 			if( s > 0 )
 			{
-				char* tmp = new char[s];
+				char* tmp = (char *)malloc( sizeof(char) * s );
 				if( tmp )
 				{
 					*str = new unicode[*len=s*2];
@@ -442,7 +442,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 						*len = ::MultiByteToWideChar(
 							CP_ACP, MB_PRECOMPOSED, tmp, s, *str, *len );
 					}
-					delete [] tmp;
+					free( tmp );
 				}
 			}
 		}
@@ -488,12 +488,12 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 		if( !app().isNT() )
 		{	// Use ANSI functions on Win9x
 			len = ::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1, NULL,0 ,NULL,NULL );
-			char* tmp = new char[len];
+			char* tmp = (char *)malloc( sizeof(char) * len );
 			if( tmp )
 			{
 				::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1,tmp,len,NULL,NULL );
 				::ImmSetCompositionStringA(ime,SCS_SETSTR,tmp,len,NULL,0);
-				delete [] tmp;
+				free( tmp );
 			}
 		}
 		else

@@ -9,11 +9,6 @@ using namespace ki;
 
 //=========================================================================
 
-void Logger::WriteLine( const String& str )
-{
-	WriteLine( str.c_str(), str.len()*sizeof(TCHAR) );
-}
-
 void Logger::WriteLine( const TCHAR* str )
 {
 	int siz = my_lstrlen(str)*sizeof(TCHAR);

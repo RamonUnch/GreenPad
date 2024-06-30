@@ -47,7 +47,7 @@ public:
 	BMSearch( const unicode* key )
 		: keylen_( my_lstrlenW(key) )
 	{
-		key_ =  new unicode[keylen_+1];
+		key_ =  (unicode *)malloc( sizeof(unicode) * (keylen_+1) );
 		if( !key_ ) return;
 		my_lstrcpyW( key_, key );
 
@@ -58,7 +58,7 @@ public:
 
 	~BMSearch()
 	{
-		delete [] key_;
+		free( key_ );
 	}
 
 	int Search( const unicode* str, int strlen )
@@ -102,7 +102,7 @@ public:
 	BMSearchRev( const unicode* key )
 		: keylen_( my_lstrlenW(key) )
 	{
-		key_ = new unicode[keylen_+1];
+		key_ =  (unicode *)malloc( sizeof(unicode) * (keylen_+1) );
 		if( !key_ ) return;
 
 		my_lstrcpyW( key_, key );
@@ -113,7 +113,7 @@ public:
 
 	~BMSearchRev()
 	{
-		delete [] key_;
+		free( key_ );
 	}
 
 	int Search( const unicode* str, int strlen )

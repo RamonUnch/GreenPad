@@ -104,16 +104,16 @@ public:
 	aarr( const aarr<T>& r )
 		: obj_ ( const_cast<aarr<T>&>(r).release() ) {}
 
-	//@{ Š—LŒ ˆÚ“® //@}
-	aarr<T>& operator=( aarr<T>& r )
-		{
-			if( obj_ != r.obj_ )
-			{
-				delete [] obj_;
-				obj_ = r.release();
-			}
-			return *this;
-		}
+//	//@{ Š—LŒ ˆÚ“® //@}
+//	aarr<T>& operator=( aarr<T>& r )
+//		{
+//			if( obj_ != r.obj_ )
+//			{
+//				delete [] obj_;
+//				obj_ = r.release();
+//			}
+//			return *this;
+//		}
 
 public:
 

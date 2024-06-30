@@ -26,7 +26,7 @@ class RSearch A_FINAL: public Searchable
 {
 public:
 	explicit RSearch( const unicode* key, bool caseS, bool down );
-	~RSearch();
+	~RSearch() override;
 
 private:
 	bool Search( const unicode* str, ulong len, ulong stt,

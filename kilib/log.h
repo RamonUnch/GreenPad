@@ -6,9 +6,6 @@ namespace ki {
 #endif
 
 
-
-class String;
-
 //=========================================================================
 //@{ @pkg ki.Core //@}
 //@{
@@ -27,7 +24,6 @@ class Logger
 public:
 
 	Logger() {}
-	void WriteLine( const String& str );
 	void WriteLine( const TCHAR* str );
 	void WriteLine( const TCHAR* str, int siz );
 	void __cdecl WriteLineFmtErr(const TCHAR *fmt, ...);

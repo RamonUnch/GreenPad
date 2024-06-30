@@ -91,12 +91,12 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 			if( cstr )
 			{
 				int Lu = my_lstrlenA( cstr ) * 3;
-				unicode* ustr = new unicode[Lu];
+				unicode* ustr = (unicode *)malloc( sizeof(unicode) * Lu );
 				if( ustr )
 				{
 					::MultiByteToWideChar( CP_ACP, 0, cstr, -1, ustr, Lu );
 					::GlobalUnlock( h );
-					return Text( ustr, Text::NEW );
+					return Text( ustr, Text::MALLOC );
 				}
 			}
 		}
@@ -115,16 +115,16 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 			{
 				UINT nf = myDragQueryFile(h, 0xFFFFFFFF, NULL, 0);
 				size_t totstrlen=0;
-				UINT *lenmap = new UINT[nf];
-				if (!lenmap) return Text( NULL, Text::NEW );
+				UINT *lenmap = (UINT *)malloc( sizeof(UINT) * nf );
+				if (!lenmap) return Text( NULL, Text::MALLOC );
 				for( uint i=0; i < nf; i++ )
 				{	// On Windows NT3.1 DragQueryFile() does not return
 					// The required buffer length hence the Min()...
 					lenmap[i] = Min((UINT)MAX_PATH, myDragQueryFile(h, i, NULL, 0));
 					totstrlen += lenmap[i];
 				}
-				unicode* ustr = new unicode[totstrlen+2*nf+1];
-				if(!ustr) return Text( NULL, Text::NEW );
+				unicode* ustr = (unicode *)malloc( sizeof(unicode) * (totstrlen+2*nf+1) );
+				if(!ustr) return Text( NULL, Text::MALLOC );
 				//mem00( ustr, (totstrlen+2*nf+1) * sizeof(unicode) );
 				unicode* ptr=ustr; *ptr = L'\0';
 				for( UINT i=0; i < nf; i++ )
@@ -146,12 +146,12 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 				}
 				*ptr = L'\0';
 				GlobalUnlock( hg );
-				delete [] lenmap;
-				return Text( ustr, Text::NEW );
+				free( lenmap );
+				return Text( ustr, Text::MALLOC );
 			}
 		}
 	}
-	return Text( NULL, Text::NEW );
+	return Text( NULL, Text::MALLOC );
 }
 
 
@@ -229,7 +229,7 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM 
 			char *dest = (char *)( ((BYTE*)df) + df->pFiles );
 
 			// Convert multi line in multi file paths
-			unicode *flst = new unicode[len_];
+			unicode *flst = (unicode *)malloc( sizeof(unicode) * len_ );
 			if( !flst ) return E_OUTOFMEMORY;
 			size_t flen = convCRLFtoNULLS(flst, str_, len_);
 
@@ -243,7 +243,7 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM 
 			{	// Directly copy unicode data
 				memmove( dest, flst, len );
 			}
-			delete [] flst;
+			free( flst );
 			remaining_bytes = gmemsz - len - df->pFiles ;
 		}
 		// Clear remaining bytes
