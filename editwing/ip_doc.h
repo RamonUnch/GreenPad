@@ -68,87 +68,87 @@ public:
 	Line() {}
 
 	void Clear() // Manually destroy line
-		{
-			if( str_ != empty_buf() )
-				ki::mem().DeAlloc( str_, EVEN((alen_+1)*2+alen_) );
-		}
+	{
+		if( str_ != empty_buf() )
+			ki::mem().DeAlloc( str_, EVEN((alen_+1)*2+alen_) );
+	}
 
 	//@{ テキスト挿入(指定位置に指定サイズ), Insert text (specified position, specified size)  //@}
 	void InsertAt( size_t at, const unicode* buf, size_t siz )
+	{
+		uchar *flgs = flg(); // str_+alen_+1;
+		if( len_+siz > alen_ )
 		{
-			uchar *flgs = flg(); // str_+alen_+1;
-			if( len_+siz > alen_ )
+			// バッファ拡張
+			size_t psiz = (alen_+1)*2+alen_;
+			size_t nalen = Max( (size_t)(alen_+(alen_>>1)), len_+siz ); // len_+siz;
+			unicode* tmpS;
+			TRYAGAIN:
+				tmpS = static_cast<unicode*>( ki::mem().Alloc( EVEN((nalen+1)*2+nalen) ) );
+			if( !tmpS )
 			{
-				// バッファ拡張
-				size_t psiz = (alen_+1)*2+alen_;
-				size_t nalen = Max( (size_t)(alen_+(alen_>>1)), len_+siz ); // len_+siz;
-				unicode* tmpS;
-				TRYAGAIN:
-					tmpS = static_cast<unicode*>( ki::mem().Alloc( EVEN((nalen+1)*2+nalen) ) );
-				if( !tmpS )
-				{
-					if( nalen > len_+siz )
-					{	// Try again with minimal buffer size...
-						nalen = len_+siz;
-						goto TRYAGAIN;
-					}
-					return;
+				if( nalen > len_+siz )
+				{	// Try again with minimal buffer size...
+					nalen = len_+siz;
+					goto TRYAGAIN;
 				}
-				uchar*   tmpF =
-					reinterpret_cast<uchar*>(tmpS+nalen+1);
-				alen_ = nalen;
-				// コピー
-				memmove( tmpS,        str_,             at*2 );
-				memmove( tmpS+at+siz, str_+at, (len_-at+1)*2 );
-				memmove( tmpF,        flgs,             at   );
-				// 古いのを削除
-				if( str_ != empty_buf() )
-					ki::mem().DeAlloc( str_, EVEN(psiz) );
-				str_ = tmpS;
+				return;
 			}
-			else
-			{
-				memmove( str_+at+siz, str_+at, (len_-at+1)*2 );
-				memmove( flgs+at+siz, flgs+at, (len_-at)     );
-			}
-			memmove( str_+at, buf, siz*sizeof(unicode) );
-			len_ += siz;
+			uchar*   tmpF =
+				reinterpret_cast<uchar*>(tmpS+nalen+1);
+			alen_ = nalen;
+			// コピー
+			memmove( tmpS,        str_,             at*2 );
+			memmove( tmpS+at+siz, str_+at, (len_-at+1)*2 );
+			memmove( tmpF,        flgs,             at   );
+			// 古いのを削除
+			if( str_ != empty_buf() )
+				ki::mem().DeAlloc( str_, EVEN(psiz) );
+			str_ = tmpS;
 		}
+		else
+		{
+			memmove( str_+at+siz, str_+at, (len_-at+1)*2 );
+			memmove( flgs+at+siz, flgs+at, (len_-at)     );
+		}
+		memmove( str_+at, buf, siz*sizeof(unicode) );
+		len_ += siz;
+	}
 
 	//@{ テキスト挿入(末尾に) //@}
 	void InsertToTail( const unicode* buf, size_t siz )
-		{
-			InsertAt( len_, buf, siz );
-		}
+	{
+		InsertAt( len_, buf, siz );
+	}
 
 	//@{ テキスト削除(指定位置から指定サイズ) //@}
 	void RemoveAt( size_t at, size_t siz )
-		{
-			uchar *flgs = flg();
-			memmove( str_+at, str_+at+siz, (len_-siz-at+1)*2 );
-			memmove( flgs+at, flgs+at+siz, (len_-siz-at)     );
-			len_ -= siz;
-		}
+	{
+		uchar *flgs = flg();
+		memmove( str_+at, str_+at+siz, (len_-siz-at+1)*2 );
+		memmove( flgs+at, flgs+at+siz, (len_-siz-at)     );
+		len_ -= siz;
+	}
 
 	//@{ テキスト削除(指定位置から末尾まで) //@}
 	void RemoveToTail( size_t at )
-		{
-			if( at < len_ )
-				str_[ len_=at ] = 0x007f;
-		}
+	{
+		if( at < len_ )
+			str_[ len_=at ] = 0x007f;
+	}
 
 	//@{ バッファにコピー(指定位置から指定サイズ) //@}
 	size_t CopyAt( size_t at, size_t siz, unicode* buf )
-		{
-			memmove( buf, str_+at, siz*sizeof(unicode) );
-			return siz;
-		}
+	{
+		memmove( buf, str_+at, siz*sizeof(unicode) );
+		return siz;
+	}
 
 	//@{ バッファにコピー(指定位置から末尾まで) //@}
 	size_t CopyToTail( size_t at, unicode* buf )
-		{
-			return CopyAt( at, len_-at, buf );
-		}
+	{
+		return CopyAt( at, len_-at, buf );
+	}
 
 	//@{ 長さ //@}
 	size_t size() const
@@ -177,11 +177,11 @@ public:
 		{ return isLineHeadCommented_; }
 	// for doc
 	uchar TransitCmt( uchar start )
-		{
-			isLineHeadCommented_ = start;
-			commentBitReady_     = false;
-			return ((uchar)commentTransition_>>start)&1;
-		}
+	{
+		isLineHeadCommented_ = start;
+		commentBitReady_     = false;
+		return ((uchar)commentTransition_>>start)&1;
+	}
 	// for parser
 	void SetTransitFlag( uchar flag )
 		{ commentTransition_ = flag; }
@@ -235,23 +235,23 @@ public:
 
 	//@{ 一行取得 //@}
 	void A_HOT getLine()
-		{
-			// 次の改行の位置を取得
-			const unicode *p=ptr_, *e=end_;
-			for( ; p<e; ++p )
-				if( *p == L'\r' || *p == L'\n' )
-					break;
-			// 記録
-			*ans_  = ptr_;
-			*aln_  = int(p-ptr_);
-			// 改行コードスキップ
-			if( p == e )
-				empty_ = true;
-			else
-				if( *(p++)==L'\r'&& p<e && *p==L'\n' )
-					++p;
-			ptr_  = p;
-		}
+	{
+		// 次の改行の位置を取得
+		const unicode *p=ptr_, *e=end_;
+		for( ; p<e; ++p )
+			if( *p == L'\r' || *p == L'\n' )
+				break;
+		// 記録
+		*ans_  = ptr_;
+		*aln_  = int(p-ptr_);
+		// 改行コードスキップ
+		if( p == e )
+			empty_ = true;
+		else
+			if( *(p++)==L'\r'&& p<e && *p==L'\n' )
+				++p;
+		ptr_  = p;
+	}
 
 private:
 	const unicode *ptr_, *end_, **ans_;
@@ -513,12 +513,12 @@ inline ulong Document::len( ulong i ) const
 	{ return text_[i].size(); }
 
 inline const uchar* Document::pl( ulong i ) const
-	{
-		const Line& x = text_[i];
-		if( !x.isCmtBitReady() )
-			SetCommentBit( x );
-		return x.flg();
-	}
+{
+	const Line& x = text_[i];
+	if( !x.isCmtBitReady() )
+		SetCommentBit( x );
+	return x.flg();
+}
 inline const unicode* Document::getCommentStr() const
 	{ return CommentStr_; }
 
