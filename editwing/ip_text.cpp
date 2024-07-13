@@ -322,7 +322,7 @@ DPos Document::rightOf( const DPos& dp, bool wide ) const
 		const unicode* l = tl(dp.tl);
 		// 番兵 0x007f が l の末尾にいるので長さチェックは不要
 		// No need to check the length of l with the #0x007f guard at the end of l.
-		if( isHighSurrogate(l[dp.ad]) && isLowSurrogate(l[dp.ad+1]) )
+		if( isHighSurrogate(l[dp.ad]) /*&& dp.ad+1 <= len(dp.tl)*/ && isLowSurrogate(l[dp.ad+1]) )
 			return DPos( dp.tl, dp.ad+2 );
 		return DPos( dp.tl, dp.ad+1 );
 	}

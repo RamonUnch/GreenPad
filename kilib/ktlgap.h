@@ -54,15 +54,16 @@ public:
 		{ ::free( buf_ ); }
 
 	//@{ —v‘f‘}“ü //@}
-	void InsertAt( ulong i, const T& x )
+	bool InsertAt( ulong i, const T& x )
 		{
 			// Try to get more room if needed.
 			if( gs_+1 >= ge_ )
 				if( !Reallocate( alen_<<1 ) )
-					return;
+					return false;
 
 			MakeGapAt( i );
 			buf_[gs_++] = x;
+			return true;
 		}
 
 	//@{ —v‘f‘}“ü(•¡”) //@}
@@ -175,8 +176,23 @@ protected:
 			}
 			gs_ = i;
 		}
-
 	bool Reallocate( ulong newalen )
+		{
+			T *tmp = (T *)malloc( sizeof(T) * newalen ), *old=buf_;
+			if( !tmp ) return false;
+			const ulong tail = alen_-ge_;
+
+			memmove( (char*)tmp, (char*)old, gs_*sizeof(T) );
+			memmove( (char*)(tmp+newalen-tail), (char*)(old+ge_), tail*sizeof(T) );
+			free( old );
+
+			buf_  = tmp;
+			ge_   = newalen-tail;
+			alen_ = newalen;
+			return true;
+		}
+
+/*	bool Reallocate( ulong newalen )
 		{
 			T *tmp = (T *)::realloc( (void *)buf_, sizeof(T) * newalen );
 			if( !tmp )
@@ -188,7 +204,7 @@ protected:
 			ge_   = newalen-tail;
 			alen_ = newalen;
 			return true;
-		}
+		}*/
 
 private:
 
