@@ -166,7 +166,7 @@ public:
 	{
 		if( fontranges_ )
 		{
-			WCRANGE *range = fontranges_->ranges;
+			const WCRANGE *range = fontranges_->ranges;
 			for(uint i=0; i < fontranges_->cRanges; i++)
 			{
 				if( range[i].wcLow <= ch && ch <= range[i].wcLow + range[i].cGlyphs)
@@ -310,8 +310,15 @@ struct WLine: public ki::storage<ulong, false>
 	//   例えば "aaabbb" という論理行を "aaab" "bb" と折るなら
 	//   {48, 4, 6} などという長さ３の配列となる。
 
-	explicit WLine(size_t sz) : ki::storage<ulong, false>(sz) {}
-	WLine() {}
+	explicit WLine(size_t sz) : ki::storage<ulong, false>(sz)
+	{
+		if(!buf_) { buf_ = dummy_buf();  alen_ = 2; };
+	}
+	static ulong *dummy_buf()
+	{
+		static ulong dummy_buf[2];
+		return dummy_buf;
+	}
 
 	ulong& width()      { return (*this)[0]; }
 	ulong width() const { return (*this)[0]; }

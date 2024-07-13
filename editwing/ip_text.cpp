@@ -322,7 +322,7 @@ DPos Document::rightOf( const DPos& dp, bool wide ) const
 		const unicode* l = tl(dp.tl);
 		// 番兵 0x007f が l の末尾にいるので長さチェックは不要
 		// No need to check the length of l with the #0x007f guard at the end of l.
-		if( isHighSurrogate(l[dp.ad]) && isLowSurrogate(l[dp.ad+1]) )
+		if( isHighSurrogate(l[dp.ad]) /*&& dp.ad+1 <= len(dp.tl)*/ && isLowSurrogate(l[dp.ad+1]) )
 			return DPos( dp.tl, dp.ad+2 );
 		return DPos( dp.tl, dp.ad+1 );
 	}
@@ -835,7 +835,7 @@ void Document::OpenFile( TextFileR& tf )
 	buf_sz = Min( buf_sz, (size_t)(tf.size()+16)<<1 );
 	unicode *buf=NULL;
 	if( buf_sz > SBUF_SZ )
-		buf = new unicode[buf_sz];
+		buf = (unicode *)malloc( sizeof(unicode) * buf_sz );
 	if( !buf )
 	{
 		buf = sbuf;
@@ -876,7 +876,7 @@ void Document::OpenFile( TextFileR& tf )
 	setBusyFlag(false);
 //	fail:
 	if( buf != sbuf )
-		delete [] buf;
+		free( buf );
 
 //	MessageBox(GetActiveWindow(),  SInt2Str(GetTickCount()-otime).c_str(), TEXT("Time in ms:"), 0);
 	// イベント発火, Event firing

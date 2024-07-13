@@ -41,8 +41,6 @@ public:
 				alen_=0;
 		}
 
-	storage() {} // Empty constructor
-
 	~storage()
 		{ if (clean_on_destroy) mem().DeAlloc( buf_, alen_*sizeof(T) ); }
 
@@ -106,7 +104,7 @@ private:
 			return true;
 		}
 
-private:
+protected:
 
 	ulong alen_;
 	ulong len_;

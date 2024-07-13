@@ -414,14 +414,14 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	{ // We found the function
 		DWORD frlen = myGetFontUnicodeRanges( cdc_, NULL );
 		LOGGERF(TEXT("GetFontUnicodeRanges->frlen=%lu"), frlen );
-		if( frlen && (fontranges_ = reinterpret_cast<GLYPHSET*>( new BYTE[frlen] )) )
+		if( frlen && (fontranges_ = reinterpret_cast<GLYPHSET*>( malloc(frlen) )) )
 		{
 			mem00(fontranges_, frlen);
 			fontranges_->cbThis = frlen;
 			fontranges_->flAccel = 0;
 			if( frlen != myGetFontUnicodeRanges( cdc_, fontranges_ ) )
 			{ // Failed!
-				delete [] reinterpret_cast<BYTE*>(fontranges_);
+				free(fontranges_);
 				fontranges_ = NULL;
 			}
 		}
@@ -478,7 +478,7 @@ Painter::~Painter()
 	::DeleteObject( pen_ );
 	::DeleteObject( brush_ );
 	if( fontranges_ )
-		delete [] reinterpret_cast<BYTE*>(fontranges_);
+		free(fontranges_);
 //	delete [] widthTable_;
 }
 
@@ -514,14 +514,14 @@ inline void Painter::StringOut
 				dwNum = ::WideCharToMultiByte(CP_ACP,0, str,len, NULL,0, NULL,NULL);
 				if (dwNum)
 				{
-					psText = new char[dwNum]; if( !psText ) return;
+					psText = (char *)malloc( dwNum * sizeof(char) ); if( !psText ) return;
 					dwNum = ::WideCharToMultiByte(CP_ACP,0 ,str,len ,psText,dwNum ,NULL,NULL);
 				}
 			}
 		}
 		::TextOutA( dc_, x, y, psText, dwNum );
 		if (psText != psTXT1K)
-			delete [] psText;
+			free( psText );
 	}
 	else
 #endif // WIN32S

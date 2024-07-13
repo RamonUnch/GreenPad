@@ -44,7 +44,7 @@ class RegLexer
 public:
 	RegLexer( const wchar_t* pat, ulong len );
 	RegToken GetToken();
-	wchar_t  GetChar() { return chr_; }
+	wchar_t  GetChar() const { return chr_; }
 
 private:
 	const wchar_t* pat_;
@@ -175,7 +175,7 @@ class RegParser: public Object
 public:
 	RegParser( const unicode* pat );
 	~RegParser() { delete root_; }
-	RegNode* root() { return root_; }
+	RegNode* root() const { return root_; }
 	bool err() { return err_; }
 	bool isHeadType() const { return isHeadType_; }
 	bool isTailType() const { return isTailType_; }
@@ -421,7 +421,7 @@ struct RegTrans : public Object
 		return false;
 	}
 */
-	bool match_c( wchar_t c )
+	bool match_c( wchar_t c ) const
 	{
 		for( RegClass* p=cls.get(); p; p=p->next.get() )
 			if( p->range.stt<=c && c<=p->range.end )
@@ -429,7 +429,7 @@ struct RegTrans : public Object
 		return false;
 	}
 
-	bool match_i( wchar_t c )
+	bool match_i( wchar_t c ) const
 	{
 		c = IgnoreCase::map(c);
 		for( RegClass* p=cls.get(); p; p=p->next.get() )
@@ -439,7 +439,7 @@ struct RegTrans : public Object
 		return false;
 	}
 
-	bool match( wchar_t c, bool caseS )
+	bool match( wchar_t c, bool caseS ) const
 	{
 		bool m = caseS ? match_c( c ) : match_i( c );
 		return cmpcls ? !m : m;
@@ -486,7 +486,7 @@ private:
 };
 
 RegNFA::RegNFA( const wchar_t* pat )
-	: parser( pat )
+	: parser( pat ), st (16)
 {
 	start = gen_state();
 	final = gen_state();
@@ -624,7 +624,7 @@ int RegNFA::match( const wchar_t* str, int len, bool caseS )
 
 	int matchpos = -1;
 
-	storage<st_ele> stack;
+	storage<st_ele> stack(16);
 	push(stack, start, 0);
 	while( stack.size() > 0 )
 	{

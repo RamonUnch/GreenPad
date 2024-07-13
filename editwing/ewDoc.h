@@ -93,7 +93,7 @@ public:
 	//	@param del コマンド終了時にdelete [] strしてよいか？
 	//@}
 	Insert( const DPos& s, const unicode* str, ulong len, bool del=false );
-	~Insert();
+	~Insert() override;
 
 private:
 
@@ -151,7 +151,7 @@ public:
 	//@}
 	Replace( const DPos& s, const DPos& e,
 		const unicode* str, ulong len, bool del=false );
-	~Replace();
+	~Replace() override;
 
 private:
 
@@ -188,7 +188,7 @@ public:
 	ulong size() const { return arr_.size(); }
 
 	//@ デストラクタ //@}
-	~MacroCommand()
+	~MacroCommand() override
 	{
 		for( ulong i=0,e=arr_.size(); i<e; ++i )
 			delete arr_[i];

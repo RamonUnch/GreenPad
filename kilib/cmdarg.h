@@ -24,7 +24,7 @@ public:
 
 	//@{ w’è‚³‚ê‚½•¶š—ñ‚ğ•ªŠ„‚·‚é //@}
 	explicit Argv( const TCHAR* cmd = GetCommandLine() );
-	~Argv() { delete [] buf_; }
+	~Argv() { free( buf_ ); }
 
 	//@{ ˆø”Get //@}
 	const TCHAR* operator[]( ulong i ) const;

@@ -93,12 +93,12 @@ class A_WUNUSED aarr
 public:
 
 	//@{ コンストラクタ //@}
-	explicit aarr( T* p = NULL )
-		: obj_( p ) {}
+	explicit aarr( size_t sz )
+		: obj_( (T *)malloc( sizeof(T) * sz ) ) {}
 
 	//@{ デストラクタ //@}
 	~aarr()
-		{ delete [] obj_; }
+		{ free( obj_ ); }
 
 	//@{ 所有権移動 何故かbccで上手く行かない部分があるのでconst付き //@}
 	aarr( const aarr<T>& r )
@@ -109,7 +109,7 @@ public:
 		{
 			if( obj_ != r.obj_ )
 			{
-				delete [] obj_;
+				free( obj_ );
 				obj_ = r.release();
 			}
 			return *this;

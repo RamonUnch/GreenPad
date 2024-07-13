@@ -64,9 +64,6 @@ public:
 			str_[ len ] = 0x007f;
 		}
 
-	// Dummy empty constructor to allocate array of lines
-	Line() {}
-
 	void Clear() // Manually destroy line
 	{
 		if( str_ != empty_buf() )

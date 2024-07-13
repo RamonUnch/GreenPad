@@ -179,7 +179,7 @@ uchar CommentDFA::tr_table[5][5] = {
 //-------------------------------------------------------------------------
 // 単純な、キーワード格納構造体。
 // ChainHashの要素にするためnextポインタがつけてあります。
-// DO NOT USE new/delete for Keyword, stick to Keyword::New/Delete
+// DO NOT USE new/delete for Keyword, stick to Keyword::New
 //-------------------------------------------------------------------------
 struct Keyword : public ki::Object
 {
@@ -189,7 +189,6 @@ struct Keyword : public ki::Object
 
 	static Keyword *New(DArena *ar,  const unicode *s, ulong l )
 	{
-//		Keyword *x = reinterpret_cast<Keyword *>(new BYTE[ (sizeof(Keyword) + l*sizeof(unicode)) ]);
 		Keyword *x = reinterpret_cast<Keyword *>( ar->alloc( (sizeof(Keyword)-2 + l*sizeof(unicode)) ) );
 		if( x )
 		{
@@ -200,11 +199,6 @@ struct Keyword : public ki::Object
 		}
 		return x;
 	}
-//	static void Delete( Keyword *x )
-//	{
-//		if( x )
-//			delete [] reinterpret_cast<BYTE*>(x);
-//	}
 };
 
 
