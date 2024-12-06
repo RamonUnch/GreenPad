@@ -58,7 +58,7 @@ static HINSTANCE LoadIMM32DLL()
 
 	HINSTANCE h = LoadLibrary(TEXT("IMM32.DLL"));
 	if( !h ) return NULL;
-	// Helper with crazy cast to avoid further casTS->
+	// Helper with crazy cast to avoid further casts.
 	#define LOADPROC(proc, procname) if(!(*reinterpret_cast<FARPROC*>(&proc)=GetProcAddress(h,procname)))goto fail;
 
 	LOADPROC( dyn_ImmIsIME,          "ImmIsIME" );
