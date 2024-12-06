@@ -509,11 +509,11 @@ void Cursor::InputUTF32( qbyte utf32 )
 
 void Cursor::Input( const char* str, ulong len )
 {
-	unicode* ustr = (unicode *)malloc( len * 4 * sizeof(unicode) );
+	unicode* ustr = (unicode *)TS.alloc( len * 4 * sizeof(unicode) );
 	if(!ustr) return;
 	len = ::MultiByteToWideChar( CP_ACP, 0, str, len, ustr, len*4 );
 	Input( ustr, len );
-	free( ustr );
+	TS.freelast( ustr, len * 4 * sizeof(unicode) );
 }
 void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
 {
@@ -585,11 +585,11 @@ void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
 }
 void Cursor::InputAt( const char* str, ulong len, int x, int y )
 {
-	unicode* ustr = (unicode *)malloc( len * 4 * sizeof(unicode) );
+	unicode* ustr = (unicode *)TS.alloc( len * 4 * sizeof(unicode) );
 	if(!ustr) return;
 	len = ::MultiByteToWideChar( CP_ACP, 0, str, len, ustr, len*4 );
 	InputAt( ustr, len, x, y );
-	free( ustr );
+	TS.freelast( ustr, len * 4 * sizeof(unicode) );
 }
 
 void Cursor::DelBack( bool wide )
@@ -960,6 +960,7 @@ void Cursor::ModSelection(ModProc mfunk)
 	}
 
 	free( p );
+
 //	// Useless for now...
 //	if( np < p || np > p+len+1 )
 //		delete np; // was allocated

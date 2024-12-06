@@ -302,11 +302,11 @@ static const uchar ctl2Map[34] = {
 };
 Painter::Painter( HWND hwnd, const VConfig& vc )
 	: hwnd_      ( hwnd )
-	, dc_        ( ::GetDC(hwnd) )
-	, cdc_       ( ::CreateCompatibleDC( dc_ ) )
-	, font_      ( init_font( vc ) )
+	, dc_        ( NULL )
+	, cdc_       ( NULL )
+	, font_      ( NULL )
 	, pen_       ( NULL )
-	, brush_     ( ::CreateSolidBrush( vc.color[BG] ) )
+	, brush_     ( NULL )
 //	, widthTable_( new int[65536] )
 	, widthTable_( wtable )
 	, height_    ( 16 )
@@ -316,9 +316,16 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 	, useOutA_   ( app().isWin32s() || (!app().isNT() && app().getOOSVer() <= MKVER(4,00,99)) )
 #endif
 {
-	// Release the DC that was captured just to make cdc_.
+	Init( vc );
+}
+void Painter::Init( const VConfig& vc )
+{
+	dc_ = ::GetDC(hwnd_);
+	cdc_ = ::CreateCompatibleDC( dc_ );
 	::ReleaseDC( NULL, dc_ ); dc_ = NULL;
 
+	font_ = init_font( vc );
+	brush_ = ::CreateSolidBrush( vc.color[BG] );
 	// 制御文字を描画するか否か？のフラグを記憶,
 	// Whether to draw control characters or not? flag is stored.
 	for( unsigned i=0; i<countof(scDraw_); ++i )
@@ -427,6 +434,7 @@ Painter::Painter( HWND hwnd, const VConfig& vc )
 		}
 	}
 }
+
 HFONT Painter::init_font( const VConfig& vc )
 {
 	// Create a font that has the correct size with regards to the
@@ -466,7 +474,7 @@ void Painter::RestoreDC()
 	dc_ = NULL;
 }
 
-Painter::~Painter()
+void Painter::Destroy()
 {
 	// 適当な別オブジェクトをくっつけて自分を解放する
 	::SelectObject( cdc_, ::GetStockObject( OEM_FIXED_FONT ) );
@@ -479,6 +487,13 @@ Painter::~Painter()
 	::DeleteObject( brush_ );
 	if( fontranges_ )
 		free(fontranges_);
+
+	dc_ = NULL;
+	cdc_ = NULL;
+	font_ = NULL;
+	pen_ = NULL;
+	brush_ = NULL;
+	fontranges_ = NULL;
 //	delete [] widthTable_;
 }
 
@@ -687,7 +702,7 @@ void ViewImpl::ReDraw( ReDrawType r, const DPos* s )
 void A_HOT ViewImpl::on_paint( const PAINTSTRUCT& ps )
 {
 	// 描画範囲の情報を詳しく取得, Obtain detailed information about the drawing area
-	Painter& p = cvs_.getPainter();
+	Painter& p = cvs_.font_;
 	p.SetupDC( ps.hdc );
 	VDrawInfo v( ps.rcPaint );
 	GetDrawPosInfo( v );

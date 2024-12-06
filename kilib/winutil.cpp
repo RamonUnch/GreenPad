@@ -115,7 +115,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 			{
 				UINT nf = myDragQueryFile(h, 0xFFFFFFFF, NULL, 0);
 				size_t totstrlen=0;
-				UINT *lenmap = (UINT *)malloc( sizeof(UINT) * nf );
+				UINT *lenmap = (UINT *)TS.alloc( sizeof(UINT) * nf );
 				if (!lenmap) return Text( NULL, Text::MALLOC );
 				for( uint i=0; i < nf; i++ )
 				{	// On Windows NT3.1 DragQueryFile() does not return
@@ -146,7 +146,7 @@ Clipboard::Text Clipboard::GetUnicodeText() const
 				}
 				*ptr = L'\0';
 				GlobalUnlock( hg );
-				free( lenmap );
+				TS.freelast( lenmap, sizeof(UINT) * nf );
 				return Text( ustr, Text::MALLOC );
 			}
 		}
@@ -229,7 +229,7 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM 
 			char *dest = (char *)( ((BYTE*)df) + df->pFiles );
 
 			// Convert multi line in multi file paths
-			unicode *flst = (unicode *)malloc( sizeof(unicode) * len_ );
+			unicode *flst = (unicode *)TS.alloc( sizeof(unicode) * len_ );
 			if( !flst ) return E_OUTOFMEMORY;
 			size_t flen = convCRLFtoNULLS(flst, str_, len_);
 
@@ -243,7 +243,7 @@ HRESULT STDMETHODCALLTYPE IDataObjectTxt::GetDataHere(FORMATETC *fmt, STGMEDIUM 
 			{	// Directly copy unicode data
 				memmove( dest, flst, len );
 			}
-			free( flst );
+			TS.freelast( flst, sizeof(unicode) * len_ );
 			remaining_bytes = gmemsz - len - df->pFiles ;
 		}
 		// Clear remaining bytes

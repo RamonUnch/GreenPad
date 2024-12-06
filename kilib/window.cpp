@@ -58,7 +58,7 @@ static HINSTANCE LoadIMM32DLL()
 
 	HINSTANCE h = LoadLibrary(TEXT("IMM32.DLL"));
 	if( !h ) return NULL;
-	// Helper with crazy cast to avoid further casts.
+	// Helper with crazy cast to avoid further casTS->
 	#define LOADPROC(proc, procname) if(!(*reinterpret_cast<FARPROC*>(&proc)=GetProcAddress(h,procname)))goto fail;
 
 	LOADPROC( dyn_ImmIsIME,          "ImmIsIME" );
@@ -432,7 +432,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 			long s = ::ImmGetCompositionStringA(ime,GCS_RESULTSTR,NULL,0);
 			if( s > 0 )
 			{
-				char* tmp = (char *)malloc( sizeof(char) * s );
+				char* tmp = (char *)TS.alloc( sizeof(char) * s );
 				if( tmp )
 				{
 					*str = (unicode *)malloc( sizeof(unicode) * (*len=s*2) );
@@ -442,7 +442,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 						*len = ::MultiByteToWideChar(
 							CP_ACP, MB_PRECOMPOSED, tmp, s, *str, *len );
 					}
-					free( tmp );
+					TS.freelast( tmp, sizeof(char) * s );
 				}
 			}
 		}
@@ -488,12 +488,12 @@ void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
 		if( !app().isNT() )
 		{	// Use ANSI functions on Win9x
 			len = ::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1, NULL,0 ,NULL,NULL );
-			char* tmp = (char *)malloc( sizeof(char) * len );
+			char* tmp = (char *)TS.alloc( sizeof(char) * len );
 			if( tmp )
 			{
 				::WideCharToMultiByte( CP_ACP,MB_PRECOMPOSED,str,-1,tmp,len,NULL,NULL );
 				::ImmSetCompositionStringA(ime,SCS_SETSTR,tmp,len,NULL,0);
-				free( tmp );
+				TS.freelast( tmp, sizeof(char) * len );
 			}
 		}
 		else
@@ -533,11 +533,16 @@ void Window::MsgLoop()
 	isLooping_ = true;
 	ime().MsgLoopBegin();
 	for( MSG msg; ::GetMessage( &msg, NULL, 0, 0 ); )
+	{
+		if( TS.end != TS.sta )
+			LOGGERF( TEXT("leak %d bytes!"), TS.end - TS.sta );
+		TS.reset();
 		if( !PreTranslateMessage( &msg ) )
 		{
 			ime().TranslateMsg( &msg );
 			::DispatchMessage( &msg );
 		}
+	}
 	ime().MsgLoopEnd();
 	isLooping_ = false;
 }

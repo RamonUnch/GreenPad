@@ -250,7 +250,7 @@ void FileR::Close()
 			// Zero out in debug mode to detect use after free!
 			mem00( (void*)basePtr_, size_ );
 		#endif
-			free( basePtr_ );
+			free( (void*)basePtr_ );
 		}
 		basePtr_ = NULL;
 	}

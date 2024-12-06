@@ -11,7 +11,7 @@ using namespace ki;
 // テキストファイル読み出し共通インターフェイス
 //=========================================================================
 
-struct ki::TextFileRPimpl: public Object
+struct ki::TextFileRPimpl : public TmpObject
 {
 //	inline TextFileRPimpl() {}
 
@@ -2441,7 +2441,7 @@ bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uCh
 //=========================================================================
 // テキストファイル出力共通インターフェイス
 //=========================================================================
-struct ki::TextFileWPimpl : public Object
+struct ki::TextFileWPimpl : public TmpObject
 {
 	virtual void WriteLine( const unicode* buf, ulong siz )
 		{ while( siz-- ) WriteChar( *buf++ ); }

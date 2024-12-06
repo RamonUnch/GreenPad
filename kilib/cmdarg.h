@@ -18,7 +18,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class A_WUNUSED Argv : public Object
+class A_WUNUSED Argv
 {
 public:
 

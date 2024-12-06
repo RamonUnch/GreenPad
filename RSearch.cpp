@@ -170,7 +170,7 @@ struct RegNode: public Object
 //@}
 //=========================================================================
 
-class RegParser: public Object
+class RegParser
 {
 public:
 	RegParser( const unicode* pat );

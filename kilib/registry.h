@@ -17,7 +17,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class A_WUNUSED IniFile : public Object
+class A_WUNUSED IniFile
 {
 public:
 

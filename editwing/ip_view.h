@@ -13,7 +13,7 @@ namespace view {
 #define CW_INTTYPE int
 #endif
 
-
+class View;
 
 //=========================================================================
 //@{ @pkg editwing.View.Impl //@}
@@ -26,12 +26,12 @@ namespace view {
 //	あるはずもなく極めて適当に…。
 //@}
 //=========================================================================
-
-class Painter : public ki::Object
+class Document;
+class Painter
 {
 public:
 
-	~Painter();
+	~Painter() {  Destroy(); }
 
 	//@{ 指定位置に一文字出力, Output a single character at the specified position //@}
 	void CharOut( unicode ch, int x, int y );
@@ -193,10 +193,10 @@ private:
 
 	const HWND   hwnd_;// Window in which we paint
 	HDC          dc_;  // Device context used for Painting (non const)
-	const HDC    cdc_; // Compatible DC used for W() (const)
-	const HFONT  font_;
+	HDC          cdc_; // Compatible DC used for W() (const)
+	HFONT        font_;
 	HPEN         pen_;
-	const HBRUSH brush_;
+	HBRUSH       brush_;
 	HFONT  oldfont_;   // Old objects to be released before
 	HPEN   oldpen_;    // the EndPaint() call.
 	HBRUSH oldbrush_;  //
@@ -214,6 +214,8 @@ private:
 private:
 
 	Painter( HWND hwnd, const VConfig& vc );
+	void Init( const VConfig& vc );
+	void Destroy();
 	HFONT init_font( const VConfig& vc );
 	HWND getWHND() { return hwnd_; }
 	friend class Canvas;
@@ -232,7 +234,7 @@ private:
 //@}
 //=========================================================================
 
-class Canvas : public ki::Object
+class Canvas
 {
 public:
 
@@ -270,16 +272,15 @@ public:
 	//@{ 表示領域の位置(pixel) //@}
 	const RECT& zone() const { return txtZone_; }
 
-	//@{ 描画用オブジェクト //@}
-	Painter& getPainter() const { return *font_; }
-
 private:
 
 	short wrapType_;  // [ -1:折り返し無し  0:窓右端  else:指定文字数 ]
 	bool  warpSmart_; // [ Enable wrapping at word boundaries ]
 	bool  showLN_;    // [ 行番号を表示するか否か ]
 
-	Painter      *font_; // 描画用オブジェクト
+public:
+	Painter       font_; // 描画用オブジェクト
+private:
 	ulong    wrapWidth_; // 折り返し幅(pixel)
 	RECT       txtZone_; // テキスト表示域の位置(pixel)
 	int         figNum_; // 行番号の桁数
@@ -378,28 +379,40 @@ struct VDrawInfo
 //@}
 //=========================================================================
 
-class ViewImpl : public ki::Object
+class ViewImpl
 {
 public:
 
 	ViewImpl( View& vw, doc::Document &dc );
 
 	//@{ 折り返し方式切替 //@}
-	void SetWrapType( int wt );
+	inline void SetWrapType( int wt )
+		{ cvs_.on_config_change( wt, cvs_.showLN(), cvs_.wrapSmart() );
+		  DoConfigChange(); }
 
-	void SetWrapSmart( bool ws );
+	inline void SetWrapSmart( bool ws )
+		{ cvs_.on_config_change( cvs_.wrapType(), cvs_.showLN(), ws );
+		  DoConfigChange(); }
+
 
 	//@{ 行番号表示/非表示切替 //@}
-	void ShowLineNo( bool show );
+	inline void ShowLineNo( bool show )
+		{ cvs_.on_config_change( cvs_.wrapType(), show, cvs_.wrapSmart() ); DoConfigChange(); }
 
 	//@{ 表示色・フォント切替 //@}
-	void SetFont( const VConfig& vc );
+	inline void SetFont( const VConfig& vc )
+		{ cvs_.on_font_change( vc );
+		  cur_.on_setfocus();
+		  CalcEveryLineWidth(); // 行幅再計算
+		  DoConfigChange(); }
 
 	//@{ All of the above in one go //@}
-	void SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc );
+	inline void SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc )
+		{ cvs_.on_config_change_nocalc( wt, showLN, ws );
+		  SetFont( vc ); }
 
-		//@{ テキスト領域のサイズ変更イベント //@}
-		void on_view_resize( int cx, int cy );
+	//@{ テキスト領域のサイズ変更イベント //@}
+	inline void on_view_resize( int cx, int cy ) { DoResize( cvs_.on_view_resize( cx, cy ) ); }
 
 	void DoResize( bool wrapWidthChanged );
 	void DoConfigChange();
@@ -429,7 +442,7 @@ public:
 	Cursor& cur() { return cur_; }
 
 	//@{ フォント //@}
-	const Painter& fnt() const { return cvs_.getPainter(); }
+	const Painter& fnt() const { return cvs_.font_; }
 
 
 	void on_hscroll( int code, int pos );
@@ -438,7 +451,8 @@ public:
 	void on_hwheel( short delta );
 
 	void GetVPos( int x, int y, VPos* vp, bool linemode=false ) const;
-	void GetOrigin( int* x, int* y ) const;
+	inline void GetOrigin( int* x, int* y ) const
+		{ *x = left()-rlScr_.nPos, *y = -udScr_.nPos*cvs_.font_.H(); }
 	void ConvDPosToVPos( DPos dp, VPos* vp, const VPos* base=NULL ) const;
 	void ScrollTo( const VPos& vp );
 	int  GetLastWidth( ulong tl ) const;
@@ -447,14 +461,14 @@ public:
 
 public:
 
-	const RECT& zone() const { return cvs_.zone(); }
-	int left()  const { return cvs_.zone().left; }
-	int right() const { return cvs_.zone().right; }
-	int bottom()const { return cvs_.zone().bottom; }
-	int lna()   const { return cvs_.zone().left; }
-	int cx()    const { return cvs_.zone().right - cvs_.zone().left; }
-	int cxAll() const { return cvs_.zone().right; }
-	int cy()    const { return cvs_.zone().bottom; }
+	inline const RECT& zone() const { return cvs_.zone(); }
+	inline int left()  const { return cvs_.zone().left; }
+	inline int right() const { return cvs_.zone().right; }
+	inline int bottom()const { return cvs_.zone().bottom; }
+	inline int lna()   const { return cvs_.zone().left; }
+	inline int cx()    const { return cvs_.zone().right - cvs_.zone().left; }
+	inline int cxAll() const { return cvs_.zone().right; }
+	inline int cy()    const { return cvs_.zone().bottom; }
 
 private:
 
@@ -508,42 +522,58 @@ private:
 
 
 
-//-------------------------------------------------------------------------
-
-inline void ViewImpl::on_view_resize( int cx, int cy )
-	{ DoResize( cvs_.on_view_resize( cx, cy ) ); }
-
-inline void ViewImpl::SetWrapType( int wt )
-	{ cvs_.on_config_change( wt, cvs_.showLN(), cvs_.wrapSmart() );
-	  DoConfigChange(); }
-
-inline void ViewImpl::SetWrapSmart( bool ws )
-	{ cvs_.on_config_change( cvs_.wrapType(), cvs_.showLN(), ws );
-	  DoConfigChange(); }
-
-inline void ViewImpl::ShowLineNo( bool show )
-	{ cvs_.on_config_change( cvs_.wrapType(), show, cvs_.wrapSmart() );
-	  DoConfigChange(); }
-
-inline void ViewImpl::SetFont( const VConfig& vc )
-	{ cvs_.on_font_change( vc );
-	  cur_.on_setfocus();
-	  CalcEveryLineWidth(); // 行幅再計算
-	  DoConfigChange(); }
-
-inline void ViewImpl::SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc )
-	{ cvs_.on_config_change_nocalc( wt, showLN, ws );
-	  cvs_.on_font_change( vc );
-	  cur_.on_setfocus();
-	  CalcEveryLineWidth(); // 行幅再計算
-	  DoConfigChange(); }
-
-inline void ViewImpl::GetOrigin( int* x, int* y ) const
-	{ *x = left()-rlScr_.nPos, *y = -udScr_.nPos*cvs_.getPainter().H(); }
-
-
+//=========================================================================
 
 //=========================================================================
+//@{ @pkg editwing.View //@}
+//@{
+//	描画処理など
+//
+//	このクラスでは、メッセージの分配を行うだけで、実装は
+//	Canvas/ViewImpl 等で行う。ので、詳しくはそちらを参照のこと。
+//@}
+//=========================================================================
+
+class View A_FINAL: public ki::WndImpl, public doc::DocEvHandler
+{
+public:
+
+	//@{ 何もしないコンストラクタ //@}
+	View( doc::Document& d, HWND wnd );
+	~View();
+
+	//@{ 折り返し方式切替 //@}
+	void SetWrapType( int wt );
+
+	void SetWrapSmart( bool ws);
+
+	//@{ 行番号表示/非表示切替 //@}
+	void ShowLineNo( bool show );
+
+	//@{ 表示色・フォント切替 //@}
+	void SetFont( const VConfig& vc );
+
+	//@{ Set all canva stuff at once (faster) //@}
+	void SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc );
+
+	//@{ カーソル //@}
+	Cursor& cur();
+
+private:
+
+	doc::Document&      doc_;
+	ViewImpl*           impl_;
+	static ClsName     className_;
+
+private:
+
+	void    on_create( CREATESTRUCT* cs ) override;
+	void    on_destroy() override;
+	LRESULT on_message( UINT msg, WPARAM wp, LPARAM lp ) override;
+	void    on_text_update( const DPos& s, const DPos& e, const DPos& e2, bool bAft, bool mCur ) override;
+	void    on_keyword_change() override;
+};
+
 
 }}     // namespace editwing::view
 #endif // _EDITWING_IP_VIEW_H_

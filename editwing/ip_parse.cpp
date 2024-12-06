@@ -181,15 +181,16 @@ uchar CommentDFA::tr_table[5][5] = {
 // ChainHashの要素にするためnextポインタがつけてあります。
 // DO NOT USE new/delete for Keyword, stick to Keyword::New
 //-------------------------------------------------------------------------
-struct Keyword : public ki::Object
+struct Keyword
 {
 	Keyword*    next;
-	ulong len;
+	ushort      len;
 	unicode     str[1];
 
-	static Keyword *New(DArena *ar,  const unicode *s, ulong l )
+	static Keyword *New(Arena *ar,  const unicode *s, ulong ll )
 	{
-		Keyword *x = reinterpret_cast<Keyword *>( ar->alloc( (sizeof(Keyword)-2 + l*sizeof(unicode)) ) );
+		ushort l = static_cast<ushort>(ll);
+		Keyword *x = reinterpret_cast<Keyword *>( ar->alloc( (sizeof(Keyword) + l * sizeof(unicode)) ) );
 		if( x )
 		{
 			x->next = NULL;
@@ -197,6 +198,8 @@ struct Keyword : public ki::Object
 			memmove(x->str, s, l*sizeof(unicode));
 			x->str[l] = L'\0';
 		}
+		//else MessageBox(NULL, s, NULL, 0);
+		//LOGGERF( TEXT("sizeof(Keyword) = %d, allocated = %d / %d"),  sizeof(Keyword), (UINT)(ar->end - ar->sta), ar->dim);
 		return x;
 	}
 };
@@ -239,7 +242,7 @@ class TagMap
 	Keyword* tag_[3]; // 0:CE 1:CB 2:LB
 	bool esc_, q1_, q2_, map_[768]; // 128
 	BYTE arbuf[64];
-	DArena ar;
+	Arena ar;
 
 public:
 
@@ -346,8 +349,7 @@ public:
 class KeywordMap
 {
 	Keyword*          backet_[HTABLE_SIZE];
-	//storage<Keyword*> dustbox_;
-	DArena ar;
+	Arena ar;
 	size_t elems_;
 	bool (*compare_)(const unicode*,const unicode*,ulong);
 	uint  (*hash)( const unicode* a, ulong al );
@@ -355,7 +357,7 @@ public:
 
 	KeywordMap( bool bCaseSensitive )
 		: /*dustbox_( 32 )*/
-		  ar ( 65536 )
+		  ar ( NULL, 0 )
 		, elems_ ( 0 )
 		, compare_( bCaseSensitive ? compare_s : compare_i )
 		, hash    ( bCaseSensitive ? hash_s : hash_i )
@@ -364,14 +366,24 @@ public:
 		mem00( backet_, sizeof(backet_) );
 	}
 
-	void Trim() { ar.trim(); }
+	void SetArenaBufSize( size_t count )
+	{
+		BYTE *buf = NULL;
+		//count *= sizeof(unicode);
+		if(count != 0)
+			buf = (BYTE*)malloc(count);
 
-//	~KeywordMap()
-//	{
-//		// 解放
-//		for( ulong i=0; i<dustbox_.size(); ++i )
-//			Keyword::Delete( dustbox_[i] );
-//	}
+		BYTE *obuf = ar.sta;
+		ar = Arena(buf, count);
+
+		free( obuf );
+	}
+
+	~KeywordMap()
+	{
+		// 解放
+		free( ar.sta );
+	}
 
 	void AddKeyword( const unicode* str, ulong len )
 	{
@@ -445,7 +457,7 @@ private:
 // 以上の道具立てでもって、テキストの解析を行うParser
 //-------------------------------------------------------------------------
 }
-class editwing::doc::Parser : public Object
+class editwing::doc::Parser
 {
 public:
 	KeywordMap kwd_;
@@ -467,7 +479,11 @@ public:
 			CommentDFA::SetCEequalCB( cblen==celen && !my_lstrncmpW(ce, cb, cblen) );
 	}
 
-	void Trim() { kwd_.Trim(); }
+	//void Trim() { kwd_.Trim(); }
+	void SetKeywordArenaSize(size_t count)
+	{
+		kwd_.SetArenaBufSize(count);
+	}
 
 	// 初期化２：キーワード追加
 	void AddKeyword( const unicode* str, ulong len )
@@ -774,14 +790,35 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 	if( prs )
 		parser_.reset( prs );
 
-	// ５行目以降：キーワードリスト
-	while( !r.isEmpty() )
+	if( siz > 0 )
 	{
-		r.getLine();
-		if( len != 0 )
-			parser_->AddKeyword( str, len );
+		// calculate the necessary memory for the keyword list.
+		size_t n = siz, totsz = 0;
+		const unicode *b = defbuf;
+		while( n-- )
+		{
+			enum { align = sizeof(void*) -1 };
+			++b;
+			if( *b == '\n' )
+			{
+				if( n && b[1] == '\n' || b[1] == '\r' )
+					continue; // Skip extra empty lines
+				totsz = (totsz + align + sizeof(Keyword)) & ~align;
+			}
+			else
+				totsz += 2;
+		}
+
+		parser_->SetKeywordArenaSize( totsz );
+		// ５行目以降：キーワードリスト
+		while( !r.isEmpty() )
+		{
+			r.getLine();
+			if( len != 0 )
+				parser_->AddKeyword( str, len );
+		}
 	}
-	parser_->Trim();
+
 	// 全行解析し直し
 	ReParse( 0, tln()-1 );
 

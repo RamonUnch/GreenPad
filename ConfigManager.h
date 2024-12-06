@@ -19,7 +19,7 @@ void SetFontSize(LOGFONT *font, HDC hDC, int fsiz, int fx);
 //@}
 //=========================================================================
 
-class ConfigManager : public ki::Object
+class ConfigManager
 {
 public:
 

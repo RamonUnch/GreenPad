@@ -410,6 +410,7 @@ extern int kmain();
 
 namespace ki
 {
+	DArena TS;
 	void APIENTRY Startup()
 	{
 		// Startup :
@@ -418,6 +419,7 @@ namespace ki
 		// C++のローカルオブジェクトの破棄順序の仕様に
 		// 自信がないので(^^;、スコープを利用して順番を強制
 		// たぶん宣言の逆順だとは思うんだけど…
+		TS.Init(1024*1024);
 
 		LOGGER( "StartUp" );
 		App myApp;
@@ -446,6 +448,7 @@ namespace ki
 			} //~ThreadManager
 			#endif
 		} //~App
+		TS.FreeAll();
 	}
 }
 

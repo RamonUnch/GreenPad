@@ -24,7 +24,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class A_NOVTABLE Window : public Object
+class A_NOVTABLE Window
 {
 public:
 

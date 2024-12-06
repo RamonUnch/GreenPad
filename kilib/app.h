@@ -2,6 +2,7 @@
 #define _KILIB_APP_H_
 #include "types.h"
 #include "log.h"
+#include "memory.h"
 
 HRESULT MyCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
 HRESULT MyCoLockObjectExternal(IUnknown * pUnk, BOOL fLock, BOOL fLastUnlockReleases);
@@ -218,7 +219,6 @@ inline HINSTANCE App::hinst() const
 
 inline HINSTANCE App::hOle32() const
 	{ return hOle32_; }
-
 
 //=========================================================================
 

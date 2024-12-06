@@ -161,7 +161,7 @@ struct TextFileWPimpl;
 //@}
 //=========================================================================
 
-class TextFileR : public Object
+class TextFileR : public TmpObject
 {
 public:
 
@@ -256,7 +256,7 @@ inline bool TextFileR::nolb_found() const
 //@}
 //=========================================================================
 
-class TextFileW : public Object
+class TextFileW : public TmpObject
 {
 public:
 
