@@ -171,58 +171,62 @@ public:
 
 //=========================================================================
 // Stupid arena allocator
-//struct Arena
-//{
-//	Arena(BYTE *buf=NULL, size_t capacity=0)
-//		: sta ( buf )
-//		, end ( buf + capacity )
-//	{ }
-//
-//	void SetBuf(BYTE *buf, size_t capacity)
-//		{ sta = buf; end = buf+capacity; }
-//
-//	void *alloc(size_t sz)
-//	{
-//		size_t pad = (UINT_PTR)end & 7;
-//		if( sz+pad > size_t(end - sta) )
-//			return NULL; // OOM
-//
-//		return reinterpret_cast<void*>(end -= sz + pad);
-//	}
-//
-//	BYTE *sta;
-//	BYTE *end;
-//};
+struct Arena
+{
+	explicit Arena(BYTE *buf, size_t capacity)
+		: sta ( buf )
+		, end ( buf + capacity )
+	{ }
+
+	void *alloc(size_t sz)
+	{
+		size_t pad = (UINT_PTR)end & (sizeof(void*)-1);
+		if( sz+pad > size_t(end - sta) )
+			return NULL; // OOM
+
+		return reinterpret_cast<void*>(end -= sz + pad);
+	}
+
+	BYTE *sta;
+	BYTE *end;
+};
+
 #pragma warning(disable: 4146)
 struct DArena
 {
 	// Dynamic mode
-	DArena( size_t reserved )
-		: sta ( (BYTE*)::VirtualAlloc(NULL, reserved, MEM_RESERVE, PAGE_READWRITE) )
-		//, end ( sta )
-		, dim ( pagesize() )
-		, res ( reserved )
+//	DArena( size_t reserved )
+//		: sta ( (BYTE*)::VirtualAlloc(NULL, reserved, MEM_RESERVE, PAGE_READWRITE) )
+//		//, end ( sta )
+//		, dim ( pagesize() )
+//		, res ( reserved )
+//	{
+//		end = sta = (BYTE*)::VirtualAlloc(sta, dim, MEM_COMMIT, PAGE_READWRITE);
+//		if( !sta ) // Alloc failed
+//			dim = 0;
+//	}
+
+	//DArena() {};
+
+	void Init( size_t reserved )
 	{
+		dim  = pagesize();
+		res = reserved;
+
+		sta = (BYTE*)::VirtualAlloc(NULL, reserved, MEM_RESERVE, PAGE_READWRITE);
 		end = sta = (BYTE*)::VirtualAlloc(sta, dim, MEM_COMMIT, PAGE_READWRITE);
 		if( !sta ) // Alloc failed
 			dim = 0;
 	}
 
-	// Fixed mode
-	DArena( BYTE *buf, size_t count)
-		: sta ( buf )
-		, end ( sta )
-		, dim ( count )
-		, res ( 0 )
-	{ }
-
 	void *alloc(size_t sz)
 	{
-		size_t pad = -(UINT_PTR)end & 7;
+		size_t pad = -(UINT_PTR)end & (sizeof(void*)-1);
 		if( sz+pad > dim - (end - sta) )
 		{
-			if( !res || !sta ) return NULL;
+			if( !sta ) return NULL;
 			size_t ps = pagesize();
+			ps = ps * (1 + (sz / ps));
 			if( !::VirtualAlloc(sta, dim + ps, MEM_COMMIT, PAGE_READWRITE) )
 				return NULL; // Unable to map!!!!
 			dim += ps;
@@ -232,21 +236,17 @@ struct DArena
 		return reinterpret_cast<void*>(ret);
 	}
 
-	void trim()
+	inline void freelast(void *ptr, size_t sz)
 	{
-		res = dim;
-		::VirtualFree(sta+dim, 0, MEM_RELEASE);
+		end -= sz;
 	}
 
-	~DArena()
+	void FreeAll()
 	{
-		if( res )
-		{
-			::VirtualFree(sta, dim, MEM_DECOMMIT);
-			::VirtualFree(sta, 0, MEM_RELEASE);
-		}
+		::VirtualFree(sta, dim, MEM_DECOMMIT);
+		::VirtualFree(sta, 0, MEM_RELEASE);
 	}
-	
+
 	size_t pagesize()
 	{
 		SYSTEM_INFO si; si.dwPageSize = 4096;
@@ -254,10 +254,52 @@ struct DArena
 		return si.dwPageSize;
 	}
 
+//	void trim()
+//	{
+//		res = dim;
+//		::VirtualFree(sta+dim, 0, MEM_RELEASE);
+//	}
+
+	void reset()
+	{
+		#ifdef _DEBUG
+		mem00(sta, dim);
+		#endif
+		size_t ps = pagesize();
+		if (dim <= ps)
+			return;
+		::VirtualFree(sta+ps, Max(dim, res)-ps, MEM_DECOMMIT);
+		dim = ps;
+		end = sta;
+	}
+
 	BYTE *sta;
 	BYTE *end;
 	size_t dim;
 	size_t res;
+};
+
+extern DArena TS;
+struct TmpObject
+{
+	static void* operator new( size_t sz ) noexcept
+	{
+		void *ptr = TS.alloc( sz );;
+//		TCHAR buf[128];
+//		::wsprintf(buf, TEXT("%x, %u"), ptr, sz);
+//		MessageBox(NULL, buf, TEXT("ALLOC"), 0);
+
+		return ptr;
+	}
+
+	static void operator delete( void* ptr, size_t sz ) noexcept
+	{
+//		TCHAR buf[128];
+//		::wsprintf(buf, TEXT("%x, %u"), ptr, sz);
+//		MessageBox(NULL, buf, TEXT("FREE"), 0);
+//
+		TS.freelast( ptr, sz );
+	}
 };
 
 }      // namespace ki

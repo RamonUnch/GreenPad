@@ -15,58 +15,6 @@ class OleDnDTarget;
 
 
 //=========================================================================
-//@{ @pkg editwing.View //@}
-//@{
-//	描画処理など
-//
-//	このクラスでは、メッセージの分配を行うだけで、実装は
-//	Canvas/ViewImpl 等で行う。ので、詳しくはそちらを参照のこと。
-//@}
-//=========================================================================
-
-class View A_FINAL: public ki::WndImpl, public doc::DocEvHandler
-{
-public:
-
-	//@{ 何もしないコンストラクタ //@}
-	View( doc::Document& d, HWND wnd );
-	~View();
-
-	//@{ 折り返し方式切替 //@}
-	void SetWrapType( int wt );
-
-	void SetWrapSmart( bool ws);
-
-	//@{ 行番号表示/非表示切替 //@}
-	void ShowLineNo( bool show );
-
-	//@{ 表示色・フォント切替 //@}
-	void SetFont( const VConfig& vc );
-
-	//@{ Set all canva stuff at once (faster) //@}
-	void SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc );
-
-	//@{ カーソル //@}
-	Cursor& cur();
-
-private:
-
-	doc::Document&      doc_;
-	ViewImpl*          impl_;
-	static ClsName     className_;
-
-private:
-
-	void    on_create( CREATESTRUCT* cs ) override;
-	void    on_destroy() override;
-	LRESULT on_message( UINT msg, WPARAM wp, LPARAM lp ) override;
-	void    on_text_update( const DPos& s, const DPos& e, const DPos& e2, bool bAft, bool mCur ) override;
-	void    on_keyword_change() override;
-};
-
-
-
-//=========================================================================
 //@{
 //	イベントハンドラインターフェイス
 //
@@ -173,7 +121,7 @@ struct VPos : public DPos
 //-------------------------------------------------------------------------
 // Caret制御用ラッパー
 //-------------------------------------------------------------------------
-class Caret : public ki::Object
+class Caret
 {
 public:
 	Caret( HWND wnd )
@@ -220,7 +168,7 @@ private:
 //	カーソル
 //@}
 //=========================================================================
-class Cursor : public ki::Object
+class Cursor
 {
 public:
 

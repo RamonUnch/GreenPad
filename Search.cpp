@@ -106,13 +106,13 @@ void SearchManager::on_init()
 		#ifdef _UNICODE
 			SetItemText( IDC_FINDBOX, str.get() );
 		#else
-			char *ab = malloc( (len+1) * 3 * sizeof(TCHAR) );
+			char *ab = (char*)TS.alloc( (len+1) * 3 * sizeof(TCHAR) );
 			if( ab )
 			{
 				::WideCharToMultiByte( CP_ACP, 0, str.get(), -1,
 					ab, (len+1)*3, NULL, NULL );
 				SetItemText( IDC_FINDBOX, ab );
-				free( ab );
+				TS.freelast( ab, (len+1) * 3 * sizeof(TCHAR) );
 			}
 		#endif
 		}
@@ -226,21 +226,21 @@ void SearchManager::UpdateData()
 
 	TCHAR* str;
 	LRESULT n = SendMsgToItem( IDC_FINDBOX, WM_GETTEXTLENGTH );
-	str = (TCHAR*)malloc( sizeof(TCHAR) * (n+1) );
+	str = (TCHAR*)TS.alloc( sizeof(TCHAR) * (n+1) );
 	if( str )
 	{
 		GetItemText( IDC_FINDBOX, n+1, str );
 		findStr_ = str;
-		free( str );
+		TS.freelast( str, sizeof(TCHAR) * (n+1) );
 	}
 
 	n = SendMsgToItem( IDC_REPLACEBOX, WM_GETTEXTLENGTH );
-	str = (TCHAR*)malloc( sizeof(TCHAR) * (n+1) );
+	str = (TCHAR*)TS.alloc( sizeof(TCHAR) * (n+1) );
 	if( str )
 	{
 		GetItemText( IDC_REPLACEBOX, n+1, str );
 		replStr_ = str;
-		free( str );
+		TS.freelast( str, sizeof(TCHAR) * (n+1) );
 	}
 }
 

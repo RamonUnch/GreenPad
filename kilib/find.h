@@ -19,7 +19,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class FindFile : public Object
+class FindFile
 {
 public:
 

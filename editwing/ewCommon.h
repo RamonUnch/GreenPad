@@ -28,7 +28,7 @@ inline bool isLowSurrogate(unicode ch)
 //@}
 //=========================================================================
 
-struct DPos : public ki::Object
+struct DPos
 {
 	//@{ バッファ中のアドレス (0～ ) //@}
 	ulong ad;
@@ -134,7 +134,7 @@ enum WrapType
 //@}
 //=========================================================================
 
-struct VConfig : public ki::Object
+struct VConfig
 {
 	//@{ フォント //@}
 	LOGFONT font;

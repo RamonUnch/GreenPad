@@ -15,7 +15,7 @@
 //@}
 //=========================================================================
 
-class Searchable : public ki::Object
+class Searchable
 {
 public:
 	//@{

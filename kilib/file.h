@@ -18,7 +18,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class FileR : public Object
+class FileR
 {
 public:
 
@@ -73,7 +73,7 @@ private:
 //@}
 //=========================================================================
 
-class FileW : public Object
+class FileW
 {
 public:
 

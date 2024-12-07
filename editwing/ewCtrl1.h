@@ -1,7 +1,7 @@
 #ifndef _EDITWING_CTRL1_H_
 #define _EDITWING_CTRL1_H_
 #include "ewDoc.h"
-#include "ewView.h"
+#include "ip_view.h"
 #include "ip_doc.h"
 #ifndef __ccdoc__
 namespace editwing {

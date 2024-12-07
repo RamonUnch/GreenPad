@@ -154,8 +154,8 @@ bool Canvas::CalcLNAreaWidth()
 	const int prev = txtZone_.left;
 	if( showLN_ )
 	{
-		txtZone_.left  = (1 + figNum_) * font_->F();
-		if( txtZone_.left+4*font_->W() >= txtZone_.right )
+		txtZone_.left  = (1 + figNum_) * font_.F();
+		if( txtZone_.left+4*font_.W() >= txtZone_.right )
 			txtZone_.left = 0; // 行番号ゾーンがデカすぎるときは表示しない
 	}
 	else
@@ -174,10 +174,10 @@ void Canvas::CalcWrapWidth()
 		wrapWidth_ = 0xffffffff;
 		break;
 	case RIGHTEDGE:
-		wrapWidth_ = txtZone_.right - txtZone_.left - font_->W()/2 - 1;
+		wrapWidth_ = txtZone_.right - txtZone_.left - font_.W()/2 - 1;
 		break; //Caretの分-3補正
 	default:
-		wrapWidth_ = wrapType_ * font_->W();
+		wrapWidth_ = wrapType_ * font_.W();
 		break;
 	}
 }
@@ -186,8 +186,7 @@ Canvas::Canvas( const View& vw )
 	: wrapType_ ( -1 )
 	, warpSmart_( false )
 	, showLN_   ( false )
-	, font_     ( new Painter( vw.hwnd(),
-	              VConfig(TEXT(""),0) ) )
+	, font_     (  vw.hwnd(), VConfig(TEXT(""),0) )
 	, wrapWidth_( 0xffffffff )
 	, figNum_   ( 3 )
 {
@@ -196,7 +195,7 @@ Canvas::Canvas( const View& vw )
 
 Canvas::~Canvas()
 {
-	delete font_;
+	//delete font_;
 }
 
 // Return true if warp width has changed.
@@ -218,10 +217,12 @@ bool Canvas::on_view_resize( int cx, int cy )
 
 void Canvas::on_font_change( const VConfig& vc )
 {
-	HWND hwnd = font_->getWHND();
-	delete font_; // 先にデストラクタを呼ばねばならない…
+	//HWND hwnd = font_->getWHND();
+	//delete font_; // 先にデストラクタを呼ばねばならない…
 	              // ってうわー格好悪ぃーーー(T_T)
-	font_ = new Painter( hwnd, vc );
+	//font_ = new Painter( hwnd, vc );
+	font_.Destroy();
+	font_.Init(vc);
 
 	CalcLNAreaWidth();
 	CalcWrapWidth();
@@ -284,12 +285,12 @@ bool ViewImpl::ReSetScrollInfo()
 //	rlScr_.nMax  = Max( textCx_, cx );
 //	rlScr_.nPos  = Min<int>( rlScr_.nPos, rlScr_.nMax-rlScr_.nPage+1 );
 	rlScr_.nPage = cx + 1;
-	rlScr_.nMax  = Max( textCx_+cvs_.getPainter().W()/2+1, cx );
+	rlScr_.nMax  = Max( textCx_+cvs_.font_.W()/2+1, cx );
 	rlScr_.nPos  = Min( rlScr_.nPos, (int)(rlScr_.nMax-rlScr_.nPage+1) );
 
 	// 縦はnPageとnMaxはとりあえず補正
 	// nPosは場合によって直し方が異なるので別ルーチンにて
-	udScr_.nPage = cy / NZero(cvs_.getPainter().H()) + 1;
+	udScr_.nPage = cy / NZero(cvs_.font_.H()) + 1;
 	//udScr_.nMax  = vln() + udScr_.nPage - 2; // Old code (not so nice)
 
 	// WIP: Adjust so that scroll bar appears only when we are shy oneline from the page.
@@ -298,7 +299,7 @@ bool ViewImpl::ReSetScrollInfo()
 	// udScr_.nMax  = vln() + udScr_.nPage - Max( 2, Min<int>( udScr_.nPage-1, vln()+1 ) );
 
 	// Limit more scrolling when there is more tha a single page
-	if( vln()*cvs_.getPainter().H() < cy )
+	if( vln()*cvs_.font_.H() < cy )
 		udScr_.nMax  = vln() + udScr_.nPage - 2;
 	else
 		udScr_.nMax  = vln() + udScr_.nPage - Max( 2, (int)Min( udScr_.nPage-1, (uint)(vln()+1) ) );
@@ -407,7 +408,7 @@ void ViewImpl::ScrollTo( const VPos& vp )
 	}
 	else
 	{
-		const int W = cvs_.getPainter().W();
+		const int W = cvs_.font_.W();
 		if( rlScr_.nPos + (signed)(rlScr_.nPage-W) <= vp.vx )
 			dx = vp.vx - (rlScr_.nPos + rlScr_.nPage) + W;
 	}
@@ -426,7 +427,7 @@ void ViewImpl::ScrollTo( const VPos& vp )
 
 void ViewImpl::GetDrawPosInfo( VDrawInfo& v ) const
 {
-	const int H = cvs_.getPainter().H();
+	const int H = cvs_.font_.H();
 
 	long most_under = (vln()-udScr_.nPos)*H;
 	if( most_under <= v.rc.top )
@@ -472,7 +473,7 @@ void ViewImpl::ScrollView( int dx, int dy, bool update )
 	cur_.on_scroll_begin();
 
 	const RECT* clip = (dy==0 ? &cvs_.zone() : NULL);
-	const int H = cvs_.getPainter().H();
+	const int H = cvs_.font_.H();
 
 	// スクロールバー更新, Scrollbar updated
 	if( dx != 0 )
@@ -561,8 +562,8 @@ void ViewImpl::on_hscroll( int code, int pos )
 	switch( code )
 	{
 	default:           return;
-	case SB_LINELEFT:  dx= -cvs_.getPainter().W(); break;
-	case SB_LINERIGHT: dx= +cvs_.getPainter().W(); break;
+	case SB_LINELEFT:  dx= -cvs_.font_.W(); break;
+	case SB_LINERIGHT: dx= +cvs_.font_.W(); break;
 	case SB_PAGELEFT:  dx= -(cx()>>1); break;
 	case SB_PAGERIGHT: dx= +(cx()>>1); break;
 	case SB_THUMBTRACK:
@@ -590,8 +591,8 @@ void ViewImpl::on_vscroll( int code, int pos )
 	default:          return;
 	case SB_LINEUP:   dy= -1; break;
 	case SB_LINEDOWN: dy= +1; break;
-	case SB_PAGEUP:   dy= -( cy() / NZero(cvs_.getPainter().H()) ); break;
-	case SB_PAGEDOWN: dy= +( cy() / NZero(cvs_.getPainter().H()) ); break;
+	case SB_PAGEUP:   dy= -( cy() / NZero(cvs_.font_.H()) ); break;
+	case SB_PAGEDOWN: dy= +( cy() / NZero(cvs_.font_.H()) ); break;
 	case SB_THUMBTRACK:
 	{
 		SCROLLINFO si = { sizeof(SCROLLINFO), SIF_TRACKPOS };
@@ -621,7 +622,7 @@ int ViewImpl::getNumScrollLines( void )
 	// This automatically takes into account the page scroll mode where
 	// SPI_GETWHEELSCROLLLINES value if 0xFFFFFFFF.
 	uint nlpage;
-	nlpage = Max( (uint)cy() / (uint)NZero(cvs_.getPainter().H()), 1U );
+	nlpage = Max( (uint)cy() / (uint)NZero(cvs_.font_.H()), 1U );
 	// scrolllines can be zero, in this case no scroll should occur.
 	return (int)Min( scrolllines, nlpage );
 }
@@ -667,7 +668,7 @@ int ViewImpl::getNumScrollRaws( void )
 	}
 	// Avoid scrolling more that halfa screen horizontally.
 	uint nlpage;
-	nlpage = Max( (uint)cx() / (uint)NZero(cvs_.getPainter().W()/2), 1U );
+	nlpage = Max( (uint)cx() / (uint)NZero(cvs_.font_.W()/2), 1U );
 	// scrollnum can be zero, in this case no scroll should occur.
 	return (int)Min( scrollnum, nlpage );
 }
@@ -675,12 +676,12 @@ int ViewImpl::getNumScrollRaws( void )
 void ViewImpl::on_hwheel( short delta )
 {
 	int nl = getNumScrollRaws();
-	int dx = nl * cvs_.getPainter().W() * (int)delta / WHEEL_DELTA;
+	int dx = nl * cvs_.font_.W() * (int)delta / WHEEL_DELTA;
 	if( dx == 0 )
 	{ // step is too small, we need to accumulate delta
 		accdeltax_ += delta;
 		// Recalculate the step.
-		dx = nl * cvs_.getPainter().W() * (int)accdeltax_ / WHEEL_DELTA;
+		dx = nl * cvs_.font_.W() * (int)accdeltax_ / WHEEL_DELTA;
 		if( dx )
 		{
 			ScrollView( dx, 0, 0 );
@@ -743,7 +744,7 @@ void ViewImpl::UpDown( int dy, bool thumb )
 
 void ViewImpl::InvalidateView( const DPos& dp, bool afterall ) const
 {
-	const int H = cvs_.getPainter().H();
+	const int H = cvs_.font_.H();
 
 	// 表示域より上での更新, Update above the display area
 	if( dp.tl < udScr_tl_ )

@@ -95,6 +95,7 @@ public:
 	//@{ コンストラクタ //@}
 	explicit aarr( size_t sz )
 		: obj_( (T *)malloc( sizeof(T) * sz ) ) {}
+	aarr(): obj_( NULL ) {} ;
 
 	//@{ デストラクタ //@}
 	~aarr()

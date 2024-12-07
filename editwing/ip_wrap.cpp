@@ -48,10 +48,8 @@ ViewImpl::ViewImpl( View& vw, doc::Document& dc )
 	udScr_.nPos   = rlScr_.nPos   = 0;
 	udScr_.nTrackPos = rlScr_.nTrackPos = 0;
 	udScr_tl_     = udScr_vrl_    = 0;
-	ReSetScrollInfo();
+	//ReSetScrollInfo();
 }
-
-
 
 //-------------------------------------------------------------------------
 // 状態変更への対応
@@ -175,7 +173,7 @@ ulong A_HOT ViewImpl::CalcLineWidth( const unicode* txt, ulong len ) const
 	// Calculate the width of the text when lines are written without wrapping
 	// For text where most of the lines are displayed without wrapping.
 	// Calculating this value can speed up the process.
-	const Painter& p = cvs_.getPainter();
+	const Painter& p = cvs_.font_;
 
 	ulong w=0;
 	for( ulong i=0; i<len ; ++i )
@@ -225,7 +223,7 @@ void ViewImpl::ModifyWrapInfo(
 {
 	// 設定幅での折り返しを実行する。
 	// 行の途中からの変更の場合、sttが開始addressを指している
-	const Painter& p = cvs_.getPainter();
+	const Painter& p = cvs_.font_;
 	const bool smart = cvs_.wrapSmart();
 	const ulong   ww = smart? cvs_.wrapWidth()-p.W()/2: cvs_.wrapWidth();
 

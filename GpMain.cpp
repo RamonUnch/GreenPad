@@ -681,7 +681,7 @@ void GreenPadWnd::on_pagesetup()
 	PAGESETUPDLG psd;
 	mem00(&psd, sizeof(psd));
 	psd.lStructSize = sizeof(psd);
-	// FIXME: use local units...
+	// FIXME: use local units.
 	psd.Flags = PSD_INTHOUSANDTHSOFINCHES|PSD_DISABLEORIENTATION|PSD_DISABLEPAPER|PSD_DISABLEPRINTER|PSD_MARGINS;
 	psd.hwndOwner = hwnd();
 	CopyRect(&psd.rtMargin, cfg_.PMargins());
@@ -914,12 +914,12 @@ void GreenPadWnd::on_drop( HDROP hd )
 		// Get length of the i string for array size.
 		UINT len = ::myDragQueryFile( hd, i, NULL, 0)+1;
 		len = Max(len, (UINT)MAX_PATH); // ^ the Above may fail on NT3.1
-		TCHAR *str = (TCHAR *)malloc( sizeof(TCHAR) * len );
+		TCHAR *str = (TCHAR *)TS.alloc( sizeof(TCHAR) * len );
 		if( str )
 		{
 			::myDragQueryFile( hd, i, str, len );
 			Open( str, AutoDetect );
-			free( str );
+			TS.freelast( str, sizeof(TCHAR) * len );
 		}
 	}
 	::DragFinish( hd );
@@ -1959,85 +1959,82 @@ int kmain()
 {
 	// MsgBox(GetCommandLine(), TEXT("Command Line"), MB_OK);
 	LOGGER( "kmain() begin" );
-
-	Argv  arg;
-	ulong   i;
-
-	LOGGER( "argv processed" );
-
-  //-- まずオプションスイッチを処理
-
-	int optL = -1;
-	int optC = 0;
-
-	for( i=1; i<arg.size() && arg[i][0]==TEXT('-'); ++i )
-		switch( arg[i][1] )
-		{
-		case TEXT('c'):
-			optC = String::GetInt( arg[i]+2 );
-			break;
-		case TEXT('l'):
-			optL = String::GetInt( arg[i]+2 );
-			break;
-		}
-
-	LOGGER( "option processed" );
-
-  //-- 次にファイル名
-
-	Path file;
-
-	if( i < arg.size() )
+	GreenPadWnd wnd;
 	{
-		file = arg[i];
-		if( !file.isFile() )
-		{
-			ulong j; // ""無しで半スペ入りでもそれなりに対処
-			for( j=i+1; j<arg.size(); ++j )
+		Argv  arg;
+		ulong   i;
+		int optL = -1;
+		int optC = 0;
+
+		LOGGER( "argv processed" );
+
+	  //-- まずオプションスイッチを処理
+
+		for( i=1; i<arg.size() && arg[i][0]==TEXT('-'); ++i )
+			switch( arg[i][1] )
 			{
-				file += ' ';
-				file += arg[j];
-				if( file.isFile() )
-					break;
+			case TEXT('c'):
+				optC = String::GetInt( arg[i]+2 );
+				break;
+			case TEXT('l'):
+				optL = String::GetInt( arg[i]+2 );
+				break;
 			}
 
-			if( j==arg.size() )
-				file = arg[i];
-			else
-				i=j;
-		}
-	}
+		LOGGER( "option processed" );
 
-	LOGGER( "filename processed" );
-
-  //-- 余ってる引数があれば、それで新規プロセス起動
-
-	if( ++i < arg.size() )
-	{
-		String cmd;
-		for( ; i<arg.size(); ++i )
+	  //-- 次にファイル名
+		Path file;
+		if( i < arg.size() )
 		{
-			cmd += TEXT('\"');
-			cmd += arg[i];
-			cmd += TEXT("\" ");
+			file = arg[i];
+			if( !file.isFile() )
+			{
+				ulong j; // ""無しで半スペ入りでもそれなりに対処
+				for( j=i+1; j<arg.size(); ++j )
+				{
+					file += ' ';
+					file += arg[j];
+					if( file.isFile() )
+						break;
+				}
+
+				if( j==arg.size() )
+					file = arg[i];
+				else
+					i=j;
+			}
 		}
-		::BootNewProcess( cmd.c_str() );
+
+		LOGGER( "filename processed" );
+
+	  //-- 余ってる引数があれば、それで新規プロセス起動
+
+		if( ++i < arg.size() )
+		{
+			String cmd;
+			for( ; i<arg.size(); ++i )
+			{
+				cmd += TEXT('\"');
+				cmd += arg[i];
+				cmd += TEXT("\" ");
+			}
+			::BootNewProcess( cmd.c_str() );
+		}
+
+		LOGGER( "newprocess booted" );
+
+	  //-- メインウインドウ発進
+		if( !wnd.StartUp(file, optC, optL) )
+			return -1;
+
+		TS.reset();
 	}
-
-	LOGGER( "newprocess booted" );
-
-  //-- メインウインドウ発進
-
-	GreenPadWnd wnd;
-	if( !wnd.StartUp(file,optC,optL) )
-		return -1;
-
-	LOGGER( "kmain() startup ok" );
 
   //-- メインループ
 
-//	wnd.ShowUp2();
-//	LOGGER( "showup!" );
+	LOGGER( "kmain() startup ok" );
+
 	wnd.MsgLoop();
 
 	LOGGER( "fin" );
