@@ -195,18 +195,18 @@ struct Arena
 struct DArena
 {
 	// Dynamic mode
-	DArena( size_t reserved )
-		: sta ( (BYTE*)::VirtualAlloc(NULL, reserved, MEM_RESERVE, PAGE_READWRITE) )
-		//, end ( sta )
-		, dim ( pagesize() )
-		, res ( reserved )
-	{
-		end = sta = (BYTE*)::VirtualAlloc(sta, dim, MEM_COMMIT, PAGE_READWRITE);
-		if( !sta ) // Alloc failed
-			dim = 0;
-	}
+//	DArena( size_t reserved )
+//		: sta ( (BYTE*)::VirtualAlloc(NULL, reserved, MEM_RESERVE, PAGE_READWRITE) )
+//		//, end ( sta )
+//		, dim ( pagesize() )
+//		, res ( reserved )
+//	{
+//		end = sta = (BYTE*)::VirtualAlloc(sta, dim, MEM_COMMIT, PAGE_READWRITE);
+//		if( !sta ) // Alloc failed
+//			dim = 0;
+//	}
 
-	DArena() {};
+	//DArena() {};
 
 	void Init( size_t reserved )
 	{
@@ -253,6 +253,12 @@ struct DArena
 		GetSystemInfo(&si);
 		return si.dwPageSize;
 	}
+
+//	void trim()
+//	{
+//		res = dim;
+//		::VirtualFree(sta+dim, 0, MEM_RELEASE);
+//	}
 
 	void reset()
 	{

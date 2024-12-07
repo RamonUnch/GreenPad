@@ -317,7 +317,7 @@ struct WLine: public ki::storage<ulong, false>
 	}
 	static ulong *dummy_buf()
 	{
-		static ulong dummy_buf[2];
+		static ulong dummy_buf[2] = {0,0};
 		return dummy_buf;
 	}
 

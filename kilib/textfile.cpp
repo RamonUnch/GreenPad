@@ -2471,8 +2471,8 @@ struct TextFileWPimplWithBuf: public ki::TextFileWPimpl
 		: ki::TextFileWPimpl( w )
 		{}
 
-	~TextFileWPimplWithBuf( )
-		{};
+//	~TextFileWPimplWithBuf( )
+//		{};
 
 	// This function should assume it will have enough room in buf_
 	virtual void WriteBuf( const unicode* str, ulong len ) = 0;

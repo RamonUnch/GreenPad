@@ -199,7 +199,7 @@ struct Keyword
 			x->str[l] = L'\0';
 		}
 		//else MessageBox(NULL, s, NULL, 0);
-		//LOGGERF( TEXT("sizeof(Keyword) = %d, allocated = %d / %d"),  sizeof(Keyword), (UINT)(ar->end - ar->sta), ar->dim);
+		//LOGGERF( TEXT("sizeof(Keyword) = %d, remaining = %d bytes"),  sizeof(Keyword), (UINT)(ar->end - ar->sta));
 		return x;
 	}
 };
@@ -790,11 +790,11 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 	if( prs )
 		parser_.reset( prs );
 
-	if( siz > 0 )
+	if( siz > 0 && !r.isEmpty() )
 	{
 		// calculate the necessary memory for the keyword list.
-		size_t n = siz, totsz = 0;
-		const unicode *b = defbuf;
+		const unicode *b = str;
+		size_t n = siz - (str - defbuf), totsz = 0;
 		while( n-- )
 		{
 			enum { align = sizeof(void*) -1 };
