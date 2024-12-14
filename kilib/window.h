@@ -286,7 +286,6 @@ inline IMEManager& ime()
 
 class A_NOVTABLE WndImpl : public Window
 {
-	enum { THUNK_SIZE = 22 };
 
 public:
 
