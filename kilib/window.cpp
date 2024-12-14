@@ -644,14 +644,115 @@ void Window::SetFront( HWND hwnd )
 }
 
 //=========================================================================
+namespace
+{
+	// THUNK allocator variables
+	enum {
+		TOT_THUNK_SIZE=4096,
+		#if defined(_M_AMD64) || defined(WIN64)
+		THUNK_SIZE=32, // x86_64 mode
+		#elif defined(_M_IX86)
+		THUNK_SIZE=16, // i386 mode
+		#else
+		#error Unsupported processor type, determine THUNK_SIZE here...
+		#endif
+		MAX_THUNKS=TOT_THUNK_SIZE/THUNK_SIZE,
+	};
 
+	static BYTE *thunks_array = NULL;
+	static WORD free_idx = 0;
+	static WORD numthunks = 0;
+
+	static byte *AllocThunk(LONG_PTR thunkProc, void *vParam)
+	{
+		if( !thunks_array )
+		{
+			thunks_array = (BYTE*)::VirtualAlloc( NULL, TOT_THUNK_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+			if ( !thunks_array )
+				return NULL;
+
+			free_idx = 0;
+			for (WORD i=0; i < MAX_THUNKS; i++)
+				*(WORD*)&thunks_array[i*THUNK_SIZE] = i+1;
+		}
+
+		if (numthunks >= MAX_THUNKS) {
+			return NULL;
+		}
+		++numthunks;
+
+		// get the free thunk
+		BYTE *thunk = &thunks_array[free_idx * THUNK_SIZE];
+		free_idx = *(WORD*)thunk; // Pick up the free index
+
+		DWORD oldprotect;
+		::VirtualProtect(thunks_array, TOT_THUNK_SIZE, PAGE_EXECUTE_READWRITE, &oldprotect);
+
+		// ここで動的にx86の命令列
+		//   | mov dword ptr [esp+4] this
+		//   | jmp MainProc
+		// あるいはAMD64の命令列
+		//   | mov rcx this
+		//   | mov rax MainProc
+		//   | jmp rax
+		// を生成し、メッセージプロシージャとして差し替える。
+		//
+		// これで次回からは、第一引数が hwnd のかわりに
+		// thisポインタになった状態でMainProcが呼ばれる
+		// …と見なしたプログラムが書ける。
+		//
+		// 参考資料：ATLのソース
+
+		#if defined(_M_AMD64) || defined(WIN64)
+		*reinterpret_cast<dbyte*>   (thunk+ 0) = 0xb948;
+		*reinterpret_cast<WndImpl**>(thunk+ 2) = this;
+		*reinterpret_cast<dbyte*>   (thunk+10) = 0xb848;
+		*reinterpret_cast<void**>   (thunk+12) = (LONG_PTR*)thunkProc;
+		*reinterpret_cast<dbyte*>   (thunk+20) = 0xe0ff;
+		#elif defined(_M_IX86)
+		*reinterpret_cast<qbyte*>   (thunk+0) = 0x042444C7;
+		*reinterpret_cast<void**>   (thunk+4) = vParam;
+		*reinterpret_cast< byte*>   (thunk+8) = 0xE9;
+		*reinterpret_cast<qbyte*>   (thunk+9) = reinterpret_cast<byte*>((void*)thunkProc)-(thunk+13);
+		#else
+		#error Unsupported processor type, please implement assembly code or consider defining NO_ASMTHUNK
+		#endif
+
+		// Make thunk read+execute only, for safety.
+		::VirtualProtect(thunks_array, TOT_THUNK_SIZE, PAGE_EXECUTE_READ, &oldprotect);
+		::FlushInstructionCache( GetCurrentProcess(), thunks_array, TOT_THUNK_SIZE );
+
+		LOGGER("THUNK ALLOC" );
+		return thunk;
+	}
+	static void ReleaseThunk(byte *thunk)
+	{
+		if ( !thunk || !thunks_array )
+			return;
+
+		DWORD oldprotect;
+		::VirtualProtect(thunks_array, TOT_THUNK_SIZE, PAGE_EXECUTE_READWRITE, &oldprotect);
+
+		*(WORD*)thunk = free_idx; // Set free index in the current thunk location
+		free_idx = (WORD)( (thunk - thunks_array) / THUNK_SIZE );
+		--numthunks;
+
+		::VirtualProtect(thunks_array, TOT_THUNK_SIZE, PAGE_EXECUTE_READ, &oldprotect);
+
+		// Everything is free!
+		if (numthunks == 0) {
+			::VirtualFree( thunks_array, 0, MEM_RELEASE );
+			thunks_array = NULL;
+		}
+		LOGGER("THUNK FREE" );
+	}
+}
 WndImpl::WndImpl( LPCTSTR className, DWORD style, DWORD styleEx )
 	: className_( className )
 	, style_    ( style )
 	, styleEx_  ( styleEx )
 #ifndef NO_ASMTHUNK
-	, thunk_    ( static_cast<byte*>(
-	                ::VirtualAlloc( NULL, THUNK_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE )) )
+	, thunk_    ( NULL )
 #endif
 {
 }
@@ -664,7 +765,7 @@ WndImpl::~WndImpl()
 	// 緊急脱出用(^^; と考えること。
 	Destroy();
 #ifndef NO_ASMTHUNK
-	::VirtualFree( thunk_, 0, MEM_RELEASE );
+	ReleaseThunk( thunk_ );
 #endif
 }
 
@@ -742,40 +843,8 @@ void WndImpl::SetUpThunk( HWND wnd )
 	// Use TrunkMainProc() that does not depends on any asmembly language.
 	::SetWindowLongPtr( wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(TrunkMainProc) );
 #else // USE ASM
-	// ここで動的にx86の命令列
-	//   | mov dword ptr [esp+4] this
-	//   | jmp MainProc
-	// あるいはAMD64の命令列
-	//   | mov rcx this
-	//   | mov rax MainProc
-	//   | jmp rax
-	// を生成し、メッセージプロシージャとして差し替える。
-	//
-	// これで次回からは、第一引数が hwnd のかわりに
-	// thisポインタになった状態でMainProcが呼ばれる
-	// …と見なしたプログラムが書ける。
-	//
-	// 参考資料：ATLのソース
-
-	#if defined(_M_AMD64) || defined(WIN64)
-	*reinterpret_cast<dbyte*>   (thunk_+ 0) = 0xb948;
-	*reinterpret_cast<WndImpl**>(thunk_+ 2) = this;
-	*reinterpret_cast<dbyte*>   (thunk_+10) = 0xb848;
-	*reinterpret_cast<void**>   (thunk_+12) = (LONG_PTR*)MainProc;
-	*reinterpret_cast<dbyte*>   (thunk_+20) = 0xe0ff;
-	#elif defined(_M_IX86)
-	*reinterpret_cast<qbyte*>   (thunk_+0) = 0x042444C7;
-	*reinterpret_cast<WndImpl**>(thunk_+4) = this;
-	*reinterpret_cast< byte*>   (thunk_+8) = 0xE9;
-	*reinterpret_cast<qbyte*>   (thunk_+9) =
-		reinterpret_cast<byte*>((void*)MainProc)-(thunk_+13);
-	#else
-	#error Unsupported processor type, please implement assembly code or consider defining NO_ASMTHUNK
-	#endif
-
-	DWORD oldprotect; // Make thuk read+execute only for safety.
-	::VirtualProtect(thunk_, THUNK_SIZE, PAGE_EXECUTE_READ, &oldprotect);
-	::FlushInstructionCache( ::GetCurrentProcess(), thunk_, THUNK_SIZE );
+	// Create a thunk to use  the this pointer as first param instead of hwnd
+	thunk_ = AllocThunk( reinterpret_cast<LONG_PTR>(MainProc), this );
 	::SetWindowLongPtr( wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&thunk_[0]) );
 #endif // NO_ASMTHUNK
 }
