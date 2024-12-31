@@ -218,8 +218,8 @@ public:
 
 	//@{ 読みとり元バッファを与えて初期化 //@}
 	UniReader(
-		const unicode*     str, ulong     len,
-		const unicode** ansstr, ulong* anslen )
+		const unicode*     str, size_t     len,
+		const unicode** ansstr, size_t* anslen )
 		: ptr_  ( str )
 		, end_  ( str+len )
 		, ans_  ( ansstr )
@@ -252,7 +252,7 @@ public:
 
 private:
 	const unicode *ptr_, *end_, **ans_;
-	ulong *aln_;
+	size_t *aln_;
 	bool  empty_;
 };
 
@@ -321,8 +321,8 @@ private:
 	Node  headTail_;
 	Node* savedPos_;
 	Node* lastOp_;
-	ulong num_;
-	ulong limit_;
+	size_t num_;
+	size_t limit_;
 
 private:
 
@@ -372,7 +372,7 @@ public:
 	void Execute( const Command& cmd );
 
 	//@{ キーワード定義切り替え //@}
-	void SetKeyword( const unicode* defbuf, ulong siz );
+	void SetKeyword( const unicode* defbuf, size_t siz );
 
 	//@{ イベントハンドラ登録 //@}
 	void AddHandler( DocEvHandler* eh );

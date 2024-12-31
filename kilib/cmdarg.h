@@ -27,10 +27,10 @@ public:
 	~Argv() { free( buf_ ); }
 
 	//@{ ˆø”Get //@}
-	const TCHAR* operator[]( ulong i ) const;
+	const TCHAR* operator[]( size_t i ) const;
 
 	//@{ ˆø”‚ÌŒÂ” //@}
-	ulong size() const;
+	size_t size() const;
 
 private:
 
@@ -47,10 +47,10 @@ private:
 //-------------------------------------------------------------------------
 #ifndef __ccdoc__
 
-inline const TCHAR* Argv::operator []( ulong i ) const
+inline const TCHAR* Argv::operator []( size_t i ) const
 	{ return arg_[i]; }
 
-inline ulong Argv::size() const
+inline size_t Argv::size() const
 	{ return arg_.size(); }
 
 

@@ -182,7 +182,7 @@ public:
 	//
 	//	少なくとも20くらいのサイズを確保したバッファを指定してください。
 	//@}
-	size_t ReadBuf( unicode* buf, ulong siz );
+	size_t ReadBuf( unicode* buf, size_t siz );
 
 public:
 
@@ -198,7 +198,7 @@ public:
 	//@{ 改行が一個も見つからなかったフラグ //@}
 	bool nolb_found() const;
 
-	void setLBfromFreq(ulong freq[256], uchar cr, uchar lf);
+	void setLBfromFreq(uint freq[256], uchar cr, uchar lf);
 
 	static int neededCodepage(int cs) A_XPURE;
 	static bool isEBCDIC( int cs ) A_XPURE;
@@ -216,15 +216,15 @@ private:
 
 private:
 
-	int AutoDetection( int cs, const uchar* ptr, ulong siz );
-	int MLangAutoDetection( const uchar* ptr, ulong siz );
-	int chardetAutoDetection( const uchar* ptr, ulong siz );
+	int AutoDetection( int cs, const uchar* ptr, size_t siz );
+	int MLangAutoDetection( const uchar* ptr, size_t siz );
+	int chardetAutoDetection( const uchar* ptr, size_t siz );
 
 	bool IsNonUnicodeRange(qbyte u) const A_XPURE;
 	bool IsAscii(uchar c) const A_XPURE;
 	bool IsSurrogateLead(qbyte w) const A_XPURE;
-	bool CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uChrSize, bool LE) const A_XPURE;
-	bool IsValidUTF8( const uchar* ptr, ulong siz ) const A_XPURE;
+	bool CheckUTFConfidence(const uchar* ptr, size_t siz, unsigned char uChrSize, bool LE) const A_XPURE;
+	bool IsValidUTF8( const uchar* ptr, size_t siz ) const A_XPURE;
 
 private:
 
@@ -271,7 +271,7 @@ public:
 	void Close();
 
 	//@{ 一行書き出し //@}
-	void WriteLine( const unicode* buf, ulong siz, bool lastline );
+	void WriteLine( const unicode* buf, size_t siz, bool lastline );
 
 private:
 

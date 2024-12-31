@@ -29,12 +29,12 @@ public:
 
 	CharSetList();
 	const CsInfo& operator[](size_t i) const { return list_[i]; }
-	ulong size() const { return list_.size(); }
+	size_t size() const { return list_.size(); }
 	int defaultCs() const;
-	ulong defaultCsi() const;
-	ulong findCsi( int cs ) const;
+	size_t defaultCsi() const;
+	size_t findCsi( int cs ) const;
 	void EnrollCs( int _id, uint _num);
-	ulong GetCSIfromNumStr( const TCHAR *buf ) const;
+	size_t GetCSIfromNumStr( const TCHAR *buf ) const;
 	static int GetCSIFromComboBox( HWND dlg, const CharSetList& csl, uint OpenSaveMask );
 
 private:

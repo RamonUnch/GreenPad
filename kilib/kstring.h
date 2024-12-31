@@ -230,7 +230,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class A_WUNUSED String : public Object
+class A_WUNUSED String
 {
 public:
 

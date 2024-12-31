@@ -74,12 +74,12 @@ String IniFile::GetStr( const TCHAR* key, const TCHAR *defval ) const
 String IniFile::GetStrinSect( const TCHAR* key, const TCHAR* sect, const TCHAR *defval ) const
 {
 	RawString str;
-	ulong l=128;
+	DWORD l=128;
 	for(;;)
 	{
 		TCHAR* x = str.AllocMem(l);
 		if( !x ) return String(TEXT(""));
-		ulong s = ::GetPrivateProfileString( sect, key, defval, x, l, iniName_ );
+		DWORD s = ::GetPrivateProfileString( sect, key, defval, x, l, iniName_ );
 		if( s < l-1 )
 			break;
 		l <<= 1;

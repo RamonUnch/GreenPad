@@ -208,18 +208,20 @@ struct DArena
 
 	//DArena() {};
 
-	void Init( size_t reserved )
+	void Init( size_t reserved ) noexcept
 	{
 		dim  = pagesize();
 		res = reserved;
 
 		sta = (BYTE*)::VirtualAlloc(NULL, reserved, MEM_RESERVE, PAGE_READWRITE);
+		if( !sta ) // Unable to reserve
+			res = dim;
 		end = sta = (BYTE*)::VirtualAlloc(sta, dim, MEM_COMMIT, PAGE_READWRITE);
 		if( !sta ) // Alloc failed
 			dim = 0;
 	}
 
-	void *alloc(size_t sz)
+	void *alloc(size_t sz) noexcept
 	{
 		size_t pad = -(UINT_PTR)end & (sizeof(void*)-1);
 		if( sz+pad > dim - (end - sta) )
@@ -236,31 +238,31 @@ struct DArena
 		return reinterpret_cast<void*>(ret);
 	}
 
-	inline void freelast(void *ptr, size_t sz)
+	inline void freelast(void *ptr, size_t sz) noexcept
 	{
 		end -= sz;
 	}
 
-	void FreeAll()
+	void FreeAll() noexcept
 	{
 		::VirtualFree(sta, dim, MEM_DECOMMIT);
 		::VirtualFree(sta, 0, MEM_RELEASE);
 	}
 
-	size_t pagesize()
+	size_t pagesize() const noexcept
 	{
 		SYSTEM_INFO si; si.dwPageSize = 4096;
 		GetSystemInfo(&si);
 		return si.dwPageSize;
 	}
 
-//	void trim()
+//	void trim() noexcept
 //	{
 //		res = dim;
 //		::VirtualFree(sta+dim, 0, MEM_RELEASE);
 //	}
 
-	void reset()
+	void reset() noexcept
 	{
 		#ifdef _DEBUG
 		mem00(sta, dim);

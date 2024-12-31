@@ -15,7 +15,7 @@ struct ki::TextFileRPimpl : public TmpObject
 {
 //	inline TextFileRPimpl() {}
 
-	virtual size_t ReadBuf( unicode* buf, ulong siz )
+	virtual size_t ReadBuf( unicode* buf, size_t siz )
 		= 0;
 
 	virtual ~TextFileRPimpl() {}
@@ -62,7 +62,7 @@ struct rBasicUTF : public ki::TextFileRPimpl
 		return 0;
 	}
 
-	size_t ReadBuf( unicode* buf, ulong siz ) override A_FINAL
+	size_t ReadBuf( unicode* buf, size_t siz ) override A_FINAL
 	{
 		// 改行が出るまで読む
 		unicode *w=buf, *e=buf+siz-1;
@@ -95,7 +95,7 @@ struct rBasicUTF : public ki::TextFileRPimpl
 template<typename T, bool be>
 struct rUCS A_FINAL : public rBasicUTF
 {
-	rUCS( const uchar* b, ulong s )
+	rUCS( const uchar* b, size_t s )
 		: fb( reinterpret_cast<const T*>(b) )
 		, fe( reinterpret_cast<const T*>(b+(s/sizeof(T))*sizeof(T)) )
 		{ SkipBOMIfNeeded(); }
@@ -121,7 +121,7 @@ typedef rUCS<dbyte, true> rUtf16BE;
 template<bool be>
 struct rUtf32 A_FINAL: public rBasicUTF
 {
-	rUtf32( const uchar* b, ulong s )
+	rUtf32( const uchar* b, size_t s )
 		: fb( reinterpret_cast<const qbyte*>(b) )
 		, fe( reinterpret_cast<const qbyte*>(b+(s/sizeof(qbyte))*sizeof(qbyte)) )
 		, state(0)
@@ -172,7 +172,7 @@ typedef rUtf32<false> rUtf32LE;
 //-------------------------------------------------------------------------
 struct rUtf1 A_FINAL: public rBasicUTF
 {
-	rUtf1( const uchar* b, ulong s )
+	rUtf1( const uchar* b, size_t s )
 		: fb( b )
 		, fe( b+s )
 		, SurrogateLow( 0 ) { fb += GetAfterBOM(fb, fe, "\xF7\x64\x4C", 3); }
@@ -238,7 +238,7 @@ struct rUtf1 A_FINAL: public rBasicUTF
 //    0080 0000-7FFF FFFF   10011xxx 1xxxxxxx 1xxxxxxx 1xxxxxxx 1xxxxxxx
 struct rUtf9 A_FINAL: public rBasicUTF
 {
-	rUtf9( const uchar* b, ulong s )
+	rUtf9( const uchar* b, size_t s )
 		: fb( b )
 		, fe( b+s )
 		, SurrogateLow( 0 ) { fb += GetAfterBOM(fb, fe, "\x93\xFD\xFF", 3); }
@@ -298,7 +298,7 @@ struct rUtf9 A_FINAL: public rBasicUTF
 //-------------------------------------------------------------------------
 struct rUtfOFSS A_FINAL: public rBasicUTF
 {
-	rUtfOFSS( const uchar* b, ulong s )
+	rUtfOFSS( const uchar* b, size_t s )
 		: fb( b )
 		, fe( b+s )
 		, SurrogateLow( 0 ) { fb += GetAfterBOM(fb, fe, "\xC3\xBC\xFF",3); }
@@ -362,7 +362,7 @@ struct rUtfOFSS A_FINAL: public rBasicUTF
 
 struct rUtf5 A_FINAL: public rBasicUTF
 {
-	rUtf5( const uchar* b, ulong s )
+	rUtf5( const uchar* b, size_t s )
 		: fb( b )
 		, fe( b+s ) { fb += GetAfterBOM(fb, fe, "\x56\x45\x46\x46", 4); }
 
@@ -410,7 +410,7 @@ namespace
 
 struct rUtf7 A_FINAL: public rBasicUTF
 {
-	rUtf7( const uchar* b, ulong s )
+	rUtf7( const uchar* b, size_t s )
 		: fb( b )
 		, fe( b+s )
 		, rest( -1 )
@@ -526,7 +526,7 @@ namespace
 }
 struct rSCSU A_FINAL: public rBasicUTF
 {
-	rSCSU( const uchar* b, ulong s )
+	rSCSU( const uchar* b, size_t s )
 		: fb( b )
 		, fe( b+s )
 		, skip( 0 )
@@ -540,7 +540,7 @@ struct rSCSU A_FINAL: public rBasicUTF
 		}
 
 	const uchar *fb, *fe;
-	ulong skip;
+	size_t skip;
 	uchar active, mode;
 	uchar c, d;
 
@@ -676,7 +676,7 @@ namespace {
 #undef m1
 struct rBOCU1 A_FINAL: public rBasicUTF
 {
-	rBOCU1( const uchar* b, ulong s )
+	rBOCU1( const uchar* b, size_t s )
 		: fb( b )
 		, fe( b+s )
 		, skip( 0 )
@@ -688,7 +688,7 @@ struct rBOCU1 A_FINAL: public rBasicUTF
 		}
 
 	const uchar *fb, *fe;
-	ulong skip;
+	size_t skip;
 	unicode cp, pc;
 
 	void Skip() override { fb+=skip; skip=0; }
@@ -811,7 +811,7 @@ static const uchar ubcd_to_i8[256] = {
 }
 struct rUtfEBCDIC A_FINAL: public rBasicUTF
 {
-	rUtfEBCDIC( const uchar* b, ulong s )
+	rUtfEBCDIC( const uchar* b, size_t s )
 	: fb( b )
 	, fe( b+s )
 	, SurrogateLow( 0 )
@@ -909,9 +909,9 @@ namespace
 	}
 
 	// IMultiLanguage2::DetectInputCodepageはGB18030のことを認識できません。
-	static bool IsGB18030Like( const uchar* ptr, ulong siz, int refcs )
+	static bool IsGB18030Like( const uchar* ptr, size_t siz, int refcs )
 	{
-		ulong i;
+		size_t i;
 		int qbcscnt = 0; // valid Quad Byte Char Seq count
 		int dbcscnt = 0; // valid Double Byte Char Seq count
 		int invcnt = 0;  // invalid char seq count
@@ -1019,7 +1019,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 	enum { ANSIMODE=0, UTF8MODE=1, DBCSMODE=2 };
 
 	// 初期設定, Initialization
-	rMBCS( const uchar* b, ulong s, int c )
+	rMBCS( const uchar* b, size_t s, int c )
 		: fb( reinterpret_cast<const char*>(b) )
 		, fe( reinterpret_cast<const char*>(b+s) )
 		, cp( c==UTF8 ? UTF8N : c==GB18030Y ? GB18030 : c )
@@ -1033,7 +1033,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 			fb += rBasicUTF::GetAfterBOM((uchar*)fb, (uchar*)fe, "\x84\x31\x95\x33", 4);
 	}
 
-	size_t ReadBuf( unicode* buf, ulong siz ) override
+	size_t ReadBuf( unicode* buf, size_t siz ) override
 	{
 		// バッファの終端か、ファイルの終端の近い方まで読み込む
 		// Read to the end of the buffer or near the end of the file
@@ -1082,8 +1082,7 @@ struct rMBCS A_FINAL: public TextFileRPimpl
 		const char *pp = p - ( p < fe && p > fb && *(p-1)=='\r' && *(p) =='\n' );
 
 		// Unicodeへ変換, convertion to Unicode
-		ulong len;
-		len = conv( cp, 0, fb, pp-fb, buf, siz );
+		size_t len = conv( cp, 0, fb, pp-fb, buf, siz );
 
 		fb = p;
 
@@ -1232,10 +1231,10 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 	const CodeSet *GL;
 	CodeSet      G[4];
 	int gWhat; // 次の字は 1:GL/GR 2:G2 3:G3 で出力
-	ulong len;
+	size_t len;
 
 	// 初期化
-	rIso2022( const uchar* b, ulong s, bool f, bool hz,
+	rIso2022( const uchar* b, size_t s, bool f, bool hz,
 		CodeSet g0, CodeSet g1, CodeSet g2=ASCII, CodeSet g3=ASCII )
 		: fb( b )
 		, fe( b+s )
@@ -1292,7 +1291,7 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 			(*p&0x80  ? G[1] : *GL)));
 
 		char c[2];
-		ulong wt=1;
+		size_t wt=1;
 		switch( cs )
 		{
 		case ASCII:
@@ -1324,7 +1323,7 @@ struct rIso2022 A_FINAL: public TextFileRPimpl
 		len+=wt;
 	}
 
-	size_t ReadBuf( unicode* buf, ulong siz ) override
+	size_t ReadBuf( unicode* buf, size_t siz ) override
 	{
 		len=0;
 
@@ -1385,7 +1384,7 @@ TextFileR::~TextFileR()
 		delete impl_;
 }
 
-size_t TextFileR::ReadBuf( unicode* buf, ulong siz )
+size_t TextFileR::ReadBuf( unicode* buf, size_t siz )
 {
 	return impl_->ReadBuf( buf, siz );
 }
@@ -1437,7 +1436,7 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	if( !fp_.Open(fname, always) )
 		return false;
 	const uchar* buf = fp_.base();
-	const ulong  siz = fp_.size();
+	const size_t  siz = fp_.size();
 
 	// 必要なら自動判定
 	cs_ = AutoDetection( cs_, buf, siz );
@@ -1502,16 +1501,16 @@ bool TextFileR::Open( const TCHAR* fname, bool always )
 	return impl_ != NULL;
 }
 
-int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
+int TextFileR::AutoDetection( int cs, const uchar* ptr, size_t totsiz )
 {
 //-- まず、文字の出現回数の統計を取る
 
-	ulong siz = Min( totsiz, (ulong)(16<<10) ); // 先頭16KB
+	size_t siz = Min( totsiz, (size_t)(16<<10) ); // 先頭16KB
 
-	ulong  freq[256];
+	uint  freq[256];
 	bool bit8 = false;
 	mem00( freq, sizeof(freq) );
-	for( ulong i=0; i<siz; ++i )
+	for( size_t i=0; i<siz; ++i )
 	{
 		if( ptr[i] >= 0x80 )
 			bit8 = true;
@@ -1533,8 +1532,8 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 
 //-- 明示指定がある場合はここで終了
 
-	ulong bom4 = (ptr[0]<<24) | (ptr[1]<<16) | (ptr[2]<<8) | (ptr[3]);
-	ulong bom2 = (ptr[0]<<8)  | (ptr[1]);
+	uint bom4 = (ptr[0]<<24) | (ptr[1]<<16) | (ptr[2]<<8) | (ptr[3]);
+	uint bom2 = (ptr[0]<<8)  | (ptr[1]);
 
 	if( cs==UTF8 || cs==UTF8N )
 		cs = (bom4>>8==0xefbbbf ? UTF8 : UTF8N);
@@ -1610,7 +1609,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 
 //-- UTF-5 チェック
 
-	ulong u5sum = 0;
+	uint u5sum = 0;
 	for( uchar c='0'; c<='9'; ++c ) u5sum += freq[c];
 	for( uchar c='A'; c<='V'; ++c ) u5sum += freq[c];
 	if( siz == u5sum )
@@ -1711,7 +1710,7 @@ int TextFileR::AutoDetection( int cs, const uchar* ptr, ulong totsiz )
 	return cs ? cs : defCs;
 }
 
-void TextFileR::setLBfromFreq(ulong freq[256], uchar cr, uchar lf)
+void TextFileR::setLBfromFreq(uint freq[256], uchar cr, uchar lf)
 {
 	     if( freq[cr] > freq[lf]*2 ) lb_ = CR;
 	else if( freq[lf] > freq[cr]*2 ) lb_ = LF;
@@ -1744,11 +1743,11 @@ bool TextFileR::isEBCDIC( int cs )
 	return false;
 }
 
-bool TextFileR::IsValidUTF8( const uchar* ptr, ulong siz ) const
+bool TextFileR::IsValidUTF8( const uchar* ptr, size_t siz ) const
 {
 	// UTF8として読めるかどうかチェック
 	int mi=1; // mask index
-	for( ulong i=0; i<siz ; ++i )
+	for( size_t i=0; i<siz ; ++i )
 		if( --mi )
 		{	// remaining bytes must be 10xxxxxx
 			if( ptr[i]<0x80 || ptr[i]>=0xc0 )
@@ -1768,7 +1767,7 @@ bool TextFileR::IsValidUTF8( const uchar* ptr, ulong siz ) const
 	return true;
 }
 
-int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
+int TextFileR::MLangAutoDetection( const uchar* ptr, size_t siz )
 {
 	int cs = 0;
 #ifndef NO_MLANG
@@ -1845,7 +1844,7 @@ int TextFileR::MLangAutoDetection( const uchar* ptr, ulong siz )
 	return cs;
 }
 
-int TextFileR::chardetAutoDetection( const uchar* ptr, ulong siz )
+int TextFileR::chardetAutoDetection( const uchar* ptr, size_t siz )
 {
 	int cs = 0;
 #ifndef NO_CHARDET
@@ -2383,12 +2382,12 @@ bool TextFileR::IsNonUnicodeRange(qbyte u) const
 bool TextFileR::IsAscii(uchar c) const { return 0x20 <= c && c < 0x80; }
 bool TextFileR::IsSurrogateLead(qbyte w) const { return 0xD800 <= w && w <= 0xDBFF; }
 
-bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uChrSize, bool LE) const
+bool TextFileR::CheckUTFConfidence(const uchar* ptr, size_t siz, unsigned char uChrSize, bool LE) const
 {
 	qbyte uchr = '\0';
-	const ulong usize = siz / NZero(uChrSize);
-	ulong unconfidence = 0, confidence = 0, x;
-	ulong impossible = 0;
+	const size_t usize = siz / NZero(uChrSize);
+	size_t unconfidence = 0, confidence = 0, x;
+	size_t impossible = 0;
 	bool prevIsNull = false;
 	for( x=0; x < usize; x++ )
 	{
@@ -2443,10 +2442,10 @@ bool TextFileR::CheckUTFConfidence(const uchar* ptr, ulong siz, unsigned int uCh
 //=========================================================================
 struct ki::TextFileWPimpl : public TmpObject
 {
-	virtual void WriteLine( const unicode* buf, ulong siz )
+	virtual void WriteLine( const unicode* buf, size_t siz )
 		{ while( siz-- ) WriteChar( *buf++ ); }
 
-	virtual void WriteLB( const unicode* buf, ulong siz )
+	virtual void WriteLB( const unicode* buf, size_t siz )
 		{ WriteLine( buf, siz ); }
 
 	virtual void WriteChar( unicode ch )
@@ -2475,9 +2474,9 @@ struct TextFileWPimplWithBuf: public ki::TextFileWPimpl
 //		{};
 
 	// This function should assume it will have enough room in buf_
-	virtual void WriteBuf( const unicode* str, ulong len ) = 0;
+	virtual void WriteBuf( const unicode* str, size_t len ) = 0;
 
-	void WriteLine( const unicode* str, ulong len ) override A_FINAL
+	void WriteLine( const unicode* str, size_t len ) override A_FINAL
 	{
 		// Write by blocks,
 		// in case the line is larger than the temporary buffer.
@@ -2485,7 +2484,7 @@ struct TextFileWPimplWithBuf: public ki::TextFileWPimpl
 		{
 			// If we meet a High surrogate we must make a 1 unicode char smaller step.
 			// So that we do not split surrogate pairs in their middle before decoding.
-			ulong step = bstep_ - ISHIGHSURROGATE( str[bstep_-1] );
+			size_t step = bstep_ - ISHIGHSURROGATE( str[bstep_-1] );
 
 			// Actually write buffer to the file!
 			WriteBuf( str, step );
@@ -2508,7 +2507,7 @@ struct wUtf16LE A_FINAL: public TextFileWPimpl
 {
 	explicit wUtf16LE( FileW& w, bool bom ) : TextFileWPimpl(w)
 		{ if(bom){ unicode ch=0xfeff; fp_.Write(&ch,2); } }
-	void WriteLine( const unicode* buf, ulong siz ) override
+	void WriteLine( const unicode* buf, size_t siz ) override
 		{ fp_.Write(buf, siz*2); }
 };
 
@@ -2518,7 +2517,7 @@ struct wUtf16BE A_FINAL: public TextFileWPimpl
 		{ if(bom) WriteChar(0xfeff); }
 	void WriteChar( unicode ch ) override
 		{ fp_.NeedSpace(2), fp_.WriteCN(ch>>8), fp_.WriteCN(ch&0xff); }
-	void WriteLine( const unicode* buf, ulong siz ) override
+	void WriteLine( const unicode* buf, size_t siz ) override
 	{
 		while( siz >= 2 )
 		{
@@ -2538,7 +2537,7 @@ struct wUtf32LE A_FINAL: public TextFileWPimpl
 		{ if(bom) {unicode c=0xfeff; WriteLine(&c,1);} }
 //	void WriteChar( unicode ch )
 //		{ fp_.WriteC(ch&0xff), fp_.WriteC(ch>>8), fp_.WriteC(0), fp_.WriteC(0); }
-	virtual void WriteLine( const unicode* buf, ulong siz ) override
+	virtual void WriteLine( const unicode* buf, size_t siz ) override
 	{
 		while( siz-- )
 		{
@@ -2564,7 +2563,7 @@ struct wUtf32BE A_FINAL: public TextFileWPimpl
 		{ if(bom) {unicode c=0xfeff; WriteLine(&c,1);} }
 //	void WriteChar( unicode ch )
 //		{ fp_.WriteC(0), fp_.WriteC(0), fp_.WriteC(ch>>8), fp_.WriteC(ch&0xff); }
-	virtual void WriteLine( const unicode* buf, ulong siz ) override
+	virtual void WriteLine( const unicode* buf, size_t siz ) override
 	{
 		while( siz-- )
 		{
@@ -2588,7 +2587,7 @@ struct wWestISO88591 A_FINAL: public TextFileWPimpl
 {
 	explicit wWestISO88591( FileW& w ) : TextFileWPimpl(w) {}
 	void WriteChar( unicode ch ) override { fp_.WriteC(ch>0xff ? '?' : (uchar)ch); }
-	virtual void WriteLine( const unicode* buf, ulong siz ) override
+	virtual void WriteLine( const unicode* buf, size_t siz ) override
 	{
 		#define SHORTEN(ch) (ch)>0xff ? '?' : (uchar)(ch)
 		while( siz >= 4 )
@@ -3107,7 +3106,7 @@ struct wUTF8 A_FINAL: public TextFileWPimpl
 			fp_.Write( "\xEF\xBB\xBF", 3 );
 	}
 
-	void WriteLine( const unicode* str, ulong len ) override
+	void WriteLine( const unicode* str, size_t len ) override
 	{
 		// Because we start from UTF-16 we are limited to 4 byte UTF-8 sequence
 		// BOM + surrog pair = 65536-2048 + 1024*1024  = 1 112 064 codepoints
@@ -3191,7 +3190,7 @@ struct wUTF7 A_FINAL: public TextFileWPimpl
 			direct[moredirect[i]] = true;
 	}
 
-	void WriteLine( const unicode* str, ulong len ) override
+	void WriteLine( const unicode* str, size_t len ) override
 	{
 		// XxxxxxYyyyyyZzzz | zzWwwwwwUuuuuuVv | vvvvTtttttSsssss
 		bool mode_m = false;
@@ -3346,7 +3345,7 @@ struct wMBCS A_FINAL: public TextFileWPimpl
 	}
 
 	// Directly write into the FileW buffer (lower mem usage).
-	void WriteLine( const unicode* str, ulong len ) override
+	void WriteLine( const unicode* str, size_t len ) override
 	{
 		// WideCharToMultiByte API を利用した変換
 		fp_.WriteInCodepageFromUnicode( cp_, str, len );
@@ -3384,7 +3383,7 @@ struct wIso2022 A_FINAL: public TextFileWPimplWithBuf
 		}
 	}
 
-	void WriteBuf( const unicode* str, ulong len ) override
+	void WriteBuf( const unicode* str, size_t len ) override
 	{
 		// まず WideCharToMultiByte API を利用して変換
 		int r=::WideCharToMultiByte(cp_, 0, str, len, buf_, bsiz_,NULL,NULL);
@@ -3512,7 +3511,7 @@ struct wEucJp A_FINAL: public TextFileWPimplWithBuf
 	explicit wEucJp( FileW& w )
 		: TextFileWPimplWithBuf(w) {}
 
-	void WriteBuf( const unicode* str, ulong len ) override
+	void WriteBuf( const unicode* str, size_t len ) override
 	{
 		// まず WideCharToMultiByte API を利用して変換
 		int r = ::WideCharToMultiByte(932,0,str,len,buf_,bsiz_,NULL,NULL);
@@ -3559,7 +3558,7 @@ struct wIsoJp A_FINAL: public TextFileWPimplWithBuf
 		fp_.Write( "\x1b\x28\x42", 3 );
 	}
 
-	void WriteBuf( const unicode* str, ulong len ) override
+	void WriteBuf( const unicode* str, size_t len ) override
 	{
 		// まず WideCharToMultiByte API を利用して変換
 		int r = ::WideCharToMultiByte(932,0,str,len,buf_,bsiz_,NULL,NULL);
@@ -3622,13 +3621,13 @@ void TextFileW::Close()
 	fp_.Close();
 }
 
-void TextFileW::WriteLine( const unicode* buf, ulong siz, bool lastline )
+void TextFileW::WriteLine( const unicode* buf, size_t siz, bool lastline )
 {
 	impl_->WriteLine( buf, siz );
 	if( !lastline )
 	{
-		static const ulong lbLst[] = {0x0D, 0x0A, 0x000A000D};
-		static const ulong lbLen[] = {   1,    1,          2};
+		static const DWORD lbLst[] = {0x0D, 0x0A, 0x000A000D};
+		static const DWORD lbLen[] = {   1,    1,          2};
 		impl_->WriteLB(
 			reinterpret_cast<const unicode*>(&lbLst[lb_]), lbLen[lb_] );
 	}

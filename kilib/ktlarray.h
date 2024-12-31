@@ -32,8 +32,8 @@ public:
 	//		最初に確保する"メモリの"サイズ。
 	//		"配列の"サイズではないことに注意。
 	//@}
-	explicit storage( ulong allocSize )
-		: alen_( Max( allocSize, (ulong)1 ) )
+	explicit storage( size_t allocSize )
+		: alen_( Max( allocSize, (size_t)1 ) )
 		, len_ ( 0 )
 		, buf_ ( static_cast<T*>(mem().Alloc(alen_*sizeof(T))) )
 		{
@@ -64,7 +64,7 @@ public:
 	//	指定した値に基づき最大indexが変化します。
 	//	@param new_size 新しいサイズ。
 	//@}
-	bool ForceSize( ulong newSize )
+	bool ForceSize( size_t newSize )
 		{
 			if( newSize > alen_ )
 				if( !ReAllocate( newSize ) )
@@ -76,7 +76,7 @@ public:
 public:
 
 	//@{ 要素数	//@}
-	ulong size() const
+	size_t size() const
 		{ return len_; }
 
 	//@{ 要素取得 //@}
@@ -92,9 +92,9 @@ public:
 
 private:
 
-	bool ReAllocate( ulong siz )
+	bool ReAllocate( size_t siz )
 		{
-			ulong p = alen_*sizeof(T);
+			size_t p = alen_*sizeof(T);
 			T* newbuf = static_cast<T*>(mem().Alloc( siz*sizeof(T) ));
 			if( !newbuf ) return false;
 			alen_ = siz;
@@ -106,8 +106,8 @@ private:
 
 protected:
 
-	ulong alen_;
-	ulong len_;
+	size_t alen_;
+	size_t len_;
 	T*    buf_;
 };
 
@@ -123,7 +123,7 @@ protected:
 //=========================================================================
 
 template <class T>
-class A_WUNUSED olist : public Object
+class A_WUNUSED olist
 {
 private:
 

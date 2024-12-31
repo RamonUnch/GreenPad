@@ -405,7 +405,7 @@ void IMEManager::SetPos( HWND wnd, int x, int y )
 #endif // NO_IME
 }
 
-void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
+void IMEManager::GetString( HWND wnd, unicode** str, size_t* len )
 {
 #ifndef NO_IME
 	#ifdef USEGLOBALIME
@@ -464,7 +464,7 @@ void IMEManager::GetString( HWND wnd, unicode** str, ulong* len )
 #endif //NO_IME
 }
 
-void IMEManager::SetString( HWND wnd, unicode* str, ulong len )
+void IMEManager::SetString( HWND wnd, unicode* str, size_t len )
 {
 #ifndef NO_IME
 
@@ -644,6 +644,8 @@ void Window::SetFront( HWND hwnd )
 }
 
 //=========================================================================
+// Static Thunk allocator, we use a single 4K memory page for all thunks
+#ifndef NO_ASMTHUNK
 namespace
 {
 	// THUNK allocator variables
@@ -705,7 +707,7 @@ namespace
 
 		#if defined(_M_AMD64) || defined(WIN64)
 		*reinterpret_cast<dbyte*>   (thunk+ 0) = 0xb948;
-		*reinterpret_cast<WndImpl**>(thunk+ 2) = this;
+		*reinterpret_cast<void**>   (thunk+ 2) = vParam;
 		*reinterpret_cast<dbyte*>   (thunk+10) = 0xb848;
 		*reinterpret_cast<void**>   (thunk+12) = (LONG_PTR*)thunkProc;
 		*reinterpret_cast<dbyte*>   (thunk+20) = 0xe0ff;
@@ -719,10 +721,10 @@ namespace
 		#endif
 
 		// Make thunk read+execute only, for safety.
-		::VirtualProtect(thunks_array, TOT_THUNK_SIZE, PAGE_EXECUTE_READ, &oldprotect);
+		::VirtualProtect(thunks_array, TOT_THUNK_SIZE, PAGE_EXECUTE, &oldprotect);
 		::FlushInstructionCache( GetCurrentProcess(), thunks_array, TOT_THUNK_SIZE );
 
-		LOGGER("THUNK ALLOC" );
+		LOGGERF( TEXT("THUNK ALLOC at %lX"), (UINT)(UINT_PTR)thunk );
 		return thunk;
 	}
 	static void ReleaseThunk(byte *thunk)
@@ -737,16 +739,18 @@ namespace
 		free_idx = (WORD)( (thunk - thunks_array) / THUNK_SIZE );
 		--numthunks;
 
-		::VirtualProtect(thunks_array, TOT_THUNK_SIZE, PAGE_EXECUTE_READ, &oldprotect);
+		::VirtualProtect(thunks_array, TOT_THUNK_SIZE, PAGE_EXECUTE, &oldprotect);
 
 		// Everything is free!
 		if (numthunks == 0) {
 			::VirtualFree( thunks_array, 0, MEM_RELEASE );
 			thunks_array = NULL;
 		}
-		LOGGER("THUNK FREE" );
+		LOGGERF( TEXT("THUNK FREE at %lX"), (UINT)(UINT_PTR)thunk );
 	}
 }
+#endif //NO_ASMTHUNK
+
 WndImpl::WndImpl( LPCTSTR className, DWORD style, DWORD styleEx )
 	: className_( className )
 	, style_    ( style )
@@ -757,6 +761,7 @@ WndImpl::WndImpl( LPCTSTR className, DWORD style, DWORD styleEx )
 {
 }
 
+//=========================================================================
 WndImpl::~WndImpl()
 {
 	// ƒEƒCƒ“ƒhƒE‚ð”jŠü‚µ–Y‚ê‚Ä‚½‚ç•Â‚¶‚é
