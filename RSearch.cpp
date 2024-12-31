@@ -109,7 +109,7 @@ RegToken RegLexer::GetToken()
 //@}
 //=========================================================================
 
-enum RegType
+enum RegTypeEnum
 {
 	N_Char,     // 普通の文字 (ch)
 	N_Class,    // [...] など (cls)
@@ -120,6 +120,7 @@ enum RegType
 	N_01,       // ?          (left)
 	N_Empty     // 空         (--)
 };
+typedef byte RegType;
 
 struct RegClass: public Object
 {
@@ -139,14 +140,14 @@ struct RegNode: public Object
 {
 	RegNode()
 	: type ( N_Char )
+	, cmpcls (false)
 	, ch   ( L'\0' )
 	, cls  ( NULL )
-	, cmpcls (false)
 	, left (NULL)
 	, right (NULL) { }
 
 	explicit RegNode( RegType t, RegClass *kls, bool cmp )
-	: type(t), ch(L'\0'), cls(kls), cmpcls(cmp)
+	: type(t), cmpcls(cmp), ch(L'\0'), cls(kls)
 	, left (NULL), right (NULL) { }
 
 	~RegNode()
@@ -155,9 +156,9 @@ struct RegNode: public Object
 		if( right ) delete right;
 	}
 	RegType           type; // このノードの種類
+	bool            cmpcls; // ↑補集合かどうか
 	wchar_t             ch; // 文字
 	uptr<RegClass>     cls; // 文字集合
-	bool            cmpcls; // ↑補集合かどうか
 	RegNode          *left; // 左の子
 	RegNode         *right; // 右の子
 };
@@ -396,17 +397,20 @@ RegNode* RegParser::expr()
 
 struct RegTrans : public Object
 {
-	enum Type { Epsilon, Class, Char };
-//	RegTrans() {} ;
-	explicit RegTrans(Type t, RegClass *rc, bool cmp, int tto, RegTrans *nx)
-		: type(t), cls(rc), cmpcls(cmp), to(tto), next(nx) {}
+	enum TypeEnum { Epsilon, Class, Char };
+	typedef byte Type;
+
 	Type           type;
-	uptr<RegClass>  cls; // この文字集合
-	                     // orEpsilon が来たら
 	bool         cmpcls;
 	int              to; // 状態番号toの状態へ遷移
-
+	uptr<RegClass>  cls; // この文字集合
+	                     // orEpsilon が来たら
 	uptr<RegTrans> next; // 連結リスト
+
+//	RegTrans() {} ;
+	explicit RegTrans(Type t, RegClass *rc, bool cmp, int tto, RegTrans *nx)
+		: type(t), cmpcls(cmp), to(tto), cls(rc), next(nx) {}
+
 /*
 	template<class Cmp>
 	bool match_i( wchar_t c, Cmp )
