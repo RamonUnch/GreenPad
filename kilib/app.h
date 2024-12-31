@@ -151,7 +151,7 @@ private:
 private:
 	const MYVERINFO osver_;
 	int             exitcode_;
-	ulong           loadedModule_;
+	uint            loadedModule_;
 	const HINSTANCE hInst_;
 	HINSTANCE       hOle32_;
 	HINSTANCE       hInstComCtl_;

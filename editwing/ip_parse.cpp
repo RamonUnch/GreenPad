@@ -187,7 +187,7 @@ struct Keyword
 	ushort      len;
 	unicode     str[1];
 
-	static Keyword *New(Arena *ar,  const unicode *s, ulong ll )
+	static Keyword *New(Arena *ar,  const unicode *s, size_t ll )
 	{
 		ushort l = static_cast<ushort>(ll);
 		Keyword *x = reinterpret_cast<Keyword *>( ar->alloc( (sizeof(Keyword) + l * sizeof(unicode)) ) );
@@ -210,7 +210,7 @@ struct Keyword
 // サポート関数。Unicodeテキスト同士の比較
 //-------------------------------------------------------------------------
 
-static bool compare_s(const unicode* a,const unicode* b, ulong l)
+static bool compare_s(const unicode* a,const unicode* b, size_t l)
 {
 	// 大文字小文字を区別, Case sensitive
 	while( l-- )
@@ -219,7 +219,7 @@ static bool compare_s(const unicode* a,const unicode* b, ulong l)
 	return true;
 }
 
-static bool compare_i(const unicode* a,const unicode* b,ulong l)
+static bool compare_i(const unicode* a,const unicode* b,size_t l)
 {
 	// 大文字小文字を区別しない（雑）, Case insensitive (misc)
 	while( l-- )
@@ -246,9 +246,9 @@ class TagMap
 
 public:
 
-	TagMap( const unicode* cb, ulong cblen,
-		    const unicode* ce, ulong celen,
-		    const unicode* lb, ulong lblen,
+	TagMap( const unicode* cb, size_t cblen,
+		    const unicode* ce, size_t celen,
+		    const unicode* lb, size_t lblen,
 		    bool q1, bool q2, bool esc )
 		: esc_( esc )
 		, q1_ ( q1 )
@@ -262,9 +262,9 @@ public:
 		map_[L'\''] = q1;
 		map_[L'\"'] = q2;
 		map_[L'\\'] = esc;
-		if( celen!=0 ){ map_[*ce]=true; tag_[0]=Keyword::New(&ar, ce,celen); }
-		if( cblen!=0 ){ map_[*cb]=true; tag_[1]=Keyword::New(&ar, cb,cblen); }
-		if( lblen!=0 ){ map_[*lb]=true; tag_[2]=Keyword::New(&ar, lb,lblen); }
+		if( celen!=0 && *ce < 0x80 ){ map_[*ce]=true; tag_[0]=Keyword::New(&ar, ce,celen); }
+		if( cblen!=0 && *cb < 0x80 ){ map_[*cb]=true; tag_[1]=Keyword::New(&ar, cb,cblen); }
+		if( lblen!=0 && *lb < 0x80 ){ map_[*lb]=true; tag_[2]=Keyword::New(&ar, lb,lblen); }
 	}
 
 //	~TagMap()
@@ -345,19 +345,18 @@ public:
 // Hash table for fast determination of whether a given string is a keyword
 //-------------------------------------------------------------------------
 // Should be a power of two!
-#define HTABLE_SIZE 4096
+#define HTABLE_SIZE 2048
 class KeywordMap
 {
 	Keyword*          backet_[HTABLE_SIZE];
 	Arena ar;
 	size_t elems_;
-	bool (*compare_)(const unicode*,const unicode*,ulong);
-	uint  (*hash)( const unicode* a, ulong al );
+	bool (*compare_)(const unicode*,const unicode*,size_t);
+	uint  (*hash)( const unicode* a, size_t al );
 public:
 
 	KeywordMap( bool bCaseSensitive )
-		: /*dustbox_( 32 )*/
-		  ar ( NULL, 0 )
+		: ar ( NULL, 0 )
 		, elems_ ( 0 )
 		, compare_( bCaseSensitive ? compare_s : compare_i )
 		, hash    ( bCaseSensitive ? hash_s : hash_i )
@@ -369,7 +368,6 @@ public:
 	void SetArenaBufSize( size_t count )
 	{
 		BYTE *buf = NULL;
-		//count *= sizeof(unicode);
 		if(count != 0)
 			buf = (BYTE*)malloc(count);
 
@@ -383,9 +381,17 @@ public:
 	{
 		// 解放
 		free( ar.sta );
+//	#ifdef _DEBUG
+//		if( elems_ )
+//		{
+//			LOGGER( "KEYWORD HASH MAP:" );
+//			for( size_t i =0; i < countof(backet_); i++ )
+//				LOGGERF( TEXT("%lu"), (DWORD)backet_[i] );
+//		}
+//	#endif
 	}
 
-	void AddKeyword( const unicode* str, ulong len )
+	void AddKeyword( const unicode* str, size_t len )
 	{
 		// データ登録
 		Keyword* x = Keyword::New(&ar, str,len);
@@ -411,7 +417,7 @@ public:
 		++elems_;
 	}
 
-	uchar inline isKeyword( const unicode* str, ulong len )
+	uchar inline isKeyword( const unicode* str, size_t len ) const
 	{
 		// 登録されているキーワードと一致するか？
 		if( elems_ ) // Nothing to do for empty keyword list.
@@ -423,7 +429,7 @@ public:
 
 private:
 
-	static uint hash_i( const unicode* a, ulong al )
+	static uint hash_i( const unicode* a, size_t al )
 	{
 		// 12bitに潰すめっちゃ雑なハッシュ関数
 		// ルーチン分けるの面倒なので、大文字小文字は常に区別されない。(^^;
@@ -438,7 +444,7 @@ private:
 		return h&(HTABLE_SIZE-1);
 	}
 
-	static uint hash_s( const unicode* a, ulong al )
+	static uint hash_s( const unicode* a, size_t al )
 	{
 		// case-sensitive
 		uint h=0,i=0;
@@ -466,9 +472,9 @@ public:
 public:
 	// 初期化１
 	Parser(
-		const unicode* cb, ulong cblen,
-		const unicode* ce, ulong celen,
-		const unicode* lb, ulong lblen,
+		const unicode* cb, size_t cblen,
+		const unicode* ce, size_t celen,
+		const unicode* lb, size_t lblen,
 		bool q1, bool q2, bool esc,
 		bool casesensitive
 	)
@@ -486,7 +492,7 @@ public:
 	}
 
 	// 初期化２：キーワード追加
-	void AddKeyword( const unicode* str, ulong len )
+	void AddKeyword( const unicode* str, size_t len )
 	{
 		kwd_.AddKeyword( str, len );
 	}
@@ -733,7 +739,7 @@ Document::~Document()
 	// delete parser_ が出来なくなる。^^;
 }
 
-void Document::SetKeyword( const unicode* defbuf, ulong siz )
+void Document::SetKeyword( const unicode* defbuf, size_t siz )
 {
 	// BOMがあったらスキップ
 	if( siz!=0 && *defbuf==0xfeff )
@@ -741,11 +747,11 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 
 	// 読み込み準備
 	const unicode* str=NULL;
-	ulong          len=0;
+	size_t       len=0;
 	UniReader r( defbuf, siz, &str, &len );
 	bool          flags[] = {false,false,false,false};
 	const unicode* tags[] = {NULL,NULL,NULL};
-	ulong        taglen[] = {0,0,0};
+	size_t       taglen[] = {0,0,0};
 	if( siz != 0 )
 	{
 		if( *defbuf != L'0' && *defbuf != L'1')
@@ -757,7 +763,7 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 		// １行目:フラグ
 		//   case? q1? q2? esc?
 		r.getLine();
-		for( ulong i=0; i<len; ++i )
+		for( size_t i=0; i<len; ++i )
 			flags[i] = (str[i]==L'1');
 
 		// ２～４行目
@@ -771,9 +777,9 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 		}
 	}
 
-	if (taglen[2])
+	if( taglen[2] )
 	{// Copy single line comment string (LB) in a convenient buffer.
-		ulong cstrlen=Min(taglen[2], (ulong)countof(CommentStr_));
+		size_t cstrlen=Min(taglen[2], countof(CommentStr_));
 		memmove(CommentStr_, tags[2], cstrlen*sizeof(*CommentStr_));
 		CommentStr_[cstrlen]='\0'; // be sure to NULL terminate
 	}
@@ -820,7 +826,12 @@ void Document::SetKeyword( const unicode* defbuf, ulong siz )
 	}
 
 	// 全行解析し直し
+	//DWORD otime = GetTickCount();
 	ReParse( 0, tln()-1 );
+
+	//TCHAR buf[128];
+	//wsprintf(buf, TEXT("%lu ms"), GetTickCount() - otime);
+	//MessageBox(NULL, NULL, buf, 0);
 
 	// 変更通知
 	Fire_KEYWORDCHANGE();

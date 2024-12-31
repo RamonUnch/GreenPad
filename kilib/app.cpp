@@ -407,7 +407,11 @@ bool App::isNewOpenSaveDlg() const
 //=========================================================================
 
 extern int kmain();
-
+#ifdef WIN64
+#define ARENA_RES (1024*1024*8)
+#else
+#define ARENA_RES (1024*1024)
+#endif
 namespace ki
 {
 	DArena TS;
@@ -419,7 +423,7 @@ namespace ki
 		// C++のローカルオブジェクトの破棄順序の仕様に
 		// 自信がないので(^^;、スコープを利用して順番を強制
 		// たぶん宣言の逆順だとは思うんだけど…
-		TS.Init(1024*1024);
+		TS.Init( ARENA_RES );
 
 		LOGGER( "StartUp" );
 		App myApp;

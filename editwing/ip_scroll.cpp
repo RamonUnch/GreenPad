@@ -136,16 +136,15 @@ namespace
 {
 	static int Log10( ulong n )
 	{
-		const static ulong power_of_ten[] =
-			{ 1, 10, 100, 1000, 10000, 100000, 1000000,
-			  10000000, 100000000, 1000000000 }; // 10^0 Å` 10^9
-		int c=3;
-		if( power_of_ten[9] <= n )
-			c=10;
-		else
-			while( power_of_ten[c] <= n )
-				c++;
-		return c; // 3<=c<=10 s.t. 10^(c-1) <= n < 10^c
+		// return Max( 3, Log10(n) + 1 );
+		ulong p = 1000;
+		int i;
+		for( i = 3; i < ULONG_DIGITS; i++ )
+		{
+			if( n < p ) return i;
+			p *= 10;
+		}
+		return i;
 	}
 }
 

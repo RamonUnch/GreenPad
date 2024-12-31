@@ -27,7 +27,7 @@ namespace ki {
 //@}
 //=========================================================================
 
-class Clipboard : public Object
+class Clipboard
 {
 public:
 
@@ -269,7 +269,7 @@ static HRESULT CreateEnumFormatEtc(UINT nNumFormats, const FORMATETC *pFormatEtc
 }
 
 // Class for a minimalist Text/File drag and drop data object
-class IDataObjectTxt A_FINAL: public IDataObject, public Object
+class IDataObjectTxt A_FINAL: public IDataObject
 {
 public:
 	IDataObjectTxt(const unicode *str, size_t len)

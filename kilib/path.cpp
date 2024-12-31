@@ -95,7 +95,7 @@ Path& Path::BeDirOnly()
 		if( *p==TEXT('\\') || *p==TEXT('/') )
 			lastslash = p;
 
-	TrimRight( len() - ulong((lastslash+1)-c_str()) );
+	TrimRight( len() - size_t((lastslash+1)-c_str()) );
 	return *this;
 }
 
@@ -108,7 +108,7 @@ Path& Path::BeDriveOnly()
 			if( *p==TEXT('\\') || *p==TEXT('/') )
 				break;
 		if( *p!=TEXT('\0') )
-			TrimRight( len() - ulong((p+1)-c_str()) );
+			TrimRight( len() - size_t((p+1)-c_str()) );
 	}
 	return *this;
 }

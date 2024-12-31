@@ -236,14 +236,14 @@ int CharSetList::defaultCs() const
 */
 }
 
-ulong CharSetList::defaultCsi() const
+size_t CharSetList::defaultCsi() const
 {
 	return findCsi( defaultCs() );
 }
 
-ulong CharSetList::findCsi( int cs ) const
+size_t CharSetList::findCsi( int cs ) const
 {
-	for( ulong i=0,ie=list_.size(); i<ie; ++i )
+	for( size_t i=0,ie=list_.size(); i<ie; ++i )
 		if( list_[i].ID == cs )
 			return i;
 
@@ -251,12 +251,12 @@ ulong CharSetList::findCsi( int cs ) const
 	return 0xf0f00000 | (cs & 0xfffff);
 }
 
-ulong CharSetList::GetCSIfromNumStr( const TCHAR *buf ) const
+size_t CharSetList::GetCSIfromNumStr( const TCHAR *buf ) const
 {
 	// Clamp cs
 	int cs = Clamp(-65535, String::GetInt(buf), +65535);
 	// Try to find value in the charset list
-	ulong csi = findCsi( cs );
+	size_t csi = findCsi( cs );
 
 	return csi;
 }
@@ -268,7 +268,7 @@ int CharSetList::GetCSIFromComboBox( HWND dlg, const CharSetList& csl, uint Open
 	int i = ComboBox(dlg,IDC_CODELIST).GetCurSel();
 	if( 0 <= i && i < (int)csl.size() )
 	{
-		ulong j;
+		size_t j;
 		for(j=0; ;++j,--i)
 		{
 			while( !(csl[j].type & OpenSaveMask) ) // 1:Open, 2:Save, 3:Both
@@ -291,7 +291,7 @@ int CharSetList::GetCSIFromComboBox( HWND dlg, const CharSetList& csl, uint Open
 			return csl.GetCSIfromNumStr(buf);
 
 		// Last resort, Try to find the string in the whole csl list...
-		ulong j;
+		size_t j;
 		for(j=0; j<csl.size() ;++j)
 		{
 			if( !my_lstrcmpiAscii(csl[j].shortName, buf)
@@ -571,7 +571,7 @@ UINT_PTR CALLBACK OpenFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 		// コンボボックスを埋めて、「自動選択」を選ぶ
 		ComboBox cb( dlg, IDC_CODELIST );
 		const CharSetList& csl = pThis->csl_;
-		for( ulong i=0; i<csl.size(); ++i )
+		for( size_t i=0; i<csl.size(); ++i )
 			if( csl[i].type & 2 ) // 2:=LOAD
 				cb.Add( csl[i].longName );
 		cb.Select( csl[0].longName );
@@ -699,7 +699,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 			ComboBox cb( dlg, IDC_CODELIST );
 			const CharSetList& csl = pThis->csl_;
 
-			for( ulong i=0; i<csl.size(); ++i )
+			for( size_t i=0; i<csl.size(); ++i )
 				if( csl[i].type & 1 ) // 1:=SAVE
 					cb.Add( csl[i].longName );
 
@@ -725,7 +725,7 @@ UINT_PTR CALLBACK SaveFileDlg::OfnHook( HWND dlg, UINT msg, WPARAM wp, LPARAM lp
 				TEXT("CRLF")
 			};
 
-			for( ulong i=0; i<countof(lbList); ++i )
+			for( size_t i=0; i<countof(lbList); ++i )
 				cb.Add( lbList[i] );
 			cb.Select( lbList[Clamp(0, pThis->lb_, 2)] );
 		}
@@ -797,7 +797,7 @@ void ReopenDlg::on_init()
 {
 	// コンボボックスを埋めて、「自動選択」を選ぶ
 	ComboBox cb( hwnd(), IDC_CODELIST );
-	for( ulong i=0; i<csl_.size(); ++i )
+	for( size_t i=0; i<csl_.size(); ++i )
 		if( csl_[i].type & 2 ) // 2:=LOAD
 			cb.Add( csl_[i].longName );
 

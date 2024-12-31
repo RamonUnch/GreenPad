@@ -28,7 +28,7 @@ class CurEvHandler
 	virtual void on_move( const DPos& c, const DPos& s ) {}
 	virtual void on_char( Cursor& cur, unicode wch );
 	virtual void on_key( Cursor& cur, int vk, bool sft, bool ctl );
-	virtual void on_ime( Cursor& cur, unicode* str, ulong len );
+	virtual void on_ime( Cursor& cur, unicode* str, size_t len );
 };
 
 //=========================================================================
@@ -193,10 +193,10 @@ public:
 	void GotoMatchingBrace( bool select );
 
 	// テキスト書き換え
-	void Input( const unicode* str, ulong len );
-	void Input( const char* str, ulong len );
-	void InputAt( const unicode *str, ulong len, int x, int y );
-	void InputAt( const char *str, ulong len, int x, int y );
+	void Input( const unicode* str, size_t len );
+	void Input( const char* str, size_t len );
+	void InputAt( const unicode *str, size_t len, int x, int y );
+	void InputAt( const char *str, size_t len, int x, int y );
 	void InputChar( unicode ch );
 	void InputUTF32( qbyte utf32 );
 	void Del(bool wide);

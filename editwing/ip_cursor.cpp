@@ -342,7 +342,7 @@ void CurEvHandler::on_char( Cursor& cur, unicode wch )
 	cur.InputChar( wch );
 }
 
-void CurEvHandler::on_ime( Cursor& cur, unicode* str, ulong len )
+void CurEvHandler::on_ime( Cursor& cur, unicode* str, size_t len )
 {
 	cur.Input( str, len );
 }
@@ -424,7 +424,7 @@ void Cursor::on_ime_composition( LPARAM lp )
 	if( !bRO_ && (lp&GCS_RESULTSTR) )
 	{
 		unicode* str=NULL;
-		ulong    len=0;
+		size_t    len=0;
 		ime().GetString( caret_.hwnd(), &str, &len );
 		if( str )
 		{
@@ -482,7 +482,7 @@ void Cursor::InputChar( unicode ch )
 	}
 }
 
-void Cursor::Input( const unicode* str, ulong len )
+void Cursor::Input( const unicode* str, size_t len )
 {
 	if( cur_==sel_ )
 		doc_.Execute( Insert( cur_, str, len ) );
@@ -507,7 +507,7 @@ void Cursor::InputUTF32( qbyte utf32 )
 	}
 }
 
-void Cursor::Input( const char* str, ulong len )
+void Cursor::Input( const char* str, size_t len )
 {
 	unicode* ustr = (unicode *)TS.alloc( len * 4 * sizeof(unicode) );
 	if(!ustr) return;
@@ -515,7 +515,7 @@ void Cursor::Input( const char* str, ulong len )
 	Input( ustr, len );
 	TS.freelast( ustr, len * 4 * sizeof(unicode) );
 }
-void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
+void Cursor::InputAt( const unicode *str, size_t len, int x, int y )
 {
 	VPos np;
 	view_.GetVPos( x, y, &np );
@@ -583,7 +583,7 @@ void Cursor::InputAt( const unicode *str, ulong len, int x, int y )
 	}
 
 }
-void Cursor::InputAt( const char* str, ulong len, int x, int y )
+void Cursor::InputAt( const char* str, size_t len, int x, int y )
 {
 	unicode* ustr = (unicode *)TS.alloc( len * 4 * sizeof(unicode) );
 	if(!ustr) return;

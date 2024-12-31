@@ -79,7 +79,7 @@ void Document::Fire_TEXTUPDATE
 	else
 	{
 		// 全部にイベント通知
-		for( ulong i=0, ie=pEvHan_.size(); i<ie; ++i )
+		for( size_t i=0, ie=pEvHan_.size(); i<ie; ++i )
 			pEvHan_[i]->on_text_update( s, e, e2, reparsed, nmlcmd );
 	}
 }
@@ -89,7 +89,7 @@ void Document::Fire_KEYWORDCHANGE()
 	AutoLock lk(this);
 
 	// 全部にイベント通知
-	for( ulong i=0, ie=pEvHan_.size(); i<ie; ++i )
+	for( size_t i=0, ie=pEvHan_.size(); i<ie; ++i )
 		pEvHan_[i]->on_keyword_change();
 }
 
@@ -99,7 +99,7 @@ void Document::Fire_MODIFYFLAGCHANGE()
 
 	// 全部にイベント通知
 	bool b = urdo_.isModified();
-	for( ulong i=0, ie=pEvHan_.size(); i<ie; ++i )
+	for( size_t i=0, ie=pEvHan_.size(); i<ie; ++i )
 		pEvHan_[i]->on_dirtyflag_change( b );
 }
 
@@ -137,7 +137,7 @@ UnReDoChain::UnReDoChain()
 	: savedPos_( &headTail_ )
 	, lastOp_  ( &headTail_ )
 	, num_     ( 0 )
-	, limit_   ( static_cast<ulong>(-1) )
+	, limit_   ( static_cast<size_t>(-1) )
 {
 }
 
@@ -166,7 +166,7 @@ void UnReDoChain::Clear()
 
 void UnReDoChain::SetLimit( long lim )
 {
-	limit_ = Max( (ulong)1, ulong(lim) );
+	limit_ = Max( (size_t)1, (size_t)lim );
 }
 
 inline void UnReDoChain::Undo( Document& doc )
@@ -583,7 +583,7 @@ bool Document::InsertingOperation
 	// 指定文字列を改行で切り分ける準備
 	// Prepare to separate the specified string with a newline.
 	const unicode* lineStr=NULL;
-	ulong lineLen=0;
+	size_t lineLen=0;
 	UniReader r( str, len, &lineStr, &lineLen );
 
 	// 一行目…, The first line...
@@ -748,7 +748,7 @@ Command* MacroCommand::operator()( Document& doc ) const
 	if( !undo ) return NULL;
 	undo->arr_.ForceSize( size() );
 
-	ulong e = arr_.size();
+	size_t e = arr_.size();
 	if( e > 4 )
 	{
 		// Accumulate TEXTUPDATE events
@@ -757,7 +757,7 @@ Command* MacroCommand::operator()( Document& doc ) const
 		undo->arr_[e-1] = (*arr_[0])(doc); // 1st command
 
 		doc.acc_Fire_TEXTUPDATE_begin();
-		for( ulong i=1; i<e-1; ++i )
+		for( size_t i=1; i<e-1; ++i )
 			undo->arr_[e-i-1] = (*arr_[i])(doc);
 		doc.acc_Fire_TEXTUPDATE_end();
 
@@ -765,7 +765,7 @@ Command* MacroCommand::operator()( Document& doc ) const
 	}
 	else
 	{
-		for( ulong i=0; i<e; ++i )
+		for( size_t i=0; i<e; ++i )
 			undo->arr_[e-i-1] = (*arr_[i])(doc);
 	}
 
@@ -835,7 +835,7 @@ void Document::OpenFile( TextFileR& tf )
 	buf_sz = Min( buf_sz, (size_t)(tf.size()+16)<<1 );
 	unicode *buf=NULL;
 	if( buf_sz > SBUF_SZ )
-		buf = (unicode *)malloc( sizeof(unicode) * buf_sz );
+		buf = (unicode *)TS.alloc( sizeof(unicode) * buf_sz );
 	if( !buf )
 	{
 		buf = sbuf;
@@ -876,7 +876,7 @@ void Document::OpenFile( TextFileR& tf )
 	setBusyFlag(false);
 //	fail:
 	if( buf != sbuf )
-		free( buf );
+		TS.freelast( buf, sizeof(unicode) * buf_sz );
 
 //	MessageBox(GetActiveWindow(),  SInt2Str(GetTickCount()-otime).c_str(), TEXT("Time in ms:"), 0);
 	// イベント発火, Event firing

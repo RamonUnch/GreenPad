@@ -201,12 +201,12 @@ public:
 	void SetPos( HWND wnd, int x, int y );
 
 	//@{ 確定文字列ゲット。受け取ったら FreeString すること。 //@}
-	void GetString( HWND wnd, unicode** str, ulong* len );
+	void GetString( HWND wnd, unicode** str, size_t* len );
 	
 	static void FreeString( unicode *str ) { free( str ); }
 
 	//@{ 再変換 //@}
-	void SetString( HWND wnd, unicode* str, ulong len );
+	void SetString( HWND wnd, unicode* str, size_t len );
 
 	//@{ GlobalIMEを利用可能状態にする //@}
 	void EnableGlobalIME( bool enable );
