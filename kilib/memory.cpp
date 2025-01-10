@@ -17,7 +17,7 @@ using namespace ki;
 	static int allocCounter = 0;
 	static int smallAllocSize = 0;
 	static int smallDeAllocSize = 0;
-	static ulong smallAllocs_hist[SMALL_MAX];
+	static ulong smallAllocs_hist[SMALL_MAX/2];
 	#endif // _DEBUG
 
 	static uchar ignorecnt=0;
@@ -577,12 +577,11 @@ MemoryManager::MemoryManager()
 #endif
 	// メモリプールをZEROクリア
 	#ifndef STACK_MEM_POOLS
-	static MemoryManager::FixedSizeMemBlockPool staticpools[ SMALL_MAX ];
+	static MemoryManager::FixedSizeMemBlockPool staticpools[ SMALL_MAX/2 ];
 	pools_ = staticpools;
 	#endif
-//	pools_ = new FixedSizeMemBlockPool[ SMALL_MAX ];
 	#ifdef STACK_MEM_POOLS
-	mem00( pools_, /*sizeof(pools_)*/ sizeof(FixedSizeMemBlockPool) * SMALL_MAX );
+	mem00( pools_, /*sizeof(pools_)*/ sizeof(FixedSizeMemBlockPool) * (SMALL_MAX/2) );
 	#endif
 
 	// 唯一のインスタンスは私です
@@ -592,7 +591,7 @@ MemoryManager::MemoryManager()
 MemoryManager::~MemoryManager()
 {
 	// 構築済みメモリプールを全て解放, Release all built memory pools
-	for( int i=0; i<SMALL_MAX; ++i )
+	for( int i=0; i<SMALL_MAX/2; ++i )
 		if( pools_[i].isValid() )
 			pools_[i].Destruct();
 
@@ -610,7 +609,7 @@ MemoryManager::~MemoryManager()
 	}
 	LOGGER( "small allocs histogram:" );
 	TCHAR tmp[ULONG_DIGITS+1];
-	for(int i=0; i<SMALL_MAX; i++)
+	for(int i=0; i<countof(smallAllocs_hist); i++)
 		LOGGERS( Ulong2lStr(tmp, smallAllocs_hist[i]) );
 #endif // _DEBUG
 #endif // SUPERTINY
@@ -618,21 +617,20 @@ MemoryManager::~MemoryManager()
 
 void* A_HOT MemoryManager::Alloc( size_t siz )
 {
-//#ifdef MEM_ALIGN
-//	siz = (siz+MEM_ALIGN-1) & ~(MEM_ALIGN-1);
-//#endif
+	siz = siz + (siz&1);
+	if( siz & 1 ) MessageBox(NULL, NULL, NULL, 0);
 #if defined(SUPERTINY) && defined(_DEBUG)
 	++allocCounter;
 	smallAllocSize += siz;
 	if( siz < SMALL_MAX )
-		smallAllocs_hist[siz]++;
+		smallAllocs_hist[(siz-1)/2]++;
 //	LOGGERF( TEXT("Alloc(%lu) - %lu tot"), siz, smallAllocSize );
 #endif
 
 	// サイズが零か大きすぎるなら
 	// デフォルトの new 演算子に任せる
-	uint i = static_cast<uint>( siz-1 );
-	if( i >= SMALL_MAX )
+	uint i = static_cast<uint>( (siz-1)/2 );
+	if( i >= SMALL_MAX/2 )
 		return malloc( siz );
 
 	// マルチスレッド対応
@@ -652,9 +650,7 @@ void* A_HOT MemoryManager::Alloc( size_t siz )
 
 void A_HOT MemoryManager::DeAlloc( void* ptr, size_t siz )
 {
-//#ifdef MEM_ALIGN
-//	siz = (siz+MEM_ALIGN-1) & ~(MEM_ALIGN-1);
-//#endif
+	siz = siz + (siz&1);
 #if defined(SUPERTINY) && defined(_DEBUG)
 	--allocCounter;
 	smallDeAllocSize += siz;
@@ -663,8 +659,8 @@ void A_HOT MemoryManager::DeAlloc( void* ptr, size_t siz )
 
 	// サイズが零か大きすぎるなら
 	// デフォルトの delete 演算子に任せる
-	uint i = static_cast<uint>( siz-1 );
-	if( i >= SMALL_MAX )
+	uint i = static_cast<uint>( (siz-1)/2 );
+	if( i >= SMALL_MAX/2 )
 	{
 		::free( ptr );
 		return; // VCで return void が出来ないとは…

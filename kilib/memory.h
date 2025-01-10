@@ -14,7 +14,7 @@ namespace ki {
 
 #ifdef WIN64
 	// 小規模と見なすオブジェクトの最大サイズ, Maximum size of objects considered small
-	#define SMALL_MAX 255
+	#define SMALL_MAX 254
 	// 一度に確保するヒープブロックのサイズ, Size of heap block to be allocated at one time
 	#define BLOCK_SIZ 8192
 #else
@@ -22,7 +22,7 @@ namespace ki {
 	#define SMALL_MAX 128
 	#define BLOCK_SIZ 4096
 	#else
-	#define SMALL_MAX 255
+	#define SMALL_MAX 254
 	#define BLOCK_SIZ 4096
 	#endif
 #endif
@@ -77,7 +77,7 @@ private:
 		INT_PTR   lastDA_;
 	};
 	#ifdef STACK_MEM_POOLS
-	FixedSizeMemBlockPool pools_[ SMALL_MAX ];
+	FixedSizeMemBlockPool pools_[ SMALL_MAX/2 ];
 	#else
 	FixedSizeMemBlockPool *pools_;
 	#endif
