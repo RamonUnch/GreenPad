@@ -36,7 +36,9 @@ class Parser;
 	// be sure to align alloc evenly because unicode is 2 bytes long
 	// and we append bytes, but alignement should remain 2bytes
 	// Otherwise some functions might fail such as TextOutW
-	#define EVEN(x) ( ((x)+1)&(~1ul) )
+	//#define EVEN(x) ( ((x)+1)&(~1ul) )
+	// No more needed as we round up all allocations
+	#define EVEN(x) (x)
 #else
 	#define EVEN(x) (x)
 #endif
