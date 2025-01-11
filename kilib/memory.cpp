@@ -2,6 +2,10 @@
 #include "memory.h"
 using namespace ki;
 
+#ifdef _DEBUG
+#include "log.h"
+#include "kstring.h"
+#endif
 
 
 //=========================================================================
@@ -540,6 +544,19 @@ void MemoryManager::FixedSizeMemBlockPool::DeAlloc( void* ptr )
 			blocks_[lastDA_] = blocks_[end];
 			blocks_[end]     = tmp;
 		}
+
+		if( blockNum_ > 4 && blockNum_ <= blockNumReserved_ >> 2 )
+		{
+			// Reduce size of mem pool if less than a quarter of what is needed.
+			//LOGGERF( TEXT("Reducing from %d to %d"), blockNumReserved_, blockNum_ );
+			MemBlock* nb = (MemBlock *)malloc( sizeof(MemBlock) * blockNum_ );
+			if( !nb )
+				return;
+			memmove( nb, blocks_, sizeof(MemBlock)*(blockNum_) );
+			free( blocks_ );
+			blocks_ = nb;
+			blockNumReserved_ = blockNum_;
+		}
 	}
 }
 
@@ -549,10 +566,6 @@ inline bool MemoryManager::FixedSizeMemBlockPool::isValid()
 	return (blockNum_ != 0);
 }
 
-#ifdef _DEBUG
-#include "log.h"
-#include "kstring.h"
-#endif
 //-------------------------------------------------------------------------
 
 //
@@ -618,7 +631,6 @@ MemoryManager::~MemoryManager()
 void* A_HOT MemoryManager::Alloc( size_t siz )
 {
 	siz = siz + (siz&1);
-	if( siz & 1 ) MessageBox(NULL, NULL, NULL, 0);
 #if defined(SUPERTINY) && defined(_DEBUG)
 	++allocCounter;
 	smallAllocSize += siz;
