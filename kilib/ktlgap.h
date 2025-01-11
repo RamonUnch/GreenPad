@@ -223,63 +223,63 @@ private:
 //@}
 //=========================================================================
 
-template<class T>
-class A_WUNUSED gapbufobj : public gapbuf<T*>
-{
-public:
-
-	explicit gapbufobj( ulong alloc_size=32 )
-		: gapbuf<T*>( alloc_size )
-		{ }
-
-	void RemoveAt( ulong i, ulong len=1 )
-		{
-			ulong& gs_ = gapbuf<T*>::gs_;
-			ulong& ge_ = gapbuf<T*>::ge_;
-			T**&   buf_= gapbuf<T*>::buf_;
-
-			if( i <= gs_ && gs_ <= i+len )
-			{
-				// ëOîºÇçÌèú
-				for( ulong j=i, ed=gs_; j<ed; ++j )
-					delete buf_[j];
-
-				len -= (gs_-i);
-				gs_  = i;
-			}
-			else
-			{
-				gapbuf<T*>::MakeGapAt( i );
-			}
-
-			// å„îºÇçÌèú
-			for( ulong j=ge_, ed=ge_+len; j<ed; ++j )
-				delete buf_[j];
-			ge_ = ge_+len;
-		}
-
-	~gapbufobj()
-		{ RemoveAt( 0, gapbuf<T*>::size() ); }
-
-	void RemoveAll( ulong i )
-		{ RemoveAt( 0, gapbuf<T*>::size() ); }
-
-	void RemoveToTail( ulong i )
-		{ RemoveAt( i, gapbuf<T*>::size()-i ); }
-
-public:
-
-	T& operator[]( ulong i )
-		{ return *gapbuf<T*>::operator[](i); }
-
-	const T& operator[]( ulong i ) const
-		{ return *gapbuf<T*>::operator[](i); }
-
-private:
-
-	NOCOPY(gapbufobj);
-};
-
+//template<class T>
+//class A_WUNUSED gapbufobj : public gapbuf<T*>
+//{
+//public:
+//
+//	explicit gapbufobj( ulong alloc_size=32 )
+//		: gapbuf<T*>( alloc_size )
+//		{ }
+//
+//	void RemoveAt( ulong i, ulong len=1 )
+//		{
+//			ulong& gs_ = gapbuf<T*>::gs_;
+//			ulong& ge_ = gapbuf<T*>::ge_;
+//			T**&   buf_= gapbuf<T*>::buf_;
+//
+//			if( i <= gs_ && gs_ <= i+len )
+//			{
+//				// ëOîºÇçÌèú
+//				for( ulong j=i, ed=gs_; j<ed; ++j )
+//					delete buf_[j];
+//
+//				len -= (gs_-i);
+//				gs_  = i;
+//			}
+//			else
+//			{
+//				gapbuf<T*>::MakeGapAt( i );
+//			}
+//
+//			// å„îºÇçÌèú
+//			for( ulong j=ge_, ed=ge_+len; j<ed; ++j )
+//				delete buf_[j];
+//			ge_ = ge_+len;
+//		}
+//
+//	~gapbufobj()
+//		{ RemoveAt( 0, gapbuf<T*>::size() ); }
+//
+//	void RemoveAll( ulong i )
+//		{ RemoveAt( 0, gapbuf<T*>::size() ); }
+//
+//	void RemoveToTail( ulong i )
+//		{ RemoveAt( i, gapbuf<T*>::size()-i ); }
+//
+//public:
+//
+//	T& operator[]( ulong i )
+//		{ return *gapbuf<T*>::operator[](i); }
+//
+//	const T& operator[]( ulong i ) const
+//		{ return *gapbuf<T*>::operator[](i); }
+//
+//private:
+//
+//	NOCOPY(gapbufobj);
+//};
+//
 
 template<class T>
 class A_WUNUSED gapbufobjnoref : public gapbuf<T>
@@ -314,6 +314,10 @@ public:
 			for( ulong j=ge_, ed=ge_+len; j<ed; ++j )
 				buf_[j].Clear();
 			ge_ = ge_+len;
+			
+			// If the buffer is widely oversized, reduce it.
+			if( gapbuf<T>::alen_ > 128 && gapbuf<T>::size()  <= gapbuf<T>::alen_ >> 2 )
+				gapbuf<T>::Reallocate( gapbuf<T>::size() );
 		}
 
 	~gapbufobjnoref()
