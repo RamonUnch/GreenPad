@@ -223,6 +223,7 @@ void SearchManager::UpdateData()
 	inichanged_ = bIgnoreCase_ != IgnoreCase || RegExp != bRegExp_;
 	bIgnoreCase_ = IgnoreCase;
 	bRegExp_ = RegExp;
+	SaveToINI();
 
 	TCHAR* str;
 	LRESULT n = SendMsgToItem( IDC_FINDBOX, WM_GETTEXTLENGTH );
