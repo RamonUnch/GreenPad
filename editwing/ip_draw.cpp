@@ -706,7 +706,7 @@ void A_HOT ViewImpl::on_paint( const PAINTSTRUCT& ps )
 	p.SetupDC( ps.hdc );
 	VDrawInfo v( ps.rcPaint );
 	GetDrawPosInfo( v );
-//	// Uncomment if you want to see the drawing.
+	// Uncomment if you want to see the drawing.
 //	Sleep( 200 );
 //	FillRect( ps.hdc, &ps.rcPaint, (HBRUSH)(COLOR_HIGHLIGHT+1) );
 //	GdiFlush( );
@@ -741,34 +741,9 @@ void A_HOT ViewImpl::on_paint( const PAINTSTRUCT& ps )
 
 void ViewImpl::DrawLNA( const VDrawInfo& v, Painter& p )
 {
-	//
-	// 文字列のまま足し算を行うルーチン, Routine for additions as string
-	//
-	struct strint {
-		strint( ulong num ) {
-			int i=11;
-			while( num ) digit[--i] = (unicode)(L'0'+(num%10)), num/=10;
-			while(  i  ) digit[--i] = L' ';
-		}
-		void operator++() {
-			int i=10;
-			do
-				if( digit[i] == L'9' )
-					digit[i] = L'0';
-				else
-					{ ++digit[i]; return; }
-			while( digit[--i] != L' ' );
-			digit[i] = L'1';
-		}
-		void Output( Painter& f, int x, int y ) {
-			for( unicode* p=digit+10; *p!=L' '; --p,x-=f.F() )
-				f.CharOut( *p, x, y );
-		}
-		unicode digit[11];
-	};
-
 	// 背面消去, backward erase
 	RECT rc = { v.rc.left, v.rc.top, lna(), v.rc.bottom };
+	unicode digitsbuf[ULONG_DIGITS+1];
 	p.Fill( rc );
 
 	if( v.rc.top < v.YMAX )
@@ -779,12 +754,17 @@ void ViewImpl::DrawLNA( const VDrawInfo& v, Painter& p )
 		p.SetColor( LN );
 
 		// 行番号表示, line number indication
-		strint n = v.TLMIN+1;
+		ulong  n = v.TLMIN+1;
 		int    y = v.YMIN;
-		int edge = lna() - p.F()*2;
+		int edge = lna() - p.F();
 		for( ulong i=v.TLMIN; y<v.YMAX; ++i,++n )
 		{
-			n.Output( p, edge, y );
+			const unicode *s = Ulong2lStr( digitsbuf, n );
+			int numwidth=0, sl=0;
+			while( s[sl] )
+				numwidth += p.Wc( s[sl++] );
+
+			p.StringOut( s, sl, edge - numwidth, y );
 			y += p.H() * rln(i);
 		}
 	}
