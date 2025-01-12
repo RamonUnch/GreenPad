@@ -550,6 +550,11 @@ inline void Painter::StringOut
 	}
 }
 
+inline void Painter::StringOutA( const char* str, int len, int x, int y )
+{
+	::TextOutA( dc_, x, y, str, len );
+}
+
 // Print all control characters 0-31 and 127-160
 // First copy to a temp buffer char for Win32s and wide for unicode.
 // This is much faster than a char by char print
@@ -743,7 +748,7 @@ void ViewImpl::DrawLNA( const VDrawInfo& v, Painter& p )
 {
 	// îwñ è¡ãé, backward erase
 	RECT rc = { v.rc.left, v.rc.top, lna(), v.rc.bottom };
-	unicode digitsbuf[ULONG_DIGITS+1];
+	TCHAR digitsbuf[ULONG_DIGITS+1];
 	p.Fill( rc );
 
 	if( v.rc.top < v.YMAX )
@@ -759,12 +764,16 @@ void ViewImpl::DrawLNA( const VDrawInfo& v, Painter& p )
 		int edge = lna() - p.F();
 		for( ulong i=v.TLMIN; y<v.YMAX; ++i,++n )
 		{
-			const unicode *s = Ulong2lStr( digitsbuf, n );
+			const TCHAR *s = Ulong2lStr( digitsbuf, n );
 			int numwidth=0, sl=0;
 			while( s[sl] )
 				numwidth += p.Wc( s[sl++] );
 
+			#ifdef UNICODE
 			p.StringOut( s, sl, edge - numwidth, y );
+			#else
+			p.StringOutA( s, sl, edge - numwidth, y );
+			#endif
 			y += p.H() * rln(i);
 		}
 	}

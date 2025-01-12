@@ -38,6 +38,7 @@ public:
 
 	//@{ w’èˆÊ’u‚É•¶š—ñ‚ğo—Í, Output a string at the specified position //@}
 	void StringOut( const unicode* str, int len, int x, int y );
+	void StringOutA( const char* str, int len, int x, int y );
 
 	void DrawCTLs( const unicode* str, int len, int x, int y );
 
