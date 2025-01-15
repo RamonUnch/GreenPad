@@ -170,7 +170,7 @@ public:
 
 
 //=========================================================================
-// Stupid arena allocator
+// Stupid arena allocator (backward)
 struct Arena
 {
 	explicit Arena(BYTE *buf, size_t capacity)
@@ -178,7 +178,7 @@ struct Arena
 		, end ( buf + capacity )
 	{ }
 
-	void *alloc(size_t sz)
+	inline void *alloc(size_t sz) noexcept
 	{
 		size_t pad = (UINT_PTR)end & (sizeof(void*)-1);
 		if( sz+pad > size_t(end - sta) )
@@ -186,6 +186,15 @@ struct Arena
 
 		return reinterpret_cast<void*>(end -= sz + pad);
 	}
+
+//	inline void *aligned_alloc(size_t sz, size_t alignm) noexcept
+//	{
+//		size_t pad = (UINT_PTR)end & alignm;
+//		if( sz+pad > size_t(end - sta) )
+//			return NULL; // OOM
+//
+//		return reinterpret_cast<void*>(end -= sz + pad);
+//	}
 
 	BYTE *sta;
 	BYTE *end;
@@ -221,10 +230,10 @@ struct DArena
 			dim = 0;
 	}
 
-	void *alloc(size_t sz) noexcept
+	void *alloc(size_t size) noexcept
 	{
-		size_t pad = -(UINT_PTR)end & (sizeof(void*)-1);
-		if( sz+pad > dim - (end - sta) )
+		size_t sz = (size + (sizeof(void*)-1)) & ~(sizeof(void*)-1);
+		if( sz > dim - (end - sta) )
 		{
 			if( !sta ) return NULL;
 			size_t ps = pagesize();
@@ -234,13 +243,13 @@ struct DArena
 			dim += ps;
 		}
 		BYTE *ret = end;
-		end += sz + pad;
+		end += sz;
 		return reinterpret_cast<void*>(ret);
 	}
 
 	inline void freelast(void *ptr, size_t sz) noexcept
 	{
-		end -= sz;
+		end -= (sz + (sizeof(void*)-1)) & ~(sizeof(void*)-1);
 	}
 
 	void FreeAll() noexcept
