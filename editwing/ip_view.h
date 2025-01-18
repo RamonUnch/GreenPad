@@ -387,7 +387,7 @@ public:
 	ViewImpl( View& vw, doc::Document &dc );
 
 	//@{ ê‹ÇËï‘Çµï˚éÆêÿë÷ //@}
-	inline void SetWrapType( int wt )
+	inline void SetWrapType( short wt )
 		{ cvs_.on_config_change( wt, cvs_.showLN(), cvs_.wrapSmart() );
 		  DoConfigChange(); }
 
@@ -408,7 +408,7 @@ public:
 		  DoConfigChange(); }
 
 	//@{ All of the above in one go //@}
-	inline void SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc )
+	inline void SetWrapLNandFont( short wt, bool ws, bool showLN, const VConfig& vc )
 		{ cvs_.on_config_change_nocalc( wt, showLN, ws );
 		  SetFont( vc ); }
 
@@ -544,7 +544,7 @@ public:
 	~View();
 
 	//@{ ê‹ÇËï‘Çµï˚éÆêÿë÷ //@}
-	void SetWrapType( int wt );
+	void SetWrapType( short wt );
 
 	void SetWrapSmart( bool ws);
 
@@ -555,7 +555,7 @@ public:
 	void SetFont( const VConfig& vc );
 
 	//@{ Set all canva stuff at once (faster) //@}
-	void SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc );
+	void SetWrapLNandFont( short wt, bool ws, bool showLN, const VConfig& vc );
 
 	//@{ ÉJÅ[É\Éã //@}
 	Cursor& cur();

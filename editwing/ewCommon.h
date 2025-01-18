@@ -138,14 +138,15 @@ struct VConfig
 {
 	//@{ フォント //@}
 	LOGFONT font;
-	int fontsize;
-	int fontwidth;
-
-	//@{ タブ幅文字数, tab width character count //@}
-	int tabstep;
 
 	//@{ 色 //@}
 	COLORREF color[7];
+
+	short fontsize;
+	short fontwidth;
+
+	//@{ タブ幅文字数, tab width character count //@}
+	uchar tabstep;
 
 	//@{ 特殊文字表示 //@}
 	bool sc[5];
@@ -154,7 +155,7 @@ struct VConfig
 	VConfig() {}
 
 	//@{ フォント関係初期化, Initialize font relationship //@}
-	VConfig( const TCHAR* fnam, int fsiz )
+	VConfig( const TCHAR* fnam, short fsiz )
 	{
 		SetFont( fnam,fsiz );
 		tabstep    = 4;
@@ -173,9 +174,9 @@ struct VConfig
 
 	//@{ フォント関係設定 //@}
 	void SetFont(
-		const TCHAR* fnam, int fsiz
+		const TCHAR* fnam, short fsiz
 		, uchar fontCS=DEFAULT_CHARSET
-		, LONG fw=FW_DONTCARE, BYTE ff=0, int fx=0
+		, LONG fw=FW_DONTCARE, BYTE ff=0, short fx=0
 		, int qual=DEFAULT_QUALITY )
 	{
 		// Actual font size in points at 72 DPI.

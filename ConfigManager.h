@@ -56,13 +56,13 @@ public:
 	const ki::String& txtFileFilter() const;
 
 	//@{ 文字数指定時の折り返し文字数 //@}
-	int wrapWidth() const;
+	short wrapWidth() const;
 
 	//@{ Get smart warp flag //@}
 	bool wrapSmart() const;
 
 	//@{ 折り返し方法 //@}
-	int wrapType() const;
+	short wrapType() const;
 
 	//@{ 行番号表示する？ //@}
 	bool showLN() const;
@@ -164,8 +164,8 @@ private:
 
 		// 設定項目
 		editwing::VConfig vc;
-		int               wrapType;
 		short             wrapWidth;
+		signed char       wrapType;
 		bool              wrapSmart;
 		bool              showLN;
 		uchar             fontCS;
@@ -212,13 +212,13 @@ inline int ConfigManager::undoLimit() const
 inline const ki::String& ConfigManager::txtFileFilter() const
 	{ return txtFilter_; }
 
-inline int ConfigManager::wrapWidth() const
+inline short ConfigManager::wrapWidth() const
 	{ return curDt_->wrapWidth; }
 
 inline bool ConfigManager::wrapSmart() const
 	{ return curDt_->wrapSmart; }
 
-inline int ConfigManager::wrapType() const
+inline short ConfigManager::wrapType() const
 	{ return curDt_->wrapType>0 ? wrapWidth() : curDt_->wrapType; }
 
 inline bool ConfigManager::showLN() const
