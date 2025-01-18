@@ -90,8 +90,8 @@ private:
 
 	ki::Path         filename_;
 	int              csi_;
-	int              lb_;
-	int              wrap_;
+	short            lb_;
+	short            wrap_;
 //	int              clickHT_;
 //	short            clickX_;
 //	short            clickY_;

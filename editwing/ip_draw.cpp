@@ -117,7 +117,7 @@ void View::on_destroy()
 // サブオブジェクトにそのまま回す
 //-------------------------------------------------------------------------
 
-void View::SetWrapType( int wt )
+void View::SetWrapType( short wt )
 	{ impl_->SetWrapType( wt ); }
 
 void View::SetWrapSmart( bool ws )
@@ -129,7 +129,7 @@ void View::ShowLineNo( bool show )
 void View::SetFont( const VConfig& vc )
 	{ impl_->SetFont( vc ); }
 
-void View::SetWrapLNandFont( int wt, bool ws, bool showLN, const VConfig& vc )
+void View::SetWrapLNandFont( short wt, bool ws, bool showLN, const VConfig& vc )
 	{ impl_->SetWrapLNandFont( wt, ws, showLN, vc ); }
 
 void View::on_keyword_change()
@@ -408,7 +408,7 @@ void Painter::Init( const VConfig& vc )
 			widthTable_[ch] = widthTable_[ctl2Map[ch-(unicode)127]];
 
 	// Set the width of a Tabulation
-	widthTable_[L'\t'] = NZero(W() * Max(1, vc.tabstep));
+	widthTable_[L'\t'] = NZero(W() * Max((uchar)1, vc.tabstep));
 
 	// LOGFONT
 	::GetObject( font_, sizeof(LOGFONT), &logfont_ );

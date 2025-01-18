@@ -605,135 +605,29 @@ void ConfigManager::LoadIni()
 		{
 			static const char s_defaultIni[] =
 			"[DocType]\r\n"
-			"1=Assembly\r\n"
-			"2=B2E\r\n"
-			"3=C/C++\r\n"
-			"4=C#\r\n"
-			"5=D\r\n"
-			"6=Delphi\r\n"
-			"7=Fortran\r\n"
-			"8=Java\r\n"
-			"9=HTML\r\n"
-			"10=CSS\r\n"
-			"11=Perl\r\n"
-			"12=Ruby\r\n"
-			"13=PHP\r\n"
-			"14=Python\r\n"
-			"15=Lua\r\n"
-			"16=Java Script\r\n"
-			"17=Erlang\r\n"
-			"18=Haskell\r\n"
-			"19=OCaml\r\n"
-			"20=INI\r\n"
-			"21=UnicodeText\r\n"
-			"\r\n"
+			"1=Assembly,program.lay,asm.kwd,.*\\.asm$\r\n"
+			"2=B2E,program.lay,b2e.kwd,.*\\.b2e$\r\n"
+			"3=C/C++,program.lay,C.kwd,.*(\\.(c|cpp|cxx|cc|h|hpp)|include\\\\[^\\.]+)$\r\n"
+			"4=C#,program.lay,C#.kwd,.*\\.cs$\r\n"
+			"5=D,program.lay,D.kwd,.*\\.d$\r\n"
+			"6=Delphi,program.lay,Delphi.kwd,.*\\.pas$\r\n"
+			"7=Fortran,program.lay,Fortran.kwd,.*\\.(f|for|f90|f95|f03|f15)$\r\n"
+			"8=Java,program.lay,Java.kwd,.*\\.java$\r\n"
+			"9=HTML,html.lay,HTML.kwd,.*(\\.html|\\.htm|temporary internet files\\\\.+)$\r\n"
+			"10=CSS,program.lay,CSS.kwd,.*\\.css$\r\n"
+			"11=Perl,program.lay,Perl.kwd,.*\\.(pl|pm|cgi)$\r\n"
+			"12=Ruby,program.lay,Ruby.kwd,.*\\.rb$\r\n"
+			"13=PHP,program.lay,PHP.kwd,.*\\.(php|php3|php4)$\r\n"
+			"14=Python,program.lay,Python.kwd,.*\\.py$\r\n"
+			"15=Lua,program.lay,Lua.kwd,.*\\.lua$\r\n"
+			"16=Java Script,program.lay,JavaScript.kwd,.*\\.js$\r\n"
+			"17=Erlang,program.lay,Erlang.kwd,.*\\.erl$\r\n"
+			"18=Haskell,program.lay,Haskell.kwd,.*\\.l?hs$\r\n"
+			"19=OCaml,program.lay,OCaml.kwd,.*\\.mli?$\r\n"
+			"20=INI,,ini.kwd,.*\\.ini$\r\n"
+			"21=UnicodeText,unitext.lay,,\r\n"
+			"22=\r\n";
 
-			"[Assembly]\r\n"
-			"Pattern=.*\\.asm$\r\n"
-			"Keyword=asm.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[B2E]\r\n"
-			"Pattern=.*\\.b2e$\r\n"
-			"Keyword=b2e.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[C/C++]\r\n"
-			"Pattern=.*(\\.(c|cpp|cxx|cc|h|hpp)|include\\\\[^\\.]+)$\r\n"
-			"Keyword=C.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[C#]\r\n"
-			"Pattern=.*\\.cs$\r\n"
-			"Keyword=C#.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[D]\r\n"
-			"Pattern=.*\\.d$\r\n"
-			"Keyword=D.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[Delphi]\r\n"
-			"Pattern=.*\\.pas$\r\n"
-			"Keyword=Delphi.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"[Fortran]\r\n"
-			"Pattern=.*\\.(f|for|f90|f95|f03|f15)$\r\n"
-			"Keyword=Fortran.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[Java]\r\n"
-			"Pattern=.*\\.java$\r\n"
-			"Keyword=Java.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[HTML]\r\n"
-			"Pattern=.*(\\.html|\\.htm|temporary internet files\\\\.+)$\r\n"
-			"Keyword=HTML.kwd\r\n"
-			"Layout=html.lay\r\n"
-			"\r\n"
-			"[CSS]\r\n"
-			"Pattern=.*\\.css$\r\n"
-			"Keyword=CSS.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[PHP]\r\n"
-			"Pattern=.*\\.(php|php3|php4)$\r\n"
-			"Keyword=PHP.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[Perl]\r\n"
-			"Pattern=.*\\.pl$\r\n"
-			"Keyword=Perl.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[Python]\r\n"
-			"Pattern=.*\\.py$\r\n"
-			"Keyword=Python.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[Ruby]\r\n"
-			"Pattern=.*\\.rb$\r\n"
-			"Keyword=Ruby.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[Lua]\r\n"
-			"Pattern=.*\\.lua$\r\n"
-			"Keyword=Lua.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[Java Script]\r\n"
-			"Pattern=.*\\.js$\r\n"
-			"Keyword=JavaScript.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[Erlang]\r\n"
-			"Pattern=.*\\.erl$\r\n"
-			"Keyword=Erlang.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[Haskell]\r\n"
-			"Pattern=.*\\.l?hs$\r\n"
-			"Keyword=Haskell.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[OCaml]\r\n"
-			"Pattern=.*\\.mli?$\r\n"
-			"Keyword=OCaml.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[INI]\r\n"
-			"Pattern=.*\\.ini$\r\n"
-			"Keyword=ini.kwd\r\n"
-			"\r\n"
-			"[Perl]\r\n"
-			"Pattern=.*\\.(pl|pm|cgi)$\r\n"
-			"Keyword=perl.kwd\r\n"
-			"Layout=program.lay\r\n"
-			"\r\n"
-			"[UnicodeText]\r\n"
-			"Layout=unitext.lay\r\n"
-			"\r\n";
 			fp.Write( s_defaultIni, sizeof(s_defaultIni)-1 );
 		}
 	}
@@ -799,22 +693,41 @@ void ConfigManager::LoadIni()
 	// 文書タイプリストの０番以外のクリア
 	dtList_.DelAfter( ++dtList_.begin() );
 
-	TCHAR buf[MAX_PATH];
-	TCHAR dctype[MAX_PATH];
+	TCHAR buf[MAX_PATH*3];
 	DocType d;
+	// [DocType]
+	// 1=Asm...
+	// 2=...
+	// ...
 	for( uint i=1; i<1024; ++i )
 	{
 		// 文書タイプ名を読み込み
 		TCHAR tmp[INT_DIGITS+1] ;
-		ini_.GetSStrHere( Int2lStr(tmp, i), TEXT("DocType"), TEXT(""), dctype );
-		if( !dctype[0] )
+		ini_.GetSStrHere( Int2lStr(tmp, i), TEXT("DocType"), TEXT(""), buf );
+		if( !buf[0] ) // End of list
 			break;
+		
+		// 4 Coma separated values to split ie:
+		// 1=Assembly,program.lay,asm.kwd,.*\.asm$
+		size_t j=0;
+		TCHAR *substrings[3] = { TEXT(""), TEXT(""), TEXT("") };
+		for( size_t i=0; j<countof(substrings) && i<countof(buf) && buf[i] ; )
+		{
+			if( buf[i] == TEXT(',') )
+			{
+				buf[i] = TEXT('\0');
+				substrings[j++] = &buf[++i];
+			}
+			else
+				++i;
+		}
 
 		// その文書タイプを実際に読み込み
-		d.name      = dctype;
-		d.layfile   = ini_.GetSStrHere( TEXT("Layout"),  dctype, TEXT("default.lay"), buf);
-		d.kwdfile   = ini_.GetSStrHere( TEXT("Keyword"), dctype, TEXT(""), buf );
-		d.pattern   = ini_.GetSStrHere( TEXT("Pattern"), dctype, TEXT(""), buf );
+		d.name      = buf;
+		d.layfile   = *substrings[0] ? substrings[0] : TEXT("default.lay");
+		d.kwdfile   = substrings[1];
+		d.pattern   = substrings[2];
+		
 		dtList_.Add( d );
 	}
 	LOGGER( "ConfigManager::LoadIni() LOADED!" );
@@ -871,18 +784,19 @@ void ConfigManager::SaveIni()
 	ini_.PutInt( TEXT("MRU"), mrus_ );
 
 	// DocType
+	TCHAR strnum[ULONG_DIGITS+1];
+	TCHAR buf[MAX_PATH*3];
+	ulong ct=1;
 	for(DtList::iterator i=++dtList_.begin(); i!=dtList_.end(); ++i )
 	{
-		//ini_.SetSection( i->name.c_str() );
-		ini_.PutStrinSect( TEXT("Pattern"), i->name.c_str(), i->pattern.c_str() );
-		ini_.PutStrinSect( TEXT("Keyword"), i->name.c_str(), i->kwdfile.c_str() );
-		ini_.PutStrinSect( TEXT("Layout"),  i->name.c_str(), i->layfile.c_str() );
+		// X=Name,Layout.lay,Kewords.kwd,.*\.extension$
+		TCHAR *p = my_lstrkpy( buf, i->name.c_str() ); *p++ = TEXT(',');
+		p = my_lstrkpy( p, i->layfile.c_str() ); *p++ = TEXT(',');
+		p = my_lstrkpy( p, i->kwdfile.c_str() ); *p++ = TEXT(',');
+		p = my_lstrkpy( p, i->pattern.c_str() ); *p++ = TEXT('\0');
+		ini_.PutStrinSect( Ulong2lStr(strnum, ct), TEXT("DocType"), buf );
+		++ct; // Next DocType
 	}
-
-	TCHAR strnum[ULONG_DIGITS+1];
-	ulong ct=1;
-	for(DtList::iterator i=++dtList_.begin(); i!=dtList_.end(); ++i,++ct)
-		ini_.PutStrinSect( Ulong2lStr(strnum, ct), TEXT("DocType"), i->name.c_str() );
 	ini_.PutStrinSect( Ulong2lStr(strnum, ct), TEXT("DocType"), TEXT("") );
 }
 

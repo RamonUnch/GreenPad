@@ -809,7 +809,7 @@ void Document::SetKeyword( const unicode* defbuf, size_t siz )
 			{
 				if( n && b[1] == '\n' || b[1] == '\r' )
 					continue; // Skip extra empty lines
-				totsz = (totsz + align + sizeof(Keyword)) & ~align;
+				totsz = (totsz + align + sizeof(Keyword)) & ~(size_t)align;
 			}
 			else
 				totsz += 2;
