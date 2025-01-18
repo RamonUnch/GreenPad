@@ -72,7 +72,7 @@ public:
 private:
 
 	TCHAR  iniName_[MAX_PATH];
-	String section_;
+	TCHAR  section_[64];
 };
 
 
@@ -83,7 +83,7 @@ inline IniFile::IniFile( /*const TCHAR* ini, bool exepath*/ )
 	{ SetFileName( /*ini, exepath*/ ); }
 
 inline void IniFile::SetSection( const TCHAR* section )
-	{ section_ = section; }
+	{ my_lstrcpyn( section_, section, countof(section_) ); }
 
 
 

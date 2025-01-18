@@ -710,7 +710,7 @@ void ConfigManager::LoadIni()
 		// 4 Coma separated values to split ie:
 		// 1=Assembly,program.lay,asm.kwd,.*\.asm$
 		size_t j=0;
-		TCHAR *substrings[3] = { TEXT(""), TEXT(""), TEXT("") };
+		const TCHAR *substrings[3] = { TEXT(""), TEXT(""), TEXT("") };
 		for( size_t i=0; j<countof(substrings) && i<countof(buf) && buf[i] ; )
 		{
 			if( buf[i] == TEXT(',') )
