@@ -626,7 +626,7 @@ void ConfigManager::LoadIni()
 			"19=OCaml,program.lay,OCaml.kwd,.*\\.mli?$\r\n"
 			"20=INI,,ini.kwd,.*\\.ini$\r\n"
 			"21=UnicodeText,unitext.lay,,\r\n"
-			"22=\r\n";
+			"22=\r\n\r\n";
 
 			fp.Write( s_defaultIni, sizeof(s_defaultIni)-1 );
 		}
