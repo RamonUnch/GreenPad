@@ -303,7 +303,7 @@ String::String( const TCHAR* s, long len )
 	{
 		// 新規バッファ作成
 		data_ = static_cast<StringData*>
-		    (mem().Alloc( sizeof(StringData)+(len+1)*sizeof(TCHAR) ));
+		    (malloc( sizeof(StringData)+(len+1)*sizeof(TCHAR) ));
 		if( !data_ )
 		{	// Set NULL string if unable to allocate mem...
 			SetData( null() );
@@ -319,8 +319,8 @@ String::String( const TCHAR* s, long len )
 inline void String::ReleaseData()
 {
 	if( --data_->ref <= 0 )
-		mem().DeAlloc(
-			data_, sizeof(StringData)+sizeof(TCHAR)*data_->alen );
+		free(
+			data_/*, sizeof(StringData)+sizeof(TCHAR)*data_->alen */);
 }
 
 String::~String()
@@ -365,7 +365,7 @@ TCHAR* String::AllocMemHelper( size_t minimum, const TCHAR* str, size_t siz )
 		minimum = Max( minimum, data_->alen );
 
 		StringData* pNew = static_cast<StringData*>
-			(mem().Alloc( sizeof(StringData)+minimum*sizeof(TCHAR) ));
+			(malloc( sizeof(StringData)+minimum*sizeof(TCHAR) ));
 		if( !pNew ) return NULL;
 		pNew->ref  = 1;
 		pNew->alen = minimum;
