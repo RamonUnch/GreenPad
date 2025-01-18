@@ -41,35 +41,47 @@ bool IniFile::HasSectionEnabled( const TCHAR* section ) const
 
 int IniFile::GetInt( const TCHAR* key, int defval ) const
 {
-	return ::GetPrivateProfileInt( section_.c_str(), key, defval, iniName_ );
+	return ::GetPrivateProfileInt( section_, key, defval, iniName_ );
 }
 
 bool IniFile::GetBool( const TCHAR* key, bool defval ) const
 {
 	return !!GetInt( key, !!defval );
 }
-void IniFile::GetRect ( const TCHAR* key, RECT *rc, const RECT *defrc  ) const
+void IniFile::GetRect( const TCHAR* key, RECT *rc, const RECT *defrc  ) const
 {
-	TCHAR rcCN[128];
-	TCHAR *lastc = my_lstrkpy(rcCN, key);
-	lastc[1] = TEXT('\0'); // Extra NULL
+	TCHAR buf[LONG_DIGITS * 4 + 4 + 1];
+	buf[0] = TEXT('\0');
+	int len = ::GetPrivateProfileString( section_, key, TEXT(""), buf, countof(buf), iniName_ );
+	if( len <= 0 || !buf[0] )
+	{
+		// Use Default
+		CopyRect( rc, defrc );
+		return;
+	}
 
-	*lastc = TEXT('L');
-	rc->left  = GetInt(rcCN, defrc->left);
-
-	*lastc = TEXT('T');
-	rc->top  = GetInt(rcCN, defrc->top);
-
-	*lastc = TEXT('R');
-	rc->right  = GetInt(rcCN, defrc->right);
-
-	*lastc = TEXT('B');
-	rc->bottom  = GetInt(rcCN, defrc->bottom);
+	TCHAR *p = buf;
+	size_t j = 0;
+	// rect=Left,Top,Right,Bottom
+	const TCHAR *substrings[3] = { TEXT(""), TEXT(""), TEXT("") };
+	while( j<countof(substrings) && len-- && *p )
+	{
+		if( *p == TEXT(',') )
+		{
+			*p = TEXT('\0');
+			substrings[j++] = p + 1;
+		}
+		++p;
+	}
+	rc->left   = String::GetInt( buf );
+	rc->top    = String::GetInt( substrings[0] );
+	rc->right  = String::GetInt( substrings[1] );
+	rc->bottom = String::GetInt( substrings[2] );
 }
 
 String IniFile::GetStr( const TCHAR* key, const TCHAR *defval ) const
 {
-	return GetStrinSect( key, section_.c_str(), defval );
+	return GetStrinSect( key, section_, defval );
 }
 String IniFile::GetStrinSect( const TCHAR* key, const TCHAR* sect, const TCHAR *defval ) const
 {
@@ -130,7 +142,7 @@ Path IniFile::GetPath( const TCHAR* key, const TCHAR *defval ) const
 
 bool IniFile::PutStr( const TCHAR* key, const TCHAR* val )
 {
-	return PutStrinSect( key, section_.c_str(), val );
+	return PutStrinSect( key, section_, val );
 }
 
 bool IniFile::PutStrinSect( const TCHAR* key, const TCHAR *sect, const TCHAR* val )
@@ -163,21 +175,16 @@ bool IniFile::PutBool( const TCHAR* key, bool val )
 
 bool IniFile::PutRect( const TCHAR* key, const RECT *rc  )
 {
-	TCHAR rcCN[128];
-	TCHAR *lastc = my_lstrkpy(rcCN, key);
-	lastc[1] = TEXT('\0'); // Extra NULL
+	TCHAR buf[LONG_DIGITS * 4 + 4 + 1];
+	TCHAR numbuf[LONG_DIGITS+1];
 
-	*lastc = TEXT('L');
-	PutInt(rcCN, rc->left);
+	TCHAR *p = buf;
+	p = my_lstrkpy( p, Int2lStr(numbuf, rc->left)   ); *p++ = TEXT(',');
+	p = my_lstrkpy( p, Int2lStr(numbuf, rc->top)    ); *p++ = TEXT(',');
+	p = my_lstrkpy( p, Int2lStr(numbuf, rc->right)  ); *p++ = TEXT(',');
+	p = my_lstrkpy( p, Int2lStr(numbuf, rc->bottom) );
 
-	*lastc = TEXT('T');
-	PutInt(rcCN, rc->top);
-
-	*lastc = TEXT('R');
-	PutInt(rcCN, rc->right);
-
-	*lastc = TEXT('B');
-	return PutInt(rcCN, rc->bottom);
+	return PutStr(key, buf);
 }
 
 bool IniFile::PutPath( const TCHAR* key, const Path& val )
@@ -191,7 +198,7 @@ bool IniFile::PutPath( const TCHAR* key, const Path& val )
 		'0','1','2','3','4','5','6','7',
 		'8','9','a','b','c','d','e','f' };
 	String buf = TEXT("#");
-	for(size_t i=0; i<val.len(); ++i)
+	for( size_t i=0; i<val.len(); ++i )
 	{
 		unsigned short u = (unsigned short) val[i];
 		if( u > 127 || u == L'%' )
