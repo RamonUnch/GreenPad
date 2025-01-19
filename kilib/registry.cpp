@@ -85,18 +85,23 @@ String IniFile::GetStr( const TCHAR* key, const TCHAR *defval ) const
 }
 String IniFile::GetStrinSect( const TCHAR* key, const TCHAR* sect, const TCHAR *defval ) const
 {
-	RawString str;
-	DWORD l=128;
+	String str;
+	DWORD l=4096, s=0;
+	TCHAR* x;
 	for(;;)
 	{
-		TCHAR* x = str.AllocMem(l);
-		if( !x ) return String(TEXT(""));
-		DWORD s = ::GetPrivateProfileString( sect, key, defval, x, l, iniName_ );
+		x = (TCHAR*)TS.alloc( l );
+		if( !x ) return str;
+		*x = TEXT('\0');
+		s = ::GetPrivateProfileString( sect, key, defval, x, l, iniName_ );
 		if( s < l-1 )
 			break;
+
+		TS.freelast( x, l );
 		l <<= 1;
 	}
-	str.UnlockMem();
+	str = String(x , s);
+	TS.freelast( x, l );
 	return str;
 }
 
@@ -147,7 +152,7 @@ bool IniFile::PutStr( const TCHAR* key, const TCHAR* val )
 
 bool IniFile::PutStrinSect( const TCHAR* key, const TCHAR *sect, const TCHAR* val )
 {
-	if( val[0]==TEXT('"') && val[my_lstrlen(val)-1]==TEXT('"') )
+	if( val && val[0]==TEXT('"') && val[my_lstrlen(val)-1]==TEXT('"') )
 	{
 		// —¼’[‚É " ‚ª‚ ‚é‚ÆŸŽè‚Éí‚ç‚ê‚é‚Ì‚Å‘Îˆ
 		String nval;
