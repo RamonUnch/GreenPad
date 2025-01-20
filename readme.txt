@@ -1,5 +1,5 @@
-=<> GreenPad ver 1.21
-=<> RamonUnch builds 2023/12/18
+=<> GreenPad ver 1.22
+=<> RamonUnch builds 2024/12/07
 
 <<What's This?>>
 
@@ -58,6 +58,16 @@
   * Improve printer configuration.
   * Fix more bugs, handle low memory situations better.
   * Optimize memory usage so that larger files can be loaded.
+
+<<What's New in 1.22 (by RamonUnch, 2024/12/07)>>
+ < NEW >
+   * Add zh-CN translation
+
+ < FIXED >
+   * Unquote also when quote mark is after abs/spaces
+   * Use more modern Open File dialog on Win2K+
+   * reduce memory usage for each line.
+   * Various fixes and optimizations.
 
 <<What's New in 1.21 (by RamonUnch, 2023/12/18)>>
  < NEW >
