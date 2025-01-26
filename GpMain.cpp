@@ -165,15 +165,16 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		}
 		break;
 
-//	case WM_MOUSEWHEEL:
-//		if( wp & MK_CONTROL )
-//		{
-//			VConfig &vc = const_cast<VConfig&>(cfg_.vConfig());
-//			vc.fontsize += (SHORT)HIWORD(wp) > 0 ? 1 : -1;
-//			edit_.getView().SetFont( cfg_.vConfig() );
-//			return 0;
-//		}
-//		break;
+	case WM_MOUSEWHEEL:
+		if( wp & MK_CONTROL )
+		{
+			VConfig &vc = const_cast<VConfig&>(cfg_.vConfig());
+			vc.fontsize += (SHORT)HIWORD(wp) > 0 ? 1 : -1;
+			vc.fontsize = vc.fontsize < 1 ? 1 : vc.fontsize > 72 ? 72 : vc.fontsize;
+			edit_.getView().SetFont( cfg_.vConfig() );
+			return 0;
+		}
+		break;
 
 	#ifdef PM_DPIAWARE
 	case 0x02E0: // WM_DPICHANGED

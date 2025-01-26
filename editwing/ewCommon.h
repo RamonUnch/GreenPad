@@ -149,7 +149,7 @@ struct VConfig
 	uchar tabstep;
 
 	//@{ 特殊文字表示 //@}
-	bool sc[5];
+	byte sc;
 
 	//@{ 危険なデフォルトコンストラクタ //@}
 	VConfig() {}
@@ -165,11 +165,7 @@ struct VConfig
 		color[CTL] = RGB(0,0,0);
 		color[ BG] = RGB(255,255,255);
 		color[ LN] = RGB(0,0,0);//255,255,0);
-		sc[scEOF]  =
-		sc[scEOL]  =
-		sc[scTAB]  =
-		sc[scHSP]  =
-		sc[scZSP]  = false;
+		sc = 0;
 	}
 
 	//@{ フォント関係設定 //@}

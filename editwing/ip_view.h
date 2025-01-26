@@ -188,7 +188,7 @@ public:
 	const LOGFONT& LogFont() const { return logfont_; }
 
 	//@{ “Á•Ê•¶Žš‚ð•`‰æ‚·‚é‚©”Û‚©, Whether to draw special characters or not //@}
-	bool sc( int i ) const { return scDraw_[i]; }
+	bool sc( int i ) const { return 0 != (scDraw_ & (1u << i)); }
 
 private:
 
@@ -207,7 +207,7 @@ private:
 	LOGFONT      logfont_;
 	GLYPHSET     *fontranges_;
 	COLORREF     colorTable_[7];
-	bool         scDraw_[5];
+	byte         scDraw_;
 #ifdef WIN32S
 	const bool   useOutA_;
 #endif
