@@ -122,6 +122,8 @@ public:
 	bool useQuickExit() const;
 	bool useOldOpenSaveDlg() const;
 	bool warnOnModified() const;
+	inline short GetZoom() const { return zoom_; };
+	inline void SetZoom(short zoom) { zoom_ = zoom; inichanged_ = true; };
 
 private:
 
@@ -132,7 +134,11 @@ private:
 	ki::String txtFilter_;
 	ki::Path   grepExe_;
 	ki::Path   helpExe_;
+	ki::String dateFormat_;
+//	ki::String timeFormat_;
+//	bool datePrior_;
 
+	short       zoom_;
 	bool        sharedConfigMode_;
 	bool        inichanged_; // keep track of save to ini.
 
@@ -144,10 +150,6 @@ private:
 	bool       useQuickExit_;
 	bool       useOldOpenSaveDlg_;
 	bool       warnOnModified_;
-
-	ki::String dateFormat_;
-//	ki::String timeFormat_;
-//	bool datePrior_;
 
 	// ウインドウサイズ記憶
 	bool wndM_; // maximized?

@@ -109,20 +109,32 @@ void GpStBar::SetUnicode( const unicode *uni )
 	SetText( t, UNI_PART );
 }
 
+void GpStBar::SetZoom( short z )
+{
+	TCHAR buf[INT_DIGITS+1 + 2];
+	const TCHAR *b = Int2lStr(buf, z);
+	buf[INT_DIGITS+2] = TEXT('\0');
+	buf[INT_DIGITS+1] = TEXT('%');
+	buf[INT_DIGITS+0] = TEXT(' ');
+	SetText(b, GpStBar::ZOOM_PART);
+}
+
 int GpStBar::AutoResize( bool maximized )
 {
 	// 文字コード表示領域を確保しつつリサイズ
 	int h = StatusBar::AutoResize( maximized );
-	int w[] = { width()-150, width()-50, width()-50, width()-5 };
+	int w[] = { width()-150, width()-50, width()-50, width()-50, width() };
 
 	HDC dc = ::GetDC( hwnd() );
 	SIZE s;
-	if( ::GetTextExtentPoint( dc, TEXT("CRLF1"), 5, &s ) ) // Line Ending
-		w[2] = w[3] - s.cx;
+	if( ::GetTextExtentPoint( dc, TEXT("CRLF1M"), 6, &s ) ) // Line Ending
+		w[3] = w[4] - s.cx;
 	if( ::GetTextExtentPoint( dc, TEXT("BBBWWW (100)"), 12, &s ) ) // Charset
-		w[0] = w[1] = w[2] - s.cx;
+		w[1] = w[2] = w[3] - s.cx;
 	if( ::GetTextExtentPoint( dc, TEXT("U+100000"), 8, &s ) ) // Unicode disp.
-		w[0] = Max( (w[1] - s.cx), (long)(width()/3) );
+		w[1] = w[2] - s.cx;
+	if( ::GetTextExtentPoint( dc, TEXT("990 %"), 6, &s ) ) // Percentage disp.
+		w[0] = Max( w[1] - s.cx, (long)(width()/3) );
 
 	::ReleaseDC( hwnd(), dc );
 
@@ -168,10 +180,19 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 	case WM_MOUSEWHEEL:
 		if( wp & MK_CONTROL )
 		{
-			VConfig &vc = const_cast<VConfig&>(cfg_.vConfig());
-			vc.fontsize += (SHORT)HIWORD(wp) > 0 ? 1 : -1;
-			vc.fontsize = vc.fontsize < 1 ? 1 : vc.fontsize > 72 ? 72 : vc.fontsize;
-			edit_.getView().SetFont( cfg_.vConfig() );
+			VConfig vc = cfg_.vConfig();
+			short zoom = cfg_.GetZoom();
+
+			short delta_zoom = (SHORT)HIWORD(wp) / 12;
+			if(delta_zoom == 0)
+				delta_zoom += (SHORT)HIWORD(wp) > 0 ? 1 : -1;
+
+			zoom += delta_zoom;
+			zoom = Clamp((short)0, zoom, (short)990);
+			edit_.getView().SetFont( vc, zoom );
+			cfg_.SetZoom( zoom );
+			stb_.SetZoom( cfg_.GetZoom() );
+
 			return 0;
 		}
 		break;
@@ -181,7 +202,7 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		if( lp )
 		{	// We need to set the font again so that it scales to
 			// The new monitor DPI.
-			edit_.getView().SetFont( cfg_.vConfig() );
+			edit_.getView().SetFont( cfg_.vConfig(), cfg_.GetZoom() );
 
 			// Resize the window to the advised RECT
 			RECT *rc = reinterpret_cast<RECT *>(lp);
@@ -272,7 +293,20 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 	case WM_NOTIFY:
 		if( wp == 1787 // Status Bar ID to check before[]
 		&& (reinterpret_cast<NMHDR*>(lp))->code == NM_DBLCLK )
-			on_reopenfile();
+		{
+			RECT rc;
+			DWORD msgpos = GetMessagePos();
+			POINT pt = { (short)LOWORD(msgpos), (short)HIWORD(msgpos) };
+			ScreenToClient(stb_.hwnd(), &pt);
+			if( stb_.SendMsg( SB_GETRECT, 0, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) )
+				on_jump();
+			else if( stb_.SendMsg( SB_GETRECT, 1, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) )
+				stb_.SetZoom(100), cfg_.SetZoom( 100 ), edit_.getView().SetFont( cfg_.vConfig(), 100 );
+			else if( stb_.SendMsg( SB_GETRECT, 2, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) )
+				on_insertuni();
+			else/* if( stb_.SendMsg( SB_GETRECT, 3, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) ) */
+				on_reopenfile();
+		}
 		break;
 
 	case WMU_CHECKFILETIMESTAMP:
@@ -1522,7 +1556,7 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 	edit_.getDoc().SetUndoLimit( cfg_.undoLimit() );
 
 	wrap_ = cfg_.wrapType(); //       wt,    smart wrap,      line number,    Font...
-	edit_.getView().SetWrapLNandFont( wrap_, cfg_.wrapSmart(), cfg_.showLN(), cfg_.vConfig() );
+	edit_.getView().SetWrapLNandFont( wrap_, cfg_.wrapSmart(), cfg_.showLN(), cfg_.vConfig(), cfg_.GetZoom() );
 	LOGGER("GreenPadWnd::ReloadConfig ViewConfigLoaded");
 
 	// キーワードファイル, keyword file
@@ -1946,6 +1980,7 @@ bool GreenPadWnd::StartUp( const Path& fn, int cs, int ln )
 		stb_.SetText( TEXT("(1,1)") );
 		LOGGER( "GreenPadWnd::StartUp updatewindowname end" );
 	}
+	stb_.SetZoom( cfg_.GetZoom() );
 
 	// 指定の行へジャンプ
 	if( ln != -1 )

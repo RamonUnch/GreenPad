@@ -126,11 +126,11 @@ void View::SetWrapSmart( bool ws )
 void View::ShowLineNo( bool show )
 	{ impl_->ShowLineNo( show ); }
 
-void View::SetFont( const VConfig& vc )
-	{ impl_->SetFont( vc ); }
+void View::SetFont( const VConfig& vc, short zoom )
+	{ impl_->SetFont( vc, zoom ); }
 
-void View::SetWrapLNandFont( short wt, bool ws, bool showLN, const VConfig& vc )
-	{ impl_->SetWrapLNandFont( wt, ws, showLN, vc ); }
+void View::SetWrapLNandFont( short wt, bool ws, bool showLN, const VConfig& vc, short zoom )
+	{ impl_->SetWrapLNandFont( wt, ws, showLN, vc, zoom ); }
 
 void View::on_keyword_change()
 	{ ::InvalidateRect( hwnd(), NULL, FALSE ); }

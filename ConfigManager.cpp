@@ -600,6 +600,7 @@ void ConfigManager::LoadIni()
 	sharedConfigMode_ = ini_.SetSectionAsUserNameIfNotShared( s_sharedConfigSection );
 
 	// ã§í ÇÃê›íË
+	zoom_      = (short)ini_.GetInt( TEXT("Zoom"), 100 );
 	undoLimit_ = ini_.GetInt( TEXT("UndoLimit"), -1 );
 	txtFilter_ = ini_.GetStr( TEXT("TxtFilter"),
 		TEXT("*.txt;*.htm;*.html;*.css;*.js;*.d;*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.php;*.php3;*.ini;*.log;*.inf") );
@@ -790,6 +791,7 @@ void ConfigManager::SaveIni()
 	ini_.SetSectionAsUserNameIfNotShared( s_sharedConfigSection );
 
 	// ã§í ÇÃê›íË
+	ini_.PutInt( TEXT("Zoom"), zoom_ );
 	ini_.PutInt( TEXT("UndoLimit"), undoLimit_ );
 	ini_.PutStr( TEXT("TxtFilter"), txtFilter_.c_str() );
 	ini_.PutStr( TEXT("GrepExe"), grepExe_.c_str() );
