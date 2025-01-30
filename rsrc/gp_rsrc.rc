@@ -255,6 +255,7 @@ BEGIN
         BEGIN
             MENUITEM "dummy",                       ID_MENUITEM40025
         END
+        MENUITEM "&Zoom...",                    ID_CMD_ZOOMDLG
         MENUITEM "&Settings...",                ID_CMD_CONFIG
         MENUITEM SEPARATOR
         MENUITEM "Status&Bar",                  ID_CMD_STATUSBAR
@@ -295,7 +296,7 @@ END
 
 IDD_REOPENDLG DIALOG  0, 0, 187, 54
 STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_VISIBLE |
-    WS_CLIPSIBLINGS | WS_CAPTION
+    WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU
 CAPTION "ReOpen File"
 FONT 8, MYDIALOGFONT
 BEGIN
@@ -313,19 +314,9 @@ FONT 8, MYDIALOGFONT
 BEGIN
     DEFPUSHBUTTON   "&Go!",IDOK,83,13,25,14
     EDITTEXT        IDC_LINEBOX,34,14,40,12,ES_AUTOHSCROLL
-    LTEXT           "&Line",IDC_STATIC,17,16,13,8
+    LTEXT           "&Line",IDC_LINLABEL,17,16,13,8
 END
 
-IDD_INSUNI DIALOG  0, 0, 131, 43
-STYLE DS_ABSALIGN | DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP |
-    WS_CAPTION | WS_SYSMENU
-CAPTION "Insert Unicode"
-FONT 8, MYDIALOGFONT
-BEGIN
-    DEFPUSHBUTTON   "Insert",IDOK,83,13,25,14
-    EDITTEXT        IDC_UNIBOX,34,14,40,12, ES_AUTOHSCROLL
-    LTEXT           "&U+",IDC_STATIC,17,16,13,8
-END
 
 IDD_FINDREPLACE DIALOG  0, 0, 282, 84
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP |
@@ -463,6 +454,9 @@ BEGIN
     IDS_CANTOPENDIR         "\nCan not open directory!"
     IDS_INVALIDCP           "Invalid codepage selected!"
     IDS_MODIFIEDOUT         "File was modified outside of GreenPad!\nRelaod it?"
+    IDS_INSERTUNI           "Insert Unicode"
+    IDS_INSSERT             "&Insert"
+    IDS_ZOOMPC              "Zoom"
 END
 
 #endif

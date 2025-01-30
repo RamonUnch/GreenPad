@@ -133,7 +133,7 @@ int GpStBar::AutoResize( bool maximized )
 		w[1] = w[2] = w[3] - s.cx;
 	if( ::GetTextExtentPoint( dc, TEXT("U+100000"), 8, &s ) ) // Unicode disp.
 		w[1] = w[2] - s.cx;
-	if( ::GetTextExtentPoint( dc, TEXT("990 %"), 6, &s ) ) // Percentage disp.
+	if( ::GetTextExtentPoint( dc, TEXT("990 %"), 5, &s ) ) // Percentage disp.
 		w[0] = Max( w[1] - s.cx, (long)(width()/3) );
 
 	::ReleaseDC( hwnd(), dc );
@@ -180,7 +180,6 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 	case WM_MOUSEWHEEL:
 		if( wp & MK_CONTROL )
 		{
-			VConfig vc = cfg_.vConfig();
 			short zoom = cfg_.GetZoom();
 
 			short delta_zoom = (SHORT)HIWORD(wp) / 12;
@@ -189,9 +188,9 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 
 			zoom += delta_zoom;
 			zoom = Clamp((short)0, zoom, (short)990);
-			edit_.getView().SetFont( vc, zoom );
+			edit_.getView().SetFont( cfg_.vConfig(), zoom );
 			cfg_.SetZoom( zoom );
-			stb_.SetZoom( cfg_.GetZoom() );
+			stb_.SetZoom( zoom );
 
 			return 0;
 		}
@@ -301,7 +300,8 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 			if( stb_.SendMsg( SB_GETRECT, 0, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) )
 				on_jump();
 			else if( stb_.SendMsg( SB_GETRECT, 1, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) )
-				stb_.SetZoom(100), cfg_.SetZoom( 100 ), edit_.getView().SetFont( cfg_.vConfig(), 100 );
+				//stb_.SetZoom(100), cfg_.SetZoom( 100 ), edit_.getView().SetFont( cfg_.vConfig(), 100 );
+				on_zoom();
 			else if( stb_.SendMsg( SB_GETRECT, 2, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) )
 				on_insertuni();
 			else/* if( stb_.SendMsg( SB_GETRECT, 3, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) ) */
@@ -371,6 +371,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	                        edit_.getCursor().End(true,true);   break;
 	case ID_CMD_DATETIME:   on_datetime();                      break;
 	case ID_CMD_INSERTUNI:  on_insertuni();                     break;
+	case ID_CMD_ZOOMDLG:    on_zoom();                          break;
 #ifndef NO_IME
 	case ID_CMD_RECONV:     on_reconv();                        break;
 	case ID_CMD_TOGGLEIME:  on_toggleime();                     break;
@@ -1195,9 +1196,16 @@ void GreenPadWnd::on_datetime()
 void GreenPadWnd::on_insertuni()
 {
 	struct InsertUnicode A_FINAL: public DlgImpl {
-		InsertUnicode(HWND w) : DlgImpl(IDD_INSUNI), utf32_(0xffffffff), w_(w) { GoModal(w); }
+		InsertUnicode(HWND w) : DlgImpl(IDD_JUMP), utf32_(0xffffffff), w_(w) { GoModal(w); }
 		void on_init() override
-			{ SetCenter(hwnd(),w_); ::SetFocus(item(IDC_UNIBOX)); }
+		{
+			SetCenter( hwnd(), w_ );
+			SetItemText( IDC_LINLABEL, TEXT("&U+") );
+			SetItemText( IDOK, RzsString(IDS_INSSERT).c_str() );
+			SetText( RzsString(IDS_INSERTUNI).c_str() );
+
+			::SetFocus(item(IDC_LINEBOX));
+		}
 		bool on_ok() override
 		{
 			TCHAR str[32]; str[0] = TEXT('\0');
@@ -1225,6 +1233,45 @@ void GreenPadWnd::on_insertuni()
 		edit_.getCursor().InputUTF32( dlg.utf32_ );
 	}
 }
+
+void GreenPadWnd::on_zoom()
+{
+	struct ZoomDlg A_FINAL: public DlgImpl {
+		ZoomDlg(HWND w, short zoom) : DlgImpl(IDD_JUMP), zoom_(zoom), w_(w) { GoModal(w); }
+		void on_init() override
+		{
+			SetCenter( hwnd(), w_ );
+			SetItemText( IDC_LINLABEL, TEXT("%") );
+			SetItemText( IDOK, /**/ TEXT("OK") );
+			SetText( RzsString(IDS_ZOOMPC).c_str() );
+			SetItemText( IDC_LINEBOX, SInt2Str(zoom_).c_str() );
+
+			HWND ed = item(IDC_LINEBOX);
+			::SetFocus(ed);
+			::SendMessage(ed, EM_SETSEL, 0, -1);
+		}
+		bool on_ok() override
+		{
+			TCHAR str[16]; str[0] = TEXT('\0');
+			::GetWindowText( item(IDC_LINEBOX), str, countof(str) );
+			if( !*str ) { zoom_ = 100; return true; }
+			zoom_ = String::GetInt(str);
+			return true;
+		}
+		short zoom_;
+		HWND w_;
+	} dlg(hwnd(), cfg_.GetZoom());
+
+	short zoom = dlg.zoom_;
+	if( IDOK == dlg.endcode() && zoom != cfg_.GetZoom() )
+	{
+		zoom = Clamp((short)0, zoom, (short)990);
+		edit_.getView().SetFont( cfg_.vConfig(), zoom );
+		cfg_.SetZoom( zoom );
+		stb_.SetZoom( zoom );
+	}
+}
+
 void GreenPadWnd::on_doctype( int no )
 {
 	if( HMENU m = ::GetSubMenu( ::GetSubMenu(::GetMenu(hwnd()),3),4 ) )

@@ -129,6 +129,7 @@ private:
 	void    on_config();
 	void    on_datetime();
 	void    on_insertuni();
+	void    on_zoom();
 	void    on_doctype( int no );
 	void    on_nextwnd();
 	void    on_prevwnd();
