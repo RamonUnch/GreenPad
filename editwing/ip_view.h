@@ -188,7 +188,7 @@ public:
 	const LOGFONT& LogFont() const { return logfont_; }
 
 	//@{ 特別文字を描画するか否か, Whether to draw special characters or not //@}
-	bool sc( int i ) const { return scDraw_[i]; }
+	bool sc( int i ) const { return 0 != (scDraw_ & (1u << i)); }
 
 private:
 
@@ -207,7 +207,7 @@ private:
 	LOGFONT      logfont_;
 	GLYPHSET     *fontranges_;
 	COLORREF     colorTable_[7];
-	bool         scDraw_[5];
+	byte         scDraw_;
 #ifdef WIN32S
 	const bool   useOutA_;
 #endif
@@ -401,16 +401,21 @@ public:
 		{ cvs_.on_config_change( cvs_.wrapType(), show, cvs_.wrapSmart() ); DoConfigChange(); }
 
 	//@{ 表示色・フォント切替 //@}
-	inline void SetFont( const VConfig& vc )
-		{ cvs_.on_font_change( vc );
-		  cur_.on_setfocus();
-		  CalcEveryLineWidth(); // 行幅再計算
-		  DoConfigChange(); }
+	inline void SetFont( const VConfig& vcc, short zoom )
+	{
+		VConfig vc = vcc;
+		vc.fontsize = vc.fontsize * zoom / 100;
+		vc.fontsize = vc.fontsize < 1 ? 1 : vc.fontsize;
+		cvs_.on_font_change( vc );
+		cur_.on_setfocus();
+		CalcEveryLineWidth(); // 行幅再計算
+		DoConfigChange();
+	}
 
 	//@{ All of the above in one go //@}
-	inline void SetWrapLNandFont( short wt, bool ws, bool showLN, const VConfig& vc )
+	inline void SetWrapLNandFont( short wt, bool ws, bool showLN, const VConfig& vc, short zoom )
 		{ cvs_.on_config_change_nocalc( wt, showLN, ws );
-		  SetFont( vc ); }
+		  SetFont( vc, zoom ); }
 
 	//@{ テキスト領域のサイズ変更イベント //@}
 	inline void on_view_resize( int cx, int cy ) { DoResize( cvs_.on_view_resize( cx, cy ) ); }
@@ -552,10 +557,10 @@ public:
 	void ShowLineNo( bool show );
 
 	//@{ 表示色・フォント切替 //@}
-	void SetFont( const VConfig& vc );
+	void SetFont( const VConfig& vc, short zoom );
 
 	//@{ Set all canva stuff at once (faster) //@}
-	void SetWrapLNandFont( short wt, bool ws, bool showLN, const VConfig& vc );
+	void SetWrapLNandFont( short wt, bool ws, bool showLN, const VConfig& vc, short zoom );
 
 	//@{ カーソル //@}
 	Cursor& cur();

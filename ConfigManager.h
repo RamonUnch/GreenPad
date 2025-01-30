@@ -122,6 +122,8 @@ public:
 	bool useQuickExit() const;
 	bool useOldOpenSaveDlg() const;
 	bool warnOnModified() const;
+	inline short GetZoom() const { return zoom_; };
+	inline void SetZoom(short zoom) { zoom_ = zoom; inichanged_ = true; };
 
 private:
 
@@ -132,7 +134,11 @@ private:
 	ki::String txtFilter_;
 	ki::Path   grepExe_;
 	ki::Path   helpExe_;
+	ki::String dateFormat_;
+//	ki::String timeFormat_;
+//	bool datePrior_;
 
+	short       zoom_;
 	bool        sharedConfigMode_;
 	bool        inichanged_; // keep track of save to ini.
 
@@ -145,13 +151,9 @@ private:
 	bool       useOldOpenSaveDlg_;
 	bool       warnOnModified_;
 
-	ki::String dateFormat_;
-//	ki::String timeFormat_;
-//	bool datePrior_;
-
 	// ウインドウサイズ記憶
 	bool wndM_; // maximized?
-	int  wndX_, wndY_, wndW_, wndH_;
+	RECT wndPos_;
 
 	// 文書タイプのリスト
 	struct DocType
@@ -192,6 +194,7 @@ private:
 
 	void LoadIni();
 	void SaveIni();
+	void ReadAllDocTypes( const TCHAR *ininame );
 	void LoadLayout( DocType* dt );
 	bool MatchDocType( const unicode* fname, const unicode* pat );
 
@@ -266,19 +269,19 @@ inline const ki::String& ConfigManager::dateFormat() const
 	{ return dateFormat_; }
 
 inline int ConfigManager::GetWndX() const
-	{ return rememberWindowPlace_ ? wndX_ : CW_USEDEFAULT; }
+	{ return rememberWindowPlace_ ? wndPos_.left : CW_USEDEFAULT; }
 
 inline int ConfigManager::GetWndY() const
-	{ return rememberWindowPlace_ ? wndY_ : CW_USEDEFAULT; }
+	{ return rememberWindowPlace_ ? wndPos_.top : CW_USEDEFAULT; }
 
 inline int ConfigManager::GetWndW() const
-	{ return rememberWindowSize_ ? wndW_ : CW_USEDEFAULT; }
+	{ return rememberWindowSize_ ? wndPos_.right-wndPos_.left : CW_USEDEFAULT; }
 
 inline int ConfigManager::GetWndH() const
-	{ return rememberWindowSize_ ? wndH_ : CW_USEDEFAULT; }
+	{ return rememberWindowSize_ ? wndPos_.bottom-wndPos_.top : CW_USEDEFAULT; }
 
 inline bool ConfigManager::GetWndM() const
-	{ return rememberWindowSize_ & wndM_; }
+	{ return rememberWindowSize_ && wndM_; }
 
 inline const RECT *ConfigManager::PMargins() const
 	{ return &rcPMargins_; }

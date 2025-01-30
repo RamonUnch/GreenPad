@@ -3,8 +3,8 @@
 // Used by kilib.rc
 //
 
-#define VER_FILEVERSION      1,2,1
-#define VER_FILEVERSIONSTR  "1.21"
+#define VER_FILEVERSION      1,2,2
+#define VER_FILEVERSIONSTR  "1.22"
 
 #include "dlgs.h"
 #define IDS_ASKTOSAVE                   1
@@ -28,6 +28,9 @@
 #define IDS_CANTOPENDIR                 15
 #define IDS_INVALIDCP                   16
 #define IDS_MODIFIEDOUT                 17
+#define IDS_INSERTUNI                   18
+#define IDS_INSSERT                     19
+#define IDS_ZOOMPC                      20
 
 #define IDR_MAIN                        103
 #define IDD_OPENFILEHOOK                105
@@ -50,7 +53,7 @@
 #define IDC_IGNORECASE                  1006
 #define IDC_REGEXP                      1007
 #define IDC_LINEBOX                     1007
-#define IDC_UNIBOX                      1007
+#define IDC_LINLABEL                    1008
 #define IDC_BACKSEARCH                  1008
 #define ID_FINDPREV                     1008
 #define IDC_LATEST_NUM                  1010
@@ -142,6 +145,7 @@
 #define ID_CMD_SELECTIONLEN             50018
 #define ID_CMD_ASCIIFY                  50019
 #define ID_CMD_INSERTUNI                50020
+#define ID_CMD_ZOOMDLG                  50021
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED

@@ -126,11 +126,11 @@ void View::SetWrapSmart( bool ws )
 void View::ShowLineNo( bool show )
 	{ impl_->ShowLineNo( show ); }
 
-void View::SetFont( const VConfig& vc )
-	{ impl_->SetFont( vc ); }
+void View::SetFont( const VConfig& vc, short zoom )
+	{ impl_->SetFont( vc, zoom ); }
 
-void View::SetWrapLNandFont( short wt, bool ws, bool showLN, const VConfig& vc )
-	{ impl_->SetWrapLNandFont( wt, ws, showLN, vc ); }
+void View::SetWrapLNandFont( short wt, bool ws, bool showLN, const VConfig& vc, short zoom )
+	{ impl_->SetWrapLNandFont( wt, ws, showLN, vc, zoom ); }
 
 void View::on_keyword_change()
 	{ ::InvalidateRect( hwnd(), NULL, FALSE ); }
@@ -167,6 +167,11 @@ LRESULT View::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		break;
 
 	case WM_MOUSEWHEEL:
+		if( GetKeyState(VK_CONTROL) & 0x8000 )
+		{
+			PostMessage(GetParent(hwnd()), WM_MOUSEWHEEL, wp|MK_CONTROL, lp);
+			break;
+		}
 		impl_->on_wheel( HIWORD(wp) );
 		break;
 
@@ -328,8 +333,7 @@ void Painter::Init( const VConfig& vc )
 	brush_ = ::CreateSolidBrush( vc.color[BG] );
 	// 制御文字を描画するか否か？のフラグを記憶,
 	// Whether to draw control characters or not? flag is stored.
-	for( unsigned i=0; i<countof(scDraw_); ++i )
-		scDraw_[i] = vc.sc[i];
+	scDraw_ = vc.sc;
 
 	// 文字色を記憶, Memorize text color
 	for( unsigned i=0; i<countof(colorTable_); ++i )
@@ -408,7 +412,9 @@ void Painter::Init( const VConfig& vc )
 			widthTable_[ch] = widthTable_[ctl2Map[ch-(unicode)127]];
 
 	// Set the width of a Tabulation
-	widthTable_[L'\t'] = NZero(W() * Max((uchar)1, vc.tabstep));
+	widthTable_[L'\t'] = W() * Max((uchar)1, vc.tabstep);
+	if( widthTable_[L'\t'] == 0 )
+		widthTable_[L'\t'] = 1;
 
 	// LOGFONT
 	::GetObject( font_, sizeof(LOGFONT), &logfont_ );

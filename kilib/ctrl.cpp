@@ -66,8 +66,6 @@ int StatusBar::AutoResize( bool maximized )
 	RECT rc;
 	getPos( &rc );
 	width_ = rc.right - rc.left;
-	if( !maximized )
-		width_ -= 15;
 	return (isStatusBarVisible() ? rc.bottom - rc.top : 0);
 }
 

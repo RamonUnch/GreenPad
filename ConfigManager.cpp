@@ -462,11 +462,8 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		dt->vc.color[BG]  = bgcol;
 		dt->vc.color[CTL] = brightmode? RGB(192,160,192) : RGB(80,64,80);
 
-		dt->vc.sc[scEOF] = true;  // Show end of file with [EOF]
-		dt->vc.sc[scEOL] = true;  // Show End of line with '/'
-		dt->vc.sc[scHSP] = false; // ' ' (ASCII space)
-		dt->vc.sc[scZSP] = true;  // '　' (0x3000)
-		dt->vc.sc[scTAB] = true;  // Show tabs with '>'
+		// EOF=0, EOL=1, TAB=2, HSP=3, ZSP=4
+		dt->vc.sc = 027 ; //010 111 b
 
 		dt->vc.SetFont( TEXT("FixedSys"), 11, dt->fontCS );
 
@@ -489,7 +486,6 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		int    fontxwidth=0;
 		LONG   fontweight=FW_DONTCARE;
 		BYTE   fontflags=0;
-		int    x;
 		bool   clfound = false;
 		dt->fontCS = DEFAULT_CHARSET;
 
@@ -554,12 +550,12 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 				dt->vc.SetTabStep( GetInt(ptr) );
 				break;
 			case 0x7363: // sc: SPECIAL-CHAR
-				x = GetInt(ptr);
-				dt->vc.sc[scZSP] = (0!=x%10); x/=10;
-				dt->vc.sc[scHSP] = (0!=x%10); x/=10;
-				dt->vc.sc[scTAB] = (0!=x%10); x/=10;
-				dt->vc.sc[scEOL] = (0!=x%10); x/=10;
-				dt->vc.sc[scEOF] = (0!=x%10);
+				if( ptr + 4 < buf+len )
+					dt->vc.sc = ( (ptr[0] != L'0') << 0 )
+					          | ( (ptr[1] != L'0') << 1 )
+					          | ( (ptr[2] != L'0') << 2 )
+					          | ( (ptr[3] != L'0') << 3 )
+					          | ( (ptr[4] != L'0') << 4 );
 				break;
 			case 0x7770: // wp: WRAP-TYPE
 				dt->wrapType = GetInt(ptr);
@@ -599,43 +595,12 @@ void ConfigManager::LoadIni()
 {
 	ki::IniFile ini_;
 	inichanged_=0;
-	{
-		FileW fp;
-		if( !Path::exist(ini_.getName()) && fp.Open(ini_.getName()) )
-		{
-			static const char s_defaultIni[] =
-			"[DocType]\r\n"
-			"1=Assembly,program.lay,asm.kwd,.*\\.asm$\r\n"
-			"2=B2E,program.lay,b2e.kwd,.*\\.b2e$\r\n"
-			"3=C/C++,program.lay,C.kwd,.*(\\.(c|cpp|cxx|cc|h|hpp)|include\\\\[^\\.]+)$\r\n"
-			"4=C#,program.lay,C#.kwd,.*\\.cs$\r\n"
-			"5=D,program.lay,D.kwd,.*\\.d$\r\n"
-			"6=Delphi,program.lay,Delphi.kwd,.*\\.pas$\r\n"
-			"7=Fortran,program.lay,Fortran.kwd,.*\\.(f|for|f90|f95|f03|f15)$\r\n"
-			"8=Java,program.lay,Java.kwd,.*\\.java$\r\n"
-			"9=HTML,html.lay,HTML.kwd,.*(\\.html|\\.htm|temporary internet files\\\\.+)$\r\n"
-			"10=CSS,program.lay,CSS.kwd,.*\\.css$\r\n"
-			"11=Perl,program.lay,Perl.kwd,.*\\.(pl|pm|cgi)$\r\n"
-			"12=Ruby,program.lay,Ruby.kwd,.*\\.rb$\r\n"
-			"13=PHP,program.lay,PHP.kwd,.*\\.(php|php3|php4)$\r\n"
-			"14=Python,program.lay,Python.kwd,.*\\.py$\r\n"
-			"15=Lua,program.lay,Lua.kwd,.*\\.lua$\r\n"
-			"16=Java Script,program.lay,JavaScript.kwd,.*\\.js$\r\n"
-			"17=Erlang,program.lay,Erlang.kwd,.*\\.erl$\r\n"
-			"18=Haskell,program.lay,Haskell.kwd,.*\\.l?hs$\r\n"
-			"19=OCaml,program.lay,OCaml.kwd,.*\\.mli?$\r\n"
-			"20=INI,,ini.kwd,.*\\.ini$\r\n"
-			"21=UnicodeText,unitext.lay,,\r\n"
-			"22=\r\n\r\n";
-
-			fp.Write( s_defaultIni, sizeof(s_defaultIni)-1 );
-		}
-	}
 
 	// 共通の設定の読み取りセクション
 	sharedConfigMode_ = ini_.SetSectionAsUserNameIfNotShared( s_sharedConfigSection );
 
 	// 共通の設定
+	zoom_      = (short)ini_.GetInt( TEXT("Zoom"), 100 );
 	undoLimit_ = ini_.GetInt( TEXT("UndoLimit"), -1 );
 	txtFilter_ = ini_.GetStr( TEXT("TxtFilter"),
 		TEXT("*.txt;*.htm;*.html;*.css;*.js;*.d;*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.php;*.php3;*.ini;*.log;*.inf") );
@@ -655,17 +620,14 @@ void ConfigManager::LoadIni()
 	// wnd
 	rememberWindowSize_  = ini_.GetBool( TEXT("RememberWindowSize"), false );
 	rememberWindowPlace_ = ini_.GetBool( TEXT("RememberWindowPos"), false );
-	wndX_ = wndY_ = wndW_ = wndH_ = CW_USEDEFAULT;
-	if( rememberWindowPlace_ )
+
+	static const RECT defpos = { CW_USEDEFAULT, CW_USEDEFAULT, 0, 0 };
+	CopyRect(&wndPos_, &defpos);
+	if( rememberWindowPlace_ || rememberWindowSize_ )
 	{
-		wndX_ = ini_.GetInt( TEXT("WndX"), CW_USEDEFAULT );
-		wndY_ = ini_.GetInt( TEXT("WndY"), CW_USEDEFAULT );
-	}
-	if( rememberWindowSize_ )
-	{
-		wndW_ = ini_.GetInt( TEXT("WndW"), CW_USEDEFAULT );
-		wndH_ = ini_.GetInt( TEXT("WndH"), CW_USEDEFAULT );
-		wndM_ = ini_.GetBool( TEXT("WndM"), false );
+		ini_.GetRect( TEXT("WndPos"), &wndPos_, &defpos );
+		if( rememberWindowSize_ )
+			wndM_ = ini_.GetBool( TEXT("WndM"), false );
 	}
 	// Exit with the ESC key?
 	useQuickExit_ = ini_.GetBool( TEXT("QuickExit"), false );
@@ -692,45 +654,110 @@ void ConfigManager::LoadIni()
 
 	// 文書タイプリストの０番以外のクリア
 	dtList_.DelAfter( ++dtList_.begin() );
+	ReadAllDocTypes( ini_.getName() );
 
-	TCHAR buf[MAX_PATH*3];
+	LOGGER( "ConfigManager::LoadIni() LOADED!" );
+}
+
+void ConfigManager::ReadAllDocTypes( const TCHAR *ininame )
+{
+	static const char s_defaultIni[] =
+		"1=Assembly,program.lay,asm.kwd,.*\\.asm$\0"
+		"2=B2E,program.lay,b2e.kwd,.*\\.b2e$\0"
+		"3=C/C++,program.lay,C.kwd,.*(\\.(c|cpp|cxx|cc|h|hpp)|include\\\\[^\\.]+)$\0"
+		"4=C#,program.lay,C#.kwd,.*\\.cs$\0"
+		"5=D,program.lay,D.kwd,.*\\.d$\0"
+		"6=Delphi,program.lay,Delphi.kwd,.*\\.pas$\0"
+		"7=Fortran,program.lay,Fortran.kwd,.*\\.(f|for|f90|f95|f03|f15)$\0"
+		"8=Java,program.lay,Java.kwd,.*\\.java$\0"
+		"9=HTML,html.lay,HTML.kwd,.*(\\.html|\\.htm|temporary internet files\\\\.+)$\0"
+		"10=CSS,program.lay,CSS.kwd,.*\\.css$\0"
+		"11=Perl,program.lay,Perl.kwd,.*\\.(pl|pm|cgi)$\0"
+		"12=Ruby,program.lay,Ruby.kwd,.*\\.rb$\0"
+		"13=PHP,program.lay,PHP.kwd,.*\\.(php|php3|php4)$\0"
+		"14=Python,program.lay,Python.kwd,.*\\.py$\0"
+		"15=Lua,program.lay,Lua.kwd,.*\\.lua$\0"
+		"16=Java Script,program.lay,JavaScript.kwd,.*\\.js$\0"
+		"17=Erlang,program.lay,Erlang.kwd,.*\\.erl$\0"
+		"18=Haskell,program.lay,Haskell.kwd,.*\\.l?hs$\0"
+		"19=OCaml,program.lay,OCaml.kwd,.*\\.mli?$\0"
+		"20=INI,,ini.kwd,.*\\.ini$\0"
+		"21=UnicodeText,unitext.lay,,\0\0";
+
 	DocType d;
 	// [DocType]
 	// 1=Asm...
 	// 2=...
 	// ...
-	for( uint i=1; i<1024; ++i )
+	DWORD seclen = 0;
+	DWORD buflen = 4096 / sizeof(TCHAR);
+	TCHAR *sec = NULL;
+	while(1)
 	{
-		// 文書タイプ名を読み込み
-		TCHAR tmp[INT_DIGITS+1] ;
-		ini_.GetSStrHere( Int2lStr(tmp, i), TEXT("DocType"), TEXT(""), buf );
-		if( !buf[0] ) // End of list
+		sec = (TCHAR *)TS.alloc( buflen * sizeof(TCHAR) );
+		if( !sec ) break;
+		seclen = GetPrivateProfileSection( TEXT("DocType"), sec, buflen, ininame );
+		if(seclen == buflen-2)
+		{
+			TS.freelast( sec, buflen * sizeof(TCHAR) );
+			buflen <<= 1;
+			continue;
+		}
+		break;
+	}
+	if (seclen == 0 || !sec)
+	{
+		if(!sec)
+		{
+			buflen = countof(s_defaultIni);
+			sec = (TCHAR*)TS.alloc( buflen * sizeof(TCHAR) );
+			if(!sec) return;
+		}
+		for( size_t i=0; i<countof(s_defaultIni); i++)
+			sec[i] = s_defaultIni[i];
+		seclen = countof(s_defaultIni)-1;
+	}
+
+	TCHAR *p=sec, *end = p + seclen;
+
+	for( ; p < end && *p; )
+	{
+		while( *p != TEXT('=') && p < end ) p++;
+		if( *p != TEXT('=') )
 			break;
-		
+		p++;
+
+		if( !*p )
+			break;
+
 		// 4 Coma separated values to split ie:
 		// 1=Assembly,program.lay,asm.kwd,.*\.asm$
 		size_t j=0;
-		const TCHAR *substrings[3] = { TEXT(""), TEXT(""), TEXT("") };
-		for( size_t i=0; j<countof(substrings) && i<countof(buf) && buf[i] ; )
+		TCHAR *substrings[3] = { TEXT(""), TEXT(""), TEXT("") };
+		for( size_t i=0; j<countof(substrings) && p[i] ; )
 		{
-			if( buf[i] == TEXT(',') )
+			if( p[i] == TEXT(',') )
 			{
-				buf[i] = TEXT('\0');
-				substrings[j++] = &buf[++i];
+				p[i] = TEXT('\0');
+				substrings[j++] = &p[++i];
 			}
 			else
 				++i;
 		}
 
 		// その文書タイプを実際に読み込み
-		d.name      = buf;
+		d.name      = p;
 		d.layfile   = *substrings[0] ? substrings[0] : TEXT("default.lay");
 		d.kwdfile   = substrings[1];
 		d.pattern   = substrings[2];
-		
+
 		dtList_.Add( d );
+
+		p = substrings[2];
+		while( p<end && *p ) p++; // go to end of string
+		p++; // skip NUL
 	}
-	LOGGER( "ConfigManager::LoadIni() LOADED!" );
+	TS.freelast( sec, buflen * sizeof(TCHAR) );
 }
 
 void ConfigManager::SaveIni()
@@ -743,47 +770,7 @@ void ConfigManager::SaveIni()
 	if( Path::isReadOnly( ini_.getName() ) )
 		return;
 
-	// 共通の設定の書き込みセクション
-	ini_.SetSectionAsUserNameIfNotShared( s_sharedConfigSection );
-
-	// 共通の設定
-	ini_.PutInt( TEXT("UndoLimit"), undoLimit_ );
-	ini_.PutStr( TEXT("TxtFilter"), txtFilter_.c_str() );
-	ini_.PutStr( TEXT("GrepExe"), grepExe_.c_str() );
-	ini_.PutBool( TEXT("OpenSame"), openSame_ );
-	ini_.PutBool( TEXT("CountUni"), countbyunicode_ );
-	ini_.PutBool( TEXT("StatusBar"), showStatusBar_ );
-
-	// Cannot be modified from the GUI
-	// ini_.PutStr( TEXT("DateFormat"), dateFormat_.c_str() );
-
-	// Wnd
-	ini_.PutBool( TEXT("RememberWindowSize"), rememberWindowSize_ );
-	ini_.PutBool( TEXT("RememberWindowPos"), rememberWindowPlace_ );
-	if (rememberWindowPlace_) {
-		ini_.PutInt( TEXT("WndX"), wndX_ );
-		ini_.PutInt( TEXT("WndY"), wndY_ );
-	}
-	if (rememberWindowSize_) {
-		ini_.PutInt( TEXT("WndW"), wndW_ );
-		ini_.PutInt( TEXT("WndH"), wndH_ );
-		ini_.PutBool( TEXT("WndM"), wndM_ );
-	}
-	// Exit with the ESC key? (Cannot Not yet be modified from GUI)
-	// ini_.PutBool(TEXT("QuickExit"), useQuickExit_);
-
-	// 新規ファイル関係
-	ini_.PutInt( TEXT("NewfileCharset"), newfileCharset_ );
-	ini_.PutStr( TEXT("NewfileDoctype"), newfileDoctype_.c_str() );
-	ini_.PutInt( TEXT("NewfileLB"),      newfileLB_      );
-
-	// Print Margins
-	ini_.PutRect( TEXT("PMargin"), &rcPMargins_);
-
-	// MRU
-	ini_.PutInt( TEXT("MRU"), mrus_ );
-
-	// DocType
+	// [DocType]
 	TCHAR strnum[ULONG_DIGITS+1];
 	TCHAR buf[MAX_PATH*3];
 	ulong ct=1;
@@ -798,6 +785,45 @@ void ConfigManager::SaveIni()
 		++ct; // Next DocType
 	}
 	ini_.PutStrinSect( Ulong2lStr(strnum, ct), TEXT("DocType"), TEXT("") );
+
+
+	// 共通の設定の書き込みセクション
+	ini_.SetSectionAsUserNameIfNotShared( s_sharedConfigSection );
+
+	// 共通の設定
+	ini_.PutInt( TEXT("Zoom"), zoom_ );
+	ini_.PutInt( TEXT("UndoLimit"), undoLimit_ );
+	ini_.PutStr( TEXT("TxtFilter"), txtFilter_.c_str() );
+	ini_.PutStr( TEXT("GrepExe"), grepExe_.c_str() );
+	ini_.PutBool( TEXT("OpenSame"), openSame_ );
+	ini_.PutBool( TEXT("CountUni"), countbyunicode_ );
+	ini_.PutBool( TEXT("StatusBar"), showStatusBar_ );
+
+	// Cannot be modified from the GUI
+	// ini_.PutStr( TEXT("DateFormat"), dateFormat_.c_str() );
+
+	// Wnd
+	ini_.PutBool( TEXT("RememberWindowSize"), rememberWindowSize_ );
+	ini_.PutBool( TEXT("RememberWindowPos"), rememberWindowPlace_ );
+	if (rememberWindowPlace_ || rememberWindowSize_) {
+		//RECT rc = { wndX_, wndY_, wndW_, wndH_ };
+		ini_.PutRect( TEXT("WndPos"), &wndPos_ );
+		if (rememberWindowSize_)
+			ini_.PutBool( TEXT("WndM"), wndM_ );
+	}
+	// Exit with the ESC key? (Cannot Not yet be modified from GUI)
+	// ini_.PutBool(TEXT("QuickExit"), useQuickExit_);
+
+	// 新規ファイル関係
+	ini_.PutInt( TEXT("NewfileCharset"), newfileCharset_ );
+	ini_.PutStr( TEXT("NewfileDoctype"), newfileDoctype_.c_str() );
+	ini_.PutInt( TEXT("NewfileLB"),      newfileLB_      );
+
+	// Print Margins
+	ini_.PutRect( TEXT("PMargin"), &rcPMargins_);
+
+	// MRU
+	ini_.PutInt( TEXT("MRU"), mrus_ );
 }
 
 
@@ -906,8 +932,6 @@ void ConfigManager::RememberWnd( const ki::Window* wnd )
 {
 	if( this->rememberWindowPlace_ || this->rememberWindowSize_ )
 	{
-		RECT rc;
-		wnd->getPos(&rc);
 		WINDOWPLACEMENT wp; wp.length = sizeof(wp);
 		::GetWindowPlacement( wnd->hwnd(), &wp );
 
@@ -915,10 +939,7 @@ void ConfigManager::RememberWnd( const ki::Window* wnd )
 			wndM_ = (wp.showCmd == SW_MAXIMIZE);
 		if( wp.showCmd==SW_SHOWNORMAL )
 		{
-			wndX_ = rc.left;
-			wndY_ = rc.top;
-			wndW_ = rc.right- rc.left;
-			wndH_ = rc.bottom - rc.top;
+			wnd->getPos(&wndPos_);
 		}
 		inichanged_=1;
 		// SaveIni();

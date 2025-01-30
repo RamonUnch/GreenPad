@@ -109,20 +109,32 @@ void GpStBar::SetUnicode( const unicode *uni )
 	SetText( t, UNI_PART );
 }
 
+void GpStBar::SetZoom( short z )
+{
+	TCHAR buf[INT_DIGITS+1 + 2];
+	const TCHAR *b = Int2lStr(buf, z);
+	buf[INT_DIGITS+2] = TEXT('\0');
+	buf[INT_DIGITS+1] = TEXT('%');
+	buf[INT_DIGITS+0] = TEXT(' ');
+	SetText(b, GpStBar::ZOOM_PART);
+}
+
 int GpStBar::AutoResize( bool maximized )
 {
 	// 文字コード表示領域を確保しつつリサイズ
 	int h = StatusBar::AutoResize( maximized );
-	int w[] = { width()-150, width()-50, width()-50, width()-5 };
+	int w[] = { width()-150, width()-50, width()-50, width()-50, width() };
 
 	HDC dc = ::GetDC( hwnd() );
 	SIZE s;
-	if( ::GetTextExtentPoint( dc, TEXT("CRLF1"), 5, &s ) ) // Line Ending
-		w[2] = w[3] - s.cx;
+	if( ::GetTextExtentPoint( dc, TEXT("CRLF1M"), 6, &s ) ) // Line Ending
+		w[3] = w[4] - s.cx;
 	if( ::GetTextExtentPoint( dc, TEXT("BBBWWW (100)"), 12, &s ) ) // Charset
-		w[0] = w[1] = w[2] - s.cx;
+		w[1] = w[2] = w[3] - s.cx;
 	if( ::GetTextExtentPoint( dc, TEXT("U+100000"), 8, &s ) ) // Unicode disp.
-		w[0] = Max( (w[1] - s.cx), (long)(width()/3) );
+		w[1] = w[2] - s.cx;
+	if( ::GetTextExtentPoint( dc, TEXT("990 %"), 5, &s ) ) // Percentage disp.
+		w[0] = Max( w[1] - s.cx, (long)(width()/3) );
 
 	::ReleaseDC( hwnd(), dc );
 
@@ -165,22 +177,31 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 		}
 		break;
 
-//	case WM_MOUSEWHEEL:
-//		if( wp & MK_CONTROL )
-//		{
-//			VConfig &vc = const_cast<VConfig&>(cfg_.vConfig());
-//			vc.fontsize += (SHORT)HIWORD(wp) > 0 ? 1 : -1;
-//			edit_.getView().SetFont( cfg_.vConfig() );
-//			return 0;
-//		}
-//		break;
+	case WM_MOUSEWHEEL:
+		if( wp & MK_CONTROL )
+		{
+			short zoom = cfg_.GetZoom();
+
+			short delta_zoom = (SHORT)HIWORD(wp) / 12;
+			if(delta_zoom == 0)
+				delta_zoom += (SHORT)HIWORD(wp) > 0 ? 1 : -1;
+
+			zoom += delta_zoom;
+			zoom = Clamp((short)0, zoom, (short)990);
+			edit_.getView().SetFont( cfg_.vConfig(), zoom );
+			cfg_.SetZoom( zoom );
+			stb_.SetZoom( zoom );
+
+			return 0;
+		}
+		break;
 
 	#ifdef PM_DPIAWARE
 	case 0x02E0: // WM_DPICHANGED
 		if( lp )
 		{	// We need to set the font again so that it scales to
 			// The new monitor DPI.
-			edit_.getView().SetFont( cfg_.vConfig() );
+			edit_.getView().SetFont( cfg_.vConfig(), cfg_.GetZoom() );
 
 			// Resize the window to the advised RECT
 			RECT *rc = reinterpret_cast<RECT *>(lp);
@@ -271,7 +292,21 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 	case WM_NOTIFY:
 		if( wp == 1787 // Status Bar ID to check before[]
 		&& (reinterpret_cast<NMHDR*>(lp))->code == NM_DBLCLK )
-			on_reopenfile();
+		{
+			RECT rc;
+			DWORD msgpos = GetMessagePos();
+			POINT pt = { (short)LOWORD(msgpos), (short)HIWORD(msgpos) };
+			ScreenToClient(stb_.hwnd(), &pt);
+			if( stb_.SendMsg( SB_GETRECT, 0, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) )
+				on_jump();
+			else if( stb_.SendMsg( SB_GETRECT, 1, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) )
+				//stb_.SetZoom(100), cfg_.SetZoom( 100 ), edit_.getView().SetFont( cfg_.vConfig(), 100 );
+				on_zoom();
+			else if( stb_.SendMsg( SB_GETRECT, 2, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) )
+				on_insertuni();
+			else/* if( stb_.SendMsg( SB_GETRECT, 3, reinterpret_cast<LPARAM>(&rc) ) && PtInRect(&rc, pt) ) */
+				on_reopenfile();
+		}
 		break;
 
 	case WMU_CHECKFILETIMESTAMP:
@@ -336,6 +371,7 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	                        edit_.getCursor().End(true,true);   break;
 	case ID_CMD_DATETIME:   on_datetime();                      break;
 	case ID_CMD_INSERTUNI:  on_insertuni();                     break;
+	case ID_CMD_ZOOMDLG:    on_zoom();                          break;
 #ifndef NO_IME
 	case ID_CMD_RECONV:     on_reconv();                        break;
 	case ID_CMD_TOGGLEIME:  on_toggleime();                     break;
@@ -1160,9 +1196,16 @@ void GreenPadWnd::on_datetime()
 void GreenPadWnd::on_insertuni()
 {
 	struct InsertUnicode A_FINAL: public DlgImpl {
-		InsertUnicode(HWND w) : DlgImpl(IDD_INSUNI), utf32_(0xffffffff), w_(w) { GoModal(w); }
+		InsertUnicode(HWND w) : DlgImpl(IDD_JUMP), utf32_(0xffffffff), w_(w) { GoModal(w); }
 		void on_init() override
-			{ SetCenter(hwnd(),w_); ::SetFocus(item(IDC_UNIBOX)); }
+		{
+			SetCenter( hwnd(), w_ );
+			SetItemText( IDC_LINLABEL, TEXT("&U+") );
+			SetItemText( IDOK, RzsString(IDS_INSSERT).c_str() );
+			SetText( RzsString(IDS_INSERTUNI).c_str() );
+
+			::SetFocus(item(IDC_LINEBOX));
+		}
 		bool on_ok() override
 		{
 			TCHAR str[32]; str[0] = TEXT('\0');
@@ -1190,6 +1233,45 @@ void GreenPadWnd::on_insertuni()
 		edit_.getCursor().InputUTF32( dlg.utf32_ );
 	}
 }
+
+void GreenPadWnd::on_zoom()
+{
+	struct ZoomDlg A_FINAL: public DlgImpl {
+		ZoomDlg(HWND w, short zoom) : DlgImpl(IDD_JUMP), zoom_(zoom), w_(w) { GoModal(w); }
+		void on_init() override
+		{
+			SetCenter( hwnd(), w_ );
+			SetItemText( IDC_LINLABEL, TEXT("%") );
+			SetItemText( IDOK, /**/ TEXT("OK") );
+			SetText( RzsString(IDS_ZOOMPC).c_str() );
+			SetItemText( IDC_LINEBOX, SInt2Str(zoom_).c_str() );
+
+			HWND ed = item(IDC_LINEBOX);
+			::SetFocus(ed);
+			::SendMessage(ed, EM_SETSEL, 0, -1);
+		}
+		bool on_ok() override
+		{
+			TCHAR str[16]; str[0] = TEXT('\0');
+			::GetWindowText( item(IDC_LINEBOX), str, countof(str) );
+			if( !*str ) { zoom_ = 100; return true; }
+			zoom_ = String::GetInt(str);
+			return true;
+		}
+		short zoom_;
+		HWND w_;
+	} dlg(hwnd(), cfg_.GetZoom());
+
+	short zoom = dlg.zoom_;
+	if( IDOK == dlg.endcode() && zoom != cfg_.GetZoom() )
+	{
+		zoom = Clamp((short)0, zoom, (short)990);
+		edit_.getView().SetFont( cfg_.vConfig(), zoom );
+		cfg_.SetZoom( zoom );
+		stb_.SetZoom( zoom );
+	}
+}
+
 void GreenPadWnd::on_doctype( int no )
 {
 	if( HMENU m = ::GetSubMenu( ::GetSubMenu(::GetMenu(hwnd()),3),4 ) )
@@ -1521,7 +1603,7 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 	edit_.getDoc().SetUndoLimit( cfg_.undoLimit() );
 
 	wrap_ = cfg_.wrapType(); //       wt,    smart wrap,      line number,    Font...
-	edit_.getView().SetWrapLNandFont( wrap_, cfg_.wrapSmart(), cfg_.showLN(), cfg_.vConfig() );
+	edit_.getView().SetWrapLNandFont( wrap_, cfg_.wrapSmart(), cfg_.showLN(), cfg_.vConfig(), cfg_.GetZoom() );
 	LOGGER("GreenPadWnd::ReloadConfig ViewConfigLoaded");
 
 	// キーワードファイル, keyword file
@@ -1945,6 +2027,7 @@ bool GreenPadWnd::StartUp( const Path& fn, int cs, int ln )
 		stb_.SetText( TEXT("(1,1)") );
 		LOGGER( "GreenPadWnd::StartUp updatewindowname end" );
 	}
+	stb_.SetZoom( cfg_.GetZoom() );
 
 	// 指定の行へジャンプ
 	if( ln != -1 )

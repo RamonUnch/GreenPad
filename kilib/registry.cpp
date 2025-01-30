@@ -10,6 +10,24 @@ void IniFile::SetFileName( /*const TCHAR* ini, bool exepath*/ )
 	DWORD len = Path::GetExeName( iniName_ );
 	if( len > 3 )
 		my_lstrcpy( iniName_+len-3, TEXT("ini") );
+	
+//	// Use user-specific ini file if possible
+//	TCHAR userini[MAX_PATH]; userini[0] = TEXT('\0');
+//	DWORD len2;
+//	if( !Path::exist( iniName_ ) && (len2 = GetEnvironmentVariable(TEXT("APPDATA"), userini, countof(userini))) > 0 )
+//	{
+//		// .ini file is not in current directorry
+//		// we should look for %APPDATA%\GreenPad\GreenPad.ini
+//		my_lstrcpyn(userini + len2, TEXT("\\GreenPad"), countof(userini) - len2);
+//		if( !Path::exist( userini ) )
+//			CreateDirectory(userini, NULL);
+//
+//		TCHAR *inifilename = iniName_ + len-3;
+//		while (inifilename >= iniName_ && *inifilename != '\\') inifilename--;
+//		my_lstrcpyn(userini+len2+9, inifilename,  countof(userini) - len2 - 9);
+//		
+//		my_lstrcpy(iniName_, userini);
+//	}
 }
 
 void IniFile::SetSectionAsUserName()
@@ -61,17 +79,15 @@ void IniFile::GetRect( const TCHAR* key, RECT *rc, const RECT *defrc  ) const
 	}
 
 	TCHAR *p = buf;
-	size_t j = 0;
 	// rect=Left,Top,Right,Bottom
 	const TCHAR *substrings[3] = { TEXT(""), TEXT(""), TEXT("") };
-	while( j<countof(substrings) && len-- && *p )
+	for( size_t j = 0; j<countof(substrings) && len-- && *p; ++p )
 	{
 		if( *p == TEXT(',') )
 		{
 			*p = TEXT('\0');
 			substrings[j++] = p + 1;
 		}
-		++p;
 	}
 	rc->left   = String::GetInt( buf );
 	rc->top    = String::GetInt( substrings[0] );
