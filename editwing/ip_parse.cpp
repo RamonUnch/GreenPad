@@ -183,7 +183,7 @@ uchar CommentDFA::tr_table[5][5] = {
 //-------------------------------------------------------------------------
 struct Keyword
 {
-	Keyword*    next;
+	ushort      next;
 	ushort      len;
 	unicode     str[1];
 
@@ -193,7 +193,7 @@ struct Keyword
 		Keyword *x = reinterpret_cast<Keyword *>( ar->alloc( (sizeof(Keyword) + l * sizeof(unicode)) ) );
 		if( x )
 		{
-			x->next = NULL;
+			x->next = 0;
 			x->len  = l;
 			memmove(x->str, s, l*sizeof(unicode));
 			x->str[l] = L'\0';
@@ -348,7 +348,7 @@ public:
 #define HTABLE_SIZE 2048
 class KeywordMap
 {
-	Keyword*          backet_[HTABLE_SIZE];
+	ushort   backet_[HTABLE_SIZE];
 	Arena ar;
 	size_t elems_;
 	bool (*compare_)(const unicode*,const unicode*,size_t);
@@ -367,6 +367,8 @@ public:
 
 	void SetArenaBufSize( size_t count )
 	{
+		if (count > 65536)
+			count = 65536; // LIMIT
 		BYTE *buf = NULL;
 		if(count != 0)
 			buf = (BYTE*)malloc(count);
@@ -390,26 +392,28 @@ public:
 //		}
 //	#endif
 	}
+	#define KW(a) ((Keyword*)(ar.sta + a))
 
 	void AddKeyword( const unicode* str, size_t len )
 	{
 		// データ登録
-		Keyword* x = Keyword::New(&ar, str,len);
+		ushort x = (ushort)((BYTE*)Keyword::New(&ar, str,len) - ar.sta);
 		int      h = hash(str,len);
 
-		if( backet_[h] == NULL )
+		if( backet_[h] == 0 )
 		{
-			// ハッシュテーブルが空の場合, Hash tambe slot is free.
+			// ハッシュテーブルが空の場合, Hash table slot is free.
 			backet_[h] = x;
 		}
 		else
 		{
 			// チェイン末尾に繋ぐ場合, chain to the existing element
 			//MessageBoxW(NULL, backet_[h]->str, x->str , MB_OK);
-			Keyword *q=backet_[h],*p=backet_[h]->next;
-			while( p!=NULL )
-				q=p, p=p->next;
-			q->next = x;
+			ushort q=backet_[h], p=KW(q)->next;
+			while( p!=0 )
+				q=p, p=KW(q)->next;
+
+			KW(q)->next = x;
 		}
 
 		// データクリア用のリストにも入れておく
@@ -421,12 +425,12 @@ public:
 	{
 		// 登録されているキーワードと一致するか？
 		if( elems_ ) // Nothing to do for empty keyword list.
-			for( Keyword* p=backet_[hash(str,len)]; p!=NULL; p=p->next )
-				if( p->len==len && compare_( p->str, str, len ) )
+			for( ushort p=backet_[hash(str,len)]; p!=0; p=KW(p)->next )
+				if( KW(p)->len==len && compare_( KW(p)->str, str, len ) )
 					return 2; // We must set the c bit of aaabbbcd
 		return 0;
 	}
-
+	#undef KW
 private:
 
 	static uint hash_i( const unicode* a, size_t al )
