@@ -732,9 +732,9 @@ void ConfigManager::ReadAllDocTypes( const TCHAR *ininame )
 
 		// 4 Coma separated values to split ie:
 		// 1=Assembly,program.lay,asm.kwd,.*\.asm$
-		size_t j=0;
-		TCHAR *substrings[3] = { TEXT(""), TEXT(""), TEXT("") };
-		for( size_t i=0; j<countof(substrings) && p[i] ; )
+		size_t i=0;
+		const TCHAR *substrings[3] = { TEXT(""), TEXT(""), TEXT("") };
+		for( size_t j=0; j<countof(substrings) && p[i] ; )
 		{
 			if( p[i] == TEXT(',') )
 			{
@@ -753,7 +753,7 @@ void ConfigManager::ReadAllDocTypes( const TCHAR *ininame )
 
 		dtList_.Add( d );
 
-		p = substrings[2];
+		p += i;
 		while( p<end && *p ) p++; // go to end of string
 		p++; // skip NUL
 	}
