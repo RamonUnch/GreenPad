@@ -155,17 +155,30 @@ struct sstorage
 
 	bool ForceSize( size_t newSize )
 	{
-		if( alen_ <= SSZ )
-		{
-			slen_= newSize;
-			return true;
-		}
-
 		if( newSize > alen_ )
+		{
+			// Reallocation needed
 			if( !ReAllocate( newSize ) )
-				return false;
+				return false; // ERROR
+		}
+		else if( alen_ <= SSZ )
+		{
+			// Still in short mode
+			slen_= newSize;
+			return true; // DONE
+		}
+//		else if( newSize <= SSZ )
+//		{
+//			// Switch back to small mode
+//			T *ob = u.s.buf_;
+//			memmove( u.a, ob, newSize * sizeof(T) );
+//			ki::mem().DeAlloc( ob, alen_ * sizeof(T) );
+//			slen_ = newSize;
+//			alen_ = SSZ;
+//			return true;
+//		}
 
-		u.s.len_ = newSize;
+		u.s.len_ = newSize; // Set size (long list mode)
 		return true;
 	}
 
