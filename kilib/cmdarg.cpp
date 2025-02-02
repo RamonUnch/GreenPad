@@ -8,7 +8,7 @@ using namespace ki;
 //=========================================================================
 
 Argv::Argv( const TCHAR* cmd )
-: arg_ ( 4 )
+: argNum_ ( 0 )
 {
 	TCHAR *p, endc;
 
@@ -33,7 +33,11 @@ Argv::Argv( const TCHAR* cmd )
 			break;
 
 		// 引数リストへ保存
-		arg_.Add( p );
+		if( argNum_ >= MAX_ARGS )
+			break;
+		
+		arg_[ argNum_++ ] = p;
+
 
 		// 引数の終わりへ…
 		while( *p!=endc && *p!=TEXT('\0') )

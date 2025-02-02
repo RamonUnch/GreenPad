@@ -453,10 +453,12 @@ public:
 
 private:
 
-	ki::uptr<Parser>                   parser_; // 文字列解析役
-	unicode                        CommentStr_[8];
-	ki::gapbufobjnoref<Line>           text_;   // テキストデータ
-	mutable ki::storage<DocEvHandler*> pEvHan_; // イベント通知先
+	enum { MAX_EVHAN = 4 };
+	ki::uptr<Parser>             parser_; // 文字列解析役
+	unicode               CommentStr_[8];
+	ki::gapbufobjnoref<Line>       text_;   // テキストデータ
+	size_t                     evHanNum_;
+	DocEvHandler*     pEvHan_[MAX_EVHAN]; // イベント通知先
 	UnReDoChain                    urdo_;   // アンドゥリドゥ
 	editwing::DPos acc_s_, acc_e2_;
 	bool busy_;

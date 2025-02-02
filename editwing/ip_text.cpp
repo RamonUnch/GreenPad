@@ -29,20 +29,23 @@ using namespace editwing::doc;
 void Document::AddHandler( DocEvHandler* eh )
 {
 	// ハンドラ追加
-	pEvHan_.Add( eh );
+	if( evHanNum_ < MAX_EVHAN )
+		pEvHan_[ evHanNum_++ ] = eh;
+	
+	LOGGERF( TEXT("Add Document Event Handler (%u / %u)"), (uint)evHanNum_, (uint)MAX_EVHAN );
 }
 
 void Document::DelHandler( const DocEvHandler* eh )
 {
 	// 後ろから見て行って…
-	const int last = pEvHan_.size() - 1;
+	const int last = evHanNum_ - 1;
 
 	// …見つけたら削除
 	for( int i=last; i>=0; --i )
 		if( pEvHan_[i] == eh )
 		{
 			pEvHan_[i] = pEvHan_[last];
-			pEvHan_.ForceSize( last );
+			evHanNum_ = last;
 			break;
 		}
 }
@@ -79,7 +82,7 @@ void Document::Fire_TEXTUPDATE
 	else
 	{
 		// 全部にイベント通知
-		for( size_t i=0, ie=pEvHan_.size(); i<ie; ++i )
+		for( size_t i=0, ie=evHanNum_; i<ie; ++i )
 			pEvHan_[i]->on_text_update( s, e, e2, reparsed, nmlcmd );
 	}
 }
@@ -89,7 +92,7 @@ void Document::Fire_KEYWORDCHANGE()
 	AutoLock lk(this);
 
 	// 全部にイベント通知
-	for( size_t i=0, ie=pEvHan_.size(); i<ie; ++i )
+	for( size_t i=0, ie=evHanNum_; i<ie; ++i )
 		pEvHan_[i]->on_keyword_change();
 }
 
@@ -99,7 +102,7 @@ void Document::Fire_MODIFYFLAGCHANGE()
 
 	// 全部にイベント通知
 	bool b = urdo_.isModified();
-	for( size_t i=0, ie=pEvHan_.size(); i<ie; ++i )
+	for( size_t i=0, ie=evHanNum_; i<ie; ++i )
 		pEvHan_[i]->on_dirtyflag_change( b );
 }
 

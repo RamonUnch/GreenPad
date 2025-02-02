@@ -384,7 +384,7 @@ int ViewImpl::InsertMulti( ulong ti_s, ulong ti_e )
 	ulong dy=0, cx=0;
 	for( ulong i=ti_s; i<=ti_e; ++i )
 	{
-		WLine pwl(2);
+		WLine pwl;
 		pwl.Add( CalcLineWidth( doc_.tl(i), doc_.len(i) ) );
 
 		if( pwl.width() < cvs_.wrapWidth() )

@@ -34,8 +34,10 @@ public:
 
 private:
 
-	TCHAR              *  buf_;
-	storage<const TCHAR*> arg_;
+	enum { MAX_ARGS = 16 };
+	TCHAR                *  buf_;
+	size_t        argNum_;
+	const TCHAR * arg_[MAX_ARGS];
 
 private:
 
@@ -51,7 +53,7 @@ inline const TCHAR* Argv::operator []( size_t i ) const
 	{ return arg_[i]; }
 
 inline size_t Argv::size() const
-	{ return arg_.size(); }
+	{ return argNum_; }
 
 
 
