@@ -94,12 +94,11 @@ private:
 
 	bool ReAllocate( size_t siz )
 		{
-			size_t p = alen_*sizeof(T);
 			T* newbuf = static_cast<T*>(mem().Alloc( siz*sizeof(T) ));
 			if( !newbuf ) return false;
-			alen_ = siz;
 			memmove( newbuf, buf_, len_*sizeof(T) );
-			mem().DeAlloc( buf_, p );
+			mem().DeAlloc( buf_, alen_*sizeof(T) );
+			alen_ = siz;
 			buf_ = newbuf;
 			return true;
 		}
@@ -111,7 +110,105 @@ protected:
 	T*    buf_;
 };
 
+//=========================================================================
+template<class T, bool free_on_del=true>
+struct sstorage
+{
+	struct ss { size_t len_; T *buf_; };
+	enum { SSZ = sizeof(ss) / sizeof(T) };
 
+	sstorage()
+	: slen_ ( 0 )
+	, alen_ ( SSZ )
+	{ }
+
+	~sstorage() { if( free_on_del ) Clear(); }
+
+	void Clear()
+	{
+		if( alen_ > SSZ )
+			ki::mem().DeAlloc( u.s.buf_, alen_*sizeof(T) );
+	}
+
+	size_t size() const { return alen_<=SSZ? slen_ : u.s.len_; };
+
+	bool Add( T val )
+	{
+		size_t prevlen;
+		if( alen_ <= SSZ )
+		{
+			if( slen_ < alen_ )
+			{
+				u.a[ slen_++ ] = val;
+				return true;
+			}
+			prevlen = slen_;
+		} else
+			prevlen = u.s.len_;
+
+		if( prevlen >= alen_ )
+			if( !ReAllocate( alen_<<1 ) )
+				return false;
+		u.s.buf_[ u.s.len_++ ] = val;
+		return true;
+	}
+
+	bool ForceSize( size_t newSize )
+	{
+		if( alen_ <= SSZ )
+		{
+			slen_= newSize;
+			return true;
+		}
+
+		if( newSize > alen_ )
+			if( !ReAllocate( newSize ) )
+				return false;
+
+		u.s.len_ = newSize;
+		return true;
+	}
+
+	bool ReAllocate( size_t siz )
+	{
+		T* newbuf = static_cast<T*>(ki::mem().Alloc( siz*sizeof(T) ));
+		if( !newbuf ) return false;
+		memmove( newbuf, alen_ > SSZ? u.s.buf_ : u.a, size()*sizeof(T) );
+		if ( alen_ > SSZ )
+		{
+			memmove( newbuf, u.s.buf_, u.s.len_*sizeof(T) );
+			ki::mem().DeAlloc( u.s.buf_, alen_*sizeof(T) );
+		}
+		else
+		{
+			memmove( newbuf, u.a, slen_*sizeof(T) );
+			u.s.len_ = slen_;
+		}
+
+		alen_ = siz;
+		u.s.buf_ = newbuf;
+
+		return true;
+	}
+
+	T operator [] (size_t i) const
+	{
+		if (alen_ <= SSZ)
+			return u.a[i];
+		return u.s.buf_[i];
+	}
+
+	T& operator [] (size_t i)
+	{
+		if (alen_ <= SSZ)
+			return u.a[i];
+		return u.s.buf_[i];
+	}
+private:
+	size_t slen_ : 3;
+	size_t alen_ : sizeof(size_t)*8 - 3;
+	union { struct ss s; T a[SSZ]; } u;
+};
 
 //=========================================================================
 //@{
