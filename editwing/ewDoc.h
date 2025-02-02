@@ -100,8 +100,8 @@ private:
 	Command* operator()( Document& doc ) const override;
 	DPos           stt_;
 	const unicode* buf_;
-	ulong          len_;
-	bool           del_;
+	ulong          len_ : sizeof(ulong)*8-1;
+	ulong          del_ : 1;
 };
 
 
@@ -159,8 +159,8 @@ private:
 	DPos           stt_;
 	DPos           end_;
 	const unicode* buf_;
-	ulong          len_;
-	bool           del_;
+	ulong          len_ : sizeof(ulong)*8-1;
+	ulong          del_ : 1;
 };
 
 
@@ -194,7 +194,7 @@ public:
 			delete arr_[i];
 	}
 
-	MacroCommand() : arr_(20) {}
+	MacroCommand() : arr_(16) {}
 
 private:
 	Command* operator()( Document& doc ) const override;
