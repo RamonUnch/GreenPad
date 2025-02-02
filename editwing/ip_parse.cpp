@@ -727,7 +727,7 @@ public:
 //-------------------------------------------------------------------------
 
 Document::Document( )
-	: pEvHan_ ( 2 )
+	: evHanNum_ ( 0 )
 	, busy_   ( false )
 	, acc_textupdate_mode_ ( false )
 	, acc_reparsed_ ( false )

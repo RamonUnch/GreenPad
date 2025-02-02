@@ -304,23 +304,13 @@ private:
 //@}
 //=========================================================================
 
-struct WLine: public ki::storage<ulong, false>
+struct WLine: public ki::sstorage<ulong, false>
 {
 	// [0]   : その行の折り返し無しでの横幅を格納
 	// [1-n] : n行目の終端のindexを格納。
 	//
 	//   例えば "aaabbb" という論理行を "aaab" "bb" と折るなら
 	//   {48, 4, 6} などという長さ３の配列となる。
-
-	explicit WLine(size_t sz) : ki::storage<ulong, false>(sz)
-	{
-		if(!buf_) { buf_ = dummy_buf();  alen_ = 2; };
-	}
-	static ulong *dummy_buf()
-	{
-		static ulong dummy_buf[2] = {0,0};
-		return dummy_buf;
-	}
 
 	ulong& width()      { return (*this)[0]; }
 	ulong width() const { return (*this)[0]; }
