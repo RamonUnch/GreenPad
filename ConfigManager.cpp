@@ -677,7 +677,7 @@ void ConfigManager::ReadAllDocTypes( const TCHAR *ininame )
 		"13=PHP,program.lay,PHP.kwd,.*\\.(php|php3|php4)$\0"
 		"14=Python,program.lay,Python.kwd,.*\\.py$\0"
 		"15=Lua,program.lay,Lua.kwd,.*\\.lua$\0"
-		"16=Java Script,program.lay,JavaScript.kwd,.*\\.js$\0"
+		"16=Java Script,program.lay,JS.kwd,.*\\.js$\0"
 		"17=Erlang,program.lay,Erlang.kwd,.*\\.erl$\0"
 		"18=Haskell,program.lay,Haskell.kwd,.*\\.l?hs$\0"
 		"19=OCaml,program.lay,OCaml.kwd,.*\\.mli?$\0"
