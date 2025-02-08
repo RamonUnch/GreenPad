@@ -318,19 +318,19 @@ using namespace ki;
 struct ki::MemBlock
 {
 public:
-	bool  Construct( byte siz, byte num );
+	bool  Construct( ushort siz, ushort num );
 	void  Destruct();
-	void* Alloc( byte siz );
-	void  DeAlloc( void* ptr, byte siz );
+	void* Alloc( ushort siz );
+	void  DeAlloc( void* ptr, ushort siz );
 	bool  isAvail();
-	bool  isEmpty( byte num );
+	bool  isEmpty( ushort num );
 	bool  hasThisPtr( const void* ptr, size_t len );
 private:
 	byte* buf_;
-	byte  first_, avail_;
+	ushort first_, avail_;
 };
 
-bool MemBlock::Construct( byte siz, byte num )
+bool MemBlock::Construct( ushort siz, ushort num )
 {
 	// 確保
 	buf_   = (byte *)malloc( siz*num );
@@ -340,8 +340,9 @@ bool MemBlock::Construct( byte siz, byte num )
 	avail_ = num;
 
 	// 連結リスト初期化
-	for( byte i=0,*p=buf_; i<num; p+=siz )
-		*p = ++i;
+	ushort i=0;
+	for( byte *p=buf_; i<num; p+=siz )
+		*((ushort*)p) = ++i;
 	return true;
 }
 
@@ -351,23 +352,23 @@ inline void MemBlock::Destruct()
 	::free( buf_ );
 }
 
-void* MemBlock::Alloc( byte siz )
+void* MemBlock::Alloc( ushort siz )
 {
 	// メモリ切り出し
 	//   ( avail==0 等のチェックは上位層に任せる )
 	byte* blk = buf_ + siz*first_;
-	first_    = *blk;
+	first_    = *(byte*)blk;
 	--avail_;
 	return blk;
 }
 
-void MemBlock::DeAlloc( void* ptr, byte siz )
+void MemBlock::DeAlloc( void* ptr, ushort siz )
 {
 	// メモリ戻す
 	//   ( 変なポインタ渡されたらだ～め～ )
 	byte* blk = static_cast<byte*>(ptr);
-	*blk      = first_;
-	first_    = static_cast<byte>((blk-buf_)/siz);
+	*(ushort*)blk      = first_;
+	first_    = static_cast<ushort>((blk-buf_)/siz);
 	++avail_;
 }
 
@@ -377,7 +378,7 @@ inline bool MemBlock::isAvail()
 	return (avail_ != 0);
 }
 
-inline bool MemBlock::isEmpty( byte num )
+inline bool MemBlock::isEmpty( ushort num )
 {
 	// 完全に空？
 	return (avail_ == num);
@@ -405,7 +406,7 @@ inline bool MemBlock::hasThisPtr( const void* ptr, size_t len )
 // 最初にそこを調べることで高速化を図る。
 //
 
-bool MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
+bool MemoryManager::FixedSizeMemBlockPool::Construct( ushort siz )
 {
 	// メモリブロック情報域をちょこっと確保
 	blocks_ = (MemBlock *)malloc( sizeof(MemBlock) * 4 );
@@ -413,7 +414,7 @@ bool MemoryManager::FixedSizeMemBlockPool::Construct( byte siz )
 
 	// ブロックサイズ等計算
 	int npb = BLOCK_SIZ/siz;
-	numPerBlock_ = static_cast<byte>( Min( npb, 255 ) );
+	numPerBlock_ = static_cast<ushort>( Min( npb, 65535 ) );
 	fixedSize_   = siz;
 
 	// 一個だけブロック作成
