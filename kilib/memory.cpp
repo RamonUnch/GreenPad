@@ -357,7 +357,7 @@ void* MemBlock::Alloc( ushort siz )
 	// メモリ切り出し
 	//   ( avail==0 等のチェックは上位層に任せる )
 	byte* blk = buf_ + siz*first_;
-	first_    = *(byte*)blk;
+	first_    = *(ushort*)blk;
 	--avail_;
 	return blk;
 }
@@ -653,7 +653,7 @@ void* A_HOT MemoryManager::Alloc( size_t siz )
 	// ここでメモリプールを作成する。
 	if( !pools_[i].isValid() )
 	{
-		bool ok = pools_[i].Construct( static_cast<byte>(siz) );
+		bool ok = pools_[i].Construct( static_cast<ushort>(siz) );
 		if( !ok ) return NULL;
 	}
 
