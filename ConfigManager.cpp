@@ -772,16 +772,16 @@ void ConfigManager::SaveIni()
 
 	// [DocType]
 	TCHAR strnum[ULONG_DIGITS+1];
-	TCHAR buf[MAX_PATH*3];
+	String tmp;
 	ulong ct=1;
 	for(DtList::iterator i=++dtList_.begin(); i!=dtList_.end(); ++i )
 	{
 		// X=Name,Layout.lay,Kewords.kwd,.*\.extension$
-		TCHAR *p = my_lstrkpy( buf, i->name.c_str() ); *p++ = TEXT(',');
-		p = my_lstrkpy( p, i->layfile.c_str() ); *p++ = TEXT(',');
-		p = my_lstrkpy( p, i->kwdfile.c_str() ); *p++ = TEXT(',');
-		p = my_lstrkpy( p, i->pattern.c_str() ); *p++ = TEXT('\0');
-		ini_.PutStrinSect( Ulong2lStr(strnum, ct), TEXT("DocType"), buf );
+		tmp = i->name.c_str(); tmp += TEXT(',');
+		tmp += i->layfile;     tmp += TEXT(',');
+		tmp += i->kwdfile;     tmp += TEXT(',');
+		tmp += i->pattern;
+		ini_.PutStrinSect( Ulong2lStr(strnum, ct), TEXT("DocType"), tmp.c_str() );
 		++ct; // Next DocType
 	}
 	ini_.PutStrinSect( Ulong2lStr(strnum, ct), TEXT("DocType"), TEXT("") );
