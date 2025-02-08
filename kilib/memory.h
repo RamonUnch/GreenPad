@@ -62,7 +62,7 @@ public:
 private:
 	struct FixedSizeMemBlockPool
 	{
-		bool Construct( byte siz );
+		bool Construct( ushort siz );
 		void Destruct();
 		void*  Alloc();
 		void DeAlloc( void* ptr );
@@ -71,8 +71,8 @@ private:
 		MemBlock* blocks_;
 		INT_PTR   blockNum_;
 		INT_PTR   blockNumReserved_;
-		byte      fixedSize_;
-		byte      numPerBlock_;
+		ushort    fixedSize_;
+		ushort    numPerBlock_;
 		INT_PTR   lastA_;
 		INT_PTR   lastDA_;
 	};
@@ -249,7 +249,16 @@ struct DArena
 
 	inline void freelast(void *ptr, size_t sz) noexcept
 	{
-		end -= (sz + (sizeof(void*)-1)) & ~(sizeof(void*)-1);
+		#ifdef _DEBUG
+		if( end - ((sz + (sizeof(void*)-1)) & ~(sizeof(void*)-1)) != (BYTE*)ptr )
+		{
+			TCHAR buf[128];
+			::wsprintf(buf, TEXT("TS.freelast(%x, %u) end = %x"), ptr, sz, end);
+			MessageBox(NULL, buf, TEXT("BAD TS.freelast()"), 0);
+		}
+		#endif
+
+		end = (BYTE*)ptr;
 	}
 
 	void FreeAll() noexcept
