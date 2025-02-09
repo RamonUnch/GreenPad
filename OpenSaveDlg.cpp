@@ -508,7 +508,7 @@ bool OpenFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 		// Include the OFN_EXPLORER flag to get the new look.
 		ofn.Flags |= OFN_EXPLORER;
 		// Use the new template sans the Open File controls.
-		ofn.lpTemplateName = MAKEINTRESOURCE(IDD_OPENFILEHOOK);
+		ofn.lpTemplateName = MAKEINTRESOURCE(IDD_OPENSAVEFILEHOOK);
 	}
 	else
 	{
@@ -641,7 +641,7 @@ bool SaveFileDlg::DoModal( HWND wnd, const TCHAR* fltr, const TCHAR* fnm )
 		// Include the OFN_EXPLORER flag to get the new look.
 		ofn.Flags |= OFN_EXPLORER;
 		// Use the new template sans the Open File controls.
-		ofn.lpTemplateName = MAKEINTRESOURCE(IDD_SAVEFILEHOOK);
+		ofn.lpTemplateName = MAKEINTRESOURCE(IDD_OPENSAVEFILEHOOK);
 	}
 	else
 	{	// WinNT 3.x

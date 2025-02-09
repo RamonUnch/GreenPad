@@ -3,8 +3,8 @@
 // Used by kilib.rc
 //
 
-#define VER_FILEVERSION      1,2,2
-#define VER_FILEVERSIONSTR  "1.22"
+#define VER_FILEVERSION      1,2,3
+#define VER_FILEVERSIONSTR  "1.23"
 
 #include "dlgs.h"
 #define IDS_ASKTOSAVE                   1
@@ -33,15 +33,14 @@
 #define IDS_ZOOMPC                      20
 
 #define IDR_MAIN                        103
-#define IDD_OPENFILEHOOK                105
-#define IDD_SAVEFILEHOOK                106
+//#define IDD_OPENFILEHOOK                105
+#define IDD_OPENSAVEFILEHOOK            106
 #define IDD_REOPENDLG                   107
 #define IDD_FINDREPLACE                 108
 #define IDD_JUMP                        109
 #define IDD_CONFIG                      110
 #define IDD_ADDDOCTYPE                  111
 #define IDD_ABOUTDLG                    112
-#define IDD_INSUNI                      113
 
 #define IDC_ABOUTSTR                    1000
 #define IDC_ABOUTURL                    1001
