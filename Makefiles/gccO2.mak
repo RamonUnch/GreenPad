@@ -36,8 +36,8 @@ OBJS = \
  $(INTDIR)/ConfigManager.$(OBJ_SUFFIX) \
  $(INTDIR)/app.$(OBJ_SUFFIX)
 
-LIBS = -nostdlib -lgcc -Wl,-e_entryp@0 -flto -fuse-linker-plugin -flto-partition=none \
- -L. -lunicows \
+LIBS = -nostdlib -Wl,-e_entryp@0 -flto -fuse-linker-plugin -flto-partition=none -fwhole-program \
+ -L. -lunicows -fno-ident \
  -lkernel32 \
  -luser32   \
  -lgdi32    \
@@ -95,7 +95,7 @@ CXXFLAGS = \
 	-mno-stack-arg-probe \
 	-momit-leaf-frame-pointer \
 	-mpreferred-stack-boundary=2 \
-	-flto -fuse-linker-plugin \
+	-flto -fuse-linker-plugin -fwhole-program  \
 	-fmerge-all-constants \
 	-fallow-store-data-races \
 	-fno-tree-loop-distribute-patterns \

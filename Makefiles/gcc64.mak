@@ -67,7 +67,7 @@ RES = $(INTDIR)/gp_rsrc.o
 VPATH    = editwing:kilib
 # -DSUPERTINY  -flto -fuse-linker-plugin
 CXXFLAGS = -nostdlib -m64 -c -Os -mno-stack-arg-probe -momit-leaf-frame-pointer \
- -flto -fuse-linker-plugin -flto-partition=none \
+ -flto -fuse-linker-plugin -flto-partition=none -fno-delete-null-pointer-checks \
  -fomit-frame-pointer -fno-stack-check -fno-stack-protector -fno-threadsafe-statics -fno-use-cxa-get-exception-ptr \
  -fno-access-control -fno-enforce-eh-specs -fno-nonansi-builtins -fnothrow-opt -fno-optional-diags -fno-use-cxa-atexit \
  -fno-exceptions -fno-dwarf2-cfi-asm -fno-asynchronous-unwind-tables -fno-extern-tls-init -fno-rtti -fno-ident \

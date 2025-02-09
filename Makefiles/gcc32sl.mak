@@ -1,9 +1,9 @@
 
-NAME       = gcc32s
+NAME       = gcc32sl
 OBJ_SUFFIX = o
 
 ###############################################################################
-TARGET = release/GPad32sg.exe
+TARGET = release/GPad32sl.exe
 INTDIR = obj\$(NAME)
 
 all: PRE $(TARGET)
@@ -81,13 +81,19 @@ WARNINGS = \
 
 DEFINES = -D_MBCS \
 	-DNO_ASMTHUNK \
+	-DNO_IME \
+	-DNO_MLANG \
+	-DNO_CHARDET \
 	-DWIN32S \
 	-UDEBUG -U_DEBUG \
-	-DUSEGLOBALIME \
 	-DSUPERTINY \
-	-DTARGET_VER=310 \
-	-DUSE_ORIGINAL_MEMMAN \
-	-DSHORT_TABLEWIDTH
+	-DTARGET_VER=303 \
+	-DSHORT_TABLEWIDTH \
+	-DNO_OLE32 \
+	-DNO_OLEDNDTAR \
+	-DNO_OLEDNDSRC \
+	-DUSE_LOCALALLOC \
+	-DOLDWIN32S
 
 CXXFLAGS = -fwhole-program  -pie -fpie \
 	-nostdlib -m32 -c -Os \

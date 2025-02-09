@@ -36,7 +36,8 @@ OBJS = \
  $(INTDIR)/ConfigManager.$(OBJ_SUFFIX) \
  $(INTDIR)/app.$(OBJ_SUFFIX)
 
-LIBS = -nostdlib -lgcc -Wl,-e_entryp@0 -flto -fuse-linker-plugin -flto-partition=none \
+LIBS = -nostdlib -Wl,-e_entryp@0 -flto -fuse-linker-plugin -flto-partition=none \
+ -fno-delete-null-pointer-checks \
  -L. -lunicows \
  -lkernel32 \
  -luser32   \
@@ -50,8 +51,10 @@ LIBS = -nostdlib -lgcc -Wl,-e_entryp@0 -flto -fuse-linker-plugin -flto-partition
  -limm32    \
  -Wl,-dynamicbase,-nxcompat,--no-seh,--enable-auto-import,--disable-stdcall-fixup \
  -Wl,--disable-reloc-section,--disable-runtime-pseudo-reloc \
- -Wl,--tsaware,--large-address-aware,-s -s\
+ -Wl,--tsaware,--large-address-aware,-s -s \
+ -Wl,--gc-sections
 
+# gcc 14: -Wnrvo 
 WARNINGS = \
    -Wall \
    -Wextra \
@@ -88,7 +91,7 @@ DEFINES = -D_WIN32_WINNT=0x400 \
     -DUSEGLOBALIME \
     -DSUPERTINY \
     -DTARGET_VER=350 \
-    -DUSE_ORIGINAL_MEMMAN \
+    -DUSE_ORIGINAL_MEMMAN -DSHORT_TABLEWIDTH \
 
 
 PRE:
@@ -139,6 +142,7 @@ CXXFLAGS = -fwhole-program \
 	-fno-ident \
 	-funsafe-loop-optimizations \
 	$(WARNINGS) $(DEFINES) \
+	-fno-delete-null-pointer-checks \
 	-idirafter kilib
 
 # -ftrivial-auto-var-init=zero

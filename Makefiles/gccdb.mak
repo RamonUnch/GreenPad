@@ -93,7 +93,7 @@ WARNINGS = \
 #ANA = -fanalyzer -Wno-analyzer-use-of-uninitialized-value -Wno-analyzer-possible-null-argument -Wno-analyzer-malloc-leak
 # -Wno-analyzer-possible-null-argument -Wno-analyzer-use-of-uninitialized-value
 
-CXXFLAGS = -m32 -g -c -Og -fno-inline-functions -fno-inline -fno-stack-protector -fomit-frame-pointer \
+CXXFLAGS = -m32 -g -c -Og -gdwarf-2 -fno-inline-functions -fno-inline -fno-stack-protector -fomit-frame-pointer \
  -march=i386 -mpreferred-stack-boundary=2 -mno-stack-arg-probe -Warray-bounds=2 \
  -idirafter kilib \
  -D_UNICODE -DUNICODE -UDEBUG -U_DEBUG -DUSEGLOBALIME -DUNICOWS -DTARGET_VER=350 \
