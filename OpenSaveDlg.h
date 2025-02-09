@@ -19,10 +19,10 @@ public:
 
 	struct CsInfo
 	{
-		int                 ID;
-		int               type;
 		const TCHAR*  longName;
 		const TCHAR* shortName;
+		long              type : 2;
+		long                ID : sizeof(long)*8 -2;
 	};
 
 public:
