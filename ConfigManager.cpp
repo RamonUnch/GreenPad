@@ -604,7 +604,7 @@ void ConfigManager::LoadIni()
 	undoLimit_ = ini_.GetInt( TEXT("UndoLimit"), -1 );
 	txtFilter_ = ini_.GetStr( TEXT("TxtFilter"),
 		TEXT("*.txt;*.htm;*.html;*.css;*.js;*.d;*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.php;*.php3;*.ini;*.log;*.inf") );
-	grepExe_   = ini_.GetStr( TEXT("GrepExe"), TEXT("") );
+	grepExe_   = ini_.GetStr( TEXT("GrepExe"), TEXT("cmd.exe /k cd \"%D\"") );
 	helpExe_   = ini_.GetStr( TEXT("HelpExe"), TEXT("") );
 	openSame_  = ini_.GetBool( TEXT("OpenSame"), false );
 	countbyunicode_ = ini_.GetBool( TEXT("CountUni"), true );
