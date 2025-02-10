@@ -76,52 +76,66 @@ public:
 	void Exit( int code );
 
 	//@{ リソース //@}
-	HACCEL LoadAccel( LPCTSTR name );
+	inline HACCEL LoadAccel( LPCTSTR name )
+		{ return ::LoadAccelerators( hInst_, name ); }
 
 	//@{ リソース //@}
-	HACCEL LoadAccel( UINT id );
+	inline HACCEL LoadAccel( UINT id )
+		{ return ::LoadAccelerators( hInst_, MAKEINTRESOURCE(id) ); }
 
 	//@{ リソース //@}
-	HBITMAP LoadBitmap( LPCTSTR name );
+	inline HBITMAP LoadBitmap( LPCTSTR name )
+		{ return ::LoadBitmap( hInst_, name ); }
 
 	//@{ リソース //@}
-	HBITMAP LoadBitmap( UINT id );
+	inline HBITMAP LoadBitmap( UINT id )
+		{ return ::LoadBitmap( hInst_, MAKEINTRESOURCE(id) ); }
 
 	//@{ リソース(OBM_XXXX) //@}
-	HBITMAP LoadOemBitmap( LPCTSTR obm );
+	inline HBITMAP LoadOemBitmap( LPCTSTR obm )
+		{ return ::LoadBitmap( NULL, obm ); }
 
 	//@{ リソース //@}
-	HCURSOR LoadCursor( LPCTSTR name );
+	inline HCURSOR LoadCursor( LPCTSTR name )
+		{ return ::LoadCursor( hInst_, name ); }
 
 	//@{ リソース //@}
-	HCURSOR LoadCursor( UINT id );
+	inline HCURSOR LoadCursor( UINT id )
+		{ return ::LoadCursor( hInst_, MAKEINTRESOURCE(id) ); }
 
 	//@{ リソース(IDC_XXXX) //@}
-	HCURSOR LoadOemCursor( LPCTSTR idc );
+	inline HCURSOR LoadOemCursor( LPCTSTR idc )
+		{ return ::LoadCursor( NULL, idc ); }
 
 	//@{ リソース //@}
-	HICON LoadIcon( LPCTSTR name );
+	inline HICON LoadIcon( LPCTSTR name )
+		{ return ::LoadIcon( hInst_, name ); }
 
 	//@{ リソース //@}
-	HICON LoadIcon( UINT id );
+	inline HICON LoadIcon( UINT id )
+		{ return ::LoadIcon( hInst_, MAKEINTRESOURCE(id) ); }
 
 	//@{ リソース(IDI_XXXX) //@}
-	HICON LoadOemIcon( LPCTSTR idi );
+	inline HICON LoadOemIcon( LPCTSTR idi )
+		{ return ::LoadIcon( NULL, idi ); }
 
 	//@{ リソース //@}
-	HMENU LoadMenu( LPCTSTR name );
+	inline HMENU LoadMenu( LPCTSTR name )
+		{ return ::LoadMenu( hInst_, name ); }
 
 	//@{ リソース //@}
-	HMENU LoadMenu( UINT id );
+	inline HMENU LoadMenu( UINT id )
+		{ return ::LoadMenu( hInst_, MAKEINTRESOURCE(id) ); }
 
 	//@{ リソース //@}
-	int LoadString( UINT id, LPTSTR buf, int siz );
+	inline int LoadString( UINT id, LPTSTR buf, int siz )
+		{ return ::LoadString( hInst_, id, buf, siz ); }
 
 public:
 
 	//@{ インスタンスハンドル //@}
-	HINSTANCE hinst() const;
-	HINSTANCE hOle32() const;
+	HINSTANCE hinst() const { return hInst_; }
+	HINSTANCE hOle32() const { return hOle32_; }
 	bool hasSysDLL(const TCHAR *dllname) const;
 	//@{ Windowsのバージョン //@}
 
@@ -160,65 +174,15 @@ private:
 private:
 
 	friend void APIENTRY Startup();
+
+	//@{ 唯一のアプリ情報オブジェクトを返す //@}
 	friend inline App& app();
+
 	NOCOPY(App);
 };
 
-
-
-//-------------------------------------------------------------------------
-
-//@{ 唯一のアプリ情報オブジェクトを返す //@}
-inline App& app()
+inline ki::App& app()
 	{ return *App::pUniqueInstance_; }
-
-inline HACCEL App::LoadAccel( LPCTSTR name )
-	{ return ::LoadAccelerators( hInst_, name ); }
-
-inline HACCEL App::LoadAccel( UINT id )
-	{ return ::LoadAccelerators( hInst_, MAKEINTRESOURCE(id) ); }
-
-inline HBITMAP App::LoadBitmap( LPCTSTR name )
-	{ return ::LoadBitmap( hInst_, name ); }
-
-inline HBITMAP App::LoadBitmap( UINT id )
-	{ return ::LoadBitmap( hInst_, MAKEINTRESOURCE(id) ); }
-
-inline HBITMAP App::LoadOemBitmap( LPCTSTR obm )
-	{ return ::LoadBitmap( NULL, obm ); }
-
-inline HCURSOR App::LoadCursor( LPCTSTR name )
-	{ return ::LoadCursor( hInst_, name ); }
-
-inline HCURSOR App::LoadCursor( UINT id )
-	{ return ::LoadCursor( hInst_, MAKEINTRESOURCE(id) ); }
-
-inline HCURSOR App::LoadOemCursor( LPCTSTR idc )
-	{ return ::LoadCursor( NULL, idc ); }
-
-inline HICON App::LoadIcon( LPCTSTR name )
-	{ return ::LoadIcon( hInst_, name ); }
-
-inline HICON App::LoadIcon( UINT id )
-	{ return ::LoadIcon( hInst_, MAKEINTRESOURCE(id) ); }
-
-inline HICON App::LoadOemIcon( LPCTSTR idi )
-	{ return ::LoadIcon( NULL, idi ); }
-
-inline HMENU App::LoadMenu( LPCTSTR name )
-	{ return ::LoadMenu( hInst_, name ); }
-
-inline HMENU App::LoadMenu( UINT id )
-	{ return ::LoadMenu( hInst_, MAKEINTRESOURCE(id) ); }
-
-inline int App::LoadString( UINT id, LPTSTR buf, int siz )
-	{ return ::LoadString( hInst_, id, buf, siz ); }
-
-inline HINSTANCE App::hinst() const
-	{ return hInst_; }
-
-inline HINSTANCE App::hOle32() const
-	{ return hOle32_; }
 
 //=========================================================================
 

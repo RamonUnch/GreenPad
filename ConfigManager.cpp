@@ -187,10 +187,8 @@ private:
 			ndt.name = dlg.name;
 			ndt.pattern = TEXT(".*\\.")+dlg.ext+TEXT("$");
 			myDtl_.Add(ndt);
-			SendMsgToItem( IDC_DOCTYPELIST, LB_ADDSTRING,
-				ndt.name.c_str() );
-			SendMsgToItem( IDC_NEWDT, CB_ADDSTRING,
-				ndt.name.c_str() );
+			SendMsgToItem( IDC_DOCTYPELIST, LB_ADDSTRING, ndt.name.c_str() );
+			SendMsgToItem( IDC_NEWDT, CB_ADDSTRING, ndt.name.c_str() );
 		}
 	}
 

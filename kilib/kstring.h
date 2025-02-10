@@ -235,35 +235,43 @@ class A_WUNUSED String
 public:
 
 	//@{ 空文字列作成 //@}
-	String();
+	inline String() { SetData( null() ); }
 	~String();
 
 	//@{ 別のStringのコピー //@}
-	String( const String& obj );
+	inline String( const String& obj ) { SetData( obj.data() ); }
 
 	//@{ 別の文字配列のコピー //@}
 	String( const TCHAR* str, long siz=-1 );
 
 	//@{ リソースから作成 //@}
-	explicit String( UINT rsrcID );
+	inline explicit String( UINT rsrcID ) { SetData( null() ), Load( rsrcID ); }
 
 	//@{ 大文字小文字を区別する比較 //@}
-	bool operator==( LPCTSTR s ) const;
-	bool operator==( const String& obj ) const;
+	inline bool operator==( LPCTSTR s ) const
+		{ return 0==my_lstrcmp( c_str(), s ); }
+	inline bool operator==( const String& obj ) const
+		{ return (data_==obj.data_ ? true : operator==( obj.c_str() )); }
 
 	//@{ 大文字小文字を区別しない比較 //@}
-	bool isSame( LPCTSTR s ) const;
-	bool isSame( const String& obj ) const;
+	bool isSame( LPCTSTR s ) const
+		{ return 0==::lstrcmpi( c_str(), s ); }
+	bool isSame( const String& obj ) const
+		{ return (data_==obj.data_ ? true : operator==( obj.c_str() )); }
 
 	//@{ 単純代入 //@}
 	String& operator=( const String& obj );
-	String& operator=( const TCHAR* s );
+	String& operator=( const TCHAR* s ) { return SetString( s, my_lstrlen(s) ); }
 	String& operator=( const XTCHAR* s );
 
 	//@{ 加算代入 //@}
-	String& operator+=( const String& obj );
-	String& operator+=( const TCHAR* s );
-	String& operator+=( TCHAR c );
+	String& operator+=( const String& obj )
+		{ return CatString( obj.c_str(), obj.len() ); }
+	String& operator+=( const TCHAR* s )
+		{ return CatString( s, my_lstrlen(s) ); }
+	String& operator+=( TCHAR c )
+		{ return CatString( &c, 1 ); }
+
 #ifdef _UNICODE
 	String& operator+=( const char* s );
 #else
@@ -282,19 +290,19 @@ public:
 	String& SetUlong( ulong n );
 
 	//@{ 文字列からintへ変換 //@}
-	int GetInt();
-	int GetULong();
+	int GetInt() const { return GetInt( data_->buf() ); }
+	int GetULong() const { return GetULong( data_->buf() ); }
 
 public:
 
 	//@{ 文字列バッファを返す //@}
-	const TCHAR* c_str() const;
+	inline const TCHAR* c_str() const { return data_->buf(); }
 
 	//@{ 長さ //@}
-	size_t len() const;
+	inline size_t len() const { return data_->len-1; }
 
 	//@{ 要素 //@}
-	TCHAR operator[](int n) const;
+	inline TCHAR operator[](int n) const { return data_->buf()[n]; }
 
 	//@{ ワイド文字列に変換して返す //@}
 	const wchar_t* ConvToWChar() const;
@@ -323,11 +331,13 @@ public:
 protected:
 
 	// 書き込み可能なバッファを、終端含めて最低でもminimum文字分用意する
-	TCHAR* AllocMem( size_t minimum );
+	inline TCHAR* AllocMem( size_t minimum )
+		{ return AllocMemHelper( minimum, TEXT(""), 1 ); }
 	TCHAR* ReallocMem( size_t minimum=0 );
 
 	// 書き込み終了後、長さを再設定
-	void UnlockMem( long siz=-1 );
+	void UnlockMem( long siz=-1 )
+		{ data_->len = 1 + (siz==-1 ? my_lstrlen(c_str()) : siz); }
 
 private:
 
@@ -347,10 +357,10 @@ private:
 	TCHAR*  AllocMemHelper( size_t minimum, const TCHAR* str, size_t siz ) A_NONNULL;
 	String& CatString( const TCHAR* str, size_t siz ) A_NONNULL;
 	String& SetString( const TCHAR* str, size_t siz ) A_NONNULL;
-	void    SetData( StringData* d ) A_NONNULL;
-	void    ReleaseData();
-	static  StringData* null();
-	        StringData* data() const;
+	inline void   SetData( StringData* d ) A_NONNULL { data_=d, data_->ref++; } // 初期化
+	void          ReleaseData();
+	inline static StringData* null() { return nullData_; } // ０文字データ
+	inline        StringData* data() const { return data_; } // 内部データ構造
 
 private:
 
@@ -371,15 +381,6 @@ private:
 //-------------------------------------------------------------------------
 #ifndef __ccdoc__
 
-// 初期化
-inline String::String()
-	{ SetData( null() ); }
-// 初期化
-inline String::String( UINT rsrcID )
-	{ SetData( null() ), Load( rsrcID ); }
-// 初期化
-inline String::String( const String& obj )
-	{ SetData( obj.data() ); }
 
 // ポインタ計算サポート
 #if !defined(_UNICODE) && defined(_MBCS)
@@ -398,64 +399,6 @@ inline String::String( const String& obj )
 		{ return false; }
 #endif
 
-// 内部メモリ確保
-inline TCHAR* String::AllocMem( size_t minimum )
-	{ return AllocMemHelper( minimum, TEXT(""), 1 ); }
-// 内部メモリ固定
-inline void String::UnlockMem( long siz )
-	{ data_->len = 1 + (siz==-1 ? my_lstrlen(c_str()) : siz); }
-
-// ０文字データ
-inline String::StringData* String::null()
-	{ return nullData_; }
-// 内部データ構造
-inline String::StringData* String::data() const
-	{ return data_; }
-// 初期化
-inline void String::SetData( String::StringData* d )
-	{ data_=d, data_->ref++; }
-
-// 属性
-inline const TCHAR* String::c_str() const
-	{ return data_->buf(); }
-// 属性
-inline size_t String::len() const
-	{ return data_->len-1; }
-// 要素
-inline TCHAR String::operator[](int n) const
-	{ return data_->buf()[n]; }
-
-// 比較
-inline bool String::operator==( LPCTSTR s ) const
-	{ return 0==my_lstrcmp( c_str(), s ); }
-// 比較
-inline bool String::operator==( const String& obj ) const
-	{ return (data_==obj.data_ ? true : operator==( obj.c_str() )); }
-// 比較
-inline bool String::isSame( LPCTSTR s ) const
-{ return 0==::lstrcmpi( c_str(), s ); }
-// 比較
-inline bool String::isSame( const String& obj ) const
-	{ return (data_==obj.data_ ? true : operator==( obj.c_str() )); }
-
-// 要コピー代入
-inline String& String::operator = ( const TCHAR* s )
-	{ return SetString( s, my_lstrlen(s) ); }
-// 合成
-inline String& String::operator += ( const String& obj )
-	{ return CatString( obj.c_str(), obj.len() ); }
-// 合成
-inline String& String::operator += ( const TCHAR* s )
-	{ return CatString( s, my_lstrlen(s) ); }
-// 合成
-inline String& String::operator += ( TCHAR c )
-	{ return CatString( &c, 1 ); }
-
-// 変換
-inline int String::GetInt()
-	{ return GetInt( data_->buf() ); }
-inline int String::GetULong()
-	{ return GetULong( data_->buf() ); }
 
 //@{ String + String //@}
 inline const String operator+( const String& a, const String& b )

@@ -90,13 +90,13 @@ public:
 	const TCHAR *CompactIfPossible(TCHAR *buf, unsigned Mx) A_NONNULL;
 
 	//@{ ディレクトリ情報以外 //@}
-	const TCHAR* name() const;
+	inline const TCHAR* name() const { return name(c_str()); }
 
 	//@{ 最後の拡張子 //@}
-	const TCHAR* ext() const;
+	inline const TCHAR* ext() const { return ext(c_str()); }
 
 	//@{ 最初の.以降全部と見なした拡張子 //@}
-	const TCHAR* ext_all() const;
+	inline const TCHAR* ext_all() const { return ext_all(c_str()); }
 
 	//@{ ディレクトリ情報と最後の拡張子を除いた名前部分 //@}
 	Path body() const;
@@ -107,21 +107,30 @@ public:
 public:
 
 	//@{ ファイルかどうか //@}
-	bool isFile() const;
+	inline bool isFile() const
+		{ return c_str()[len()-1] != TEXT('\\') && c_str()[len()-1] != TEXT('/')
+	      && 0==(GetFileAttributesUNC(c_str())&FILE_ATTRIBUTE_DIRECTORY); }
+
 
 	//@{ ディレクトリかどうか //@}
-	bool isDirectory() const;
-	static bool isDirectory( const TCHAR *fn ) A_NONNULL;
+	inline bool isDirectory() const { return isDirectory( c_str() ); }
+	inline static bool isDirectory( const TCHAR *fn ) A_NONNULL
+		{ DWORD x=GetFileAttributesUNC( fn );
+		  return x!=0xffffffff && (x&FILE_ATTRIBUTE_DIRECTORY)!=0; }
+
 
 	//@{ 存在するかどうか。isFile() || isDirectory() //@}
-	bool exist() const;
-	static bool exist( const TCHAR *fn ) A_NONNULL;
+	inline bool exist() const { return exist( c_str() ); }
+	inline static bool exist( const TCHAR *fn ) A_NONNULL
+		{ return 0xffffffff != GetFileAttributesUNC(fn); }
 
 	//@{ 読み取り専用かどうか //@}
-	bool isReadOnly() const;
-	static bool isReadOnly( const TCHAR *fn );
+	inline bool isReadOnly() const { return isReadOnly( c_str() ); }
+	inline static bool isReadOnly( const TCHAR *fn )
+		{ DWORD x = GetFileAttributesUNC( fn );
+		  return x!=0xffffffff && (x&FILE_ATTRIBUTE_READONLY)!=0; }
 
-	FILETIME getLastWriteTime() const;
+	inline FILETIME getLastWriteTime() const { return getLastWriteTime( c_str() ); }
 	static FILETIME getLastWriteTime( const TCHAR *fn );
 
 public:
@@ -131,47 +140,6 @@ public:
 	static const TCHAR* ext_all( const TCHAR* str );
 	static DWORD GetExeName( TCHAR buf[MAX_PATH] ) A_NONNULL;
 };
-
-
-
-//-------------------------------------------------------------------------
-
-inline bool Path::isFile() const
-	{ return c_str()[len()-1] != TEXT('\\') && c_str()[len()-1] != TEXT('/')
-	      && 0==(GetFileAttributesUNC(c_str())&FILE_ATTRIBUTE_DIRECTORY); }
-
-inline bool Path::isDirectory() const
-	{ return isDirectory( c_str() ); }
-
-inline bool Path::isDirectory( const TCHAR *fn ) // static
-	{ DWORD x=GetFileAttributesUNC( fn );
-	  return x!=0xffffffff && (x&FILE_ATTRIBUTE_DIRECTORY)!=0; }
-
-inline bool Path::exist() const
-	{ return exist( c_str() ); }
-
-inline bool Path::exist( const TCHAR *fn ) // static
-	{ return 0xffffffff != GetFileAttributesUNC(fn); }
-
-inline bool Path::isReadOnly() const
-	{ return isReadOnly( c_str() ); }
-
-inline bool Path::isReadOnly( const TCHAR *fn ) // Static
-	{ DWORD x = GetFileAttributesUNC( fn );
-	  return x!=0xffffffff && (x&FILE_ATTRIBUTE_READONLY)!=0; }
-
-inline FILETIME Path::getLastWriteTime() const
-	{ return getLastWriteTime( c_str() ); }
-
-inline const TCHAR* Path::name() const
-	{ return name(c_str()); }
-
-inline const TCHAR* Path::ext() const
-	{ return ext(c_str()); }
-
-inline const TCHAR* Path::ext_all() const
-	{ return ext_all(c_str()); }
-
 
 
 //=========================================================================

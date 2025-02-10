@@ -47,54 +47,60 @@ public:
 public:
 
 	//@{ Undo回数制限値 //@}
-	int undoLimit() const;
+	inline int undoLimit() const { return undoLimit_; }
 
 	//@{ 文字数のカウント方法 //@}
-	bool countByUnicode() const;
+	inline bool countByUnicode() const { return countbyunicode_; }
 
 	//@{ 開く/保存ダイアログに出すフィルタの設定 //@}
-	const ki::String& txtFileFilter() const;
+	inline const ki::String& txtFileFilter() const { return txtFilter_; }
 
 	//@{ 文字数指定時の折り返し文字数 //@}
-	short wrapWidth() const;
+	inline short wrapWidth() const { return curDt_->wrapWidth; }
 
 	//@{ Get smart warp flag //@}
-	bool wrapSmart() const;
+	inline bool wrapSmart() const { return curDt_->wrapSmart; }
 
 	//@{ 折り返し方法 //@}
-	short wrapType() const;
+	inline short wrapType() const { return curDt_->wrapType>0 ? wrapWidth() : curDt_->wrapType; }
 
 	//@{ 行番号表示する？ //@}
-	bool showLN() const;
+	inline bool showLN() const { return curDt_->showLN; }
 
 	//@{ 表示色・フォントなど //@}
-	const editwing::VConfig& vConfig() const;
+	inline const editwing::VConfig& vConfig() const { return curDt_->vc; }
 
 	//@{ キーワードファイル名(フルパス) //@}
-	ki::Path kwdFile() const;
+	inline ki::Path kwdFile() const
+		{
+		ki::Path p(ki::Path::Exe);
+		p += TEXT("type\\");
+		p += curDt_->kwdfile;
+		return p;
+		}
 
 	//@{ Grep用外部実行ファイル名 //@}
-	const ki::Path& grepExe() const;
+	inline const ki::Path& grepExe() const { return grepExe_; }
 
 	//@{ Help用外部実行ファイル名 //@}
-	const ki::Path& helpExe() const;
+	inline const ki::Path& helpExe() const { return helpExe_; }
 
 	//@{ 同じウインドウで開くモード //@}
-	bool openSame() const;
+	inline bool openSame() const { return openSame_; }
 
 	//@{ ステータスバー表示 //@}
-	bool showStatusBar() const;
-	void ShowStatusBarSwitch();
+	inline bool showStatusBar() const { return showStatusBar_; }
+	inline void ShowStatusBarSwitch() { showStatusBar_ = !showStatusBar_; inichanged_=1; SaveIni(); }
 
 	//@{ 日付 //@}
-	const ki::String& dateFormat() const;
+	inline const ki::String& dateFormat() const { return dateFormat_; }
 
 public:
 	//@{ 新規ファイルの文字コードindex //@}
-	int GetNewfileCsi() const;
+	inline int GetNewfileCsi() const { return charSets_.findCsi( newfileCharset_ ); }
 
 	//@{ 新規ファイルの改行コード //@}
-	ki::lbcode GetNewfileLB() const;
+	inline ki::lbcode GetNewfileLB() const { return newfileLB_; }
 
 public:
 	//@{ [最近使ったファイル]へ追加 //@}
@@ -107,21 +113,21 @@ public:
 	ki::Path GetMRU( int no ) const;
 
 	//@{ 対応文字セットリスト取得 //@}
-	CharSetList& GetCharSetList();
+	inline CharSetList& GetCharSetList() { return charSets_; }
 
 public:
 	//@{ ウインドウ位置・サイズ復元処理 //@}
-	int GetWndX() const;
-	int GetWndY() const;
-	int GetWndW() const;
-	int GetWndH() const;
-	bool GetWndM() const;
+	inline int GetWndX() const { return rememberWindowPlace_ ? wndPos_.left : CW_USEDEFAULT; }
+	inline int GetWndY() const { return rememberWindowPlace_ ? wndPos_.top : CW_USEDEFAULT; }
+	inline int GetWndW() const { return rememberWindowSize_ ? wndPos_.right-wndPos_.left : CW_USEDEFAULT; }
+	inline int GetWndH() const { return rememberWindowSize_ ? wndPos_.bottom-wndPos_.top : CW_USEDEFAULT; }
+	inline bool GetWndM() const { return rememberWindowSize_ && wndM_; }
 	void RememberWnd( const ki::Window* wnd );
-	const RECT *PMargins() const;
-	void SetPrintMargins(const RECT *rc);
-	bool useQuickExit() const;
-	bool useOldOpenSaveDlg() const;
-	bool warnOnModified() const;
+	const RECT *PMargins() const { return &rcPMargins_; }
+	inline void SetPrintMargins(const RECT *rc) { CopyRect(&rcPMargins_, rc); inichanged_=1; SaveIni(); }
+	inline bool useQuickExit() const { return useQuickExit_; }
+	inline bool useOldOpenSaveDlg() const { return useOldOpenSaveDlg_; }
+	inline bool warnOnModified() const { return warnOnModified_; }
 	inline short GetZoom() const { return zoom_; };
 	inline void SetZoom(short zoom) { zoom_ = zoom; inichanged_ = true; };
 
@@ -138,9 +144,9 @@ private:
 //	ki::String timeFormat_;
 //	bool datePrior_;
 
-	short       zoom_;
-	bool        sharedConfigMode_;
-	bool        inichanged_; // keep track of save to ini.
+	short      zoom_;
+	bool       sharedConfigMode_;
+	bool       inichanged_; // keep track of save to ini.
 
 	bool       openSame_;
 	bool       countbyunicode_;
@@ -204,101 +210,6 @@ private:
 	NOCOPY(ConfigManager);
 };
 
-
-
-//-------------------------------------------------------------------------
-#ifndef __ccdoc__
-
-inline int ConfigManager::undoLimit() const
-	{ return undoLimit_; }
-
-inline const ki::String& ConfigManager::txtFileFilter() const
-	{ return txtFilter_; }
-
-inline short ConfigManager::wrapWidth() const
-	{ return curDt_->wrapWidth; }
-
-inline bool ConfigManager::wrapSmart() const
-	{ return curDt_->wrapSmart; }
-
-inline short ConfigManager::wrapType() const
-	{ return curDt_->wrapType>0 ? wrapWidth() : curDt_->wrapType; }
-
-inline bool ConfigManager::showLN() const
-	{ return curDt_->showLN; }
-
-inline const editwing::VConfig& ConfigManager::vConfig() const
-	{ return curDt_->vc; }
-
-inline ki::Path ConfigManager::kwdFile() const
-	{
-	ki::Path p(ki::Path::Exe);
-	p += TEXT("type\\");
-	p += curDt_->kwdfile;
-	return p;
-	}
-
-inline const ki::Path& ConfigManager::grepExe() const
-	{ return grepExe_; }
-
-inline const ki::Path& ConfigManager::helpExe() const
-	{ return helpExe_; }
-
-inline bool ConfigManager::openSame() const
-	{ return openSame_; }
-
-inline bool ConfigManager::showStatusBar() const
-	{ return showStatusBar_; }
-
-inline void ConfigManager::ShowStatusBarSwitch()
-	{ showStatusBar_ = !showStatusBar_; inichanged_=1; SaveIni(); }
-
-inline bool ConfigManager::countByUnicode() const
-	{ return countbyunicode_; }
-
-inline CharSetList& ConfigManager::GetCharSetList()
-	{ return charSets_; }
-
-inline int ConfigManager::GetNewfileCsi() const
-	{ return charSets_.findCsi( newfileCharset_ ); }
-
-inline ki::lbcode ConfigManager::GetNewfileLB() const
-	{ return newfileLB_; }
-
-inline const ki::String& ConfigManager::dateFormat() const
-	{ return dateFormat_; }
-
-inline int ConfigManager::GetWndX() const
-	{ return rememberWindowPlace_ ? wndPos_.left : CW_USEDEFAULT; }
-
-inline int ConfigManager::GetWndY() const
-	{ return rememberWindowPlace_ ? wndPos_.top : CW_USEDEFAULT; }
-
-inline int ConfigManager::GetWndW() const
-	{ return rememberWindowSize_ ? wndPos_.right-wndPos_.left : CW_USEDEFAULT; }
-
-inline int ConfigManager::GetWndH() const
-	{ return rememberWindowSize_ ? wndPos_.bottom-wndPos_.top : CW_USEDEFAULT; }
-
-inline bool ConfigManager::GetWndM() const
-	{ return rememberWindowSize_ && wndM_; }
-
-inline const RECT *ConfigManager::PMargins() const
-	{ return &rcPMargins_; }
-
-inline void ConfigManager::SetPrintMargins(const RECT *rc)
-	{ CopyRect(&rcPMargins_, rc); inichanged_=1; SaveIni(); }
-
-inline bool ConfigManager::useQuickExit() const
-	{ return useQuickExit_; }
-
-inline bool ConfigManager::useOldOpenSaveDlg() const
-	{ return useOldOpenSaveDlg_; }
-
-inline bool ConfigManager::warnOnModified() const
-	{ return warnOnModified_; }
-
 //=========================================================================
 
-#endif // __ccdoc__
 #endif // AFX_ONFIGMANAGER_H__9243DE9D_0F70_40F8_8F90_55436B952B37__INCLUDED_

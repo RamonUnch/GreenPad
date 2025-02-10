@@ -22,13 +22,15 @@ class A_WUNUSED IniFile
 public:
 
 	//@{ コンストラクタ //@}
-	IniFile( /*const TCHAR* ini=NULL, bool exeppath=true */ );
+	IniFile( /*const TCHAR* ini=NULL, bool exeppath=true */ )
+		{ SetFileName( /*ini, exepath*/ ); }
 
 	//@{ iniファイル名を設定 //@}
 	void SetFileName( /*const TCHAR* ini=NULL, bool exepath=true*/ );
 
 	//@{ セクション名を設定 //@}
-	void SetSection( const TCHAR* section );
+	void SetSection( const TCHAR* section )
+		{ my_lstrcpyn( section_, section, countof(section_) ); }
 
 	//@{ Cache section //@}
 	void CacheSection();
@@ -74,19 +76,6 @@ private:
 	TCHAR  iniName_[MAX_PATH];
 	TCHAR  section_[64];
 };
-
-
-
-//-------------------------------------------------------------------------
-
-inline IniFile::IniFile( /*const TCHAR* ini, bool exepath*/ )
-	{ SetFileName( /*ini, exepath*/ ); }
-
-inline void IniFile::SetSection( const TCHAR* section )
-	{ my_lstrcpyn( section_, section, countof(section_) ); }
-
-
-
 
 //=========================================================================
 
