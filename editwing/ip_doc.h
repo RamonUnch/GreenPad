@@ -289,7 +289,7 @@ public:
 	void Clear();
 
 	//@{ 保存位置フラグを現在位置にセット //@}
-	void SavedHere();
+	inline void SavedHere() { savedPos_ = lastOp_; }
 
 	//@{ Undo/Redoの回数制限を指定。-1 = Infinite //@}
 	void SetLimit( long lim );
@@ -297,13 +297,13 @@ public:
 public:
 
 	//@{ Undo操作が可能か？ //@}
-	bool isUndoAble() const;
+	inline bool isUndoAble() const { return (lastOp_ != &headTail_); }
 
 	//@{ Redo操作が可能か？ //@}
-	bool isRedoAble() const;
+	inline bool isRedoAble() const { return (lastOp_->next_ != &headTail_); }
 
 	//@{ 保存後、変更されているか？ //@}
-	bool isModified() const;
+	inline bool isModified() const { return (lastOp_ != savedPos_); }
 
 private:
 
@@ -332,25 +332,6 @@ private:
 };
 
 
-
-//-------------------------------------------------------------------------
-#ifndef __ccdoc__
-
-inline void UnReDoChain::SavedHere()
-	{ savedPos_ = lastOp_; }
-
-inline bool UnReDoChain::isUndoAble() const
-	{ return (lastOp_ != &headTail_); }
-
-inline bool UnReDoChain::isRedoAble() const
-	{ return (lastOp_->next_ != &headTail_); }
-
-inline bool UnReDoChain::isModified() const
-	{ return (lastOp_ != savedPos_); }
-
-
-
-#endif // __ccdoc__
 //=========================================================================
 //@{
 //	Documentクラスの実装部分
@@ -406,16 +387,22 @@ public:
 public:
 
 	//@{ 行数 //@}
-	ulong tln() const;
+	inline ulong tln() const { return text_.size(); }
 
 	//@{ 行バッファ //@}
-	const unicode* tl( ulong i ) const;
+	inline const unicode* tl( ulong i ) const { return text_[i].str(); }
 
 	//@{ 行解析結果バッファ //@}
-	const uchar* pl( ulong i ) const;
+	const uchar* pl( ulong i ) const
+	{
+		const Line& x = text_[i];
+		if( !x.isCmtBitReady() )
+			SetCommentBit( x );
+		return x.flg();
+	}
 
 	//@{ 行文字数 //@}
-	ulong len( ulong i ) const;
+	ulong len( ulong i ) const { return text_[i].size(); }
 
 	//@{ 指定範囲のテキストの長さ //@}
 	ulong getRangeLength( const DPos& stt, const DPos& end );
@@ -445,7 +432,7 @@ public:
 	//@{ 変更済み？ //@}
 	bool isModified() const;
 
-	const unicode* getCommentStr() const;
+	const unicode* getCommentStr() const { return CommentStr_; }
 
 	//@{ ビジーフラグ（マクロコマンド実行中のみ成立） //@}
 	void setBusyFlag( bool b ) { busy_ = b; }
@@ -499,31 +486,6 @@ private:
 	friend class Delete;
 	friend class Replace;
 };
-
-
-
-//-------------------------------------------------------------------------
-
-inline ulong Document::tln() const
-	{ return text_.size(); }
-
-inline const unicode* Document::tl( ulong i ) const
-	{ return text_[i].str(); }
-
-inline ulong Document::len( ulong i ) const
-	{ return text_[i].size(); }
-
-inline const uchar* Document::pl( ulong i ) const
-{
-	const Line& x = text_[i];
-	if( !x.isCmtBitReady() )
-		SetCommentBit( x );
-	return x.flg();
-}
-inline const unicode* Document::getCommentStr() const
-	{ return CommentStr_; }
-
-
 
 //=========================================================================
 

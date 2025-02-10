@@ -57,12 +57,16 @@ private:
 class OpenFileDlg
 {
 public:
-	explicit OpenFileDlg( const CharSetList& csl, bool oldstyle );
+	explicit OpenFileDlg( const CharSetList& csl, bool oldstyle )
+		: csl_(csl), csIndex_(0)
+		, dlgEverOpened_ (false) , oldstyleDlg_(oldstyle)
+		{ ki::mem00( filename_, sizeof(filename_) ); }
+
 	bool DoModal( HWND wnd, const TCHAR* filter, const TCHAR* fnm );
 
 public:
-	const TCHAR* filename() const;
-	int csi() const;
+	inline const TCHAR* filename() const { return filename_; }
+	inline int csi() const { return csIndex_; }
 
 public:
 	static ki::aarr<TCHAR> ConnectWithNull( const TCHAR *lst[], size_t num );
@@ -80,23 +84,6 @@ private:
 };
 
 
-
-//------------------------------------------------------------------------
-#ifndef __ccdoc__
-
-inline OpenFileDlg::OpenFileDlg( const CharSetList& csl, bool oldstyle )
-	: csl_(csl), csIndex_(0), dlgEverOpened_ (false), oldstyleDlg_(oldstyle)
-	{ ki::mem00( filename_, sizeof(filename_) ); }
-
-inline const TCHAR* OpenFileDlg::filename() const
-	{ return filename_; }
-
-inline int OpenFileDlg::csi() const
-	{ return csIndex_; }
-
-
-
-#endif // __ccdoc__
 //========================================================================
 //@{
 //	「ファイルを保存」ダイアログ
@@ -109,16 +96,23 @@ inline int OpenFileDlg::csi() const
 class SaveFileDlg
 {
 public:
-	explicit SaveFileDlg( const CharSetList& csl, int cs, int lb, bool oldstyle );
+	explicit SaveFileDlg( const CharSetList& csl, int cs, int lb, bool oldstyle )
+		: csl_(csl)
+		, csIndex_(cs)
+		, lb_(lb)
+		, dlgEverOpened_(false), oldstyleDlg_(oldstyle)
+		{ ki::mem00( filename_, sizeof(filename_) ); }
+
 	bool DoModal( HWND wnd, const TCHAR* filter, const TCHAR* fnm );
 
 public:
-	const TCHAR* filename() const;
-	int csi() const;
-	int lb() const;
+	inline const TCHAR* filename() const { return filename_; }
+	inline int csi() const { return csIndex_; }
+	inline int lb() const { return lb_; }
 
 public:
-	static ki::aarr<TCHAR> ConnectWithNull( const TCHAR *lst[], size_t num );
+	static ki::aarr<TCHAR> ConnectWithNull( const TCHAR *lst[], size_t num )
+		{ return OpenFileDlg::ConnectWithNull( lst, num ); }
 
 private:
 	const CharSetList& csl_;
@@ -133,28 +127,7 @@ private:
 	static UINT_PTR CALLBACK OfnHook( HWND, UINT, WPARAM, LPARAM );
 };
 
-//------------------------------------------------------------------------
-#ifndef __ccdoc__
 
-inline SaveFileDlg::SaveFileDlg( const CharSetList& csl, int cs, int lb, bool oldstyle )
-	: csl_(csl), csIndex_(cs), lb_(lb), dlgEverOpened_(false), oldstyleDlg_(oldstyle)
-	{ ki::mem00( filename_, sizeof(filename_) ); }
-
-inline const TCHAR* SaveFileDlg::filename() const
-	{ return filename_; }
-
-inline int SaveFileDlg::csi() const
-	{ return csIndex_; }
-
-inline int SaveFileDlg::lb() const
-	{ return lb_; }
-
-inline ki::aarr<TCHAR> SaveFileDlg::ConnectWithNull( const TCHAR *lst[], size_t num )
-	{ return OpenFileDlg::ConnectWithNull( lst, num ); }
-
-
-
-#endif // __ccdoc__
 //========================================================================
 //@{
 //	「開き直す」ダイアログ
@@ -167,7 +140,7 @@ class ReopenDlg A_FINAL: public ki::DlgImpl
 {
 public:
 	ReopenDlg( const CharSetList& csl, int csi );
-	int csi() const;
+	inline int csi() const { return csIndex_; }
 
 private:
 	void on_init() override;
@@ -178,15 +151,6 @@ private:
 	int   csIndex_;
 };
 
-//------------------------------------------------------------------------
-#ifndef __ccdoc__
-
-inline int ReopenDlg::csi() const
-	{ return csIndex_; }
-
-
-
 //========================================================================
 
-#endif // __ccdoc__
 #endif // _GREENPAD_OPENSAVEDLG_H_

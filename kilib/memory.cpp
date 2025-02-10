@@ -318,79 +318,56 @@ using namespace ki;
 struct ki::MemBlock
 {
 public:
-	bool  Construct( ushort siz, ushort num );
-	void  Destruct();
-	void* Alloc( ushort siz );
-	void  DeAlloc( void* ptr, ushort siz );
-	bool  isAvail();
-	bool  isEmpty( ushort num );
-	bool  hasThisPtr( const void* ptr, size_t len );
+	bool  Construct( ushort siz, ushort num )
+	{
+		// 確保
+		buf_   = (byte *)malloc( siz*num );
+		if( !buf_ )
+			return false;
+		first_ = 0;
+		avail_ = num;
+
+		// 連結リスト初期化
+		ushort i=0;
+		for( byte *p=buf_; i<num; p+=siz )
+			*((ushort*)p) = ++i;
+		return true;
+	}
+
+	inline void  Destruct()
+		{ ::free( buf_ ); /* 解放 */ }
+
+	void* Alloc( ushort siz )
+	{
+		// メモリ切り出し
+		//   ( avail==0 等のチェックは上位層に任せる )
+		byte* blk = buf_ + siz*first_;
+		first_    = *(ushort*)blk;
+		--avail_;
+		return blk;
+	}
+
+	void  DeAlloc( void* ptr, ushort siz )
+	{
+		// メモリ戻す
+		//   ( 変なポインタ渡されたらだ～め～ )
+		byte* blk = static_cast<byte*>(ptr);
+		*(ushort*)blk      = first_;
+		first_    = static_cast<ushort>((blk-buf_)/siz);
+		++avail_;
+	}
+
+	inline bool  isAvail()
+		{ return (avail_ != 0); } // 空きがある？
+	inline bool  isEmpty( ushort num )
+		{ return (avail_ == num); } // 完全に空？
+	bool hasThisPtr( const void* ptr, size_t len ) // このブロックのポインタ？
+		{ return ( buf_<=ptr && ptr<buf_+len ); }
+
 private:
 	byte* buf_;
 	ushort first_, avail_;
 };
-
-bool MemBlock::Construct( ushort siz, ushort num )
-{
-	// 確保
-	buf_   = (byte *)malloc( siz*num );
-	if( !buf_ )
-		return false;
-	first_ = 0;
-	avail_ = num;
-
-	// 連結リスト初期化
-	ushort i=0;
-	for( byte *p=buf_; i<num; p+=siz )
-		*((ushort*)p) = ++i;
-	return true;
-}
-
-inline void MemBlock::Destruct()
-{
-	// 解放
-	::free( buf_ );
-}
-
-void* MemBlock::Alloc( ushort siz )
-{
-	// メモリ切り出し
-	//   ( avail==0 等のチェックは上位層に任せる )
-	byte* blk = buf_ + siz*first_;
-	first_    = *(ushort*)blk;
-	--avail_;
-	return blk;
-}
-
-void MemBlock::DeAlloc( void* ptr, ushort siz )
-{
-	// メモリ戻す
-	//   ( 変なポインタ渡されたらだ～め～ )
-	byte* blk = static_cast<byte*>(ptr);
-	*(ushort*)blk      = first_;
-	first_    = static_cast<ushort>((blk-buf_)/siz);
-	++avail_;
-}
-
-inline bool MemBlock::isAvail()
-{
-	// 空きがある？
-	return (avail_ != 0);
-}
-
-inline bool MemBlock::isEmpty( ushort num )
-{
-	// 完全に空？
-	return (avail_ == num);
-}
-
-inline bool MemBlock::hasThisPtr( const void* ptr, size_t len )
-{
-	// このブロックのポインタ？
-	return ( buf_<=ptr && ptr<buf_+len );
-}
-
-
 
 //-------------------------------------------------------------------------
 

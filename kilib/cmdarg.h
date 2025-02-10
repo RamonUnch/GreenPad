@@ -27,10 +27,10 @@ public:
 	~Argv() { free( buf_ ); }
 
 	//@{ ˆø”Get //@}
-	const TCHAR* operator[]( size_t i ) const;
+	const TCHAR* operator[]( size_t i ) const { return arg_[i]; }
 
 	//@{ ˆø”‚ÌŒÂ” //@}
-	size_t size() const;
+	size_t size() const { return argNum_; }
 
 private:
 
@@ -44,21 +44,7 @@ private:
 	NOCOPY(Argv);
 };
 
-
-
-//-------------------------------------------------------------------------
-#ifndef __ccdoc__
-
-inline const TCHAR* Argv::operator []( size_t i ) const
-	{ return arg_[i]; }
-
-inline size_t Argv::size() const
-	{ return argNum_; }
-
-
-
 //=========================================================================
 
-#endif // __ccdoc__
 }      // namespace ki
 #endif // _KILIB_CMDARG_H_

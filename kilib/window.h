@@ -32,10 +32,12 @@ public:
 	void MsgLoop();
 
 	//@{ メッセージを送って処理されるまで待機 //@}
-	LRESULT SendMsg( UINT msg, WPARAM wp=0, LPARAM lp=0 );
+	inline LRESULT SendMsg( UINT msg, WPARAM wp=0, LPARAM lp=0 ) const
+		{ return ::SendMessage( wnd_, msg, wp, lp ); }
 
 	//@{ メッセージを送ってすぐ帰る //@}
-	BOOL PostMsg( UINT msg, WPARAM wp=0, LPARAM lp=0 );
+	inline BOOL PostMsg( UINT msg, WPARAM wp=0, LPARAM lp=0 ) const
+		{ return ::PostMessage( wnd_, msg, wp, lp ); }
 
 	//@{
 	//	自動消滅機能付きメッセージボックス
@@ -43,49 +45,53 @@ public:
 	//	@param caption ダイアログの題名
 	//	@param type Win32SDKの説明を見てね
 	//@}
-	int MsgBox( LPCTSTR msg, LPCTSTR caption=NULL, UINT type=MB_OK ) const;
+	inline int MsgBox( LPCTSTR msg, LPCTSTR caption=NULL, UINT type=MB_OK ) const
+		{ return ::MessageBox( wnd_?wnd_:GetActiveWindow(), msg, caption, type ); }
 
 	static int __cdecl MsgBoxf( HWND hwnd,  LPCTSTR title, LPCTSTR fmt, ... );
 
 	//@{ テキスト設定 //@}
-	void SetText( const TCHAR* str );
+	inline void SetText( const TCHAR* str )
+		{ ::SetWindowText( wnd_, str ); }
 
 	//@{ 表示 //@}
-	void ShowUp( int sw=SW_SHOW );
+	inline void ShowUp( int sw=SW_SHOW )
+		{ ::ShowWindow( wnd_, sw ), ::UpdateWindow( wnd_ ); }
 
 	//@{ 移動 //@}
-	void MoveTo( int l, int t, int r, int b );
+	inline void MoveTo( int l, int t, int r, int b )
+		{ ::MoveWindow( wnd_, l, t, r-l, b-t, TRUE ); }
 
 	//@{ フォーカス //@}
-	void SetFocus();
+	inline void SetFocus() { ::SetFocus( wnd_ ); }
 
 	//@{ 最前面へGo! //@}
-	void SetFront();
+	inline void SetFront() { SetFront( wnd_ ); }
 
-	void SetActive();
+	inline void SetActive() { ::SetActiveWindow( wnd_ ); }
 
 	//@{ 画面中央へGo! //@}
-	void SetCenter();
+	inline void SetCenter() { SetCenter( wnd_ ); }
 
 public:
 
 	//@{ ウインドウハンドル //@}
-	HWND hwnd() const;
+	inline HWND hwnd() const { return wnd_; }
 
 	//@{ 位置・サイズ //@}
-	void getPos( RECT* rc ) const;
+	inline void getPos( RECT* rc ) const { ::GetWindowRect( wnd_, rc ); }
 
 	//@{ サイズ //@}
-	void getClientRect( RECT* rc ) const;
+	inline void getClientRect( RECT* rc ) const { ::GetClientRect( wnd_, rc ); }
 
 	//@{ メインループを回してるウインドウかどうか //@}
-	bool isMainWnd() const;
+	inline bool isMainWnd() const { return isLooping_; }
 
 	//@{ 生きてる？ //@}
-	bool isAlive() const;
+	inline bool isAlive() const { return FALSE != ::IsWindow( wnd_ ); }
 
 	//@{ Is the window visible? //@}
-	bool isVisible() const;
+	inline bool isVisible() const { return FALSE != ::IsWindowVisible( wnd_ ); }
 
 public:
 
@@ -123,61 +129,6 @@ private:
 	NOCOPY(Window);
 };
 
-
-
-//-------------------------------------------------------------------------
-#ifndef __ccdoc__
-
-inline LRESULT Window::SendMsg( UINT msg, WPARAM wp, LPARAM lp )
-	{ return ::SendMessage( wnd_, msg, wp, lp ); }
-
-inline BOOL Window::PostMsg( UINT msg, WPARAM wp, LPARAM lp )
-	{ return ::PostMessage( wnd_, msg, wp, lp ); }
-
-inline int Window::MsgBox( LPCTSTR m, LPCTSTR c, UINT y ) const
-	{ return ::MessageBox( wnd_?wnd_:GetActiveWindow(), m, c, y ); }
-
-inline void Window::ShowUp( int sw )
-	{ ::ShowWindow( wnd_, sw ), ::UpdateWindow( wnd_ ); }
-
-inline void Window::SetText( const TCHAR* str )
-	{ ::SetWindowText( wnd_, str ); }
-
-inline void Window::MoveTo( int l, int t, int r, int b )
-	{ ::MoveWindow( wnd_, l, t, r-l, b-t, TRUE ); }
-
-inline void Window::SetFocus()
-	{ ::SetFocus( wnd_ ); }
-
-inline void Window::SetFront()
-	{ SetFront( wnd_ ); }
-
-inline void Window::SetActive()
-	{ ::SetActiveWindow( wnd_ ); }
-
-inline void Window::SetCenter()
-	{ SetCenter( wnd_ ); }
-
-inline HWND Window::hwnd() const
-	{ return wnd_; }
-
-inline bool Window::isMainWnd() const
-	{ return isLooping_; }
-
-inline void Window::getPos( RECT* rc ) const
-	{ ::GetWindowRect( wnd_, rc ); }
-
-inline void Window::getClientRect( RECT* rc ) const
-	{ ::GetClientRect( wnd_, rc ); }
-
-inline bool Window::isAlive() const
-	{ return FALSE != ::IsWindow( wnd_ ); }
-
-inline bool Window::isVisible() const
-	{ return FALSE != ::IsWindowVisible( wnd_ ); }
-
-
-#endif // __ccdoc__
 //=========================================================================
 //@{
 //	IME制御マネージャ
@@ -202,7 +153,7 @@ public:
 
 	//@{ 確定文字列ゲット。受け取ったら FreeString すること。 //@}
 	void GetString( HWND wnd, unicode** str, size_t* len );
-	
+
 	static void FreeString( unicode *str ) { free( str ); }
 
 	//@{ 再変換 //@}
@@ -255,18 +206,14 @@ private:
 	friend class Window;
 	friend class WndImpl;
 	friend void APIENTRY  Startup();
+
+	//@{ 唯一のIME管理オブジェクトを返す //@}
 	friend inline IMEManager& ime();
 	NOCOPY(IMEManager);
 };
 
-
-
-//-------------------------------------------------------------------------
-
-//@{ 唯一のIME管理オブジェクトを返す //@}
 inline IMEManager& ime()
 	{ return *IMEManager::pUniqueInstance_; }
-
 
 
 //=========================================================================
@@ -375,10 +322,10 @@ public:
 public:
 
 	//@{ モーダルかモードレスか //@}
-	dlgtype type() const;
+	inline dlgtype type() const { return type_; }
 
 	//@{ 終了コード取得 //@}
-	UINT endcode() const;
+	inline UINT endcode() const { return endCode_; }
 
 protected:
 
@@ -388,25 +335,33 @@ protected:
 	~DlgImpl();
 
 	//@{ 子アイテムID→HWND変換 //@}
-	HWND item( UINT id ) const;
+	inline HWND item( UINT id ) const { return ::GetDlgItem( hwnd(), id ); }
 
 	//@{ アイテムに対してメッセージ送信 //@}
-	LRESULT SendMsgToItem( UINT id, UINT msg, WPARAM wp=0, LPARAM lp=0 );
+	LRESULT SendMsgToItem( UINT id, UINT msg, WPARAM wp=0, LPARAM lp=0 )
+		{ return ::SendDlgItemMessage( hwnd(), id, msg, wp, lp ); }
 
 	//@{ アイテムに対してメッセージ送信（ポインタ送る版） //@}
-	LRESULT SendMsgToItem( UINT id, UINT msg, void* lp );
+	LRESULT SendMsgToItem( UINT id, UINT msg, void* lp )
+		{ return ::SendDlgItemMessage( hwnd(), id, msg, 0, reinterpret_cast<LPARAM>(lp) ); }
+
 
 	//@{ アイテムに対してメッセージ送信（文字列送る版） //@}
-	LRESULT SendMsgToItem( UINT id, UINT msg, const TCHAR* lp );
+	LRESULT SendMsgToItem( UINT id, UINT msg, const TCHAR* lp )
+		{ return ::SendDlgItemMessage( hwnd(), id, msg, 0, reinterpret_cast<LPARAM>(lp) ); }
 
-	bool isItemChecked( UINT id ) const;
-	void setItemCheck( UINT id, WPARAM state);
-	void CheckItem( UINT id);
-	void UncheckItem( UINT id);
-	void GrayCheckItem( UINT id);
+	bool isItemChecked( UINT id ) const
+		{ return BST_CHECKED == ::SendDlgItemMessage(hwnd(), id, BM_GETCHECK, 0, 0); }
+	void setItemCheck( UINT id, WPARAM state)
+		{ ::SendDlgItemMessage(hwnd(), id, BM_SETCHECK, state, 0); }
+	inline void CheckItem( UINT id)     { setItemCheck(id, BST_CHECKED); }
+	inline void UncheckItem( UINT id)   { setItemCheck(id, BST_UNCHECKED); }
+	inline void GrayCheckItem( UINT id) { setItemCheck(id, BST_INDETERMINATE); }
 
-	LRESULT SetItemText( UINT id, const TCHAR *str );
-	LRESULT GetItemText( UINT id, size_t len, TCHAR *str ) const;
+	LRESULT SetItemText( UINT id, const TCHAR *str )
+		{ return ::SendDlgItemMessage(hwnd(), id, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(str) ); }
+	LRESULT GetItemText( UINT id, size_t len, TCHAR *str ) const
+		{ return ::SendDlgItemMessage(hwnd(), id, WM_GETTEXT, static_cast<WPARAM>(len), reinterpret_cast<LPARAM>(str) ); }
 
 	// てけとーに実装して反応してください。
 	// on_ok/on_cancelは、終了して良いならtrueを返すこと。
@@ -431,55 +386,7 @@ private:
 };
 
 
-
-//-------------------------------------------------------------------------
-#ifndef __ccdoc__
-
-inline DlgImpl::dlgtype DlgImpl::type() const
-	{ return type_; }
-
-inline UINT DlgImpl::endcode() const
-	{ return endCode_; }
-
-inline HWND DlgImpl::item( UINT id ) const
-	{ return ::GetDlgItem( hwnd(), id ); }
-
-inline LRESULT DlgImpl::SendMsgToItem
-	( UINT id, UINT msg, WPARAM wp, LPARAM lp )
-	{ return ::SendDlgItemMessage( hwnd(), id, msg, wp, lp ); }
-
-inline LRESULT DlgImpl::SendMsgToItem( UINT id, UINT msg, void* lp )
-	{ return ::SendDlgItemMessage( hwnd(), id, msg, 0,
-	                            reinterpret_cast<LPARAM>(lp) ); }
-
-inline LRESULT DlgImpl::SendMsgToItem( UINT id, UINT msg, const TCHAR* lp )
-	{ return ::SendDlgItemMessage( hwnd(), id, msg, 0,
-	                            reinterpret_cast<LPARAM>(lp) ); }
-inline bool DlgImpl::isItemChecked( UINT id ) const
-	{ return BST_CHECKED == ::SendDlgItemMessage(hwnd(), id, BM_GETCHECK, 0, 0); }
-
-inline void DlgImpl::setItemCheck( UINT id, WPARAM state )
-	{ ::SendDlgItemMessage(hwnd(), id, BM_SETCHECK, state, 0); }
-
-inline void DlgImpl::CheckItem( UINT id)
-	{ setItemCheck(id, BST_CHECKED); }
-
-inline void DlgImpl::UncheckItem( UINT id)
-	{ setItemCheck(id, BST_UNCHECKED); }
-
-inline void DlgImpl::GrayCheckItem( UINT id)
-	{ setItemCheck(id, BST_INDETERMINATE); }
-
-inline LRESULT DlgImpl::SetItemText( UINT id, const TCHAR *str )
-	{ return ::SendDlgItemMessage(hwnd(), id, WM_SETTEXT, 0, reinterpret_cast<LPARAM>(str) ); }
-
-inline LRESULT DlgImpl::GetItemText( UINT id, size_t len, TCHAR *str ) const
-	{ return ::SendDlgItemMessage(hwnd(), id, WM_GETTEXT, static_cast<WPARAM>(len), reinterpret_cast<LPARAM>(str) ); }
-
-
-
 //=========================================================================
 
-#endif // __ccdoc__
 }      // namespace ki
 #endif // _KILIB_WINDOW_H_

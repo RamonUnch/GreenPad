@@ -22,9 +22,10 @@ public:
 	int  AutoResize( bool maximized );
 	void SetText( const TCHAR* str, int part=0 );
 	void SetTipText( const TCHAR* tip, int part=0 );
-	void SetParts( int n, int* parts );
+	inline void SetParts( int n, int* parts )
+		{ SendMsg( SB_SETPARTS, n, reinterpret_cast<LPARAM>(parts) ); }
 	void SetStatusBarVisible(bool b=true);
-	void SetParent(HWND parent);
+	inline void SetParent(HWND parent) { parent_ = parent; }
 
 	int GetText( TCHAR* str, int part = 0 );
 	int GetTextLen( int part );
@@ -32,8 +33,8 @@ public:
 
 public:
 
-	int width() const;
-	bool isStatusBarVisible() const;
+	inline int width() const { return width_; }
+	inline bool isStatusBarVisible() const { return visible_; }
 
 public:
 	class SaveRestoreText
@@ -68,24 +69,6 @@ private:
 };
 
 
-
-//-------------------------------------------------------------------------
-#ifndef __ccdoc__
-
-inline int StatusBar::width() const
-	{ return width_; }
-
-inline bool StatusBar::isStatusBarVisible() const
-	{ return visible_; }
-
-inline void StatusBar::SetParts( int n, int* parts )
-	{ SendMsg( SB_SETPARTS, n, reinterpret_cast<LPARAM>(parts) ); }
-
-inline void StatusBar::SetParent(HWND parent)
-	{ parent_ = parent; }
-
-
-#endif // __ccdoc__
 //=========================================================================
 //@{
 //	コンボボックス
@@ -95,11 +78,13 @@ inline void StatusBar::SetParent(HWND parent)
 class ComboBox A_FINAL: public Window
 {
 public:
-	explicit ComboBox( HWND cb );
-	explicit ComboBox( HWND dlg, UINT id );
-	void Add( const TCHAR* str );
+	inline explicit ComboBox( HWND cb ) { SetHwnd(cb); }
+	inline explicit ComboBox( HWND dlg, UINT id )
+		{ SetHwnd( ::GetDlgItem(dlg,id) ); }
+	inline void Add( const TCHAR* str )
+		{ SendMsg( CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(str) ); }
 	void Select( const TCHAR* str );
-	int GetCurSel();
+	inline int GetCurSel() { return (int) SendMsg( CB_GETCURSEL ); }
 	bool GetTextFrom( TCHAR *buf, int len, int i )
 	{
 		if( i >= 0 )
@@ -120,26 +105,7 @@ private:
 };
 
 
-
-//-------------------------------------------------------------------------
-#ifndef __ccdoc__
-
-inline ComboBox::ComboBox( HWND cb )
-	{ SetHwnd(cb); }
-
-inline ComboBox::ComboBox( HWND dlg, UINT id )
-	{ SetHwnd( ::GetDlgItem(dlg,id) ); }
-
-inline void ComboBox::Add( const TCHAR* str )
-	{ SendMsg( CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(str) ); }
-
-inline int ComboBox::GetCurSel()
-	{ return (int) SendMsg( CB_GETCURSEL ); }
-
-
-
 //=========================================================================
 
-#endif // __ccdoc__
 }      // namespace ki
 #endif // _KILIB_CTRL_H_

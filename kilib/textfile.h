@@ -187,16 +187,16 @@ public:
 public:
 
 	//@{ 読んでるファイルのコードページ //@}
-	int codepage() const;
+	inline int codepage() const { return cs_; }
 
 	//@{ 改行コード (0:CR, 1:LF, 2:CRLF) //@}
-	int linebreak() const;
+	inline int linebreak() const { return lb_; }
 
 	//@{ ファイルサイズ //@}
-	ulong size() const;
+	inline ulong size() const { return fp_.size(); }
 
 	//@{ 改行が一個も見つからなかったフラグ //@}
-	bool nolb_found() const;
+	inline bool nolb_found() const { return nolbFound_; }
 
 	void setLBfromFreq(uint freq[256], uchar cr, uchar lf);
 
@@ -230,22 +230,6 @@ private:
 
 	NOCOPY(TextFileR);
 };
-
-
-
-//-------------------------------------------------------------------------
-
-inline int TextFileR::codepage() const
-	{ return cs_; }
-
-inline int TextFileR::linebreak() const
-	{ return lb_; }
-
-inline ulong TextFileR::size() const
-	{ return fp_.size(); }
-
-inline bool TextFileR::nolb_found() const
-	{ return nolbFound_; }
 
 
 //=========================================================================

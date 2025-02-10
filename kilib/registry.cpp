@@ -9,23 +9,19 @@ void IniFile::SetFileName( /*const TCHAR* ini, bool exepath*/ )
 {
 	DWORD len = Path::GetExeName( iniName_ );
 	if( len > 3 )
-		my_lstrcpy( iniName_+len-3, TEXT("ini") );
+		my_lstrkpy( iniName_+len-3, TEXT("ini") );
 	
 //	// Use user-specific ini file if possible
 //	TCHAR userini[MAX_PATH]; userini[0] = TEXT('\0');
 //	DWORD len2;
-//	if( !Path::exist( iniName_ ) && (len2 = GetEnvironmentVariable(TEXT("APPDATA"), userini, countof(userini))) > 0 )
+//	if( !Path::exist( iniName_ ) && (len2 = ::GetEnvironmentVariable(TEXT("APPDATA"), userini, countof(userini))) > 0 )
 //	{
 //		// .ini file is not in current directorry
-//		// we should look for %APPDATA%\GreenPad\GreenPad.ini
-//		my_lstrcpyn(userini + len2, TEXT("\\GreenPad"), countof(userini) - len2);
-//		if( !Path::exist( userini ) )
-//			CreateDirectory(userini, NULL);
-//
+//		// we should look for %APPDATA%\exename.ini
 //		TCHAR *inifilename = iniName_ + len-3;
 //		while (inifilename >= iniName_ && *inifilename != '\\') inifilename--;
-//		my_lstrcpyn(userini+len2+9, inifilename,  countof(userini) - len2 - 9);
-//		
+//		my_lstrcpyn(userini+len2, inifilename,  countof(userini) - len2);
+//
 //		my_lstrcpy(iniName_, userini);
 //	}
 }
