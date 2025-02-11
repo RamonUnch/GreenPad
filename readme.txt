@@ -1,5 +1,5 @@
-=<> GreenPad ver 1.22
-=<> RamonUnch builds 2024/12/07
+=<> GreenPad ver 1.23
+=<> RamonUnch builds 2025/02/11
 
 <<What's This?>>
 
@@ -58,6 +58,18 @@
   * Improve printer configuration.
   * Fix more bugs, handle low memory situations better.
   * Optimize memory usage so that larger files can be loaded.
+
+<<What's New in 1.23 (by RamonUnch, 2025/02/11)>>
+ < NEW >
+   * Added Zoom option
+
+ < FIXED >
+   * Word wrap would go at bad locations sometime
+   * Always save search options to the ini file.
+   * Reduce allocation fir thunks (use a single 4k page for all of them)
+   * Arrange struct for smaller sizes.
+   * Modify DocType list with simpler model (reset your ini file).
+   * Various memory optimizations and minor adjustements.
 
 <<What's New in 1.22 (by RamonUnch, 2024/12/07)>>
  < NEW >
