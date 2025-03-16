@@ -30,7 +30,7 @@ public:
 
 	//@{ ƒZƒNƒVƒ‡ƒ“–¼‚ğİ’è //@}
 	void SetSection( const TCHAR* section )
-		{ my_lstrcpyn( section_, section, countof(section_) ); }
+		{ my_lstrcpys( section_, countof(section_) , section ); }
 
 	//@{ Cache section //@}
 	void CacheSection();

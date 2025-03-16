@@ -7,7 +7,7 @@
 
 #ifdef UNICODE
 	#define my_lstrcpy my_lstrcpyW
-	#define my_lstrcpyn my_lstrcpynW
+	#define my_lstrcpys my_lstrcpysW
 	#define my_lstrlen my_lstrlenW
 	#define my_lstrcmp my_lstrcmpW
 	#define my_lstrchr my_lstrchrW
@@ -16,7 +16,7 @@
 	#define my_lstrcmpiAscii my_lstrcmpiAsciiW
 #else
 	#define my_lstrcpy my_lstrcpyA
-	#define my_lstrcpyn my_lstrcpynA
+	#define my_lstrcpys my_lstrcpysA
 	#define my_lstrlen my_lstrlenA
 	#define my_lstrcmp my_lstrcmpA
 	#define my_lstrchr my_lstrchrA
@@ -98,10 +98,9 @@ const unicode *my_lstrchrW(const unicode *str, unicode c)
 }
 
 static inline
-unicode* my_lstrcpyW( unicode* const d, const unicode* restrict s )
+void my_lstrcpyW( unicode* const d, const unicode* restrict s )
 {
 	for(unicode* n=d; (*n++ = *s++););
-	return d;
 }
 inline static
 size_t my_lstrlenW( const unicode* const d )
@@ -129,10 +128,9 @@ bool my_instringW(const unicode *X, const unicode *Y)
 	return !*Y; // Match if we reached the end of Y
 }
 inline static
-char* my_lstrcpyA( char* const d, const char * restrict s )
+void my_lstrcpyA( char* const d, const char * restrict s )
 {
 	for(char* n=d; (*n++ = *s++););
-	return d;
 }
 inline static
 size_t my_lstrlenA( const char* const d )
@@ -176,26 +174,24 @@ int looseStrCmp( LPCTSTR a, LPCTSTR b )
 }
 
 static inline
-wchar_t *my_lstrcpynW(wchar_t *out, const wchar_t * restrict in, size_t outlen)
+void my_lstrcpysW(wchar_t *out, size_t outlen, const wchar_t * restrict in)
 {
 	size_t i;
-	for (i=0; i<outlen && in[i]; i++)
+	for (i=0; i<outlen-1 && in[i]; i++)
 	{
 		out[i] = in[i];
 	}
 	out[i] = TEXT('\0');
-	return out;
 }
 static inline
-char *my_lstrcpynA(char *out, const char * restrict in, size_t outlen)
+void my_lstrcpysA(char *out, size_t outlen, const char * restrict in)
 {
 	size_t i;
-	for (i=0; i<outlen && in[i]; i++)
+	for (i=0; i<outlen-1 && in[i]; i++)
 	{
 		out[i] = in[i];
 	}
 	out[i] = TEXT('\0');
-	return out;
 }
 
 namespace ki {

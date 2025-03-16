@@ -23,26 +23,26 @@ class ConfigManager
 {
 public:
 
-	ConfigManager();
-	~ConfigManager();
+	ConfigManager() A_COLD;
+	~ConfigManager() A_COLD;
 
 	//@{ 指定した名前のファイル用の文書タイプをロード //@}
-	int SetDocType( const ki::Path& fname );
+	int SetDocType( const ki::Path& fname )  A_COLD;
 
 	//@{ 指定した番号の文書タイプをロード //@}
-	void SetDocTypeByMenu( int pos, HMENU m );
+	void SetDocTypeByMenu( int pos, HMENU m )  A_COLD;
 
 	//@{ 指定した名前の文書タイプをロード //@}
-	bool SetDocTypeByName( const ki::String& nam );
+	bool SetDocTypeByName( const ki::String& nam )  A_COLD;
 
 	//@{ メニュー項目作成 //@}
-	void SetDocTypeMenu( HMENU m, UINT idstart );
+	void SetDocTypeMenu( HMENU m, UINT idstart )  A_COLD;
 
 	//@{ メニュー項目のチェック修正 //@}
-	void CheckMenu( HMENU m, int pos );
+	void CheckMenu( HMENU m, int pos )  A_COLD;
 
 	//@{ 設定ダイアログ表示 //@}
-	bool DoDialog( const ki::Window& parent );
+	bool DoDialog( const ki::Window& parent )  A_COLD;
 
 public:
 
@@ -104,13 +104,13 @@ public:
 
 public:
 	//@{ [最近使ったファイル]へ追加 //@}
-	bool AddMRU( const ki::Path& fname );
+	bool AddMRU( const ki::Path& fname )  A_COLD;
 
 	//@{ [最近使ったファイル]メニューの構築 //@}
-	int SetUpMRUMenu( HMENU m, UINT id );
+	int SetUpMRUMenu( HMENU m, UINT id )  A_COLD;
 
 	//@{ [最近使ったファイル]取得 //@}
-	ki::Path GetMRU( int no ) const;
+	ki::Path GetMRU( int no ) const A_COLD;
 
 	//@{ 対応文字セットリスト取得 //@}
 	inline CharSetList& GetCharSetList() { return charSets_; }
@@ -123,7 +123,7 @@ public:
 	inline int GetWndH() const { return rememberWindowSize_ ? wndPos_.bottom-wndPos_.top : CW_USEDEFAULT; }
 	inline bool GetWndM() const { return rememberWindowSize_ && wndM_; }
 	void RememberWnd( const ki::Window* wnd );
-	const RECT *PMargins() const { return &rcPMargins_; }
+	inline const RECT *PMargins() const { return &rcPMargins_; }
 	inline void SetPrintMargins(const RECT *rc) { CopyRect(&rcPMargins_, rc); inichanged_=1; SaveIni(); }
 	inline bool useQuickExit() const { return useQuickExit_; }
 	inline bool useOldOpenSaveDlg() const { return useOldOpenSaveDlg_; }
@@ -198,10 +198,10 @@ private:
 
 private:
 
-	void LoadIni();
-	void SaveIni();
-	void ReadAllDocTypes( const TCHAR *ininame );
-	void LoadLayout( DocType* dt );
+	void LoadIni() A_COLD;
+	void SaveIni() A_COLD;
+	void ReadAllDocTypes( const TCHAR *ininame ) A_COLD;
+	void LoadLayout( DocType* dt ) A_COLD;
 	bool MatchDocType( const unicode* fname, const unicode* pat );
 
 private:

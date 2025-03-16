@@ -142,11 +142,14 @@ Path& Path::BeShortLongStyle()
     // Avoid using the long file name if it contains invalid chars.
     // ie: the short path name is always ASCII on NT.
     // Someone migh be using the short file name for a reason!
-	TCHAR fp[MAX_PATH];
-	if( my_lstrchr( fd.cFileName, TEXT('?') )
-	|| !my_lstrcpy( fp, c_str() )
-	|| !my_lstrcpy( const_cast<char*>(name(fp)), fd.cFileName)
-	|| ::GetFileAttributes( fp ) == 0xFFFFFFFF )
+	TCHAR fp[MAX_PATH*2];
+	if( my_lstrchr( fd.cFileName, TEXT('?') ) )
+		return *this; // Invalid long path name, do not set it
+
+	// Build full path and try to find the file.
+	my_lstrcpys( fp, countof(fp), c_str() );
+	my_lstrcpy( const_cast<char*>(name(fp)), fd.cFileName);
+	if( ::GetFileAttributes( fp ) == 0xFFFFFFFF )
 	{ // Unable to find long file name.
 		return *this;
 	}
@@ -167,25 +170,27 @@ Path& Path::BeShortLongStyle()
 	return *this;
 }
 
-const TCHAR *Path::CompactIfPossible( TCHAR *buf, unsigned Mx )
+void Path::CompactIfPossible( TCHAR *buf, size_t Mx )
 {
-	if(this->len() <= Mx)
-		return this->c_str(); // Nothing to do
+	if(this->len() <= Mx) // No compaction needed
+	{
+		memmove( buf, this->c_str(), (this->len()+1)*sizeof(TCHAR) );
+		return;
+	}
 
+	// Compact
 	const TCHAR *fn = name();
 	int fnlen = my_lstrlen(fn);
 	int remaining = Mx - fnlen; // what remains
 	int premaining = Max(remaining-3, 3); // what w will use for the path.
-	my_lstrcpyn(buf, c_str(), premaining);
-	my_lstrcpyn( buf+premaining, TEXT("..."), 3); // Add ... after the truncated path
+	my_lstrcpys( buf, premaining+1, c_str() );
+	my_lstrcpys( buf+premaining, 4, TEXT("...") ); // Add ... after the truncated path
 	if (remaining >= 3)
 		my_lstrcpy(buf+remaining, fn); // copy fn to the end of buf
 	else // remaining < 4
-		my_lstrcpyn( buf+6, fn-remaining+6, Mx-6 ); // copy end fn to the end of buf
+		my_lstrcpys( buf+6, Mx-5, fn-remaining+6); // copy end fn to the end of buf
 
 	buf[Mx] = '\0'; // In case
-
-	return buf;
 }
 
 const TCHAR* Path::name( const TCHAR* str )

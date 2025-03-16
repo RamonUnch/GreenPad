@@ -87,7 +87,7 @@ public:
 	Path& BeShortLongStyle();
 
 	//@{ ...とかを入れて短く //@}
-	const TCHAR *CompactIfPossible(TCHAR *buf, unsigned Mx) A_NONNULL;
+	void CompactIfPossible(TCHAR *buf, size_t Mx) A_NONNULL;
 
 	//@{ ディレクトリ情報以外 //@}
 	inline const TCHAR* name() const { return name(c_str()); }
