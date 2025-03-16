@@ -58,7 +58,7 @@ public:
 	};
 
 private:
-	bool Create();
+	bool Create() A_COLD;
 	bool PreTranslateMessage( MSG* ) override A_FINAL;
 
 private:

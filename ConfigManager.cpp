@@ -263,11 +263,15 @@ private:
 		FindFile f;
 		WIN32_FIND_DATA fd;
 		Path exepath(Path::Exe);
-		f.Begin( (exepath + TEXT("type\\*.kwd")).c_str() );
+		exepath += TEXT("type\\*.kwd");
+		f.Begin( exepath.c_str() );
 		SendMsgToItem( IDC_PAT_KWD, CB_ADDSTRING, TEXT("") );
 		while( f.Next(&fd) )
 			SendMsgToItem( IDC_PAT_KWD, CB_ADDSTRING, fd.cFileName );
-		f.Begin( (exepath + TEXT("type\\*.lay")).c_str() );
+		
+		exepath.TrimRight(3);
+		exepath += TEXT("lay");
+		f.Begin( exepath.c_str() );
 		while( f.Next(&fd) )
 			SendMsgToItem( IDC_PAT_LAY, CB_ADDSTRING, fd.cFileName );
 
@@ -294,8 +298,13 @@ private:
 	{
 		TCHAR buf[MAX_PATH];
 		if( getComboBoxText( idc, buf ) )
-			BootNewProcess( (TEXT("-c0 \"")+Path(Path::Exe)+
-				TEXT("type\\")+buf+TEXT("\"") ).c_str() );
+		{
+			String cmd = TEXT("-c0 \"") + Path(Path::Exe);
+			cmd += TEXT("type\\");
+			cmd += buf;
+			cmd += TEXT('\"');
+			BootNewProcess( cmd.c_str() );
+		}
 	}
 
 	bool on_command( UINT cmd, UINT id, HWND ctrl ) override
@@ -399,6 +408,7 @@ bool ConfigManager::DoDialog( const ki::Window& parent )
 //-------------------------------------------------------------------------
 
 namespace {
+#ifndef UNICODE
 	static ulong ToByte( const unicode str[2] )
 	{
 		ulong c = str[0];
@@ -428,6 +438,12 @@ namespace {
 			c = c * 10 + *str - L'0';
 		return c*s;
 	}
+#else
+	static inline int GetInt( const unicode* str )
+		{ return String::GetInt( str ); }
+	static inline ulong GetColor( const unicode* str )
+		{ return Hex2Ulong( str ); }
+#endif
 }
 // Brightness approximation, that does not take gamma into account.
 #define COLBRIGHTNESS(x) ( (218*GetRValue(x) + 732*GetGValue(x) + 74*GetBValue(x))>>10 )
@@ -479,13 +495,14 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 	TextFileR tf( UTF16LE );
 	if( tf.Open( ((Path(Path::Exe)+=TEXT("type\\"))+=dt->layfile).c_str() ) )
 	{
-		String fontname;
+		TCHAR  fontname[LF_FACESIZE];
 		int    fontsize=0;
 		int    fontxwidth=0;
 		LONG   fontweight=FW_DONTCARE;
 		BYTE   fontflags=0;
 		bool   clfound = false;
 		dt->fontCS = DEFAULT_CHARSET;
+		fontname[0] = TEXT('\0');
 
 		// Read the whole file at once.
 		unicode buf[1024], *nptr=buf,*ptr;
@@ -530,7 +547,11 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 				fontflags = GetInt(ptr);
 				break;
 			case 0x6674: // ft: FONT
-				fontname = ptr;
+				#ifdef UNICODE
+				my_lstrcpysW( fontname, countof(fontname), ptr );
+				#else
+				WideCharToMultiByte(CP_ACP, 0, ptr, -1, fontname, countof(fontname), NULL, NULL);
+				#endif
 				break;
 			case 0x6677: // fw: FONT WEIGHT
 				fontweight = GetInt(ptr);
@@ -575,8 +596,8 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 
 		if( !clfound )
 			dt->vc.color[LN] = dt->vc.color[TXT];
-		if( fontname.len()!=0 && fontsize!=0 )
-			dt->vc.SetFont( fontname.c_str(), fontsize, dt->fontCS
+		if( fontname[0]!=TEXT('\0') && fontsize!=0 )
+			dt->vc.SetFont( fontname, fontsize, dt->fontCS
 						, fontweight, fontflags, fontxwidth, dt->fontQual );
 	}
 }
@@ -895,9 +916,9 @@ int ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 	while( ::DeleteMenu( m, 0, MF_BYPOSITION ) );
 
 	// ÉÅÉjÉÖÅ[ç\íz
-	TCHAR tmp[61];
-	TCHAR cpt[61+INT_DIGITS+3];
-	cpt[0] = TEXT('&');
+	enum { MAX_ENTRY_LEN = 60 };
+	TCHAR buf[MAX_ENTRY_LEN+INT_DIGITS+4];
+	buf[0] = TEXT('&');
 	for( int i=0; i<mrus_; ++i )
 	{
 		if( i>=mrus_ || mru_[i].len()==0 )
@@ -908,10 +929,10 @@ int ConfigManager::SetUpMRUMenu( HMENU m, UINT id )
 			}
 			break;
 		}
-		TCHAR *end = my_lstrkpy( cpt+1, SInt2Str(i+1).c_str() );
+		TCHAR *end = my_lstrkpy( buf+1, SInt2Str(i+1).c_str() );
 		*end++ = TEXT(' ');
-		my_lstrkpy( end, mru_[i].CompactIfPossible(tmp, countof(tmp)-1) );
-		::InsertMenu( m, i, MF_BYPOSITION, id + i, cpt );
+		mru_[i].CompactIfPossible( end, MAX_ENTRY_LEN );
+		::InsertMenu( m, i, MF_BYPOSITION, id + i, buf );
 	}
 	return mrus_;
 }

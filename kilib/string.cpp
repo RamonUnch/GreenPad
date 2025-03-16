@@ -546,7 +546,7 @@ bool String::isCompatibleWithACP(const TCHAR *uni, size_t len)
 		compatible = false; // Not matching
 	//free( backconv );
 	TS.end = oend; // resstore TS!
-	
+
 
 	return compatible;
 #else

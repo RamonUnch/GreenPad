@@ -450,8 +450,8 @@ static void CommonDialogPrepareBuffers( const TCHAR* fnm, TCHAR* filepath, TCHAR
 	{
 		// Limit to MAX_PATH because fnm can be longer
 		// And SHELL API does not handle UNC anyway!
-		my_lstrcpyn( filepath, fnm, MAX_PATH-1 );
-		my_lstrcpyn( filename, fnm, MAX_PATH-1 );
+		my_lstrcpys( filepath, MAX_PATH, fnm );
+		my_lstrcpys( filename, MAX_PATH, fnm );
 
 		int i = 0;
 		int j = -1;

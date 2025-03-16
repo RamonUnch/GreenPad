@@ -194,7 +194,7 @@ struct VConfig
 		font.lfPitchAndFamily = VARIABLE_PITCH|FF_DONTCARE;
 		font.lfCharSet        = fontCS;
 
-		my_lstrcpyn( font.lfFaceName, fnam, LF_FACESIZE-1 );
+		my_lstrcpys( font.lfFaceName, LF_FACESIZE, fnam );
 
 		// ki::LOGGER( "VConfig::SetFont() end" );
 	}

@@ -146,41 +146,41 @@ class IMEManager
 public:
 
 	//@{ フォント指定 //@}
-	void SetFont( HWND wnd, const LOGFONT& lf );
+	void SetFont( HWND wnd, const LOGFONT& lf ) A_COLD;
 
 	//@{ 位置指定 //@}
-	void SetPos( HWND wnd, int x, int y );
+	void SetPos( HWND wnd, int x, int y )  A_COLD;
 
 	//@{ 確定文字列ゲット。受け取ったら FreeString すること。 //@}
-	void GetString( HWND wnd, unicode** str, size_t* len );
+	void GetString( HWND wnd, unicode** str, size_t* len ) A_COLD;
 
 	static void FreeString( unicode *str ) { free( str ); }
 
 	//@{ 再変換 //@}
-	void SetString( HWND wnd, unicode* str, size_t len );
+	void SetString( HWND wnd, unicode* str, size_t len ) A_COLD;
 
 	//@{ GlobalIMEを利用可能状態にする //@}
-	void EnableGlobalIME( bool enable );
+	void EnableGlobalIME( bool enable ) A_COLD;
 
 	//@{ IMEをON/OFFにする //@}
-	void SetState( HWND wnd, bool enable );
+	void SetState( HWND wnd, bool enable ) A_COLD;
 
 	//@{ IME ON/OFF判定 //@}
-	BOOL GetState( HWND wnd );
+	BOOL GetState( HWND wnd ) A_COLD;
 
 	//@{ IMEを持つかどうかを調べる //@}
-	BOOL IsIME();
+	BOOL IsIME() A_COLD;
 
 	//@{ 逆変換をサポートを調べる //@}
-	BOOL CanReconv();
+	BOOL CanReconv() A_COLD;
 
 	//@{ GlobalIMEを使えるWindowのリストを登録 //@}
-	void FilterWindows( ATOM* lst, UINT siz );
+	void FilterWindows( ATOM* lst, UINT siz ) A_COLD;
 
 private:
 
-	IMEManager();
-	~IMEManager();
+	IMEManager() A_COLD;
+	~IMEManager() A_COLD;
 	void    TranslateMsg( MSG* msg );
 	LRESULT DefProc( HWND wnd, UINT msg, WPARAM wp, LPARAM lp );
 	void    MsgLoopBegin();
@@ -274,7 +274,7 @@ protected:
 
 private:
 
-	static LRESULT CALLBACK StartProc( HWND, UINT, WPARAM, LPARAM );
+	static LRESULT CALLBACK StartProc( HWND, UINT, WPARAM, LPARAM ) A_COLD;
 	static LRESULT CALLBACK MainProc( WndImpl*, UINT, WPARAM, LPARAM );
 	#ifdef NO_ASMTHUNK
 	static LRESULT CALLBACK TrunkMainProc( HWND, UINT, WPARAM, LPARAM );
