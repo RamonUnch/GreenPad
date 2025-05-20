@@ -786,6 +786,9 @@ ATOM WndImpl::Register( WNDCLASS* cls )
 	// プロシージャはkilib謹製のものに書き換えちゃいます。
 	cls->hInstance   = app().hinst();
 	cls->lpfnWndProc = StartProc;
+#ifdef NO_ASMTHUNK
+	cls->cbWndExtra  = sizeof(void*);
+#endif // NO_ASMTHUNK
 	return ::RegisterClass( cls );
 }
 
@@ -829,8 +832,8 @@ LRESULT CALLBACK WndImpl::StartProc(
 	WndImpl*   pThis   = pz->pThis;
 	cs->lpCreateParams = pz->pParam;
 	#ifdef NO_ASMTHUNK
-	// Store the this pointer in GWLP_USERDATA when not using ASM thunking
-	::SetWindowLongPtr(wnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
+	// Store the this pointer in the cbWndExtra bytes when not using ASM thunking
+	::SetWindowLongPtr(wnd, 0, reinterpret_cast<LONG_PTR>(pThis));
 	#endif
 	// サンク
 	pThis->SetUpThunk( wnd );
@@ -855,10 +858,10 @@ void WndImpl::SetUpThunk( HWND wnd )
 }
 
 #ifdef NO_ASMTHUNK
-// To avoid ASM thunking we can use GWLP_USERDATA in the window structure
+// To avoid ASM thunking we can use cbWndExtra bytes in the window structure
 LRESULT CALLBACK WndImpl::TrunkMainProc( HWND wnd, UINT msg, WPARAM wp, LPARAM lp )
 {
-	WndImpl*   pThis  = reinterpret_cast<WndImpl*>(GetWindowLong(wnd, GWLP_USERDATA));
+	WndImpl*   pThis  = reinterpret_cast<WndImpl*>(GetWindowLongPtr(wnd, 0));
 	if(pThis) {
 		return WndImpl::MainProc(pThis, msg, wp, lp);
 	} else {
