@@ -1507,7 +1507,7 @@ void GreenPadWnd::JumpToLine( ulong ln )
 
 void GreenPadWnd::SetupSubMenu()
 {
-	if( HMENU m = ::GetSubMenu( ::GetSubMenu(::GetMenu(hwnd()),3),4 ) )
+	if( HMENU m = ::GetSubMenu( ::GetSubMenu(::GetMenu(hwnd()),3),9 ) )
 	{
 		cfg_.SetDocTypeMenu( m, ID_CMD_DOCTYPE );
 		::DrawMenuBar( hwnd() );
