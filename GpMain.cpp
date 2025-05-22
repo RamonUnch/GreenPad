@@ -71,7 +71,7 @@ void BootNewProcess( const TCHAR* cmd = TEXT("") )
 #endif // UNICOWS
 }
 
-
+static HMENU getDocTypeSubMenu(HWND hwnd) { return GetSubMenu( ::GetSubMenu(::GetMenu(hwnd),3),9 ); }
 
 //-------------------------------------------------------------------------
 // ステータスバー制御
@@ -1276,7 +1276,7 @@ void GreenPadWnd::on_setzoom( short zoom )
 
 void GreenPadWnd::on_doctype( int no )
 {
-	if( HMENU m = ::GetSubMenu( ::GetSubMenu(::GetMenu(hwnd()),3),4 ) )
+	if( HMENU m = getDocTypeSubMenu( hwnd() ) )
 	{
 		cfg_.SetDocTypeByMenu( no, m );
 		ReloadConfig( true );
@@ -1507,7 +1507,7 @@ void GreenPadWnd::JumpToLine( ulong ln )
 
 void GreenPadWnd::SetupSubMenu()
 {
-	if( HMENU m = ::GetSubMenu( ::GetSubMenu(::GetMenu(hwnd()),3),9 ) )
+	if( HMENU m = getDocTypeSubMenu( hwnd() ) )
 	{
 		cfg_.SetDocTypeMenu( m, ID_CMD_DOCTYPE );
 		::DrawMenuBar( hwnd() );
@@ -1596,7 +1596,7 @@ void GreenPadWnd::ReloadConfig( bool noSetDocType )
 	if( !noSetDocType )
 	{
 		int t = cfg_.SetDocType( filename_ );
-		if( HMENU m = ::GetSubMenu( ::GetSubMenu(::GetMenu(hwnd()),3),4 ) )
+		if( HMENU m = getDocTypeSubMenu( hwnd() ) )
 			cfg_.CheckMenu( m, t );
 	}
 	LOGGER("GreenPadWnd::ReloadConfig DocTypeLoaded");
