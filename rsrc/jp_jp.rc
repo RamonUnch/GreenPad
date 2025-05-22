@@ -88,11 +88,15 @@ BEGIN
         MENUITEM "指定幅で折り返し(&W)\tCtrl+2", ID_CMD_WRAPWIDTH
         MENUITEM "右端で折り返し(&R)\tCtrl+3",  ID_CMD_WRAPWINDOW
         MENUITEM SEPARATOR
+        MENUITEM "&Set Zoom...",                 ID_CMD_ZOOMDLG
+        MENUITEM "R&eset Zoom",                  ID_CMD_ZOOMRZ
+        MENUITEM "Zoom &Up",                     ID_CMD_ZOOMUP
+        MENUITEM "Zoom Do&wn",                   ID_CMD_ZOOMDN
+        MENUITEM SEPARATOR
         POPUP "文書タイプ(&T)"
         BEGIN
             MENUITEM "(なし)",                      ID_MENUITEM40025, GRAYED
         END
-        MENUITEM "&Zoom...",                   ID_CMD_ZOOMDLG
         MENUITEM "設定(&S)...",                 ID_CMD_CONFIG
         MENUITEM SEPARATOR
         MENUITEM "ステータス バー(&B)",         ID_CMD_STATUSBAR

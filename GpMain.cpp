@@ -180,18 +180,10 @@ LRESULT GreenPadWnd::on_message( UINT msg, WPARAM wp, LPARAM lp )
 	case WM_MOUSEWHEEL:
 		if( wp & MK_CONTROL )
 		{
-			short zoom = cfg_.GetZoom();
-
 			short delta_zoom = (SHORT)HIWORD(wp) / 12;
 			if(delta_zoom == 0)
 				delta_zoom += (SHORT)HIWORD(wp) > 0 ? 1 : -1;
-
-			zoom += delta_zoom;
-			zoom = Clamp((short)0, zoom, (short)990);
-			edit_.getView().SetFont( cfg_.vConfig(), zoom );
-			cfg_.SetZoom( zoom );
-			stb_.SetZoom( zoom );
-
+			on_setzoom( cfg_.GetZoom() + delta_zoom );
 			return 0;
 		}
 		break;
@@ -372,6 +364,9 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_DATETIME:   on_datetime();                      break;
 	case ID_CMD_INSERTUNI:  on_insertuni();                     break;
 	case ID_CMD_ZOOMDLG:    on_zoom();                          break;
+	case ID_CMD_ZOOMRZ:     on_setzoom( 100 );                  break;
+	case ID_CMD_ZOOMUP:     on_setzoom( cfg_.GetZoom() + 10 );  break;
+	case ID_CMD_ZOOMDN:     on_setzoom( cfg_.GetZoom() - 10 );  break;
 #ifndef NO_IME
 	case ID_CMD_RECONV:     on_reconv();                        break;
 	case ID_CMD_TOGGLEIME:  on_toggleime();                     break;
@@ -1234,6 +1229,7 @@ void GreenPadWnd::on_insertuni()
 	}
 }
 
+// Show zoom dialog
 void GreenPadWnd::on_zoom()
 {
 	struct ZoomDlg A_FINAL: public DlgImpl {
@@ -1265,11 +1261,17 @@ void GreenPadWnd::on_zoom()
 	short zoom = dlg.zoom_;
 	if( IDOK == dlg.endcode() && zoom != cfg_.GetZoom() )
 	{
-		zoom = Clamp((short)0, zoom, (short)990);
-		edit_.getView().SetFont( cfg_.vConfig(), zoom );
-		cfg_.SetZoom( zoom );
-		stb_.SetZoom( zoom );
+		on_setzoom( zoom );
 	}
+}
+
+
+void GreenPadWnd::on_setzoom( short zoom )
+{
+	zoom = Clamp((short)0, zoom, (short)990);
+	edit_.getView().SetFont( cfg_.vConfig(), zoom );
+	cfg_.SetZoom( zoom );
+	stb_.SetZoom( zoom );
 }
 
 void GreenPadWnd::on_doctype( int no )
