@@ -145,6 +145,9 @@
 #define ID_CMD_ASCIIFY                  50019
 #define ID_CMD_INSERTUNI                50020
 #define ID_CMD_ZOOMDLG                  50021
+#define ID_CMD_ZOOMRZ                   50022
+#define ID_CMD_ZOOMUP                   50023
+#define ID_CMD_ZOOMDN                   50024
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED

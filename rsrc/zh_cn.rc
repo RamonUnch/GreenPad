@@ -91,11 +91,15 @@ BEGIN
         MENUITEM "按字符换行(&W)\tCtrl+2", ID_CMD_WRAPWIDTH
         MENUITEM "按窗口换行(&R)\tCtrl+3", ID_CMD_WRAPWINDOW
         MENUITEM SEPARATOR
+        MENUITEM "&Set Zoom...",                 ID_CMD_ZOOMDLG
+        MENUITEM "R&eset Zoom",                  ID_CMD_ZOOMRZ
+        MENUITEM "Zoom &Up",                     ID_CMD_ZOOMUP
+        MENUITEM "Zoom Do&wn",                   ID_CMD_ZOOMDN
+        MENUITEM SEPARATOR
         POPUP "文档类型(&T)"
         BEGIN
             MENUITEM "(默认)",                       ID_MENUITEM40025
         END
-        MENUITEM "&Zoom...",                    ID_CMD_ZOOMDLG
         MENUITEM "设置(&S)...",                ID_CMD_CONFIG
         MENUITEM SEPARATOR
         MENUITEM "状态栏(&B)",                  ID_CMD_STATUSBAR

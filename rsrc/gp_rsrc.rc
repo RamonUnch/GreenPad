@@ -150,6 +150,9 @@ BEGIN
     "X",            ID_CMD_CUT,             VIRTKEY, CONTROL, NOINVERT
     "Y",            ID_CMD_REDO,            VIRTKEY, CONTROL, NOINVERT
     "Z",            ID_CMD_UNDO,            VIRTKEY, CONTROL, NOINVERT
+    VK_MULTIPLY,    ID_CMD_ZOOMRZ,          VIRTKEY, CONTROL, NOINVERT
+    VK_ADD,         ID_CMD_ZOOMUP,          VIRTKEY, CONTROL, NOINVERT
+    VK_SUBTRACT,    ID_CMD_ZOOMDN,          VIRTKEY, CONTROL, NOINVERT
 END
 
 /////////////////////////////////////////////////////////////////////////////
@@ -251,11 +254,15 @@ BEGIN
         MENUITEM "&Wrap at #th letter\tCtrl+2", ID_CMD_WRAPWIDTH
         MENUITEM "Wrap at &Right Edge\tCtrl+3", ID_CMD_WRAPWINDOW
         MENUITEM SEPARATOR
+        MENUITEM "&Set Zoom...",                 ID_CMD_ZOOMDLG
+        MENUITEM "R&eset Zoom",                  ID_CMD_ZOOMRZ
+        MENUITEM "Zoom &Up",                     ID_CMD_ZOOMUP
+        MENUITEM "Zoom Do&wn",                   ID_CMD_ZOOMDN
+        MENUITEM SEPARATOR
         POPUP "&Document Type"
         BEGIN
             MENUITEM "dummy",                       ID_MENUITEM40025
         END
-        MENUITEM "&Zoom...",                    ID_CMD_ZOOMDLG
         MENUITEM "&Settings...",                ID_CMD_CONFIG
         MENUITEM SEPARATOR
         MENUITEM "Status&Bar",                  ID_CMD_STATUSBAR
