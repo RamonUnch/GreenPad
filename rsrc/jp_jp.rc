@@ -65,6 +65,13 @@ BEGIN
             MENUITEM "&Quote\tAlt+Q",               ID_CMD_QUOTE
             MENUITEM "U&nquote\tAlt+N",             ID_CMD_UNQUOTE
         END
+        POPUP "Unic&ode NF"
+        BEGIN
+            MENUITEM "NF&C (composed)",                  ID_CMD_UNINORMC
+            MENUITEM "NF&D (decomposed)",                ID_CMD_UNINORMD
+            MENUITEM "NF&KC (compatibility composed)",   ID_CMD_UNINORMKC
+            MENUITEM "&NFKD (compatibility decomposed)", ID_CMD_UNINORMKD
+        END
       # ifndef NO_IME
         MENUITEM SEPARATOR
         MENUITEM "çƒïœä∑(&V)",              ID_CMD_RECONV

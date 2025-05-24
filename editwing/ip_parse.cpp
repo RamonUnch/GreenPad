@@ -344,10 +344,10 @@ public:
 // 与えられた文字列がキーワードかどうか高速判定するためのハッシュ表
 // Hash table for fast determination of whether a given string is a keyword
 //-------------------------------------------------------------------------
-// Should be a power of two!
-#define HTABLE_SIZE 2048
 class KeywordMap
 {
+	// Should be a power of two!
+	enum { HTABLE_SIZE = 2048 };
 	ushort   backet_[HTABLE_SIZE];
 	Arena ar;
 	size_t elems_;

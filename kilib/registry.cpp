@@ -5,12 +5,12 @@ using namespace ki;
 
 //=========================================================================
 
-void IniFile::SetFileName( /*const TCHAR* ini, bool exepath*/ )
+DWORD IniFile::GetIniPath(TCHAR *ini)
 {
-	DWORD len = Path::GetExeName( iniName_ );
+	DWORD len = Path::GetExeName( ini );
 	if( len > 3 )
-		my_lstrkpy( iniName_+len-3, TEXT("ini") );
-	
+		my_lstrkpy( ini+len-3, TEXT("ini") );
+
 //	// Use user-specific ini file if possible
 //	TCHAR userini[MAX_PATH]; userini[0] = TEXT('\0');
 //	DWORD len2;
@@ -24,6 +24,7 @@ void IniFile::SetFileName( /*const TCHAR* ini, bool exepath*/ )
 //
 //		my_lstrcpy(iniName_, userini);
 //	}
+	return len;
 }
 
 void IniFile::SetSectionAsUserName()

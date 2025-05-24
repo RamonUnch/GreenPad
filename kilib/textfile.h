@@ -161,7 +161,7 @@ struct TextFileWPimpl;
 //@}
 //=========================================================================
 
-class TextFileR : public TmpObject
+class TextFileR
 {
 public:
 
@@ -240,7 +240,7 @@ private:
 //@}
 //=========================================================================
 
-class TextFileW : public TmpObject
+class TextFileW
 {
 public:
 

@@ -833,7 +833,7 @@ void Cursor::Paste()
 //-------------------------------------------------------------------------
 // More Edit functions
 //-------------------------------------------------------------------------
-unicode* WINAPI Cursor::InvertCaseW(unicode *str, size_t *lenp)
+unicode* WINAPI Cursor::InvertCaseW(unicode *str, size_t *lenp, LPARAM param)
 {
 	if(!str) return NULL;
 	size_t len = *lenp;
@@ -847,7 +847,7 @@ unicode* WINAPI Cursor::InvertCaseW(unicode *str, size_t *lenp)
 	return str;
 }
 
-unicode* WINAPI Cursor::UpperCaseW(unicode *str, size_t *lenp)
+unicode* WINAPI Cursor::UpperCaseW(unicode *str, size_t *lenp, LPARAM param)
 {
 	if(!str) return NULL;
 	const size_t len = *lenp;
@@ -864,7 +864,7 @@ unicode* WINAPI Cursor::UpperCaseW(unicode *str, size_t *lenp)
 #endif
 }
 
-unicode* WINAPI Cursor::LowerCaseW(unicode *str, size_t *lenp)
+unicode* WINAPI Cursor::LowerCaseW(unicode *str, size_t *lenp, LPARAM param)
 {
 	if(!str) return NULL;
 	const size_t len = *lenp;
@@ -881,7 +881,7 @@ unicode* WINAPI Cursor::LowerCaseW(unicode *str, size_t *lenp)
 #endif
 }
 
-unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str, size_t *lenp)
+unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str, size_t *lenp, LPARAM param)
 {
 
 	long i, j, len=*lenp, new_len=0;
@@ -908,7 +908,7 @@ unicode* WINAPI Cursor::TrimTrailingSpacesW(unicode *str, size_t *lenp)
 	return j!=0 ? &str[j]: NULL; // New string start
 }
 
-unicode* WINAPI Cursor::StripLastCharsW(unicode *p, size_t *lenp)
+unicode* WINAPI Cursor::StripLastCharsW(unicode *p, size_t *lenp, LPARAM param)
 {	// Remove last char of each line
 
 	size_t  i, j, len=*lenp;
@@ -924,7 +924,7 @@ unicode* WINAPI Cursor::StripLastCharsW(unicode *p, size_t *lenp)
 	return p;
 }
 
-unicode* WINAPI Cursor::ASCIIOnlyW(unicode *str, size_t *lenp)
+unicode* WINAPI Cursor::ASCIIOnlyW(unicode *str, size_t *lenp, LPARAM param)
 {
 	size_t cnt = 0, len = *lenp;
 	for(ulong i=0; i<len; i++)
@@ -938,7 +938,51 @@ unicode* WINAPI Cursor::ASCIIOnlyW(unicode *str, size_t *lenp)
 	return cnt? str: NULL;
 }
 
-void Cursor::ModSelection(ModProc mfunk)
+// Since Windows XP/2003 we got the NORMALIZ.DLL
+unicode *WINAPI Cursor::UnicodeNormalizeW( unicode *str, size_t *lenp, LPARAM normalizeMode )
+{
+	typedef int (WINAPI *funk_t)(int NormForm, LPCWSTR lpSrcString, int cwSrcLength, LPWSTR lpDstString, int cwDstLength);
+
+	HINSTANCE h = LoadLibrary( TEXT("NORMALIZ.DLL") );
+	if( !h )
+	{
+		if( !app().isWin32s() )
+			::MessageBox(NULL, TEXT("Unable to load NORMALIZ.DLL"), NULL, MB_OK|MB_TASKMODAL);
+		return NULL;
+	}
+	funk_t dyn_NormalizeString = (funk_t)GetProcAddress(h, "NormalizeString");
+
+	unicode *dstbuf = NULL;
+	if( dyn_NormalizeString )
+	{
+		// We got NORMALIZ.DLL::NormalizeString() function.
+		int mode = (int)normalizeMode;
+
+		int dstlen = dyn_NormalizeString(mode, str, *lenp, NULL, 0);
+		if(dstlen > 0)
+		{
+			dstbuf = (unicode *)malloc( dstlen * sizeof(unicode) );
+			if( dstbuf )
+			{
+				int ret = dyn_NormalizeString( mode, str, *lenp, dstbuf, dstlen );
+				if( ret <= 0 )
+				{
+					free( dstbuf );
+					dstbuf = NULL;
+					TCHAR buf[64];
+					::wsprintf( buf, TEXT("Invalid unicode sequence at offset: %d"), -ret );
+					::MessageBox(NULL, buf, NULL, MB_OK|MB_TASKMODAL);
+				}
+				else
+					*lenp = ret;
+			}
+		}
+	}
+	FreeLibrary( h );
+	return dstbuf;
+}
+
+void Cursor::ModSelection(ModProc mfunk, LPARAM param)
 {
 	DPos dm=cur_, dM=sel_;
 	DPos ocur=cur_, osel=sel_;
@@ -947,11 +991,12 @@ void Cursor::ModSelection(ModProc mfunk)
 	else if (cur_==sel_)
 		return; // Nothing to do.
 
-	size_t len = doc_.getRangeLength( dm, dM );
+	size_t olen, len;
+	olen = len = doc_.getRangeLength( dm, dM );
 	unicode *p = (unicode *)malloc( sizeof(unicode) * (len+1) );
 	if( !p ) return;
 	doc_.getText( p, dm, dM );
-	unicode *np = mfunk(p, &len); // IN and OUT len!!!
+	unicode *np = mfunk(p, &len, param); // IN and OUT len!!!
 	if( np ) // Sucess!
 	{
 		doc_.Execute( Replace(cur_, sel_, np, len) );
@@ -959,12 +1004,17 @@ void Cursor::ModSelection(ModProc mfunk)
 		MoveCur(ocur, true);
 	}
 
-	free( p );
+	if( np < p || np > p+olen+1 )
+		free( np ); // was allocated
 
-//	// Useless for now...
-//	if( np < p || np > p+len+1 )
-//		delete np; // was allocated
+	free( p );
 }
+
+void Cursor::UnicodeNormalize(int mode)
+{
+	ModSelection(UnicodeNormalizeW, mode);
+}
+
 void Cursor::UpperCaseSel()
 {
 	ModSelection(UpperCaseW);

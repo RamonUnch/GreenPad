@@ -221,14 +221,15 @@ public:
 	void SetROMode( bool bRO );
 
 	// More Edit
-	typedef unicode *(WINAPI *ModProc)(unicode* str, size_t *len);
-	static unicode* WINAPI InvertCaseW(unicode *, size_t *len);
-	static unicode* WINAPI UpperCaseW(unicode *, size_t *len);
-	static unicode* WINAPI LowerCaseW(unicode *, size_t *len);
-	static unicode* WINAPI TrimTrailingSpacesW(unicode *, size_t *len);
-	static unicode* WINAPI StripLastCharsW(unicode *, size_t *len);
-	static unicode* WINAPI ASCIIOnlyW(unicode *, size_t *len);
-	void ModSelection(ModProc funk);
+	typedef unicode *(WINAPI *ModProc)(unicode* str, size_t *len, LPARAM param);
+	static unicode* WINAPI InvertCaseW(unicode *, size_t *len, LPARAM param);
+	static unicode* WINAPI UpperCaseW(unicode *, size_t *len, LPARAM param);
+	static unicode* WINAPI LowerCaseW(unicode *, size_t *len, LPARAM param);
+	static unicode* WINAPI TrimTrailingSpacesW(unicode *, size_t *len, LPARAM param);
+	static unicode* WINAPI StripLastCharsW(unicode *, size_t *len, LPARAM param);
+	static unicode* WINAPI ASCIIOnlyW(unicode *, size_t *len, LPARAM param);
+	static unicode* WINAPI UnicodeNormalizeW(unicode *str, size_t *lenp, LPARAM param);
+	void ModSelection(ModProc funk, LPARAM lp=0);
 	void UpperCaseSel();
 	void LowerCaseSel();
 	void InvertCaseSel();
@@ -237,6 +238,7 @@ public:
 	void StripFirstChar();
 	void StripLastChar();
 	void ASCIIFy();
+	void UnicodeNormalize(int mode);
 	// IME
 	void Reconv();
 	void ToggleIME();
