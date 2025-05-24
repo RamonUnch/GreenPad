@@ -379,6 +379,13 @@ bool GreenPadWnd::on_command( UINT id, HWND ctrl )
 	case ID_CMD_SFCHAR:     edit_.getCursor().StripFirstChar();    break;
 	case ID_CMD_SLCHAR:     edit_.getCursor().StripLastChar();     break;
 	case ID_CMD_ASCIIFY:    edit_.getCursor().ASCIIFy();           break;
+
+	// Normalizations forms C=1, D=2, KC=5, KD=6.
+	case ID_CMD_UNINORMC:   edit_.getCursor().UnicodeNormalize(1); break;
+	case ID_CMD_UNINORMD:   edit_.getCursor().UnicodeNormalize(2); break;
+	case ID_CMD_UNINORMKC:  edit_.getCursor().UnicodeNormalize(5); break;
+	case ID_CMD_UNINORMKD:  edit_.getCursor().UnicodeNormalize(6); break;
+
 	case ID_CMD_QUOTE:      edit_.getCursor().QuoteSelection(false);break;
 	case ID_CMD_UNQUOTE:    edit_.getCursor().QuoteSelection(true); break;
 	case ID_CMD_DELENDLINE: edit_.getCursor().DelToEndline(false); break;

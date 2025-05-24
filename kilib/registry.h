@@ -26,7 +26,10 @@ public:
 		{ SetFileName( /*ini, exepath*/ ); }
 
 	//@{ iniファイル名を設定 //@}
-	void SetFileName( /*const TCHAR* ini=NULL, bool exepath=true*/ );
+	void SetFileName( /*const TCHAR* ini=NULL, bool exepath=true*/ )
+		{ GetIniPath( iniName_ ); }
+
+	static DWORD GetIniPath(TCHAR *ini);
 
 	//@{ セクション名を設定 //@}
 	void SetSection( const TCHAR* section )
