@@ -44,6 +44,8 @@ public:
 	//@{ 設定ダイアログ表示 //@}
 	bool DoDialog( const ki::Window& parent )  A_COLD;
 
+	static size_t GetLayData(const TCHAR *name, unicode *buf, size_t buf_len);
+
 public:
 
 	//@{ Undo回数制限値 //@}

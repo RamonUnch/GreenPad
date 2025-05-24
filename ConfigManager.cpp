@@ -268,7 +268,24 @@ private:
 		SendMsgToItem( IDC_PAT_KWD, CB_ADDSTRING, TEXT("") );
 		while( f.Next(&fd) )
 			SendMsgToItem( IDC_PAT_KWD, CB_ADDSTRING, fd.cFileName );
-		
+
+		// Add ini section [xxx.lay] to the the layout the droplist
+		{
+			IniFile ini;
+			TCHAR buf[512];
+			buf[0] = TEXT('\0');
+			size_t sz = ::GetPrivateProfileString(TEXT("DocType"), NULL, TEXT(""), buf, countof(buf), ini.getName());
+			for( TCHAR *p = buf; p<buf+sz && *p; )
+			{
+				//MessageBox(NULL, p, NULL, 0);
+				size_t pplen = my_lstrlen(p);
+				if( pplen > 4 && !my_lstrcmpiAscii(p+pplen - 4, TEXT(".lay") ) )
+					SendMsgToItem( IDC_PAT_LAY, CB_ADDSTRING, p );
+
+				p += pplen + 1; // Next...
+			}
+		}
+		// Add all *.lay files to the layout the droplist
 		exepath.TrimRight(3);
 		exepath += TEXT("lay");
 		f.Begin( exepath.c_str() );
@@ -425,7 +442,7 @@ namespace {
 	{
 		ulong val = 0;
 		for(int i=0; i<=2 && str && str[1]; ++i,str+=2 )
-			val += ToByte(str) << (i*8);
+			val |= ToByte(str) << (i*8);
 		return val;
 	}
 	static int GetInt( const unicode* str )
@@ -442,7 +459,7 @@ namespace {
 	static inline int GetInt( const unicode* str )
 		{ return String::GetInt( str ); }
 	static inline ulong GetColor( const unicode* str )
-		{ return Hex2Ulong( str ); }
+		{ ulong v = Hex2Ulong( str ); return ((v&0x0000FF)<<16) | ((v&0x00FF00)<<0) | ((v&0xFF0000)>>16); }
 #endif
 }
 // Brightness approximation, that does not take gamma into account.
@@ -472,14 +489,12 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		dt->vc.color[TXT] =
 		dt->vc.color[LN]  = ::GetSysColor(COLOR_WINDOWTEXT); // RGB(0,0,0);
 		dt->vc.color[CMT] = brightmode? RGB(0,128,0): RGB(255,255,128);
-		dt->vc.color[KWD] = brightmode? RGB(0,32,192): RGB(128,255,255);
+		dt->vc.color[KWD] = brightmode? RGB(0,0,128): RGB(128,255,255);
 		dt->vc.color[BG]  = bgcol;
 		dt->vc.color[CTL] = brightmode? RGB(192,160,192) : RGB(80,64,80);
 
 		// EOF=0, EOL=1, TAB=2, HSP=3, ZSP=4
 		dt->vc.sc = 027 ; //010 111 b
-
-		dt->vc.SetFont( TEXT("FixedSys"), 11, dt->fontCS );
 
 		dt->wrapWidth  = 80;
 		dt->wrapType   = -1;
@@ -487,31 +502,33 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 		dt->showLN     = true;
 		dt->fontCS     = DEFAULT_CHARSET;
 		dt->fontQual   = DEFAULT_QUALITY;
+
+		dt->vc.SetFont( TEXT("FixedSys"), 12, dt->fontCS );
 	}
 	dt->loaded     = true;
 
   // ２．*.layファイルからの読み込み
 	// MessageBox(NULL, dt->layfile.c_str(), TEXT("Loading"), 0);
-	TextFileR tf( UTF16LE );
-	if( tf.Open( ((Path(Path::Exe)+=TEXT("type\\"))+=dt->layfile).c_str() ) )
+	unicode buf[512];
+	size_t len = GetLayData(dt->layfile.c_str(), buf, countof(buf));
+
+	// Rad buffer
+	if( len )
 	{
 		TCHAR  fontname[LF_FACESIZE];
-		int    fontsize=0;
+		int    fontsize = dt->vc.fontsize;
 		int    fontxwidth=0;
 		LONG   fontweight=FW_DONTCARE;
 		BYTE   fontflags=0;
 		bool   clfound = false;
 		dt->fontCS = DEFAULT_CHARSET;
-		fontname[0] = TEXT('\0');
 
 		// Read the whole file at once.
-		unicode buf[1024], *nptr=buf,*ptr;
-		size_t len = tf.ReadBuf( buf, countof(buf)-1 );
-		buf[len] = L'\0'; // NULL terminate in case.
+		unicode *nptr=buf,*ptr;
 		for( ptr=buf; ptr<buf+len; ptr=nptr ) // !EOF
 		{
 			// Get to next line
-			while( *nptr != L'\0' &&  *nptr != L'\r' && *nptr != L'\n' )
+			while( *nptr != L'\0' &&  *nptr != L'\r' && *nptr != L'\n' && *nptr != L'|' )
 				nptr++;
 			*nptr++ = L'\0'; // zero out endline.
 			nptr += *(nptr) == L'\n'; // Skip eventual \n
@@ -602,6 +619,55 @@ void ConfigManager::LoadLayout( ConfigManager::DocType* dt )
 	}
 }
 
+// Try to open a file in the type\ folder and fallback to
+size_t ConfigManager::GetLayData(const TCHAR *name, unicode *buf, size_t buf_len)
+{
+	size_t len = 0;
+	Path full_filename = (Path(Path::Exe) += TEXT("type\\")) += name;
+
+//	if( !buf || buf_len == 0 )
+//	{
+//		// Return 1 if exists 0 otherwise
+//		if( full_filename.isFile() )
+//			return 1;
+//
+//		IniFile ini;
+//		TCHAR tmp[4];
+//		// Here GetPrivateProfileSection will return 2 if section exists and 0 if it does not.
+//		return countof(tmp)-2 == GetPrivateProfileSection(name, tmp, countof(tmp), ini.getName() );
+//	}
+
+	if( full_filename.isFile() )
+	{
+		TextFileR tf( UTF16LE );
+		if( tf.Open( full_filename.c_str() ) )
+		{
+			// Read the whole file at once.
+			len = tf.ReadBuf( buf, buf_len-1 );
+			buf[len] = L'\0'; // NULL terminate in case.
+
+			return len;
+		}
+	}
+
+	// file not found in the type directorry,
+	// look for a section in the main ini file.
+	IniFile ini;
+#ifdef UNICODE
+	len = GetPrivateProfileStringW( L"DocType", name, L"", buf, buf_len, ini.getName() );
+#else
+	char *tmp = (char *)TS.alloc( buf_len * sizeof(char) );
+	if( tmp )
+	{
+		len = ::GetPrivateProfileStringA( "DocType", name, "", tmp, buf_len, ini.getName() );
+		len = ::MultiByteToWideChar( CP_ACP, 0, tmp, len+1, buf, buf_len );
+		TS.freelast( tmp, buf_len * sizeof(char) );
+	}
+#endif
+
+	return len;
+}
+
 
 
 //-------------------------------------------------------------------------
@@ -659,7 +725,7 @@ void ConfigManager::LoadIni()
 	ini_.GetRect( TEXT("PMargin"), &rcPMargins_, &rcPMargins_);
 
 	// TODO: MRU
-	mrus_ = ini_.GetInt( TEXT("MRU"), 8 );
+	mrus_ = ini_.GetInt( TEXT("MRU"), 0 );
 	mrus_ = Min(Max(0, mrus_), 20);
 
 	// 新規ファイル関係
