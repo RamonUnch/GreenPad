@@ -752,21 +752,24 @@ Command* MacroCommand::operator()( Document& doc ) const
 	undo->arr_.ForceSize( size() );
 
 	size_t e = arr_.size();
-	if( e > 4 )
-	{
-		// Accumulate TEXTUPDATE events
-		// Except for the first and last command,
-		// so that the cursor behaves as exected.
-		undo->arr_[e-1] = (*arr_[0])(doc); // 1st command
-
-		doc.acc_Fire_TEXTUPDATE_begin();
-		for( size_t i=1; i<e-1; ++i )
-			undo->arr_[e-i-1] = (*arr_[i])(doc);
-		doc.acc_Fire_TEXTUPDATE_end();
-
-		undo->arr_[0] = (*arr_[e-1])(doc); // Last command
-	}
-	else
+// TODO: FIXME: the accumulation system is broken by multi-line Find/Replace
+// FOR now we just ignore it but it makes find replace in the whole file
+// a thousand time longer, 15min instead of 5 secs on my 200Mb file.
+//	if( e > 4 )
+//	{
+//		// Accumulate TEXTUPDATE events
+//		// Except for the first and last command,
+//		// so that the cursor behaves as exected.
+//		undo->arr_[e-1] = (*arr_[0])(doc); // 1st command
+//
+//		doc.acc_Fire_TEXTUPDATE_begin();
+//		for( size_t i=1; i<e-1; ++i )
+//			undo->arr_[e-i-1] = (*arr_[i])(doc);
+//		doc.acc_Fire_TEXTUPDATE_end();
+//
+//		undo->arr_[0] = (*arr_[e-1])(doc); // Last command
+//	}
+//	else
 	{
 		for( size_t i=0; i<e; ++i )
 			undo->arr_[e-i-1] = (*arr_[i])(doc);
