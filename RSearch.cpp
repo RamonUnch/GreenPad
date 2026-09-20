@@ -90,6 +90,32 @@ RegToken RegLexer::GetToken()
 		if( x==end_ ) return R_End;
 		switch( *x++ )
 		{
+		case L'x': case L'X': {
+			// ASCII + Iso 8859-1 codepoint \xXX
+			wchar_t v = 0;
+			for( size_t i = 0; i < 2 && x < end_ ; i++, x++ )
+			{
+				wchar_t ch = *x;
+				if( '0'<=ch && ch<='9' ) v = 16*v + ch-'0';
+				if( 'A'<=ch && ch<='F' ) v = 16*v + ch-'A'+10;
+				if( 'a'<=ch && ch<='f' ) v = 16*v + ch-'a'+10;
+			}
+			chr_ = v;
+			return R_Char;
+		}
+		case L'u': {
+			// UCS2 codepoint \uXXXX
+			wchar_t v = 0;
+			for( size_t i = 0; i < 4 && x < end_ ; i++, x++ )
+			{
+				wchar_t ch = *x;
+				if( '0'<=ch && ch<='9' ) v = 16*v + ch-'0';
+				if( 'A'<=ch && ch<='F' ) v = 16*v + ch-'A'+10;
+				if( 'a'<=ch && ch<='f' ) v = 16*v + ch-'a'+10;
+			}
+			chr_ = v;
+			return R_Char;
+		}
 		case L't': chr_=L'\t';            return R_Char;
 		case L'n': chr_=L'\n';            return R_Char;
 		case L'r': chr_=L'\r';            return R_Char;

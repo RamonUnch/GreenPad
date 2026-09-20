@@ -28,6 +28,51 @@ static ulong DecodeReplacement( const wchar_t* src, wchar_t* dst )
 			case L'f': dst[di++]=L'\f'; break;
 			case L'v': dst[di++]=L'\v'; break;
 			case L'a': dst[di++]=L'\a'; break;
+			case L'x': case L'X': {
+				// ASCII + Iso 8859-1 codepoint \xXX
+				uint v = 0;
+				for( size_t i = 0; i < 2 && src[si+1] ; i++ )
+				{
+					wchar_t ch = src[++si];
+					if( '0'<=ch && ch<='9' ) v = 16*v + ch-'0';
+					if( 'A'<=ch && ch<='F' ) v = 16*v + ch-'A'+10;
+					if( 'a'<=ch && ch<='f' ) v = 16*v + ch-'a'+10;
+				}
+				dst[di++] = (wchar_t)v;
+				}break;
+			case L'u': {
+				// UCS2 codepoint \uXXXX
+				uint v = 0;
+				for( size_t i = 0; i < 4 && src[si+1] ; i++ )
+				{
+					wchar_t ch = src[++si];
+					if( '0'<=ch && ch<='9' ) v = 16*v + ch-'0';
+					if( 'A'<=ch && ch<='F' ) v = 16*v + ch-'A'+10;
+					if( 'a'<=ch && ch<='f' ) v = 16*v + ch-'a'+10;
+				}
+				dst[di++] = (wchar_t)v;
+				}break;
+			case L'U': {
+				// UTF-32 codepoint \UXXXXXXXX
+				uint v = 0;
+				for( size_t i = 0; i < 8 && src[si+1] ; i++ )
+				{
+					wchar_t ch = src[++si];
+					if( '0'<=ch && ch<='9' ) v = 16*v + ch-'0';
+					if( 'A'<=ch && ch<='F' ) v = 16*v + ch-'A'+10;
+					if( 'a'<=ch && ch<='f' ) v = 16*v + ch-'a'+10;
+				}
+				if( v < 0x10000 )
+				{
+					dst[di++] = (wchar_t)v;
+				}
+				else
+				{
+					// Surrogate pair...
+					dst[di++] = (wchar_t)(0xD800 + (((v-0x10000)>>10)&0x3ff)),
+					dst[di++] = (wchar_t)(0xDC00 + (((v-0x10000)    )&0x3ff));
+				}
+				}break;
 			default:   dst[di++]=n; break;
 			}
 		}
