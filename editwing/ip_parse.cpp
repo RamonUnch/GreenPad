@@ -794,9 +794,10 @@ void Document::SetKeyword( const unicode* defbuf, size_t siz )
 
 
 	// パーサー作成
-	void *pp = parser_.get();
+	Parser *pp = parser_.get();
 	if( pp )
 	{
+		pp->~Parser();
 		new ( pp ) Parser(
 			tags[0], taglen[0], tags[1], taglen[1], tags[2], taglen[2],
 			flags[1], flags[2], flags[3], flags[0] );
