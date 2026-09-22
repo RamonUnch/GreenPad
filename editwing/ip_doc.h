@@ -448,7 +448,7 @@ private:
 	size_t                     evHanNum_;
 	DocEvHandler*     pEvHan_[MAX_EVHAN]; // イベント通知先
 	UnReDoChain                    urdo_;   // アンドゥリドゥ
-	editwing::DPos acc_s_, acc_e2_;
+	//editwing::DPos acc_s_, acc_e_, acc_e2_, acc_old_max_;
 	bool busy_;
 	bool acc_textupdate_mode_;
 	bool acc_reparsed_;

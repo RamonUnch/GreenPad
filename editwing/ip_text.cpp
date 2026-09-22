@@ -31,7 +31,7 @@ void Document::AddHandler( DocEvHandler* eh )
 	// ハンドラ追加
 	if( evHanNum_ < MAX_EVHAN )
 		pEvHan_[ evHanNum_++ ] = eh;
-	
+
 	LOGGERF( TEXT("Add Document Event Handler (%u / %u)"), (uint)evHanNum_, (uint)MAX_EVHAN );
 }
 
@@ -56,34 +56,41 @@ void Document::DelHandler( const DocEvHandler* eh )
 void Document::acc_Fire_TEXTUPDATE_begin()
 {
 	acc_textupdate_mode_ = true;
-	acc_s_ = DPos(-1, -1);
-	acc_e2_ = DPos(0,0);
-	acc_reparsed_ = acc_nmlcmd_ = false;
+//	acc_old_max_ = DPos(-1,-1);
+//	CorrectPos(acc_old_max_);
+//	acc_s_ = DPos(-1, -1);
+//	acc_e_ = DPos(0, 0);
+//	acc_e2_ = DPos(0,0);
+//	acc_reparsed_ = acc_nmlcmd_ = false;
 }
 // End the above and send Fire_TEXTUPDATE() for real.
 void Document::acc_Fire_TEXTUPDATE_end()
 {
 	acc_textupdate_mode_ = false;
-	Fire_TEXTUPDATE( acc_s_, acc_e2_, acc_e2_, acc_reparsed_, acc_nmlcmd_ );
+//	acc_s_ = Min(acc_s_, acc_old_max_);
+//	acc_e_ = Min(acc_e_, acc_old_max_);
+//	acc_e2_ = DPos(-1,-1);
+//	CorrectPos(acc_e2_);
+//	Fire_TEXTUPDATE( acc_s_, acc_e_, acc_e2_, acc_reparsed_, acc_nmlcmd_ );
 }
 
 void Document::Fire_TEXTUPDATE
 	( const DPos& s, const DPos& e, const DPos& e2, bool reparsed, bool nmlcmd )
 {
 	AutoLock lk(this);
-
-	if( acc_textupdate_mode_ )
-	{	// Accumulate positions.
-		acc_s_  = Min(acc_s_, s);
-		acc_e2_ = Max(acc_e2_, e2);
-		acc_reparsed_ = acc_reparsed_ || reparsed;
-		acc_nmlcmd_   = acc_nmlcmd_ || nmlcmd;
-	}
-	else
+//	if( acc_textupdate_mode_ )
+//	{	// Accumulate positions.
+//		acc_s_  = Min(acc_s_, s);
+//		acc_e_  = Max(acc_e_, e);
+//		acc_e2_ = Max(acc_e2_, e2);
+//		acc_reparsed_ = acc_reparsed_ || reparsed;
+//		acc_nmlcmd_   = acc_nmlcmd_ || nmlcmd;
+//	}
+//	else
 	{
 		// 全部にイベント通知
 		for( size_t i=0, ie=evHanNum_; i<ie; ++i )
-			pEvHan_[i]->on_text_update( s, e, e2, reparsed, nmlcmd );
+			pEvHan_[i]->on_text_update( s, e, e2, reparsed, nmlcmd && !acc_textupdate_mode_ );
 	}
 }
 
@@ -752,6 +759,11 @@ Command* MacroCommand::operator()( Document& doc ) const
 	undo->arr_.ForceSize( size() );
 
 	size_t e = arr_.size();
+	// TODO: FIXME: the accumulation system is broken by multi-line Find/Replace
+	// FOR now we just ignore it but it makes find replace in the whole file
+	// a thousand time longer, 15min instead of 5 secs on my 200Mb file.
+	// for now we just use a flag to disable cursor updates in the loop
+	// This is not as fast as the previous solution but it is usable.
 	if( e > 4 )
 	{
 		// Accumulate TEXTUPDATE events

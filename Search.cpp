@@ -8,6 +8,122 @@ using namespace ki;
 using namespace editwing;
 using view::VPos;
 
+//-------------------------------------------------------------------------
+// Replacement escape decoding (regexp mode only) and multiline end calc
+//-------------------------------------------------------------------------
+
+static ulong DecodeReplacement( const wchar_t* src, wchar_t* dst )
+{
+	ulong di = 0;
+	for( ulong si=0; src[si]!=L'\0'; ++si )
+	{
+		if( src[si]==L'\\' && src[si+1]!=L'\0' )
+		{
+			wchar_t n = src[++si];
+			switch( n )
+			{
+			case L't': dst[di++]=L'\t'; break;
+			case L'n': dst[di++]=L'\n'; break;
+			case L'r': dst[di++]=L'\r'; break;
+			case L'f': dst[di++]=L'\f'; break;
+			case L'v': dst[di++]=L'\v'; break;
+			case L'a': dst[di++]=L'\a'; break;
+			case L'x': case L'X': {
+				// ASCII + Iso 8859-1 codepoint \xXX
+				uint v = 0;
+				for( size_t i = 0; i < 2 && src[si+1] ; i++ )
+				{
+					wchar_t ch = src[++si];
+					if( '0'<=ch && ch<='9' ) v = 16*v + ch-'0';
+					if( 'A'<=ch && ch<='F' ) v = 16*v + ch-'A'+10;
+					if( 'a'<=ch && ch<='f' ) v = 16*v + ch-'a'+10;
+				}
+				dst[di++] = (wchar_t)v;
+				}break;
+			case L'u': {
+				// UCS2 codepoint \uXXXX
+				uint v = 0;
+				for( size_t i = 0; i < 4 && src[si+1] ; i++ )
+				{
+					wchar_t ch = src[++si];
+					if( '0'<=ch && ch<='9' ) v = 16*v + ch-'0';
+					if( 'A'<=ch && ch<='F' ) v = 16*v + ch-'A'+10;
+					if( 'a'<=ch && ch<='f' ) v = 16*v + ch-'a'+10;
+				}
+				dst[di++] = (wchar_t)v;
+				}break;
+			case L'U': {
+				// UTF-32 codepoint \UXXXXXXXX
+				uint v = 0;
+				for( size_t i = 0; i < 8 && src[si+1] ; i++ )
+				{
+					wchar_t ch = src[++si];
+					if( '0'<=ch && ch<='9' ) v = 16*v + ch-'0';
+					if( 'A'<=ch && ch<='F' ) v = 16*v + ch-'A'+10;
+					if( 'a'<=ch && ch<='f' ) v = 16*v + ch-'a'+10;
+				}
+				if( v < 0x10000 )
+				{
+					dst[di++] = (wchar_t)v;
+				}
+				else
+				{
+					// Surrogate pair...
+					dst[di++] = (wchar_t)(0xD800 + (((v-0x10000)>>10)&0x3ff)),
+					dst[di++] = (wchar_t)(0xDC00 + (((v-0x10000)    )&0x3ff));
+				}
+				}break;
+			default:   dst[di++]=n; break;
+			}
+		}
+		else
+		{
+			dst[di++] = src[si];
+		}
+	}
+	dst[di] = L'\0';
+	return di;
+}
+
+static DPos ReplaceEndPos( const DPos& b, const wchar_t* ustr, ulong ulen )
+{
+	ulong breaks = 0;
+	ulong lastBreakEnd = 0;
+	for( ulong i=0; i<ulen; )
+	{
+		if( ustr[i]==L'\r' )
+		{
+			++breaks;
+			++i;
+			if( i<ulen && ustr[i]==L'\n' )
+				++i;
+			lastBreakEnd = i;
+		}
+		else if( ustr[i]==L'\n' )
+		{
+			++breaks;
+			++i;
+			lastBreakEnd = i;
+		}
+		else
+		{
+			++i;
+		}
+	}
+	DPos e;
+	if( breaks == 0 )
+	{
+		e.tl = b.tl;
+		e.ad = b.ad + ulen;
+	}
+	else
+	{
+		e.tl = b.tl + breaks;
+		e.ad = ulen - lastBreakEnd;
+	}
+	return e;
+}
+
 
 
 //-------------------------------------------------------------------------
@@ -129,7 +245,7 @@ void SearchManager::on_init()
 
 	::SetFocus( item(IDC_FINDBOX) );
 	SendMsgToItem( IDC_FINDBOX, EM_SETSEL, 0, ::GetWindowTextLength(item(IDC_FINDBOX)) );
-	
+
 	bChanged_ = true;
 }
 
@@ -448,17 +564,27 @@ void SearchManager::ReplaceImpl()
 	{
 		if( e == *end )
 		{
-			const wchar_t* ustr = replStr_.ConvToWChar();
-			const ulong ulen = my_lstrlenW( ustr );
+			const wchar_t* raw = replStr_.ConvToWChar();
+			const ulong rawLen = my_lstrlenW( raw );
+			unicode* dec = NULL;
+			const unicode* ustr = raw;
+			ulong ulen = rawLen;
+			if( bRegExp_ )
+			{
+				dec = (unicode *)TS.alloc( (rawLen + 1) * sizeof(unicode) );
+				if (!dec) { replStr_.FreeWCMem( raw ); return; }
+				ulen = DecodeReplacement( raw, dec );
+				ustr = dec;
+			}
 
 			// 置換
-			edit_.getDoc().Execute( doc::Replace(
-				b, e, ustr, ulen
-			) );
+			edit_.getDoc().Execute( doc::Replace( b, e, ustr, ulen ) );
 
-			replStr_.FreeWCMem( ustr );
+			DPos nxt = ReplaceEndPos( b, ustr, ulen );
+			replStr_.FreeWCMem( raw );
+			if( dec ) TS.freelast( dec, (rawLen + 1) * sizeof(unicode) );
 
-			if( FindNextFromImpl( DPos(b.tl,b.ad+ulen), &b, &e ) )
+			if( FindNextFromImpl( nxt, &b, &e ) )
 			{
 				// 次を選択
 				edit_.getCursor().MoveCur( b, false );
@@ -484,9 +610,18 @@ void SearchManager::ReplaceAllImpl()
 	doc::MacroCommand mcr;
 
 	// 置換後文字列
-	const wchar_t* ustr = replStr_.ConvToWChar();
-	const ulong ulen = my_lstrlenW( ustr );
-
+	const wchar_t* raw = replStr_.ConvToWChar();
+	const ulong rawLen = my_lstrlenW( raw );
+	unicode* dec = NULL;
+	const unicode* ustr = raw;
+	ulong ulen = rawLen;
+	if( bRegExp_ )
+	{
+		dec = (unicode *)TS.alloc( (rawLen + 1) * sizeof(unicode) );
+		if (!dec) { replStr_.FreeWCMem( raw ); return; }
+		ulen = DecodeReplacement( raw, dec );
+		ustr = dec;
+	}
 	// Get selection position
 	const VPos *stt, *end;
 	edit_.getCursor().getCurPos( &stt, &end );
@@ -504,17 +639,71 @@ void SearchManager::ReplaceAllImpl()
 	}
 
 	// 文書の頭から検索, Search from the beginning of the document (or selection)
-	int dif=0;
+	ulong tlAdd = 0;
+	long adDif = 0;
+	ulong prevTl = 0;
+	bool firstHit = true;
 	DPos b, e;
 	while( FindNextFromImpl( s, &b, &e ) && (noselection || e <= dend) )
 	{ // search until the end of selection if any
-		if( s.tl != b.tl ) dif = 0;
+		if( b.tl == e.tl && b.ad == e.ad )
+		{
+			if( s.ad < edit_.getDoc().len( s.tl ) )
+				s.ad = s.ad + 1;
+			else
+				s = DPos( s.tl+1, 0 );
+			if( s.tl >= edit_.getDoc().tln() )
+				break;
+			continue;
+		}
+		if( firstHit )
+		{
+			prevTl = b.tl;
+			firstHit = false;
+		}
+		else if( b.tl != prevTl )
+		{
+			adDif = 0;
+			prevTl = b.tl;
+		}
+
 		s = e;
 
+		ulong obAd = b.ad;
+		ulong oeAd = e.ad;
+		b.tl += tlAdd; b.ad += adDif;
+		e.tl += tlAdd; e.ad += adDif;
+
 		// 置換コマンドを登録
-		b.ad += dif, e.ad += dif;
 		mcr.Add( new doc::Replace(b,e,ustr,ulen) );
-		dif -= e.ad-b.ad-ulen;
+		ulong newBreaks = 0;
+		ulong lastSeg = ulen;
+		for( ulong ri=0; ri<ulen; )
+		{
+			if( ustr[ri]==L'\r' )
+			{
+				++newBreaks;
+				++ri;
+				if( ri<ulen && ustr[ri]==L'\n' )
+					++ri;
+				lastSeg = ulen - ri;
+			}
+			else if( ustr[ri]==L'\n' )
+			{
+				++newBreaks;
+				++ri;
+				lastSeg = ulen - ri;
+			}
+			else
+			{
+				++ri;
+			}
+		}
+		if( newBreaks == 0 )
+			adDif += (long)ulen - (long)(oeAd - obAd);
+		else
+			adDif = (long)lastSeg - (long)oeAd;
+		tlAdd += newBreaks;
 	}
 
 	if( mcr.size() > 0 )
@@ -522,7 +711,9 @@ void SearchManager::ReplaceAllImpl()
 		// ここで連続置換
 		edit_.getDoc().Execute( mcr );
 		// カーソル移動
-		e.ad = b.ad + ulen;
+		DPos lastEnd = ReplaceEndPos( b, ustr, ulen );
+		edit_.getCursor().MoveCur( lastEnd, false );
+
 		if (noselection)
 		{
 			edit_.getCursor().MoveCur( e, false );
@@ -530,7 +721,7 @@ void SearchManager::ReplaceAllImpl()
 		else
 		{ // Re-select the text that was modified if needed.
 			edit_.getCursor().MoveCur( oristt, false );
-			edit_.getCursor().MoveCur( DPos(dend.tl, dend.ad+dif), true );
+			edit_.getCursor().MoveCur( DPos(dend.tl, dend.ad+adDif), true );
 		}
 		// 閉じる？
 		End( IDOK );
@@ -540,5 +731,6 @@ void SearchManager::ReplaceAllImpl()
 	::wsprintf( str, RzsString(IDS_REPLACEALLDONE).c_str(), mcr.size() );
 	MsgBox( str, RzsString(IDS_APPNAME).c_str(), MB_ICONINFORMATION );
 
-	replStr_.FreeWCMem( ustr );
+	if( dec ) TS.freelast( dec, (rawLen + 1) * sizeof(unicode) );
+	replStr_.FreeWCMem( raw );
 }
